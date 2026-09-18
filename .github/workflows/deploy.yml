@@ -1,0 +1,57 @@
+name: Publicar propuestas
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  construir:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Construir las tres propuestas
+        run: |
+          set -e
+          mkdir -p publico
+          for p in a-imprenta b-galeria c-obsidiana; do
+            echo "::group::$p"
+            (cd "propuestas/$p" && ln -sfn ../../node_modules node_modules && npm run build)
+            cp -rL "propuestas/$p/dist" "publico/$p"
+            echo "::endgroup::"
+          done
+
+      - name: Portada comparativa
+        run: cp indice.html publico/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: publico
+
+  publicar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

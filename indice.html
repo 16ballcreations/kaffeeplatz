@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>KaffeePlatz · Tres propuestas</title>
+<style>
+  :root{
+    --bg:#fdf7e7; --surface:#fff; --border:#ebe1c8;
+    --ink:#1a1a1a; --muted:#6d5b4a; --oro:#dec185; --oro-ink:#8f6724;
+    color-scheme: light;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    line-height:1.6; padding:0 20px;
+  }
+  .env{max-width:940px; margin:0 auto; padding-block:clamp(40px,8vw,88px)}
+  header{margin-bottom:clamp(32px,6vw,64px)}
+  .kicker{
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--oro-ink); font-weight:600; margin:0 0 14px;
+  }
+  h1{
+    font-family:'Playfair Display',Georgia,serif; font-weight:300;
+    font-size:clamp(38px,7vw,62px); line-height:1.05; margin:0 0 18px;
+  }
+  .intro{font-size:clamp(15px,2vw,17px); color:var(--muted); max-width:62ch; margin:0}
+  .regla{height:1px;border:0;margin:clamp(32px,6vw,52px) 0;
+    background:linear-gradient(90deg,#8f6e3e,var(--oro) 50%,#8f6e3e)}
+  .rejilla{display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .carta{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:26px; display:flex; flex-direction:column; text-decoration:none; color:inherit;
+    transition:border-color .18s, transform .18s;
+  }
+  .carta:hover,.carta:focus-visible{border-color:var(--oro-ink); transform:translateY(-3px)}
+  .carta:focus-visible{outline:2px solid var(--oro-ink); outline-offset:3px}
+  .letra{
+    font-family:'Playfair Display',Georgia,serif; font-size:44px; font-weight:300;
+    line-height:1; color:var(--oro-ink); margin-bottom:12px;
+  }
+  .carta h2{font-size:20px; margin:0 0 8px; font-weight:600}
+  .carta p{font-size:14px; color:var(--muted); margin:0 0 18px; flex:1}
+  .muestra{display:flex; gap:6px; margin-bottom:18px}
+  .tono{width:26px; height:26px; border-radius:5px; border:1px solid rgb(0 0 0 / .08)}
+  .ver{
+    font-size:13px; font-weight:600; color:var(--oro-ink);
+    display:inline-flex; align-items:center; gap:6px;
+  }
+  .nota{
+    margin-top:clamp(32px,6vw,52px); padding:20px;
+    border:1px dashed var(--oro-ink); border-radius:10px;
+    font-size:13px; color:var(--muted);
+  }
+  .nota strong{color:var(--ink)}
+  .nota ul{margin:10px 0 0; padding-left:18px}
+  .nota li{margin-bottom:4px}
+  footer{margin-top:40px; font-size:12px; color:var(--muted)}
+  footer a{color:var(--oro-ink)}
+</style>
+</head>
+<body>
+<div class="env">
+
+  <header>
+    <p class="kicker">Café de especialidad · Medellín, Colombia</p>
+    <h1>KaffeePlatz<br>Tres propuestas</h1>
+    <p class="intro">
+      Mismo contenido, misma arquitectura, misma identidad. Lo único que cambia
+      es el lenguaje visual — así la comparación es entre diseños, no entre sitios.
+      Cada propuesta tiene sus 47 páginas navegables.
+    </p>
+  </header>
+
+  <hr class="regla">
+
+  <div class="rejilla">
+
+    <a class="carta" href="a-imprenta/">
+      <div class="letra">A</div>
+      <h2>Imprenta</h2>
+      <p>
+        Editorial de imprenta. Serif ligera a gran tamaño, acciones como enlaces
+        con borde, imágenes enmarcadas. La tipografía carga el peso visual.
+      </p>
+      <div class="muestra" aria-hidden="true">
+        <span class="tono" style="background:#fdf7e7"></span>
+        <span class="tono" style="background:#fff"></span>
+        <span class="tono" style="background:#dec185"></span>
+        <span class="tono" style="background:#1a1a1a"></span>
+      </div>
+      <span class="ver">Ver propuesta →</span>
+    </a>
+
+    <a class="carta" href="b-galeria/">
+      <div class="letra">B</div>
+      <h2>Galería</h2>
+      <p>
+        Galería contemporánea. Una sola familia en muchos pesos, píldoras de oro
+        y bloques de dato gigante que no dependen de fotografía.
+      </p>
+      <div class="muestra" aria-hidden="true">
+        <span class="tono" style="background:#fdf7e7"></span>
+        <span class="tono" style="background:#fff"></span>
+        <span class="tono" style="background:#dec185"></span>
+        <span class="tono" style="background:#8f6724"></span>
+      </div>
+      <span class="ver">Ver propuesta →</span>
+    </a>
+
+    <a class="carta" href="c-obsidiana/">
+      <div class="letra">C</div>
+      <h2>Obsidiana</h2>
+      <p>
+        Editorial sobre papel negro. Serif en cursiva, oro sobre oscuro. Es la que
+        mejor aprovecha el emblema de la marca, diseñado para fondo oscuro.
+      </p>
+      <div class="muestra" aria-hidden="true">
+        <span class="tono" style="background:#1a1a1a"></span>
+        <span class="tono" style="background:#dec185"></span>
+        <span class="tono" style="background:#fdf7e7"></span>
+        <span class="tono" style="background:#8f6e3e"></span>
+      </div>
+      <span class="ver">Ver propuesta →</span>
+    </a>
+
+  </div>
+
+  <div class="nota">
+    <strong>Estado: propuesta en revisión.</strong>
+    El sitio actual en Shopify sigue en producción; esto es para elegir dirección
+    antes de migrar.
+    <ul>
+      <li>Sin carrito ni pasarela: la compra se cierra por WhatsApp con mensaje precargado.</li>
+      <li>La sección <em>Café</em> está marcada como provisional — falta definir la línea de grano.</li>
+      <li>Las fotos son las actuales, de baja resolución. Se sustituyen sin tocar el diseño.</li>
+    </ul>
+  </div>
+
+  <footer>
+    <a href="https://github.com/16ballcreations/kaffeeplatz">Código y documentación</a>
+  </footer>
+
+</div>
+</body>
+</html>
