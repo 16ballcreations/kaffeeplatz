@@ -54,6 +54,10 @@ const INK = '#1a1a1a';
 const INK_MUTED = '#6d5b4a';
 // Tinta secundaria de las franjas CLARAS nuevas.
 const INK_CREMA_TENUE = '#5c4c3e';
+// Naranja de estado "agotado". No es marca: es senaletica, y se elige lejos
+// del oro #DEC185 en tono para que no se confundan.
+const NARANJA = '#c2410c';
+const BLANCO = '#ffffff';
 
 /**
  * @typedef {[uso: string, fg: string, bg: string, tipo: string, umbral: number]} Par
@@ -116,6 +120,14 @@ const PARES = [
   ['Franja crema: enlace de accion', ORO_LEGIBLE, PANEL, 'normal', 4.5],
   ['Franja crema: enlace en hover', INK, PANEL, 'normal', 4.5],
   ['Franja crema: foco (oro oscuro)', ORO_LEGIBLE, PANEL, 'no-texto', 3.0],
+
+  // ---- CINTA "AGOTADO" (revision de cliente) ---------------------------
+  // Senaletica, no color de marca. Texto blanco sobre naranja.
+  ['Cinta agotado: texto blanco/naranja', BLANCO, NARANJA, 'normal', 4.5],
+  ['Cinta agotado: naranja vs tarjeta', NARANJA, ELEVADO, 'no-texto', 3.0],
+  ['Cinta agotado: naranja vs crema', NARANJA, PANEL, 'no-texto', 3.0],
+  ['Tarjeta agotada: titulo atenuado', TENUE, ELEVADO, 'normal', 4.5],
+  ['Tarjeta agotada: linea "Agotado"', SUTIL, ELEVADO, 'normal', 4.5],
 
   // ---- /cafe provisional ------------------------------------------------
   ['Provisional: aviso (oro)', ORO, CANVAS, 'normal', 4.5],
@@ -188,5 +200,10 @@ console.log(`    #DEC185 sobre crema #FDF7E7 .... ${oroSobreCrema.toFixed(2)}:1 
 console.log(`    #DEC185 sobre negro #1A1A1A .... ${oroSobreNegro.toFixed(2)}:1  -> PASA AA y AAA`);
 console.log('    La prohibición es relativa al fondo crema, no al color.');
 console.log('    En Obsidiana el oro solo se usa como texto SOBRE superficie oscura.\n');
+
+console.log('  CINTA "AGOTADO" — verificación explícita:');
+console.log(`    Texto blanco sobre ${NARANJA} ..... ${ratio(BLANCO, NARANJA).toFixed(2)}:1  -> PASA AA`);
+console.log(`    ${NARANJA} frente al oro #DEC185 ... ${ratio(NARANJA, ORO).toFixed(2)}:1  (separación de tono, no se confunden)`);
+console.log('    El naranja es rojo-anaranjado y el oro es arena: distintos en tono y en gris.\n');
 
 process.exit(fallos > 0 ? 1 : 0);

@@ -8,6 +8,7 @@
  * Ganchos disponibles:
  *   [data-kp-tarjeta]  [data-kp-tarjeta-media]  [data-kp-tarjeta-cuerpo]
  *   [data-kp-tarjeta-titulo]  [data-kp-tarjeta-precio]  [data-kp-agotado]
+ *   [data-kp-cinta-agotado]  cinta de estado, decorativa (aria-hidden)
  *
  * Slots: "media", "antes-titulo", "despues-precio", "acciones".
  */
@@ -34,6 +35,16 @@ const hayRango = new Set(producto.variantes.map((v) => v.precio)).size > 1;
 ---
 
 <article class={clase} data-kp-tarjeta data-kp-disponible={String(producto.disponible)}>
+  {
+    /* Cinta de estado, solo visual: el dato ya lo anuncia el <p data-kp-agotado>
+       del cuerpo de la tarjeta, asi que aqui va aria-hidden para no duplicar. */
+    !producto.disponible && (
+      <span data-kp-cinta-agotado aria-hidden="true">
+        Agotado
+      </span>
+    )
+  }
+
   <a href={enlace} data-kp-tarjeta-enlace>
     <div data-kp-tarjeta-media>
       <slot name="media">

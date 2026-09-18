@@ -69,22 +69,32 @@ import { SITIO, ruta } from '../datos/sitio';
     </ul>
   </section>
 
-  <section data-kp-seccion="ritual" aria-labelledby="t-ritual" class="c-prosa-seccion">
-    <h2 id="t-ritual">El café como ritual, no como trámite</h2>
-    <p>
-      Preparar café a mano te obliga a parar diez minutos. Pesas, mueles, calientas el agua, viertes
-      despacio. Ese rato es medio punto de la experiencia; el otro medio está en el grano y en el
-      equipo.
-    </p>
-    <p>
-      Por eso insistimos tanto en los detalles que parecen pequeños: el molido correcto para cada
-      método, el agua a la temperatura adecuada, el café conservado como toca. Son la diferencia
-      entre una taza plana y una taza que te hace levantar la cabeza.
-    </p>
-    <p>
-      Nuestra frase es <strong>{SITIO.lema.toLowerCase()}</strong>, y va bastante en serio: no
-      vendemos objetos, acompañamos un hábito.
-    </p>
+  {/* AJUSTE DE CLIENTE: este bloque rompe la linealidad del negro.
+      Franja a sangre en CREMA con el tejido de lino claro y el texto
+      centrado. Las tintas las reasigna .c-franja--crema (oscuras sobre
+      claro); ver el bloque de ajustes al final de obsidiana.css. */}
+  <section
+    data-kp-seccion="ritual"
+    aria-labelledby="t-ritual"
+    class="c-franja c-franja--crema c-lino c-lino--claro"
+  >
+    <div class="c-limite c-prosa-seccion c-ritual">
+      <h2 id="t-ritual">El café como ritual, no como trámite</h2>
+      <p>
+        Preparar café a mano te obliga a parar diez minutos. Pesas, mueles, calientas el agua,
+        viertes despacio. Ese rato es medio punto de la experiencia; el otro medio está en el grano
+        y en el equipo.
+      </p>
+      <p>
+        Por eso insistimos tanto en los detalles que parecen pequeños: el molido correcto para cada
+        método, el agua a la temperatura adecuada, el café conservado como toca. Son la diferencia
+        entre una taza plana y una taza que te hace levantar la cabeza.
+      </p>
+      <p>
+        Nuestra frase es <strong>{SITIO.lema.toLowerCase()}</strong>, y va bastante en serio: no
+        vendemos objetos, acompañamos un hábito.
+      </p>
+    </div>
   </section>
 
   <section data-kp-seccion="como-funciona" aria-labelledby="t-como" class="c-prosa-seccion">

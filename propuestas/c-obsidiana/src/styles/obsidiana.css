@@ -2318,3 +2318,432 @@ strong {
   white-space: nowrap;
   border: 0;
 }
+
+/* ===========================================================================
+   === AJUSTES INICIO Y CATALOGO ===
+   Bloque de revision de cliente. Vive al final del archivo a proposito: gana
+   por orden en la cascada sin tocar las reglas originales, y mantiene el
+   diff acotado mientras otro agente trabaja en el resto del sitio.
+   =========================================================================== */
+
+:root {
+  /* --- Lino TESELABLE -------------------------------------------------
+     El asset original (textura-lino.png, 610x813) es una PIEZA, no una
+     trama: estirado a cover sobre secciones de 1400px+ se pixela y, en
+     contenedores anchos y bajos, deja de cubrir. Estos dos tiles de
+     512x512 son tejido solido, sin costura y sin wordmark, asi que
+     admiten `repeat` a tamano nativo o cerca de el: cubren siempre y no
+     escalan, por lo que no hay pixelado posible.
+     --kp-lino se conserva intacto para los usos de pieza unica recortada
+     (hero, encabezados interiores, velo global), donde funciona bien. */
+  --c-lino-tile: url('/img/marca/lino-tile.png');
+  --c-lino-tile-claro: url('/img/marca/lino-tile-claro.png');
+
+  /* --- Naranja de estado "agotado" ------------------------------------
+     No es un color de marca: es senaletica. Se elige deliberadamente lejos
+     del oro #DEC185 en tono (rojo-naranja frente a arena) para que nadie
+     confunda una cinta de agotado con un acento de marca.
+     #C2410C con texto BLANCO = 5.18:1 -> AA para texto normal.
+     Contra el oro de marca queda a 2.98:1 de luminancia y a mucha distancia
+     de tono: no se confunden ni en escala de grises. */
+  --c-agotado: #c2410c;
+  --c-agotado-tinta: #ffffff;
+}
+
+/* --- AJUSTE 1: el lino de las franjas, ahora teselado ------------------
+   `repeat` + `background-size` fijo de 192px. El navegador nunca amplia el
+   bitmap por encima de su tamano nativo (512px), solo lo reduce, que es la
+   direccion segura: reducir no pixela. Y al repetirse, cubre el contenedor
+   entero sea cual sea su proporcion.
+   Se anula `top: -20%` de la regla base: aquella existia para expulsar del
+   cuadro la banda del wordmark del asset viejo. Estos tiles no la tienen,
+   asi que el pseudo-elemento cubre exactamente su caja. */
+.c-lino::before {
+  top: 0;
+  background-image: var(--c-lino-tile);
+  background-repeat: repeat;
+  background-size: 192px 192px;
+  background-position: center top;
+}
+
+/* La franja crema: tile claro, en multiply, con la misma opacidad baja de
+   antes (0.14). El tejido se nota, la tinta sigue mandando y ningun ratio
+   de contraste medido se mueve. */
+.c-lino--claro::before {
+  background-image: var(--c-lino-tile-claro);
+  opacity: 0.14;
+  mix-blend-mode: multiply;
+}
+
+@media (min-width: 1024px) {
+  /* En pantallas grandes el grano puede crecer un poco sin delatarse. */
+  .c-lino::before {
+    background-size: 232px 232px;
+  }
+}
+
+/* --- AJUSTE 4: producto agotado, evidente de un vistazo ----------------
+   Antes toda la senal era `opacity: 0.66` en la imagen mas una linea de
+   texto gris. El cliente pide que se lea sin buscarlo. Ahora hay tres
+   senales sumadas: cinta naranja, imagen desaturada y cuerpo atenuado. */
+
+/* 1. LA CINTA. Etiqueta rectangular anclada arriba a la derecha, no cinta
+   diagonal a 45º: la diagonal obliga a rotar y a recortar con overflow, y
+   esta tarjeta tiene `overflow` visible y radio de 4px. La etiqueta recta
+   respeta el lenguaje (radio 4px, sin sombra) y no desborda nunca.
+   Se ancla DENTRO del borde de la tarjeta, con el mismo inset que su
+   padding, asi que no pisa la imagen ni se sale en ningun ancho. */
+[data-kp-cinta-agotado] {
+  position: absolute;
+  z-index: 3;
+  top: var(--c-4);
+  right: var(--c-4);
+  padding: 0.3rem 0.6rem;
+  background-color: var(--c-agotado);
+  color: var(--c-agotado-tinta);
+  border-radius: var(--c-radio);
+  /* REDONDA, mayusculas, pequena y con tracking amplio: es senaletica,
+     no es voz de marca, y desde luego no es una accion. */
+  font-family: var(--c-sans);
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* 2. LA IMAGEN, mucho mas apagada que antes (era 0.66 de opacidad a secas).
+   grayscale(0.7) le quita el color del producto y opacity(0.55) lo hunde
+   contra el panel claro. La cinta NO se desatura porque es hermana de la
+   media, no descendiente. */
+[data-kp-tarjeta][data-kp-disponible='false'] [data-kp-tarjeta-media] {
+  filter: grayscale(0.7) opacity(0.55);
+  opacity: 1;
+}
+
+/* 3. EL CUERPO de la tarjeta tambien baja de intensidad: titulo y precio
+   pasan a la tinta tenue, que sobre #232320 mide 6.92:1 y sigue siendo AA
+   holgado. Atenuar no puede significar volver ilegible. */
+[data-kp-tarjeta][data-kp-disponible='false'] [data-kp-tarjeta-titulo] {
+  color: var(--c-tinta-tenue);
+}
+
+[data-kp-tarjeta][data-kp-disponible='false'] [data-kp-tarjeta-precio] [data-kp-precio] {
+  color: var(--c-tinta-tenue);
+  border-color: var(--c-hairline);
+}
+
+/* El hover no devuelve el color al titulo de un producto que no se puede
+   comprar: seria una promesa falsa. */
+[data-kp-tarjeta][data-kp-disponible='false'] [data-kp-tarjeta-enlace]:hover
+  [data-kp-tarjeta-titulo] {
+  color: var(--c-tinta);
+}
+
+/* La linea "Agotado" del cuerpo ya no necesita cargar sola con el mensaje:
+   la cinta lo grita. Se queda como texto accesible y como refuerzo, en
+   sutil, para no repetir dos veces lo mismo con el mismo peso visual. */
+[data-kp-tarjeta][data-kp-disponible='false'] [data-kp-agotado] {
+  color: var(--c-tinta-sutil);
+}
+
+/* En la franja crema la cinta mantiene su naranja: sobre crema #FDF7E7 el
+   naranja mide 4.84:1, asi que el borde de la etiqueta tampoco se pierde. */
+
+/* ===========================================================================
+   === AJUSTES NOSOTROS, CONTACTO Y CABECERA ===
+   Bloque de revision de cliente. Vive al final del archivo a proposito: gana
+   por orden en la cascada sin reescribir las reglas originales, y mantiene el
+   diff acotado mientras otro agente trabaja en inicio, catalogo y tarjetas.
+
+   Reutiliza --c-lino-tile / --c-lino-tile-claro, ya declarados en el bloque
+   de INICIO Y CATALOGO. No se redefinen aqui para no duplicar el token.
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   AJUSTE 1 — EL BUG DE LA CABECERA
+
+   DIAGNOSTICO REAL (no era el lino estirado; la cabecera no usaba lino).
+
+   La regla original era:
+       background-color: rgb(17 17 17 / 0.94);   <- 6% TRANSPARENTE
+       backdrop-filter: blur(10px);
+       -webkit-backdrop-filter: blur(10px);
+
+   El fondo translucido no tapaba nada por si mismo: contaba con que el
+   `backdrop-filter` desenfocara lo que pasa por debajo. Pero Lightning CSS
+   (el minificador de Tailwind 4) colapsa ese par de declaraciones y en el
+   build deja SOLO el alias prefijado:
+
+       .c-cabecera{...;-webkit-backdrop-filter:blur(10px);...}
+
+   Chromium moderno soporta la propiedad ESTANDAR pero ya NO el alias
+   -webkit- (CSS.supports('-webkit-backdrop-filter','blur(10px)') === false).
+   Resultado: el blur nunca se aplica, y queda una cabecera 94% opaca por la
+   que se transparenta el contenido al hacer scroll. Eso es el "bg que no
+   cubre todo el contenedor" que reporta el cliente: no es un recorte del
+   fondo, es que se ve la pagina A TRAVES de la cabecera.
+
+   SOLUCION: fondo OPACO que no dependa de ningun filtro. Se aprovecha para
+   dar a la cabecera el tejido de marca con el tile teselable, que cubre
+   siempre su caja entera sea cual sea el ancho, y a tamano reducido (nunca
+   ampliado) no puede pixelarse.
+
+   El blur se conserva como mejora progresiva bajo @supports con la propiedad
+   estandar; si existe, suma cristal, pero la cabecera ya tapa sin el. */
+.c-cabecera {
+  /* Opaco al 100%: la cabecera tapa por si sola. */
+  background-color: var(--c-abismo);
+  /* Se retira el backdrop-filter de la regla base: el build lo degradaba al
+     alias -webkit- y dejaba la cabecera translucida sin blur. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  /* Contiene el pseudo-elemento del tejido. */
+  position: sticky;
+  isolation: isolate;
+}
+
+/* El tejido de la cabecera: tile teselado, por debajo del contenido y
+   cubriendo EXACTAMENTE la caja de la cabecera (inset: 0, sin desbordes).
+   `repeat` + tamano fijo de 160px = cubre cualquier ancho sin estirar. */
+.c-cabecera::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--c-lino-tile);
+  background-repeat: repeat;
+  background-size: 160px 160px;
+  opacity: 0.5;
+  mix-blend-mode: soft-light;
+}
+
+/* SIN @supports y SIN translucidez. Se intento devolver el efecto cristal
+   como mejora progresiva bajo `@supports (backdrop-filter: blur(10px))`,
+   pero Lightning CSS reescribe esa consulta a
+       @supports ((-webkit-backdrop-filter:...) or (backdrop-filter:...))
+   y entonces el bloque SI entra en Chromium, devolviendo el fondo a 92% y
+   reintroduciendo exactamente el bug que se venia a arreglar.
+
+   La cabecera se queda OPACA. Es lo correcto para este lenguaje: Obsidiana
+   separa por hairlines, no por efectos, y una cabecera que tapa de verdad
+   es mas legible que una que transluce. El tejido de lino le da la vida que
+   antes buscaba el blur. */
+
+/* ---------------------------------------------------------------------------
+   AJUSTE 2 — NOSOTROS: "Como elegimos lo que vendemos" en 3 columnas
+
+   La rejilla generica [data-kp-lista] mandaba 'criterio', 'hechos' y
+   'canales' a repeat(2, 1fr) en >=768px. Con TRES elementos eso deja 2 + 1:
+   una fila coja, que es justo lo que senala el cliente.
+
+   'criterio' pasa a 3 columnas iguales en una sola fila desde 960px. Entre
+   768 y 959 se queda en 2 (tres columnas de ~230px apretarian el texto), y
+   por debajo de 768 hereda 1 columna de la regla base.
+
+   'hechos' (4 elementos) y 'canales' (4) NO se tocan: con 4 elementos el
+   2x2 es correcto. */
+@media (min-width: 960px) {
+  [data-kp-lista='criterio'] {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--c-8);
+    align-items: start;
+  }
+}
+
+/* Con tres columnas la medida baja a ~28ch. La prosa de la lista tiene
+   max-width heredado de ningun sitio, pero conviene fijar que no se estire
+   si un dia la rejilla cambia. */
+@media (min-width: 960px) {
+  [data-kp-lista='criterio'] > li p {
+    max-width: 38ch;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   AJUSTE 3 — NOSOTROS: el bloque "El cafe como ritual" diferenciado
+
+   ELECCION: franja a sangre en CREMA (#FDF7E7) con el tile de lino claro.
+   Es el corte mas fuerte disponible sin inventar color nuevo: la pagina
+   entra en negro, se abre en claro justo en el bloque mas reflexivo y vuelve
+   al negro. Un simple escalon de oscuro (--c-panel-oscuro) no se habria
+   leido como ruptura a este tamano de bloque.
+
+   El texto va CENTRADO, como pide el cliente.
+
+   >>> CONTRASTE <<< sobre crema NO valen las tintas de fondo oscuro. La
+   clase .c-franja--crema ya reasigna h2/p/strong/enlaces a las tintas
+   oscuras y el oro a --c-oro-legible (#8F6724). Aqui solo se anaden las
+   piezas que esa clase no cubre y que este bloque si usa. */
+.c-ritual {
+  text-align: center;
+}
+
+/* La prosa de .c-prosa-seccion lleva max-width 58ch y se alinea a la
+   izquierda por defecto: centrada, hay que centrar tambien la CAJA. */
+.c-ritual p {
+  margin-inline: auto;
+  max-width: 54ch;
+  text-align: center;
+}
+
+/* >>> EL FALLO DE CONTRASTE QUE AVISABA EL ENCARGO, Y AQUI ESTABA <<<
+   .c-franja--crema p fija --c-tinta-oscura-tenue, pero .c-prosa-seccion p
+   fija --c-tinta-tenue (calculado para fondo NEGRO) y tiene la MISMA
+   especificidad (0-1-1) apareciendo DESPUES en el archivo: ganaba la
+   cascada por orden. Medido en el navegador daba 2.13:1 sobre crema.
+   Se corrige con un selector de dos clases (0-2-1), que gana sin !important.
+   Ahora: #5C4C3E sobre #FDF7E7 = 7.07:1 -> AA y AAA. */
+.c-ritual.c-prosa-seccion p,
+.c-franja--crema .c-prosa-seccion p {
+  color: var(--c-tinta-oscura-tenue);
+}
+
+/* El filete dorado del h2 esta a la izquierda por la regla de
+   .c-prosa-seccion; centrado, debe centrarse el tambien. */
+.c-ritual h2 {
+  text-align: center;
+}
+
+.c-ritual h2::before {
+  margin-inline: auto;
+}
+
+/* Sobre crema el filete usa el degradado de oro de marca, que es relleno de
+   area (no texto), asi que --kp-oro-horizontal es correcto y no infringe la
+   regla del oro. Se sube la opacidad porque sobre claro se ve menos. */
+.c-franja--crema .c-prosa-seccion h2::before,
+.c-ritual h2::before {
+  opacity: 1;
+}
+
+/* El <strong> del lema dentro del bloque claro: tinta oscura plena
+   (#1A1A1A sobre #FDF7E7 = 15.8:1). Ya lo fija .c-franja--crema strong,
+   se deja explicito por legibilidad del codigo. */
+.c-ritual strong {
+  color: var(--c-tinta-oscura);
+}
+
+/* ---------------------------------------------------------------------------
+   AJUSTE 4 — CONTACTO: formulario compacto en dos columnas
+
+   Dos problemas que senala el cliente: ocupa demasiado alto y es un canal
+   SECUNDARIO (el real es WhatsApp).
+
+   (a) Rejilla de dos columnas: nombre+email comparten la primera fila y
+       telefono ocupa la primera celda de la segunda; el comentario va a
+       ancho completo. NO hay campo "asunto": el formulario tiene tres
+       campos reales (nombre, email, telefono) mas el comentario, y el
+       encargo prohibe anadir o quitar campos, asi que la rejilla se ajusta
+       a los que existen. El ancho maximo sube de 34rem a 46rem porque
+       ahora hay dos columnas que alojar.
+   (b) El textarea baja de min-height 8rem a 4 filas reales.
+   (c) Los margenes por campo (margin-bottom var(--c-5)) se sustituyen por el
+       `gap` de la rejilla, que no acumula.
+
+   NO se toca ni un campo ni la logica del formulario: solo la distribucion.
+   La trampa anti-spam sigue fuera de flujo (position:absolute) y no ocupa
+   celda de la rejilla. */
+[data-kp-formulario-contacto] {
+  max-width: 46rem;
+}
+
+[data-kp-formulario-contacto] [data-kp-form] {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--c-4) var(--c-5);
+  align-items: start;
+}
+
+/* El gap de la rejilla sustituye a los margenes individuales: sumados
+   generaban el alto sobrante del que se queja el cliente. */
+[data-kp-formulario-contacto] [data-kp-campo] {
+  margin-bottom: 0;
+}
+
+/* El TELEFONO a fila completa: con tres campos reales, dejarlo en media fila
+   abria un hueco vacio a su derecha, que es justo el "espacio vacio" del que
+   se queja el cliente. A ancho completo la rejilla queda cerrada:
+   fila 1 = nombre + email, fila 2 = telefono, fila 3 = comentario. */
+[data-kp-formulario-contacto] [data-kp-campo]:has(input[type='tel']) {
+  grid-column: 1 / -1;
+}
+
+/* El comentario, el aviso, la trampa, el boton y la nota ocupan la fila
+   entera. */
+[data-kp-formulario-contacto] [data-kp-campo]:has(textarea),
+[data-kp-formulario-contacto] [data-kp-trampa],
+[data-kp-formulario-contacto] [data-kp-enviar],
+[data-kp-formulario-contacto] [data-kp-nota] {
+  grid-column: 1 / -1;
+}
+
+/* Fallback para navegadores sin :has() — el textarea a ancho completo es la
+   pieza que mas se nota si falla. */
+@supports not selector(:has(*)) {
+  [data-kp-formulario-contacto] [data-kp-campo]:nth-of-type(4) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* El textarea: de 8rem de min-height a 4 filas reales.
+   OJO: `rows="5"` del componente da un alto INTRINSECO de ~146px, asi que
+   bajar el min-height no bastaba: el intrinseco ganaba. Se fija `height`
+   ademas del min-height para que las 4 filas manden de verdad.
+   No se toca el markup (el atributo rows sigue siendo 5): si alguien quita
+   este CSS, el formulario vuelve a su alto original sin romperse. */
+[data-kp-formulario-contacto] [data-kp-campo] textarea {
+  min-height: 0;
+  height: 6.5rem;
+}
+
+/* El boton de envio, alineado a la izquierda de su fila completa y con algo
+   de aire por encima. */
+[data-kp-formulario-contacto] [data-kp-enviar] {
+  justify-self: start;
+  margin-top: var(--c-2);
+}
+
+/* El aviso de "pendiente de conexion" era un bloque de 5 de padding y 8 de
+   margen inferior: en un formulario que queremos compacto, sobra alto.
+   Se aprieta sin perder legibilidad (sigue a 14px y line-height 1.6). */
+[data-kp-formulario-contacto] [data-kp-aviso] {
+  padding: var(--c-4);
+  margin-bottom: var(--c-5);
+}
+
+/* En movil todo vuelve a una sola columna. */
+@media (max-width: 767px) {
+  [data-kp-formulario-contacto] [data-kp-form] {
+    grid-template-columns: 1fr;
+    gap: var(--c-4);
+  }
+}
+
+/* --- Jerarquia de canales: WhatsApp manda -----------------------------
+   El cliente recuerda que el formulario "probablemente sea algo que se
+   utilice poco". Se le baja el protagonismo sin esconderlo: la seccion del
+   formulario se marca como secundaria con un hairline superior y una
+   entradilla mas discreta, mientras la tarjeta de WhatsApp de la lista de
+   canales gana peso. */
+[data-kp-seccion='formulario'] {
+  border-top: 1px solid var(--c-hairline);
+  padding-top: var(--c-10);
+}
+
+/* La tarjeta de WhatsApp dentro de "Canales directos": es el canal real de
+   venta, asi que se le da un escalon de superficie y el filete de oro. */
+[data-kp-lista='canales'] > li:first-child {
+  background-color: var(--c-elevado);
+  border-top: 1px solid var(--c-hairline-oro);
+  border-radius: var(--c-radio);
+  padding: var(--c-5);
+}
+
+[data-kp-lista='canales'] > li:first-child h3 {
+  color: var(--c-oro);
+}
