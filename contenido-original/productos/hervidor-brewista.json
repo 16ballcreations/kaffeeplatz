@@ -1,0 +1,35 @@
+{
+  "handle": "hervidor-brewista",
+  "title": "Hervidor Brewista",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-04-25T15:40:24-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>Elegancia y precisión en cada vertido. Con control de temperatura ajustable, boquilla de cuello de cisne y un diseño moderno con detalles en madera, el Brewista Artisan es ideal para llevar tu café filtrado a otro nivel.</p>",
+  "body_text": "Elegancia y precisión en cada vertido. Con control de temperatura ajustable, boquilla de cuello de cisne y un diseño moderno con detalles en madera, el Brewista Artisan es ideal para llevar tu café filtrado a otro nivel.",
+  "variants": [
+    {
+      "id": 48023424434413,
+      "title": "Default Title",
+      "price": "950000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": false,
+      "option1": "Default Title",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Title",
+      "values": [
+        "Default Title"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/background-editor_output_209a6a6b-1061-417e-a9b1-20c2fbf3a304.png?v=1752184943"
+  ]
+}

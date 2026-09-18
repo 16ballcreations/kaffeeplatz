@@ -1,0 +1,61 @@
+{
+  "handle": "aeropress-clear",
+  "titulo": "Aeropress Clear",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>La AeroPress Clear es la cafetera ideal para los amantes del café que buscan una preparación rápida y versátil. Su diseño en material transparente y resistente permite preparar desde un espresso hasta un café filtrado, resaltando los sabores y aromas del café de especialidad colombiano. Perfecta para el hogar, la oficina o viajes.</p>\n<p> </p>",
+  "descripcionTexto": "La AeroPress Clear es la cafetera ideal para los amantes del café que buscan una preparación rápida y versátil. Su diseño en material transparente y resistente permite preparar desde un espresso hasta un café filtrado, resaltando los sabores y aromas del café de especialidad colombiano. Perfecta para el hogar, la oficina o viajes.",
+  "precio": 315000,
+  "precioFormateado": "$315.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47804709830893",
+      "titulo": "Morado",
+      "precio": 315000,
+      "precioFormateado": "$315.000",
+      "disponible": true,
+      "sku": null
+    },
+    {
+      "id": "47804709863661",
+      "titulo": "Verde",
+      "precio": 315000,
+      "precioFormateado": "$315.000",
+      "disponible": true,
+      "sku": null
+    },
+    {
+      "id": "47804709896429",
+      "titulo": "Rosa",
+      "precio": 315000,
+      "precioFormateado": "$315.000",
+      "disponible": false,
+      "sku": null
+    }
+  ],
+  "opciones": [
+    {
+      "nombre": "Color",
+      "valores": [
+        "Morado",
+        "Verde",
+        "Rosa"
+      ]
+    }
+  ],
+  "imagenes": [
+    {
+      "src": "/img/productos/aeropress-clear/aeropress-clear-1.jpg",
+      "alt": "Aeropress Clear"
+    },
+    {
+      "src": "/img/productos/aeropress-clear/aeropress-clear-2.jpg",
+      "alt": "Aeropress Clear — vista 2"
+    },
+    {
+      "src": "/img/productos/aeropress-clear/aeropress-clear-3.jpg",
+      "alt": "Aeropress Clear — vista 3"
+    }
+  ],
+  "destacado": true
+}

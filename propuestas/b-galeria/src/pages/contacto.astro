@@ -1,0 +1,141 @@
+---
+/**
+ * /contacto — PROPUESTA B "GALERÍA".
+ *
+ * WhatsApp es el canal REAL. El formulario es una maqueta sin backend
+ * (ver FormularioContacto.astro) y conserva su aviso y su botón deshabilitado.
+ *
+ * Los datos de cobertura, tiempos y horario salen de la base. No se inventa
+ * ninguno. Los plazos de envío van como bloque de dato gigante: son cifras, y
+ * este lenguaje las trata mejor así que como lista.
+ */
+import Base from '../layouts/Base.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import FormularioContacto from '../components/FormularioContacto.astro';
+import { SITIO } from '../datos/sitio';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ContactPage',
+  name: 'Contacto KaffeePlatz',
+  description: 'Cómo contactar con KaffeePlatz: WhatsApp, correo y horario de atención.',
+};
+---
+
+<Base
+  titulo="Contacto"
+  descripcion="Escríbenos por WhatsApp al +57 301 380 9886 o a kaffeeplatz28@gmail.com. Atendemos de lunes a viernes, 9:00 a.m. a 6:00 p.m."
+  camino="/contacto"
+  migas={[{ nombre: 'Contacto', href: '/contacto' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado" class="g-seccion g-agua">
+    <div class="g-envoltura">
+      <div class="g-asim">
+        <div class="g-pila">
+          <p data-kp-kicker class="g-kicker">Contacto</p>
+          <h1 class="g-display">
+            <span class="g-cursiva">hablemos</span>
+          </h1>
+        </div>
+        <div class="g-pila">
+          <p data-kp-entradilla class="g-entradilla">
+            Aquí no hay carrito ni pasarela de pago: cada pedido se cierra hablando con nosotros.
+            Cuéntanos qué buscas y te ayudamos a elegir.
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section data-kp-seccion="canales" aria-labelledby="t-canales" class="g-seccion-ajustada">
+    <div class="g-envoltura">
+      <h2 id="t-canales" class="sr-only">Canales directos</h2>
+      <ul data-kp-lista="canales" class="g-lista g-lista-2">
+        <li>
+          <h3>WhatsApp</h3>
+          <p>La vía más rápida. Te responde {SITIO.dueña}.</p>
+          <p><strong>{SITIO.whatsappVisible}</strong></p>
+          <p style="margin-top: 6px;">
+            <BotonWhatsApp clase="g-pildora g-pildora-oro">Abrir WhatsApp</BotonWhatsApp>
+          </p>
+        </li>
+        <li>
+          <h3>Correo</h3>
+          <p>Para pedidos especiales, facturación o incidencias con un envío.</p>
+          <p><a href={`mailto:${SITIO.email}`} class="g-enlace">{SITIO.email}</a></p>
+        </li>
+        <li>
+          <h3>Horario de atención</h3>
+          <p>Lunes a viernes, de 9:00 a.m. a 6:00 p.m. (hora de Colombia).</p>
+        </li>
+        <li>
+          <h3>Dónde estamos</h3>
+          <p>{SITIO.ciudad}. Atendemos 100% en línea, sin punto físico de venta.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section data-kp-seccion="envios" aria-labelledby="t-envios" class="g-seccion">
+    <div class="g-envoltura">
+      <div class="g-cabecera-seccion">
+        <div class="g-pila-ajustada">
+          <p class="g-kicker">Cobertura</p>
+          <h2 id="t-envios" class="g-h2">
+            <span class="g-cursiva">envíos</span>
+          </h2>
+        </div>
+        <div>
+          <p class="g-nota">
+            Enviamos a todo el territorio colombiano con transportadoras certificadas.
+          </p>
+        </div>
+      </div>
+
+      {/* Los plazos, como bloque de dato gigante. */}
+      <div class="g-datos">
+        <div class="g-dato">
+          <span class="g-dato-cifra">2–5</span>
+          <span class="g-dato-etiqueta">Días hábiles</span>
+          <p class="g-dato-pie">Ciudades principales.</p>
+        </div>
+        <div class="g-dato">
+          <span class="g-dato-cifra">5–8</span>
+          <span class="g-dato-etiqueta">Días hábiles</span>
+          <p class="g-dato-pie">Otras ciudades y municipios.</p>
+        </div>
+        <div class="g-dato">
+          <span class="g-dato-cifra">8–15</span>
+          <span class="g-dato-etiqueta">Días hábiles</span>
+          <p class="g-dato-pie">Pedidos por encargo o especiales, y te avisamos.</p>
+        </div>
+      </div>
+
+      <p class="g-texto" style="margin-top: 32px;">
+        El costo del envío depende del destino y del peso del pedido; te lo confirmamos al cerrar la
+        compra. Si tu pedido llega con el empaque dañado, escríbenos de inmediato a {SITIO.email} con
+        fotos de lo que recibiste.
+      </p>
+    </div>
+  </section>
+
+  <section data-kp-seccion="formulario" aria-labelledby="t-formulario" class="g-seccion g-linea-sup">
+    <div class="g-envoltura">
+      <div class="g-asim-inv">
+        <div class="g-pila">
+          <p class="g-kicker">Por escrito</p>
+          <h2 id="t-formulario" class="g-h2">
+            escríbenos por <span class="g-cursiva">formulario</span>
+          </h2>
+          <p class="g-texto">
+            ¿Prefieres dejarnos el mensaje por escrito? Rellena esto y te respondemos.
+          </p>
+        </div>
+        <div>
+          <FormularioContacto />
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

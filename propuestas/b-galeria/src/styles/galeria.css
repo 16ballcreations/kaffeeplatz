@@ -1,0 +1,1645 @@
+/* ===========================================================================
+   PROPUESTA B — "GALERÍA"
+   ---------------------------------------------------------------------------
+   Editorial de belleza bajo luces de galería.
+
+   Principios no negociables de este lenguaje:
+     1. UNA sola familia tipográfica (Poppins) en pesos 200-800.
+     2. Display enorme y LIGERO, siempre en minúsculas, tracking muy negativo.
+     3. Píldoras de radio infinito (600px). Tarjetas e imágenes a 15px.
+     4. CERO sombras. Líneas de 1px y contraste de superficie.
+     5. Mucho aire. Composición asimétrica.
+     6. Un gesto editorial: última palabra del titular en cursiva.
+     7. Bloques de dato gigante: número enorme + etiqueta pequeña.
+
+   DESVIACIÓN DELIBERADA respecto a la referencia:
+   la referencia sangra fotos a pantalla completa sobre BLANCO PURO. Aquí no.
+   El catálogo es de baja resolución (25/25 por debajo de 1200px, 18 de captura
+   de móvil); el blanco puro sin marco delataría cada defecto. Por eso:
+   fondo crema, imagen SIEMPRE enmarcada en tarjeta con radio 15px y fondo
+   propio, y nunca texto sobre foto sin scrim.
+   =========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   0. Escala y ritmo
+   --------------------------------------------------------------------------- */
+:root {
+  --g-ancho: 1280px;
+  --g-gutter: 24px;
+  --g-seccion: 80px;
+
+  /* Tracking: agresivo en el display grande, relajado conforme baja el cuerpo.
+     En móvil se suaviza (ver §10) para que no solapen las letras. */
+  --g-track-display: -0.065em;
+  --g-track-titulo: -0.04em;
+
+  /* Superficies propias de este lenguaje, derivadas de los tokens de marca.
+     No redefinen ningún color de marca: son mezclas para separar planos. */
+  --g-hueso: #f7efdb; /* crema un punto más denso, para zonas de reposo */
+  --g-linea: var(--kp-border);
+  --g-linea-fuerte: #ddd0ae;
+}
+
+/* ---------------------------------------------------------------------------
+   1. Base
+   --------------------------------------------------------------------------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  /* Fondo CREMA liso. Nunca blanco puro: perdona la foto irregular. */
+  background: var(--kp-bg);
+  color: var(--kp-ink);
+  font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-weight: 300;
+  font-size: 17px;
+  line-height: 1.62;
+  letter-spacing: -0.005em;
+  overflow-x: hidden; /* red de seguridad contra el scroll horizontal */
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+/* CERO sombras en todo el documento. Es el principio 4, y se defiende aquí. */
+* {
+  box-shadow: none;
+}
+
+/* ---------------------------------------------------------------------------
+   2. Tipografía — una sola familia, muchos pesos
+   --------------------------------------------------------------------------- */
+
+/* Display gigante: peso 200, minúsculas, tracking muy negativo. */
+.g-display {
+  font-weight: 200;
+  font-size: clamp(2.6rem, 9.2vw, 8.75rem); /* 41.6px -> 140px */
+  line-height: 0.94;
+  letter-spacing: var(--g-track-display);
+  text-transform: lowercase;
+  margin: 0;
+  text-wrap: balance;
+}
+
+/* Variante media, para encabezados de página interiores. */
+.g-display-med {
+  font-weight: 200;
+  font-size: clamp(2.35rem, 6.6vw, 6rem); /* 37.6px -> 96px */
+  line-height: 0.98;
+  letter-spacing: var(--g-track-display);
+  text-transform: lowercase;
+  margin: 0;
+  text-wrap: balance;
+}
+
+/* Variante pequeña, para la ficha de producto y el artículo, donde el título
+   es contenido dado y puede ser largo. */
+.g-display-min {
+  font-weight: 250;
+  font-size: clamp(2.05rem, 4.4vw, 3.9rem); /* 32.8px -> 62.4px */
+  line-height: 1.04;
+  letter-spacing: var(--g-track-titulo);
+  margin: 0;
+  text-wrap: balance;
+  /* Sin lowercase: aquí el texto es del cliente y respetamos sus mayúsculas. */
+}
+
+/* EL GESTO EDITORIAL: la última palabra de algún titular, en cursiva. */
+.g-cursiva {
+  font-style: italic;
+  font-weight: 250;
+}
+
+/* Titular de sección. */
+.g-h2 {
+  font-weight: 300;
+  font-size: clamp(1.75rem, 3.6vw, 3rem);
+  line-height: 1.06;
+  letter-spacing: var(--g-track-titulo);
+  text-transform: lowercase;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.g-h3 {
+  font-weight: 500;
+  font-size: 1.125rem;
+  line-height: 1.32;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* Kicker: minúscula, versalita ancha, en oro LEGIBLE. */
+.g-kicker {
+  font-weight: 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+  margin: 0;
+}
+
+.g-kicker-tenue {
+  font-weight: 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--kp-ink-muted);
+  margin: 0;
+}
+
+/* Entradilla: peso ligero, medida corta. */
+.g-entradilla {
+  font-weight: 300;
+  font-size: clamp(1.0625rem, 1.5vw, 1.3125rem);
+  line-height: 1.55;
+  letter-spacing: -0.012em;
+  color: var(--kp-ink-muted);
+  max-width: 54ch;
+  margin: 0;
+}
+
+.g-texto {
+  font-weight: 300;
+  color: var(--kp-ink-muted);
+  max-width: 68ch;
+  margin: 0;
+}
+
+.g-nota {
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: var(--kp-ink-muted);
+  max-width: 64ch;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   3. Rejilla y contenedores — mucho aire, composición asimétrica
+   --------------------------------------------------------------------------- */
+.g-envoltura {
+  width: 100%;
+  max-width: var(--g-ancho);
+  margin-inline: auto;
+  padding-inline: var(--g-gutter);
+}
+
+.g-seccion {
+  padding-block: var(--g-seccion);
+}
+
+.g-seccion-ajustada {
+  padding-block: calc(var(--g-seccion) * 0.6);
+}
+
+/* Línea de 1px: la estructura se sostiene con esto, no con sombras. */
+.g-linea-sup {
+  border-top: 1px solid var(--g-linea);
+}
+
+/* Asimetría: el bloque no se centra, se ancla a la izquierda y deja aire a la
+   derecha. En pantallas anchas el texto ocupa ~58% y respira. */
+.g-asim {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 56px;
+  align-items: start;
+}
+
+/* Variante invertida, para alternar el ritmo entre secciones. */
+.g-asim-inv {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 56px;
+  align-items: start;
+}
+
+/* Encabezado de sección: título a la izquierda, apoyo a la derecha. */
+.g-cabecera-seccion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: end;
+  margin-bottom: 44px;
+}
+
+/* ---------------------------------------------------------------------------
+   4. Píldoras — radio infinito
+   --------------------------------------------------------------------------- */
+.g-pildora {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  border-radius: 600px;
+  padding: 0.95em 1.7em;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease;
+}
+
+/* Píldora RELLENA de oro con texto tinta: 7.4:1. Es el uso natural del
+   #dec185 en este lenguaje, y el único correcto. */
+.g-pildora-oro {
+  background: var(--kp-accent);
+  color: var(--kp-ink);
+  /* El borde es TRANSPARENTE a propósito, no #dec185: el relleno define la
+     forma. Así ninguna línea de oro claro se lee nunca contra el crema. */
+  border-color: transparent;
+}
+
+.g-pildora-oro:hover {
+  background: var(--kp-accent-ink);
+  border-color: var(--kp-accent-ink);
+  color: #ffffff;
+}
+
+/* Píldora de contorno: borde en oro LEGIBLE (#8f6724), nunca en #dec185. */
+.g-pildora-linea {
+  background: transparent;
+  color: var(--kp-accent-ink);
+  border-color: var(--kp-accent-ink);
+}
+
+.g-pildora-linea:hover {
+  background: var(--kp-accent-ink);
+  color: #ffffff;
+}
+
+/* Píldora tinta, para acciones sobre superficie clara. */
+.g-pildora-tinta {
+  background: var(--kp-ink);
+  color: #ffffff;
+  border-color: var(--kp-ink);
+}
+
+.g-pildora-tinta:hover {
+  background: var(--kp-accent-ink);
+  border-color: var(--kp-accent-ink);
+}
+
+/* Chip: píldora pequeña, informativa. */
+.g-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  border-radius: 600px;
+  padding: 0.42em 0.95em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  border: 1px solid var(--g-linea-fuerte);
+  color: var(--kp-ink-muted);
+  background: var(--kp-surface);
+}
+
+/* Chip de precio: oro relleno, texto tinta. 7.4:1. */
+.g-chip-precio {
+  background: var(--kp-accent);
+  color: var(--kp-ink);
+  /* Borde transparente, no #dec185: ver .g-pildora-oro. */
+  border-color: transparent;
+  font-size: 0.8125rem;
+  padding: 0.48em 1.05em;
+  letter-spacing: -0.01em;
+}
+
+.g-chip-agotado {
+  background: transparent;
+  color: var(--kp-ink-muted);
+  border-color: var(--g-linea-fuerte);
+}
+
+/* ---------------------------------------------------------------------------
+   5. Bloques de dato gigante — el mejor componente de este lenguaje
+   --------------------------------------------------------------------------- */
+.g-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px; /* el gap ES la línea: fondo visible entre celdas */
+  background: var(--g-linea);
+  border-block: 1px solid var(--g-linea);
+}
+
+.g-dato {
+  background: var(--kp-bg);
+  padding: 36px 28px 32px;
+  min-width: 0;
+}
+
+/* El número: 120px+ en peso 200. No necesita fotografía. */
+.g-dato-cifra {
+  display: block;
+  font-weight: 200;
+  font-size: clamp(3.75rem, 8.6vw, 8.125rem); /* 60px -> 130px */
+  line-height: 0.86;
+  letter-spacing: -0.07em;
+  color: var(--kp-ink);
+  margin: 0 0 18px;
+  overflow-wrap: break-word;
+}
+
+/* Cifra de medida corta (precios largos como "$950.000"): baja un escalón
+   para que no desborde en móvil. */
+.g-dato-cifra-corta {
+  font-size: clamp(2.6rem, 6.2vw, 5.5rem);
+  letter-spacing: -0.055em;
+}
+
+.g-dato-etiqueta {
+  display: block;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+  margin: 0 0 8px;
+}
+
+.g-dato-pie {
+  font-size: 0.875rem;
+  font-weight: 300;
+  color: var(--kp-ink-muted);
+  margin: 0;
+  max-width: 34ch;
+}
+
+/* Variante sobre superficie blanca, para datos dentro de una tarjeta. */
+.g-dato-surface {
+  background: var(--kp-surface);
+}
+
+/* ---------------------------------------------------------------------------
+   6. Tarjetas e imágenes — radio 15px, marco que absorbe la irregularidad
+   --------------------------------------------------------------------------- */
+.g-tarjeta {
+  background: var(--kp-surface);
+  border: 1px solid var(--g-linea);
+  border-radius: 15px;
+  overflow: hidden;
+  transition:
+    border-color 0.22s ease,
+    transform 0.22s ease;
+}
+
+.g-tarjeta:hover {
+  border-color: var(--kp-accent-ink);
+}
+
+/* EL MARCO. La foto nunca sangra: vive dentro de una caja con fondo propio,
+   radio 15px y relación fija. Eso absorbe que una venga a 800px y otra a 1100,
+   que una sea captura de móvil y otra de estudio. */
+.g-marco {
+  position: relative;
+  /* Fondo BLANCO, no crema: la mayoría de las fotos del catálogo vienen
+     recortadas sobre blanco. Con un marco crema se veía el rectángulo blanco
+     de la foto dentro del marco. Con blanco, la foto funde con su marco y solo
+     el borde de 1px y el radio de 15px definen la pieza. El crema queda para
+     la PÁGINA, que es donde importa no usar blanco puro. */
+  background: var(--kp-surface);
+  border-radius: 15px;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  display: grid;
+  place-items: center;
+}
+
+.g-marco > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* No se amplía más de la cuenta: las fuentes son de baja resolución. */
+}
+
+/* Marco cuadrado, para la rejilla de catálogo. */
+.g-marco-cuadro {
+  aspect-ratio: 1 / 1;
+}
+
+/* Marco alto, para la portada del artículo. */
+.g-marco-ancho {
+  aspect-ratio: 16 / 9;
+}
+
+/* Marco con `contain`: la pieza completa, sin recortar, sobre su fondo. Es lo
+   correcto para la galería de la ficha, donde importa ver el objeto entero. */
+.g-marco-contener > img {
+  object-fit: contain;
+  padding: 7%;
+}
+
+/* Marco TIPOGRÁFICO: el sustituto de la foto cuando no hay foto. Un artículo
+   del material no tiene portada; en este lenguaje la tipografía sobre crema
+   se sostiene sola, así que la ausencia se compone en vez de disimularse. */
+.g-marco-tipografico {
+  background: var(--g-hueso);
+  border: 1px solid var(--g-linea);
+  position: relative;
+  overflow: hidden;
+}
+
+.g-marco-tipografico::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--g-emblema);
+  background-size: 62%;
+  background-repeat: no-repeat;
+  background-position: 118% 50%;
+  opacity: 0.07;
+}
+
+.g-marco-tipografico-texto {
+  font-weight: 200;
+  font-size: clamp(2.25rem, 6vw, 3.5rem);
+  letter-spacing: -0.06em;
+  color: var(--kp-ink-muted);
+  text-transform: lowercase;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+/* Estado "sin imagen": no se deja un hueco roto, se compone. */
+.g-sin-imagen {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  border-radius: 15px;
+  background: var(--g-hueso);
+  border: 1px dashed var(--g-linea-fuerte);
+  color: var(--kp-ink-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 1rem;
+}
+
+/* ---------------------------------------------------------------------------
+   7. Marca de agua — la planta del emblema a gran escala
+   --------------------------------------------------------------------------- */
+.g-agua {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.g-agua::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: -12%;
+  width: min(620px, 62vw);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  background-image: var(--g-emblema);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+/* Variante a la izquierda, para alternar. */
+.g-agua-izq::before {
+  right: auto;
+  left: -14%;
+}
+
+/* ---------------------------------------------------------------------------
+   8. Cabecera y pie
+   --------------------------------------------------------------------------- */
+[data-kp-cabecera] {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  /* Sin fondo propio más allá del crema, sin sombra: solo la línea de 1px. */
+  background: color-mix(in srgb, var(--kp-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--g-linea);
+}
+
+.g-cabecera-interior {
+  width: 100%;
+  max-width: var(--g-ancho);
+  margin-inline: auto;
+  padding: 18px var(--g-gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+/* El wordmark, compuesto en la misma familia. El PNG de marca es crema sobre
+   transparente y sería invisible sobre este fondo; además, componerlo en vivo
+   refuerza el principio 1 (una sola familia). */
+[data-kp-logo] {
+  text-decoration: none;
+  color: var(--kp-ink);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.55em;
+  flex-shrink: 0;
+}
+
+[data-kp-logo-texto] {
+  font-weight: 600;
+  font-size: 1.0625rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.g-logo-sub {
+  font-weight: 400;
+  font-size: 0.625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+}
+
+[data-kp-nav] ul {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+[data-kp-nav] a {
+  display: inline-block;
+  text-decoration: none;
+  color: var(--kp-ink-muted);
+  font-weight: 400;
+  font-size: 0.875rem;
+  letter-spacing: -0.008em;
+  padding: 0.5em 0.85em;
+  border-radius: 600px;
+  border: 1px solid transparent;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+  white-space: nowrap;
+}
+
+[data-kp-nav] a:hover {
+  color: var(--kp-ink);
+}
+
+/* Página actual: píldora de contorno en oro legible. */
+[data-kp-nav] a[aria-current='page'] {
+  color: var(--kp-ink);
+  border-color: var(--g-linea-fuerte);
+}
+
+[data-kp-pie] {
+  border-top: 1px solid var(--g-linea);
+  margin-top: var(--g-seccion);
+}
+
+.g-pie-interior {
+  width: 100%;
+  max-width: var(--g-ancho);
+  margin-inline: auto;
+  padding: 64px var(--g-gutter) 48px;
+}
+
+.g-pie-rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 48px;
+  align-items: start;
+}
+
+[data-kp-pie-lema] {
+  font-weight: 200;
+  font-size: clamp(2rem, 5vw, 3.75rem);
+  line-height: 1;
+  letter-spacing: var(--g-track-display);
+  text-transform: lowercase;
+  margin: 0;
+}
+
+.g-pie-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.875rem;
+  color: var(--kp-ink-muted);
+  margin: 0;
+}
+
+.g-pie-datos a {
+  color: var(--kp-accent-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--g-linea-fuerte);
+}
+
+.g-pie-datos a:hover {
+  border-bottom-color: var(--kp-accent-ink);
+}
+
+[data-kp-pie-contacto],
+[data-kp-pie-legal],
+[data-kp-pie-copy] {
+  margin: 0;
+}
+
+.g-pie-cierre {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--g-linea);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: var(--kp-ink-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   9. Componentes de contenido
+   --------------------------------------------------------------------------- */
+
+/* --- Tarjeta de producto --- */
+[data-kp-tarjeta] {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-kp-tarjeta-enlace] {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+}
+
+[data-kp-tarjeta-cuerpo] {
+  padding: 20px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+[data-kp-tarjeta-titulo] {
+  font-weight: 400;
+  font-size: 1.0625rem;
+  line-height: 1.26;
+  letter-spacing: -0.022em;
+  margin: 0;
+  color: var(--kp-ink);
+}
+
+[data-kp-tarjeta-precio] {
+  margin: 0;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+[data-kp-agotado] {
+  margin: 0;
+}
+
+/* Producto agotado: se atenúa la imagen, no el texto (el texto debe seguir
+   cumpliendo contraste). */
+[data-kp-disponible='false'] .g-marco > img {
+  opacity: 0.55;
+}
+
+/* Las acciones de la tarjeta viven fuera del enlace, en su propio zócalo. */
+.g-tarjeta-acciones {
+  padding: 0 20px 20px;
+}
+
+/* --- Tarjeta de artículo --- */
+[data-kp-articulo-enlace] {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+[data-kp-articulo] {
+  height: 100%;
+}
+
+[data-kp-articulo-cuerpo] {
+  padding: 22px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+[data-kp-articulo-fecha] {
+  font-weight: 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+}
+
+[data-kp-articulo-titulo] {
+  font-weight: 400;
+  font-size: 1.1875rem;
+  line-height: 1.22;
+  letter-spacing: -0.028em;
+  margin: 0;
+}
+
+[data-kp-articulo-resumen] {
+  font-size: 0.9375rem;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--kp-ink-muted);
+  margin: 0;
+}
+
+/* --- Rejillas de contenido --- */
+[data-kp-rejilla] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 28px;
+}
+
+[data-kp-rejilla='productos'] {
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+[data-kp-rejilla='articulos'] {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+/* --- Precio --- */
+[data-kp-precio] {
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+
+[data-kp-precio-prefijo] {
+  font-weight: 400;
+  opacity: 0.75;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   9b. Prosa del artículo — aquí el lenguaje da lo mejor sin pedir fotos
+   --------------------------------------------------------------------------- */
+[data-kp-prosa] {
+  max-width: 68ch;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+  font-weight: 300;
+  color: var(--kp-ink);
+}
+
+[data-kp-prosa] > * + * {
+  margin-top: 1.35em;
+}
+
+[data-kp-prosa] h2 {
+  font-weight: 300;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  line-height: 1.12;
+  letter-spacing: -0.035em;
+  margin-top: 2em;
+  margin-bottom: 0.1em;
+  color: var(--kp-ink);
+}
+
+[data-kp-prosa] h3 {
+  font-weight: 500;
+  font-size: 1.1875rem;
+  line-height: 1.3;
+  letter-spacing: -0.022em;
+  margin-top: 1.9em;
+  margin-bottom: 0.1em;
+}
+
+[data-kp-prosa] h4 {
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+  margin-top: 1.7em;
+}
+
+[data-kp-prosa] p {
+  margin-block: 0;
+}
+
+[data-kp-prosa] a {
+  color: var(--kp-accent-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--g-linea-fuerte);
+}
+
+[data-kp-prosa] a:hover {
+  border-bottom-color: var(--kp-accent-ink);
+}
+
+[data-kp-prosa] strong {
+  font-weight: 600;
+  color: var(--kp-ink);
+}
+
+[data-kp-prosa] em {
+  font-style: italic;
+}
+
+[data-kp-prosa] ul,
+[data-kp-prosa] ol {
+  padding-left: 1.35em;
+  margin-block: 0;
+}
+
+[data-kp-prosa] li + li {
+  margin-top: 0.55em;
+}
+
+[data-kp-prosa] li::marker {
+  color: var(--kp-accent-ink);
+}
+
+[data-kp-prosa] img {
+  border-radius: 15px;
+  border: 1px solid var(--g-linea);
+}
+
+[data-kp-prosa] blockquote {
+  margin: 2em 0;
+  padding-left: 1.5em;
+  border-left: 1px solid var(--kp-accent-ink);
+  font-weight: 250;
+  font-size: 1.1875rem;
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  color: var(--kp-ink);
+}
+
+[data-kp-prosa] blockquote p {
+  margin: 0;
+}
+
+[data-kp-prosa] hr {
+  border: 0;
+  border-top: 1px solid var(--g-linea);
+  margin-block: 2.5em;
+}
+
+/* La descripción de la ficha de producto viene en HTML del proveedor. */
+[data-kp-ficha-descripcion] {
+  font-size: 1rem;
+  line-height: 1.7;
+  font-weight: 300;
+  color: var(--kp-ink-muted);
+  max-width: 62ch;
+}
+
+[data-kp-ficha-descripcion] > * + * {
+  margin-top: 1.1em;
+}
+
+[data-kp-ficha-descripcion] p {
+  margin-block: 0;
+}
+
+[data-kp-ficha-descripcion] strong {
+  font-weight: 600;
+  color: var(--kp-ink);
+}
+
+[data-kp-ficha-descripcion] ul,
+[data-kp-ficha-descripcion] ol {
+  padding-left: 1.3em;
+  margin-block: 0;
+}
+
+[data-kp-ficha-descripcion] li::marker {
+  color: var(--kp-accent-ink);
+}
+
+[data-kp-ficha-descripcion] a {
+  color: var(--kp-accent-ink);
+}
+
+/* ---------------------------------------------------------------------------
+   9c. Formulario de contacto
+   --------------------------------------------------------------------------- */
+[data-kp-formulario-contacto] {
+  background: var(--kp-surface);
+  border: 1px solid var(--g-linea);
+  border-radius: 15px;
+  padding: clamp(24px, 4vw, 40px);
+}
+
+[data-kp-aviso] {
+  border: 1px solid var(--kp-accent-ink);
+  border-radius: 15px;
+  padding: 16px 20px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--kp-ink-muted);
+  margin: 0 0 28px;
+  /* Fondo CREMA de página, no --g-hueso: sobre hueso (#f7efdb) el oro legible
+     cae a 4.43:1 y falla AA por poco. Sobre crema da 4.75:1 y pasa.
+     Lo detectó scripts/contraste.mjs. */
+  background: var(--kp-bg);
+}
+
+[data-kp-aviso] strong {
+  color: var(--kp-accent-ink);
+  font-weight: 600;
+}
+
+[data-kp-form] {
+  display: grid;
+  gap: 20px;
+}
+
+[data-kp-campo] {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+[data-kp-campo] label {
+  font-weight: 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kp-ink-muted);
+}
+
+[data-kp-campo] input,
+[data-kp-campo] textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 300;
+  color: var(--kp-ink);
+  background: var(--kp-bg);
+  border: 1px solid var(--g-linea-fuerte);
+  border-radius: 15px;
+  padding: 13px 16px;
+  width: 100%;
+  transition: border-color 0.2s ease;
+}
+
+[data-kp-campo] textarea {
+  resize: vertical;
+  min-height: 130px;
+}
+
+[data-kp-campo] input:focus,
+[data-kp-campo] textarea:focus {
+  border-color: var(--kp-accent-ink);
+}
+
+[data-kp-enviar] {
+  justify-self: start;
+  font-family: inherit;
+  border-radius: 600px;
+  padding: 0.95em 2.2em;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+  border: 1px solid var(--kp-ink);
+  background: var(--kp-ink);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+[data-kp-enviar]:hover:not(:disabled) {
+  background: var(--kp-accent-ink);
+  border-color: var(--kp-accent-ink);
+}
+
+[data-kp-enviar]:disabled {
+  background: transparent;
+  color: var(--kp-ink-muted);
+  border-color: var(--g-linea-fuerte);
+  cursor: not-allowed;
+}
+
+[data-kp-nota] {
+  font-size: 0.8125rem;
+  color: var(--kp-ink-muted);
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   9d. Bloque PROVISIONAL (/cafe)
+   Debe seguir siendo INEQUÍVOCAMENTE distinto del contenido definitivo:
+   nadie debe confundirlo con una promesa comercial. Se reestila al lenguaje
+   (radio 15px, sin sombra) pero conserva el borde discontinuo y la trama.
+   --------------------------------------------------------------------------- */
+[data-kp-provisional] {
+  border: 1px dashed var(--kp-accent-ink);
+  border-radius: 15px;
+  padding: clamp(22px, 3.5vw, 40px);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgb(143 103 36 / 0.045) 10px,
+    rgb(143 103 36 / 0.045) 20px
+  );
+}
+
+/* Anidado: las secciones interiores no repiten el marco completo. */
+[data-kp-provisional] [data-kp-provisional] {
+  border: 0;
+  border-top: 1px dashed var(--kp-accent-ink);
+  border-radius: 0;
+  background-image: none;
+  padding: 36px 0 0;
+  margin-top: 36px;
+}
+
+[data-kp-provisional-aviso] {
+  color: var(--kp-accent-ink);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 62ch;
+}
+
+[data-kp-provisional-aviso] strong {
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------------------------
+   9e. Listas compuestas (criterio, hechos, canales, pasos)
+   --------------------------------------------------------------------------- */
+.g-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--g-linea);
+  border-block: 1px solid var(--g-linea);
+}
+
+.g-lista > li {
+  background: var(--kp-bg);
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.g-lista-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.g-lista-3 {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.g-lista h3 {
+  font-weight: 500;
+  font-size: 1.125rem;
+  line-height: 1.28;
+  letter-spacing: -0.024em;
+  margin: 0;
+}
+
+.g-lista p {
+  font-size: 0.9375rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--kp-ink-muted);
+  margin: 0;
+}
+
+/* Pasos numerados: el ordinal en grande, fiel al bloque de dato. */
+.g-pasos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: paso;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1px;
+  background: var(--g-linea);
+  border-block: 1px solid var(--g-linea);
+}
+
+.g-pasos > li {
+  counter-increment: paso;
+  background: var(--kp-bg);
+  padding: 34px 28px;
+  min-width: 0;
+}
+
+.g-pasos > li::before {
+  content: counter(paso, decimal-leading-zero);
+  display: block;
+  font-weight: 200;
+  font-size: 4.5rem;
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+  color: var(--kp-accent-ink);
+  margin-bottom: 16px;
+}
+
+.g-pasos h3 {
+  font-weight: 500;
+  font-size: 1.125rem;
+  letter-spacing: -0.024em;
+  margin: 0 0 8px;
+}
+
+.g-pasos p {
+  font-size: 0.9375rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--kp-ink-muted);
+  margin: 0;
+}
+
+/* Lista sencilla con viñeta de raya, para envíos y pendientes. */
+.g-lista-simple {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  max-width: 68ch;
+}
+
+.g-lista-simple > li {
+  padding: 15px 0;
+  border-bottom: 1px solid var(--g-linea);
+  font-size: 0.9375rem;
+  font-weight: 300;
+  line-height: 1.6;
+  color: var(--kp-ink-muted);
+}
+
+.g-lista-simple > li:first-child {
+  border-top: 1px solid var(--g-linea);
+}
+
+.g-lista-simple strong {
+  font-weight: 600;
+  color: var(--kp-accent-ink);
+  letter-spacing: 0.02em;
+}
+
+/* --- Utilidades de composición --- */
+.g-pila {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.g-pila-ajustada {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.g-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.g-enlace {
+  color: var(--kp-accent-ink);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+  border-bottom: 1px solid var(--g-linea-fuerte);
+  padding-bottom: 2px;
+  transition: border-color 0.2s ease;
+}
+
+.g-enlace:hover {
+  border-bottom-color: var(--kp-accent-ink);
+}
+
+/* Panel: caja de superficie para agrupar sin sombra. */
+.g-panel {
+  background: var(--kp-surface);
+  border: 1px solid var(--g-linea);
+  border-radius: 15px;
+  padding: clamp(24px, 3.5vw, 40px);
+}
+
+.g-panel-hueso {
+  background: var(--g-hueso);
+  border: 1px solid var(--g-linea);
+  border-radius: 15px;
+  padding: clamp(24px, 3.5vw, 40px);
+}
+
+/* Enlace de salto, en el lenguaje. */
+.kp-saltar:focus {
+  border-radius: 600px;
+  border: 1px solid var(--kp-accent-ink);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+/* ---------------------------------------------------------------------------
+   9f. Ficha de producto
+   --------------------------------------------------------------------------- */
+.g-ficha {
+  display: grid;
+  grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+  gap: 56px;
+  align-items: start;
+}
+
+.g-ficha-galeria {
+  display: grid;
+  gap: 16px;
+  position: sticky;
+  top: 96px;
+}
+
+.g-ficha-info {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.g-ficha-precio {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--g-linea);
+  border-bottom: 1px solid var(--g-linea);
+  padding-block: 24px;
+  width: 100%;
+}
+
+.g-ficha-precio .g-dato-cifra {
+  margin: 0;
+}
+
+.g-ficha-precio .g-dato-etiqueta {
+  margin: 0;
+  order: -1;
+}
+
+.g-chip-disponible {
+  color: var(--kp-accent-ink);
+  border-color: var(--kp-accent-ink);
+  background: transparent;
+}
+
+.g-migas-enlace {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--g-linea-fuerte);
+}
+
+.g-migas-enlace:hover {
+  border-bottom-color: currentColor;
+}
+
+.g-opciones {
+  width: 100%;
+  display: grid;
+  gap: 18px;
+}
+
+.g-variantes {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+}
+
+.g-variantes > li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--g-linea);
+  font-size: 0.9375rem;
+  font-weight: 300;
+  color: var(--kp-ink-muted);
+}
+
+.g-variantes > li:first-child {
+  border-top: 1px solid var(--g-linea);
+}
+
+.g-variante-precio {
+  font-weight: 500;
+  color: var(--kp-ink);
+  letter-spacing: -0.015em;
+}
+
+.g-variantes [data-kp-disponible='false'] .g-variante-precio {
+  color: var(--kp-ink-muted);
+  font-weight: 400;
+}
+
+.g-ficha-accion {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+  width: 100%;
+  padding-top: 8px;
+}
+
+/* ---------------------------------------------------------------------------
+   9g. Diario: entrada destacada y encabezado de artículo
+   --------------------------------------------------------------------------- */
+.g-destacado {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  gap: 44px;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  padding-block: 8px;
+}
+
+.g-destacado-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.g-destacado-titulo {
+  font-weight: 250;
+  font-size: clamp(1.85rem, 3.6vw, 3.1rem);
+  line-height: 1.04;
+  letter-spacing: var(--g-track-titulo);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.g-destacado:hover .g-destacado-titulo {
+  color: var(--kp-accent-ink);
+}
+
+.g-destacado:hover .g-marco {
+  border-color: var(--kp-accent-ink);
+}
+
+.g-destacado .g-marco {
+  border: 1px solid var(--g-linea);
+  transition: border-color 0.22s ease;
+}
+
+.g-articulo-encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: min(100%, 68ch);
+}
+
+.g-articulo-portada {
+  margin: 0 0 var(--g-seccion);
+}
+
+.g-articulo-portada .g-marco {
+  border: 1px solid var(--g-linea);
+}
+
+.g-articulo-cierre {
+  margin-top: 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+  max-width: 68ch;
+}
+
+/* ---------------------------------------------------------------------------
+   10. RESPONSIVE
+   El display de 140px baja a ~42px en 375px. El tracking negativo agresivo se
+   relaja conforme baja el cuerpo: a tamaño pequeño, -0.065em solapa las letras.
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .g-asim,
+  .g-asim-inv,
+  .g-ficha,
+  .g-destacado {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 960px) {
+  /* La ficha colapsa: la galería deja de ser sticky y va arriba. */
+  .g-ficha {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+
+  .g-ficha-galeria {
+    position: static;
+    top: auto;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .g-destacado {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (max-width: 900px) {
+  :root {
+    --g-seccion: 60px;
+  }
+
+  /* La composición asimétrica colapsa a una columna. */
+  .g-asim,
+  .g-asim-inv,
+  .g-cabecera-seccion,
+  .g-pie-rejilla {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  .g-cabecera-seccion {
+    margin-bottom: 32px;
+  }
+
+  /* En una columna se restituye el orden lógico de lectura. */
+  .g-asim-inv > :first-child {
+    order: 2;
+  }
+
+  .g-asim-inv > :last-child {
+    order: 1;
+  }
+
+  /* En una columna la marca de agua caía justo detrás del párrafo y estorbaba
+     la lectura. Se ancla arriba (a la altura del titular, no del cuerpo), se
+     sale más por el borde y baja de opacidad. */
+  .g-agua::before {
+    width: min(420px, 70vw);
+    opacity: 0.028;
+    top: 0;
+    right: -26%;
+    transform: none;
+  }
+
+  .g-agua-izq::before {
+    left: auto;
+    right: -26%;
+  }
+}
+
+@media (max-width: 720px) {
+  :root {
+    --g-gutter: 20px;
+    /* CLAVE: el tracking se relaja para que las letras no se solapen. */
+    --g-track-display: -0.035em;
+    --g-track-titulo: -0.025em;
+  }
+
+  body {
+    font-size: 16px;
+  }
+
+  .g-display,
+  .g-display-med,
+  .g-h2 {
+    line-height: 1.02;
+  }
+
+  .g-dato-cifra {
+    letter-spacing: -0.04em;
+    line-height: 0.92;
+  }
+
+  .g-dato,
+  .g-lista > li,
+  .g-pasos > li {
+    padding: 26px 20px;
+  }
+
+  .g-pasos > li::before {
+    font-size: 3.25rem;
+  }
+
+  [data-kp-rejilla] {
+    gap: 20px;
+  }
+
+  .g-cabecera-interior {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px var(--g-gutter);
+  }
+
+  [data-kp-nav] ul {
+    justify-content: flex-start;
+    gap: 2px;
+    /* La nav no debe provocar scroll horizontal: envuelve. */
+    margin-left: -0.85em;
+  }
+
+  [data-kp-nav] a {
+    font-size: 0.8125rem;
+    padding: 0.45em 0.7em;
+  }
+
+  .g-pie-interior {
+    padding: 48px var(--g-gutter) 36px;
+  }
+
+  .g-pie-cierre {
+    margin-top: 32px;
+  }
+}
+
+@media (max-width: 440px) {
+  :root {
+    --g-gutter: 16px;
+    /* A 375px el display ronda los 42px: con -0.02em ya es seguro. */
+    --g-track-display: -0.025em;
+  }
+
+  [data-kp-rejilla='productos'],
+  [data-kp-rejilla='articulos'] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .g-datos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .g-dato-cifra {
+    letter-spacing: -0.03em;
+  }
+}
+
+/* Respeto por quien pide menos movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

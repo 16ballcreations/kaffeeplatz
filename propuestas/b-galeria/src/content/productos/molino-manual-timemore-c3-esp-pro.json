@@ -1,0 +1,27 @@
+{
+  "handle": "molino-manual-timemore-c3-esp-pro",
+  "titulo": "Molino Timemore C3Esp Pro",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>El Timemore Chestnut C3 ESP Pro es un molino manual de alta gama diseñado para baristas exigentes y entusiastas del café que valoran la precisión y la calidad en cada taza. Su sistema de muelas cónicas de acero inoxidable con tecnología S2C (Spike-to-Cut) garantiza una molienda uniforme, especialmente eficaz para espresso, pero también perfecta para métodos como V60, Chemex, Aeropress o prensa francesa.</p>\n<p>Cuenta con una perilla lateral plegable de acero y un cuerpo en aleación de aluminio texturizado para un agarre seguro. Su sistema de ajuste de clics permite controlar con exactitud el grosor de la molienda, facilitando la consistencia en cada preparación.</p>",
+  "descripcionTexto": "El Timemore Chestnut C3 ESP Pro es un molino manual de alta gama diseñado para baristas exigentes y entusiastas del café que valoran la precisión y la calidad en cada taza. Su sistema de muelas cónicas de acero inoxidable con tecnología S2C (Spike-to-Cut) garantiza una molienda uniforme, especialmente eficaz para espresso, pero también perfecta para métodos como V60, Chemex, Aeropress o prensa francesa.\n\nCuenta con una perilla lateral plegable de acero y un cuerpo en aleación de aluminio texturizado para un agarre seguro. Su sistema de ajuste de clics permite controlar con exactitud el grosor de la molienda, facilitando la consistencia en cada preparación.",
+  "precio": 600000,
+  "precioFormateado": "$600.000",
+  "disponible": false,
+  "variantes": [
+    {
+      "id": "48262146752749",
+      "titulo": "Molino Timemore C3Esp Pro",
+      "precio": 600000,
+      "precioFormateado": "$600.000",
+      "disponible": false,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/molino-manual-timemore-c3-esp-pro/molino-manual-timemore-c3-esp-pro-1.jpg",
+      "alt": "Molino Timemore C3Esp Pro"
+    }
+  ]
+}

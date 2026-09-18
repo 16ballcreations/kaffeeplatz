@@ -1,0 +1,35 @@
+{
+  "handle": "fitro-de-acero-chemex-3-tazas",
+  "title": "Filtro de Acero Chemex 3 tazas",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-07-10T17:28:59-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>Este filtro de acero inoxidable está diseñado específicamente para Chemex de 3 tazas. Su estructura de doble malla permite una excelente filtración conservando los aceites esenciales del café, lo que da como resultado una taza con más cuerpo y sabor. Al ser reutilizable, es ideal para quienes buscan una alternativa sostenible a los filtros de papel, sin sacrificar calidad ni practicidad.</p>\n<p>Gracias a su estructura robusta y fácil de limpiar, se convierte en un accesorio indispensable para los amantes del café que quieren simplificar su preparación sin perder la esencia del método Chemex.</p>",
+  "body_text": "Este filtro de acero inoxidable está diseñado específicamente para Chemex de 3 tazas. Su estructura de doble malla permite una excelente filtración conservando los aceites esenciales del café, lo que da como resultado una taza con más cuerpo y sabor. Al ser reutilizable, es ideal para quienes buscan una alternativa sostenible a los filtros de papel, sin sacrificar calidad ni practicidad.\n\nGracias a su estructura robusta y fácil de limpiar, se convierte en un accesorio indispensable para los amantes del café que quieren simplificar su preparación sin perder la esencia del método Chemex.",
+  "variants": [
+    {
+      "id": 48374363652333,
+      "title": "Default Title",
+      "price": "50000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": true,
+      "option1": "Default Title",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Title",
+      "values": [
+        "Default Title"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_300fa07f-3a40-4bb3-a177-f1fdae1aa4e8.jpg?v=1752186342"
+  ]
+}

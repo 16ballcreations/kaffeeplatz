@@ -1,0 +1,84 @@
+---
+/**
+ * TarjetaProducto — PROPUESTA B "GALERÍA".
+ *
+ * Igual que la base en datos y ganchos. Lo único que cambia es que la imagen
+ * va ENMARCADA: un contenedor .g-marco con fondo propio, radio 15px y relación
+ * fija. Las fotos del catálogo son irregulares (25/25 por debajo de 1200px, 18
+ * de captura de móvil); el marco absorbe esa inconsistencia y evita que la
+ * rejilla se vea rota. Nunca sangran ni van sobre blanco puro.
+ */
+import type { CollectionEntry } from 'astro:content';
+import Imagen from './Imagen.astro';
+import Precio from './Precio.astro';
+import { ruta } from '../datos/sitio';
+
+interface Props {
+  producto: CollectionEntry<'productos'>['data'];
+  clase?: string;
+  /** "eager" para las primeras tarjetas visibles. */
+  prioridad?: boolean;
+  /** Oculta el precio (algun diseno puede quererlo). */
+  mostrarPrecio?: boolean;
+}
+
+const { producto, clase = '', prioridad = false, mostrarPrecio = true } = Astro.props as Props;
+
+const portada = producto.imagenes[0];
+const enlace = ruta(`/producto/${producto.handle}`);
+/** Hay rango de precios cuando las variantes no valen todas lo mismo. */
+const hayRango = new Set(producto.variantes.map((v) => v.precio)).size > 1;
+---
+
+<article
+  class={`g-tarjeta ${clase}`}
+  data-kp-tarjeta
+  data-kp-disponible={String(producto.disponible)}
+>
+  <a href={enlace} data-kp-tarjeta-enlace>
+    <div data-kp-tarjeta-media>
+      <slot name="media">
+        {
+          portada ? (
+            <div class="g-marco g-marco-cuadro g-marco-contener">
+              <Imagen src={portada.src} alt={portada.alt} prioridad={prioridad} />
+            </div>
+          ) : (
+            <span class="g-sin-imagen" data-kp-sin-imagen>
+              Sin fotografía
+            </span>
+          )
+        }
+      </slot>
+    </div>
+
+    <div data-kp-tarjeta-cuerpo>
+      <slot name="antes-titulo" />
+      <h3 data-kp-tarjeta-titulo>{producto.titulo}</h3>
+
+      {
+        mostrarPrecio && (
+          <p data-kp-tarjeta-precio>
+            <Precio
+              precioFormateado={producto.precioFormateado}
+              precio={producto.precio}
+              desde={hayRango}
+              clase="g-chip g-chip-precio"
+            />
+          </p>
+        )
+      }
+
+      {
+        !producto.disponible && (
+          <p data-kp-agotado>
+            <span class="g-chip g-chip-agotado">Agotado</span>
+          </p>
+        )
+      }
+      <slot name="despues-precio" />
+    </div>
+  </a>
+
+  <slot name="acciones" />
+</article>

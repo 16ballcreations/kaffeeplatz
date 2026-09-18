@@ -1,0 +1,35 @@
+{
+  "handle": "molino-manual-timemore-c3-esp-pro",
+  "title": "Molino Timemore C3Esp Pro",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-06-23T18:55:41-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>El Timemore Chestnut C3 ESP Pro es un molino manual de alta gama diseñado para baristas exigentes y entusiastas del café que valoran la precisión y la calidad en cada taza. Su sistema de muelas cónicas de acero inoxidable con tecnología S2C (Spike-to-Cut) garantiza una molienda uniforme, especialmente eficaz para espresso, pero también perfecta para métodos como V60, Chemex, Aeropress o prensa francesa.</p>\n<p>Cuenta con una perilla lateral plegable de acero y un cuerpo en aleación de aluminio texturizado para un agarre seguro. Su sistema de ajuste de clics permite controlar con exactitud el grosor de la molienda, facilitando la consistencia en cada preparación.</p>",
+  "body_text": "El Timemore Chestnut C3 ESP Pro es un molino manual de alta gama diseñado para baristas exigentes y entusiastas del café que valoran la precisión y la calidad en cada taza. Su sistema de muelas cónicas de acero inoxidable con tecnología S2C (Spike-to-Cut) garantiza una molienda uniforme, especialmente eficaz para espresso, pero también perfecta para métodos como V60, Chemex, Aeropress o prensa francesa.\n\nCuenta con una perilla lateral plegable de acero y un cuerpo en aleación de aluminio texturizado para un agarre seguro. Su sistema de ajuste de clics permite controlar con exactitud el grosor de la molienda, facilitando la consistencia en cada preparación.",
+  "variants": [
+    {
+      "id": 48262146752749,
+      "title": "Default Title",
+      "price": "600000.00",
+      "compare_at_price": "600000.00",
+      "sku": null,
+      "available": false,
+      "option1": "Default Title",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Title",
+      "values": [
+        "Default Title"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_620217e2-7439-464c-8098-fbf5e21ad4cc.jpg?v=1762459173"
+  ]
+}

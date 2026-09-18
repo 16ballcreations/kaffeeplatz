@@ -1,0 +1,103 @@
+---
+/**
+ * /catalogo — Listado completo de los 25 productos. PROPUESTA B "GALERÍA".
+ *
+ * Rejilla aireada, tarjetas de radio 15px, píldora de precio en oro relleno.
+ * El encabezado usa el bloque de dato gigante con el recuento real.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import TarjetaProducto from '../components/TarjetaProducto.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import { ruta } from '../datos/sitio';
+
+const productos = (await getCollection('productos')).sort((a, b) => {
+  // Disponibles primero, luego alfabetico.
+  if (a.data.disponible !== b.data.disponible) return a.data.disponible ? -1 : 1;
+  return a.data.titulo.localeCompare(b.data.titulo, 'es');
+});
+
+const disponibles = productos.filter((p) => p.data.disponible).length;
+const agotados = productos.length - disponibles;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Catálogo KaffeePlatz',
+  numberOfItems: productos.length,
+  itemListElement: productos.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: p.data.titulo,
+    url: new URL(ruta(`/producto/${p.data.handle}`), Astro.site).toString(),
+  })),
+};
+---
+
+<Base
+  titulo="Catálogo"
+  descripcion="Todos los accesorios de café de especialidad de KaffeePlatz: métodos, filtros, hervidores, grameras y utensilios."
+  camino="/catalogo"
+  migas={[{ nombre: 'Catálogo', href: '/catalogo' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado" class="g-seccion g-agua">
+    <div class="g-envoltura">
+      <div class="g-asim">
+        <div class="g-pila">
+          <p class="g-kicker">Todo lo que tenemos</p>
+          <h1 class="g-display-med">
+            el <span class="g-cursiva">catálogo</span>
+          </h1>
+        </div>
+        <div>
+          <p data-kp-entradilla class="g-entradilla">
+            {productos.length} accesorios para preparar café de especialidad en casa. {disponibles}{' '}
+            disponibles y {agotados} agotados ahora mismo. Si algo aparece agotado, escríbenos: te
+            contamos cuándo vuelve.
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {/* Bloque de dato gigante con el estado real del catálogo. */}
+  <section class="g-seccion-ajustada" aria-label="Estado del catálogo">
+    <div class="g-envoltura">
+      <div class="g-datos">
+        <div class="g-dato">
+          <span class="g-dato-cifra">{productos.length}</span>
+          <span class="g-dato-etiqueta">Referencias</span>
+        </div>
+        <div class="g-dato">
+          <span class="g-dato-cifra">{disponibles}</span>
+          <span class="g-dato-etiqueta">Disponibles</span>
+        </div>
+        <div class="g-dato">
+          <span class="g-dato-cifra">{agotados}</span>
+          <span class="g-dato-etiqueta">Agotados</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Productos" class="g-seccion-ajustada">
+    <div class="g-envoltura">
+      <ul data-kp-rejilla="productos">
+        {
+          productos.map((p, i) => (
+            <li>
+              <TarjetaProducto producto={p.data} prioridad={i < 4}>
+                <div slot="acciones" class="g-tarjeta-acciones">
+                  <BotonWhatsApp producto={p.data} clase="g-pildora g-pildora-linea">
+                    Preguntar por este
+                  </BotonWhatsApp>
+                </div>
+              </TarjetaProducto>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</Base>

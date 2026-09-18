@@ -1,0 +1,34 @@
+{
+  "handle": "prensa-francesa-acero-inoxidable",
+  "titulo": "Prensa Francesa Acero Inoxidable",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>Disfruta de un café intenso y con cuerpo con esta prensa francesa de acero inoxidable. Su diseño elegante, duradero y térmico te permite preparar hasta 4 tazas de café o té con total comodidad. ¡Ideal para quienes valoran la simplicidad y el sabor puro!</p>",
+  "descripcionTexto": "Disfruta de un café intenso y con cuerpo con esta prensa francesa de acero inoxidable. Su diseño elegante, duradero y térmico te permite preparar hasta 4 tazas de café o té con total comodidad. ¡Ideal para quienes valoran la simplicidad y el sabor puro!",
+  "precio": 120000,
+  "precioFormateado": "$120.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47808444498157",
+      "titulo": "350ml",
+      "precio": 120000,
+      "precioFormateado": "$120.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [
+    {
+      "nombre": "Capacidad",
+      "valores": [
+        "350ml"
+      ]
+    }
+  ],
+  "imagenes": [
+    {
+      "src": "/img/productos/prensa-francesa-acero-inoxidable/prensa-francesa-acero-inoxidable-1.png",
+      "alt": "Prensa Francesa Acero Inoxidable"
+    }
+  ]
+}

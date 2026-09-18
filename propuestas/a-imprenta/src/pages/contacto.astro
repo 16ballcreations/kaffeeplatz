@@ -1,0 +1,132 @@
+---
+/**
+ * /contacto — lenguaje IMPRENTA.
+ *
+ * WhatsApp es el canal REAL. El formulario es una maqueta sin backend
+ * (ver FormularioContacto.astro). Los datos de cobertura, tiempos y horario
+ * salen de contenido-original/datos/politicas/. No se inventa ninguno.
+ */
+import Imprenta from '../layouts/Imprenta.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import FormularioContacto from '../components/FormularioContacto.astro';
+import { SITIO } from '../datos/sitio';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ContactPage',
+  name: 'Contacto KaffeePlatz',
+  description: 'Cómo contactar con KaffeePlatz: WhatsApp, correo y horario de atención.',
+};
+---
+
+<Imprenta
+  titulo="Contacto"
+  descripcion="Escríbenos por WhatsApp al +57 301 380 9886 o a kaffeeplatz28@gmail.com. Atendemos de lunes a viernes, 9:00 a.m. a 6:00 p.m."
+  camino="/contacto"
+  migas={[{ nombre: 'Contacto', href: '/contacto' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado" class="im-contenedor im-seccion--amplia">
+    <div class="im-split im-split--texto-ancho">
+      <div class="im-pila-20">
+        <p data-kp-kicker class="im-label">Contacto</p>
+        <h1 class="im-titulo-pagina">Hablemos</h1>
+      </div>
+      <p data-kp-entradilla class="im-entradilla">
+        Aquí no hay carrito ni pasarela de pago: cada pedido se cierra hablando con nosotros.
+        Cuéntanos qué buscas y te ayudamos a elegir.
+      </p>
+    </div>
+  </header>
+
+  <hr class="im-filete" />
+
+  <section data-kp-seccion="canales" aria-labelledby="t-canales" class="im-contenedor im-seccion--amplia">
+    <div class="im-rubrica">
+      <span class="im-rubrica__label">Canales</span>
+      <hr class="im-rubrica__regla" />
+    </div>
+
+    <h2 id="t-canales" class="im-titulo-seccion im-medida" style="margin-bottom:var(--im-50)">
+      Canales directos
+    </h2>
+
+    <ul data-kp-lista="canales" class="im-lista im-lista--2">
+      <li class="im-lista__item">
+        <h3 class="im-lista__titulo">WhatsApp</h3>
+        <p class="im-lista__texto">La vía más rápida. Te responde {SITIO.dueña}.</p>
+        <p style="font-family:var(--im-display);font-size:var(--im-display-s);font-weight:400">
+          {SITIO.whatsappVisible}
+        </p>
+        <p><BotonWhatsApp clase="im-accion">Abrir WhatsApp</BotonWhatsApp></p>
+      </li>
+
+      <li class="im-lista__item">
+        <h3 class="im-lista__titulo">Correo</h3>
+        <p class="im-lista__texto">Para pedidos especiales, facturación o incidencias con un envío.</p>
+        <p>
+          <a href={`mailto:${SITIO.email}`} class="im-enlace-inline">{SITIO.email}</a>
+        </p>
+      </li>
+
+      <li class="im-lista__item">
+        <h3 class="im-lista__titulo">Horario de atención</h3>
+        <p class="im-lista__texto">Lunes a viernes, de 9:00 a.m. a 6:00 p.m. (hora de Colombia).</p>
+      </li>
+
+      <li class="im-lista__item">
+        <h3 class="im-lista__titulo">Dónde estamos</h3>
+        <p class="im-lista__texto">
+          {SITIO.ciudad}. Atendemos 100% en línea, sin punto físico de venta.
+        </p>
+      </li>
+    </ul>
+  </section>
+
+  <hr class="im-filete" />
+
+  <section data-kp-seccion="envios" aria-labelledby="t-envios" class="im-contenedor im-seccion--amplia">
+    <div class="im-rubrica">
+      <span class="im-rubrica__label">Envíos</span>
+      <hr class="im-rubrica__regla" />
+    </div>
+
+    <div class="im-split im-split--texto-ancho">
+      <h2 id="t-envios" class="im-titulo-seccion">Envíos</h2>
+
+      <div class="im-pila-20">
+        <p class="im-entradilla">
+          Enviamos a todo el territorio colombiano con transportadoras certificadas.
+        </p>
+        <ul data-kp-lista="envios">
+          <li>Ciudades principales: 2 a 5 días hábiles.</li>
+          <li>Otras ciudades y municipios: 5 a 8 días hábiles.</li>
+          <li>Pedidos por encargo o especiales: 8 a 15 días hábiles, y te avisamos.</li>
+        </ul>
+        <p class="im-nota">
+          El costo del envío depende del destino y del peso del pedido; te lo confirmamos al cerrar
+          la compra. Si tu pedido llega con el empaque dañado, escríbenos de inmediato a{' '}
+          {SITIO.email} con fotos de lo que recibiste.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="im-filete" />
+
+  <section data-kp-seccion="formulario" aria-labelledby="t-formulario" class="im-contenedor im-seccion--amplia">
+    <div class="im-rubrica">
+      <span class="im-rubrica__label">Formulario</span>
+      <hr class="im-rubrica__regla" />
+    </div>
+
+    <h2 id="t-formulario" class="im-titulo-seccion im-medida">Escríbenos por formulario</h2>
+    <p class="im-entradilla" style="margin:var(--im-20) 0 var(--im-30)">
+      ¿Prefieres dejarnos el mensaje por escrito? Rellena esto y te respondemos.
+    </p>
+
+    <div class="im-panel">
+      <FormularioContacto />
+    </div>
+  </section>
+</Imprenta>

@@ -1,0 +1,56 @@
+---
+/**
+ * /diario — Indice de los 16 articulos.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
+import { ruta } from '../../datos/sitio';
+
+const articulos = (await getCollection('diario')).sort(
+  (a, b) => b.data.fecha.getTime() - a.data.fecha.getTime()
+);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Blog',
+  name: 'Diario KaffeePlatz',
+  description: 'Guías y apuntes sobre café de especialidad y métodos de preparación.',
+  blogPost: articulos.map((a) => ({
+    '@type': 'BlogPosting',
+    headline: a.data.titulo,
+    datePublished: a.data.fecha.toISOString().slice(0, 10),
+    author: { '@type': 'Person', name: a.data.autor },
+    url: new URL(ruta(`/diario/${a.data.handle}`), Astro.site).toString(),
+  })),
+};
+---
+
+<Base
+  titulo="Diario"
+  descripcion="Guías prácticas de café de especialidad: métodos, molienda, conservación y errores comunes al preparar café en casa."
+  camino="/diario"
+  migas={[{ nombre: 'Diario', href: '/diario' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado" class="c-encabezado">
+    <p data-kp-kicker>Lecturas</p>
+    <h1>Diario</h1>
+    <p data-kp-entradilla>
+      Lo que hemos ido aprendiendo preparando café: cómo funciona cada método, qué molienda pide,
+      cómo conservar el grano y en qué solemos equivocarnos. {articulos.length} artículos.
+    </p>
+  </header>
+
+  <section aria-label="Artículos">
+    <ul data-kp-rejilla="articulos">
+      {
+        articulos.map((a, i) => (
+          <li>
+            <TarjetaArticulo articulo={a.data} prioridad={i < 3} />
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>

@@ -1,0 +1,124 @@
+---
+/**
+ * /diario/[handle] — Articulo del diario. 16 paginas.
+ */
+import type { GetStaticPaths } from 'astro';
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Imagen from '../../components/Imagen.astro';
+import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
+import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
+import { SITIO, ruta } from '../../datos/sitio';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const articulos = await getCollection('diario');
+  return articulos.map((a) => ({
+    params: { handle: a.data.handle },
+    props: { articulo: a, todos: articulos },
+  }));
+};
+
+interface Props {
+  articulo: CollectionEntry<'diario'>;
+  todos: CollectionEntry<'diario'>[];
+}
+
+const { articulo, todos } = Astro.props as Props;
+const d = articulo.data;
+const { Content } = await render(articulo);
+
+const iso = d.fecha.toISOString().slice(0, 10);
+const fechaLegible = d.fecha.toLocaleDateString('es-CO', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+const otros = todos
+  .filter((a) => a.data.handle !== d.handle)
+  .sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime())
+  .slice(0, 3);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: d.titulo,
+  description: d.resumen,
+  datePublished: iso,
+  dateModified: iso,
+  inLanguage: 'es-CO',
+  author: { '@type': 'Person', name: d.autor },
+  publisher: {
+    '@type': 'Organization',
+    name: SITIO.nombre,
+    url: new URL(ruta('/'), Astro.site).toString(),
+  },
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id': new URL(ruta(`/diario/${d.handle}`), Astro.site).toString(),
+  },
+  ...(d.imagen ? { image: new URL(ruta(d.imagen), Astro.site).toString() } : {}),
+};
+---
+
+<Base
+  titulo={d.titulo}
+  descripcion={d.resumen.slice(0, 160)}
+  camino={`/diario/${d.handle}`}
+  imagen={d.imagen}
+  tipoOg="article"
+  migas={[
+    { nombre: 'Diario', href: '/diario' },
+    { nombre: d.titulo, href: `/diario/${d.handle}` },
+  ]}
+  jsonLd={jsonLd}
+>
+  <article data-kp-articulo-completo>
+    <header data-kp-articulo-encabezado>
+      <p data-kp-kicker>Diario</p>
+      <h1>{d.titulo}</h1>
+      <p data-kp-articulo-meta>
+        <time datetime={iso}>{fechaLegible}</time> · {d.autor}
+      </p>
+      {d.resumen && <p data-kp-entradilla>{d.resumen}</p>}
+    </header>
+
+    {
+      d.imagen && (
+        <figure data-kp-articulo-portada>
+          <Imagen src={d.imagen} alt={`Portada de: ${d.titulo}`} prioridad clase="w-full h-auto" />
+        </figure>
+      )
+    }
+
+    <div data-kp-prosa>
+      <Content />
+    </div>
+
+    <aside data-kp-articulo-cierre>
+      <p>¿Te quedó alguna duda sobre el método o el equipo? Escríbenos y lo vemos contigo.</p>
+      <BotonWhatsApp
+        mensaje={`Hola KaffeePlatz, leí "${d.titulo}" y tengo una duda.`}
+      >
+        Preguntar por WhatsApp
+      </BotonWhatsApp>
+      <p><a href={ruta('/catalogo')}>Ver el catálogo</a></p>
+    </aside>
+  </article>
+
+  {
+    otros.length > 0 && (
+      <section data-kp-seccion="mas-diario" aria-labelledby="t-mas">
+        <h2 id="t-mas">Sigue leyendo</h2>
+        <ul data-kp-rejilla="articulos">
+          {otros.map((a) => (
+            <li>
+              <TarjetaArticulo articulo={a.data} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Base>

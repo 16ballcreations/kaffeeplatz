@@ -1,0 +1,43 @@
+{
+  "handle": "filtros-v60",
+  "titulo": "Filtro de papel V60 | Hario",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>Los filtros de papel Hario V60 tamaño 02 están diseñados específicamente para encajar en los drippers cónicos V60. Su forma cónica permite una extracción uniforme del café, mientras que el papel de alta calidad evita sabores indeseados. Son ideales para los amantes del café filtrado que buscan una taza limpia, con gran claridad en los sabores. Cada paquete contiene 100 filtros desechables, listos para usar y compostables.</p>",
+  "descripcionTexto": "Los filtros de papel Hario V60 tamaño 02 están diseñados específicamente para encajar en los drippers cónicos V60. Su forma cónica permite una extracción uniforme del café, mientras que el papel de alta calidad evita sabores indeseados. Son ideales para los amantes del café filtrado que buscan una taza limpia, con gran claridad en los sabores. Cada paquete contiene 100 filtros desechables, listos para usar y compostables.",
+  "precio": 50000,
+  "precioFormateado": "$50.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47862161080557",
+      "titulo": "V60 #01",
+      "precio": 50000,
+      "precioFormateado": "$50.000",
+      "disponible": true,
+      "sku": null
+    },
+    {
+      "id": "47862161113325",
+      "titulo": "V60 #02",
+      "precio": 50000,
+      "precioFormateado": "$50.000",
+      "disponible": false,
+      "sku": null
+    }
+  ],
+  "opciones": [
+    {
+      "nombre": "Tamaño",
+      "valores": [
+        "V60 #01",
+        "V60 #02"
+      ]
+    }
+  ],
+  "imagenes": [
+    {
+      "src": "/img/productos/filtros-v60/filtros-v60-1.jpg",
+      "alt": "Filtro de papel V60 | Hario"
+    }
+  ]
+}

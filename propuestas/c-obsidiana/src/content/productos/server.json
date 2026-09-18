@@ -1,0 +1,27 @@
+{
+  "handle": "server",
+  "titulo": "Server",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p><span>El server de vidrio es el complemento ideal para quienes disfrutan del café filtrado en casa o en la barra. Diseñado en vidrio de borosilicato, soporta altas temperaturas y es perfecto tanto para preparar como para servir el café directamente. Su forma curva ayuda a mantener el calor por más tiempo y su asa ergonómica proporciona comodidad al momento de verter. Compatible con diferentes métodos de extracción, es un accesorio versátil, elegante y funcional que no puede faltar en tu rutina cafetera.<br></span></p>",
+  "descripcionTexto": "El server de vidrio es el complemento ideal para quienes disfrutan del café filtrado en casa o en la barra. Diseñado en vidrio de borosilicato, soporta altas temperaturas y es perfecto tanto para preparar como para servir el café directamente. Su forma curva ayuda a mantener el calor por más tiempo y su asa ergonómica proporciona comodidad al momento de verter. Compatible con diferentes métodos de extracción, es un accesorio versátil, elegante y funcional que no puede faltar en tu rutina cafetera.",
+  "precio": 65000,
+  "precioFormateado": "$65.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47779595452653",
+      "titulo": "Server",
+      "precio": 65000,
+      "precioFormateado": "$65.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/server/server-1.jpg",
+      "alt": "Server"
+    }
+  ]
+}

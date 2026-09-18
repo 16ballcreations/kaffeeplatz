@@ -1,0 +1,28 @@
+{
+  "handle": "set-hario-v60",
+  "titulo": "Set Hario V60",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>El Set Hario V60 es ideal para los amantes del café que buscan practicidad sin renunciar a la calidad. Este kit incluye el icónico dripper Hario V60, diseñado con surcos en espiral que aseguran una extracción uniforme y resaltan las notas más delicadas del café.<br>La jarra de vidrio resistente al calor facilita la preparación y el servicio, mientras que los filtros de papel garantizan una taza limpia, sin sedimentos y con un perfil aromático balanceado.<br>Perfecto tanto para principiantes como para baristas que desean una experiencia completa en un solo set.</p>",
+  "descripcionTexto": "El Set Hario V60 es ideal para los amantes del café que buscan practicidad sin renunciar a la calidad. Este kit incluye el icónico dripper Hario V60, diseñado con surcos en espiral que aseguran una extracción uniforme y resaltan las notas más delicadas del café.\nLa jarra de vidrio resistente al calor facilita la preparación y el servicio, mientras que los filtros de papel garantizan una taza limpia, sin sedimentos y con un perfil aromático balanceado.\nPerfecto tanto para principiantes como para baristas que desean una experiencia completa en un solo set.",
+  "precio": 240000,
+  "precioFormateado": "$240.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "48480438157549",
+      "titulo": "Set Hario V60",
+      "precio": 240000,
+      "precioFormateado": "$240.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/set-hario-v60/set-hario-v60-1.jpg",
+      "alt": "Set Hario V60"
+    }
+  ],
+  "destacado": true
+}

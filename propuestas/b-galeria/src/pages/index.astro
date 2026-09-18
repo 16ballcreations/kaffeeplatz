@@ -1,0 +1,216 @@
+---
+/**
+ * / — Portada. PROPUESTA B "GALERÍA".
+ *
+ * Composición: display gigante en minúsculas y peso 200, con la última palabra
+ * en cursiva (el gesto editorial del lenguaje), sobre rejilla asimétrica.
+ * Debajo, el bloque de dato gigante con las cifras REALES del catálogo.
+ *
+ * El contenido y los textos son los de la base, sin cambios.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import TarjetaProducto from '../components/TarjetaProducto.astro';
+import TarjetaArticulo from '../components/TarjetaArticulo.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import { SITIO, ruta } from '../datos/sitio';
+
+const productos = await getCollection('productos');
+const destacados = productos
+  .filter((p) => p.data.destacado)
+  .sort((a, b) => b.data.precio - a.data.precio);
+
+const articulos = (await getCollection('diario'))
+  .sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime())
+  .slice(0, 3);
+
+/* Cifras derivadas del contenido real. No se inventa ningún dato. */
+const total = productos.length;
+const disponibles = productos.filter((p) => p.data.disponible).length;
+const totalArticulos = (await getCollection('diario')).length;
+---
+
+<Base
+  titulo={SITIO.nombre}
+  descripcion={SITIO.descripcion}
+  camino="/"
+  imagen={destacados[0]?.data.imagenes[0]?.src}
+>
+  {/* ---------- HERO: display gigante, asimétrico, con marca de agua ---------- */}
+  <section data-kp-seccion="hero" class="g-seccion g-agua">
+    <div class="g-envoltura">
+      <div class="g-asim">
+        <div class="g-pila">
+          <p data-kp-kicker class="g-kicker">Café de especialidad · {SITIO.ciudad}</p>
+          <h1 class="g-display">
+            eleva tu experiencia <span class="g-cursiva">cafetera</span>
+          </h1>
+        </div>
+        <div class="g-pila">
+          <p data-kp-entradilla class="g-entradilla">
+            Seleccionamos métodos, filtros y utensilios para que preparar café en casa deje de ser un
+            trámite y se convierta en un ritual. Cada pieza está elegida por cómo se comporta en la
+            taza, no por cómo se ve en la foto.
+          </p>
+          <p data-kp-acciones class="g-fila">
+            <a href={ruta('/catalogo')} data-kp-cta="primaria" class="g-pildora g-pildora-oro">
+              Ver el catálogo
+            </a>
+            <BotonWhatsApp data-kp-cta="secundaria" clase="g-pildora g-pildora-linea">
+              Pregúntanos por WhatsApp
+            </BotonWhatsApp>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ---------- BLOQUE DE DATO GIGANTE: cifras reales del catálogo ---------- */}
+  <section class="g-seccion-ajustada" aria-label="El catálogo en cifras">
+    <div class="g-envoltura">
+      <div class="g-datos">
+        <div class="g-dato">
+          <span class="g-dato-cifra">{total}</span>
+          <span class="g-dato-etiqueta">Accesorios</span>
+          <p class="g-dato-pie">Métodos, filtros, hervidores y utensilios de preparación.</p>
+        </div>
+        <div class="g-dato">
+          <span class="g-dato-cifra">{disponibles}</span>
+          <span class="g-dato-etiqueta">Disponibles hoy</span>
+          <p class="g-dato-pie">El resto vuelve: escríbenos y te contamos cuándo.</p>
+        </div>
+        <div class="g-dato">
+          <span class="g-dato-cifra">{totalArticulos}</span>
+          <span class="g-dato-etiqueta">Guías en el diario</span>
+          <p class="g-dato-pie">Molienda, temperatura, ratio y conservación, método a método.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* ---------- DESTACADOS ---------- */}
+  <section data-kp-seccion="destacados" aria-labelledby="t-destacados" class="g-seccion">
+    <div class="g-envoltura">
+      <div class="g-cabecera-seccion">
+        <div class="g-pila-ajustada">
+          <p class="g-kicker">Selección</p>
+          <h2 id="t-destacados" class="g-h2">
+            selección <span class="g-cursiva">destacada</span>
+          </h2>
+        </div>
+        <div>
+          <p class="g-nota">
+            Las piezas por las que más nos preguntan. Si dudas entre dos, escríbenos y lo vemos.
+          </p>
+        </div>
+      </div>
+
+      <ul data-kp-rejilla="productos">
+        {
+          destacados.map((p, i) => (
+            <li>
+              <TarjetaProducto producto={p.data} prioridad={i === 0} />
+            </li>
+          ))
+        }
+      </ul>
+
+      <p style="margin-top: 36px;">
+        <a href={ruta('/catalogo')} class="g-enlace">Ver los {productos.length} productos</a>
+      </p>
+    </div>
+  </section>
+
+  {/* ---------- CÓMO COMPRAS ---------- */}
+  <section data-kp-seccion="promesa" aria-labelledby="t-promesa" class="g-seccion g-linea-sup">
+    <div class="g-envoltura">
+      <div class="g-cabecera-seccion">
+        <div class="g-pila-ajustada">
+          <p class="g-kicker">El proceso</p>
+          <h2 id="t-promesa" class="g-h2">
+            cómo <span class="g-cursiva">compras</span>
+          </h2>
+        </div>
+        <div>
+          <p data-kp-nota class="g-nota">
+            No hay carrito ni pasarela de pago: aquí se compra hablando con nosotros.
+          </p>
+        </div>
+      </div>
+
+      <ol data-kp-pasos class="g-pasos">
+        <li>
+          <h3>Eliges</h3>
+          <p>Miras el catálogo y ves qué método encaja con la taza que buscas.</p>
+        </li>
+        <li>
+          <h3>Nos escribes</h3>
+          <p>
+            Nos hablas por WhatsApp. Te confirmamos disponibilidad, resolvemos dudas y acordamos el
+            envío contigo.
+          </p>
+        </li>
+        <li>
+          <h3>Preparas</h3>
+          <p>Te llega a casa y empiezas. En el diario tienes las guías de cada método.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  {/* ---------- DEL DIARIO ---------- */}
+  <section data-kp-seccion="diario" aria-labelledby="t-diario" class="g-seccion">
+    <div class="g-envoltura">
+      <div class="g-cabecera-seccion">
+        <div class="g-pila-ajustada">
+          <p class="g-kicker">Lecturas</p>
+          <h2 id="t-diario" class="g-h2">
+            del <span class="g-cursiva">diario</span>
+          </h2>
+        </div>
+        <div>
+          <p class="g-nota">
+            Lo que hemos ido aprendiendo preparando café, sin jerga innecesaria.
+          </p>
+        </div>
+      </div>
+
+      <ul data-kp-rejilla="articulos">
+        {
+          articulos.map((a) => (
+            <li>
+              <TarjetaArticulo articulo={a.data} />
+            </li>
+          ))
+        }
+      </ul>
+
+      <p style="margin-top: 36px;">
+        <a href={ruta('/diario')} class="g-enlace">Todos los artículos</a>
+      </p>
+    </div>
+  </section>
+
+  {/* ---------- SOBRE NOSOTROS ---------- */}
+  <section data-kp-seccion="sobre" aria-labelledby="t-sobre" class="g-seccion g-linea-sup g-agua g-agua-izq">
+    <div class="g-envoltura">
+      <div class="g-asim-inv">
+        <div>
+          <p class="g-kicker">Quiénes somos</p>
+        </div>
+        <div class="g-pila">
+          <h2 id="t-sobre" class="g-display-med">
+            sobre <span class="g-cursiva">nosotros</span>
+          </h2>
+          <p class="g-entradilla">
+            Somos una marca colombiana de accesorios de café de especialidad. Trabajamos 100% en
+            línea y atendemos cada pedido de forma directa.
+          </p>
+          <p>
+            <a href={ruta('/nosotros')} class="g-pildora g-pildora-linea">Conócenos</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>

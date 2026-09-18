@@ -1,0 +1,1496 @@
+/* ===========================================================================
+   PROPUESTA A — "IMPRENTA"
+   ---------------------------------------------------------------------------
+   Lenguaje visual editorial de imprenta para KaffeePlatz.
+
+   NO redefine ningun token de marca.css: solo lo CONSUME.
+   Los colores vienen todos de var(--kp-*).
+
+   PRINCIPIOS NO NEGOCIABLES aplicados aqui:
+     1. Jerarquia por TAMANO. Display serif 300-400. Nunca bold en titulares.
+     2. CERO botones rellenos como accion primaria. Todo es enlace con borde 1px.
+     3. CERO sombras. La elevacion es radio 25px + cambio de superficie.
+     4. Imagenes SIEMPRE enmarcadas (radio 25px), nunca a sangre.
+     5. Splits 50/50 asimetricos + cabeceras de seccion tipo revista.
+     6. Radios: 25px tarjetas/imagenes, 50px pildoras/inputs, 3.75px inline.
+     7. Escala de espaciado 5/8/10/12/15/20/30/50/117/234.
+
+   >>> REGLA DEL ORO <<<
+   #DEC185 (--kp-accent) NO aparece nunca como color de texto ni de borde fino.
+   Solo como relleno de area o dentro de un degradado decorativo grueso.
+   Para texto/bordes/iconos se usa SIEMPRE --kp-accent-ink (#8F6724).
+   =========================================================================== */
+
+@import './marca.css';
+
+/* ---------------------------------------------------------------------------
+   1. VARIABLES DEL LENGUAJE (no son colores de marca: son ritmo y tipografia)
+   --------------------------------------------------------------------------- */
+:root {
+  /* Tipografia */
+  --im-display: 'Playfair Display', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --im-texto: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Escala de espaciado editorial */
+  --im-5: 5px;
+  --im-8: 8px;
+  --im-10: 10px;
+  --im-12: 12px;
+  --im-15: 15px;
+  --im-20: 20px;
+  --im-30: 30px;
+  --im-50: 50px;
+  --im-117: 117px;
+  --im-234: 234px;
+
+  /* Radios del sistema */
+  --im-radio-marco: 25px; /* tarjetas e imagenes */
+  --im-radio-pildora: 50px; /* botones, inputs, chips */
+  --im-radio-inline: 3.75px; /* enlaces inline, marcas pequenas */
+
+  /* Ritmo vertical entre secciones */
+  --im-seccion: var(--im-50);
+  --im-seccion-grande: var(--im-117);
+
+  /* Ancho de medida editorial */
+  --im-medida: 68ch;
+  --im-ancho: 1280px;
+  --im-gutter: var(--im-20);
+
+  /* Escala tipografica fluida.
+     El display baja a ~42px en 375px y sube a 112px en 1440px.
+     clamp() hace la interpolacion: es la escala movil que la referencia no
+     documenta y que aqui se define explicitamente. */
+  --im-display-xxl: clamp(2.625rem, 1.15rem + 6.3vw, 7rem); /* 42 -> 112 */
+  --im-display-xl: clamp(2.25rem, 1.15rem + 4.7vw, 5rem); /* 36 -> 80 */
+  --im-display-l: clamp(1.875rem, 1.2rem + 2.9vw, 3.5rem); /* 30 -> 56 */
+  --im-display-m: clamp(1.5rem, 1.1rem + 1.7vw, 2.5rem); /* 24 -> 40 */
+  --im-display-s: clamp(1.25rem, 1.05rem + 0.85vw, 1.75rem); /* 20 -> 28 */
+
+  --im-texto-l: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem); /* 17 -> 20 */
+  --im-texto-m: 1rem;
+  --im-texto-s: 0.875rem;
+  --im-label: 0.6875rem; /* micro-label en mayusculas */
+
+  /* Superficie oscura del pie, con lino de marca */
+  --im-oscuro: var(--kp-anchor);
+}
+
+/* ---------------------------------------------------------------------------
+   2. RESET Y BASE
+   --------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body.im {
+  background: var(--kp-bg);
+  color: var(--kp-ink);
+  font-family: var(--im-texto);
+  font-size: var(--im-texto-m);
+  line-height: 1.65;
+  overflow-x: hidden; /* garantia dura contra el scroll horizontal */
+}
+
+.im img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Jerarquia por TAMANO, nunca por peso: todos los titulares en 300/400. */
+.im h1,
+.im h2,
+.im h3,
+.im h4 {
+  font-family: var(--im-display);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.im h1 {
+  font-weight: 300;
+}
+
+.im p,
+.im ul,
+.im ol {
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   3. CONTENEDORES Y REJILLA EDITORIAL
+   --------------------------------------------------------------------------- */
+.im-contenedor {
+  width: 100%;
+  max-width: var(--im-ancho);
+  margin-inline: auto;
+  padding-inline: var(--im-gutter);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --im-gutter: var(--im-30);
+  }
+}
+
+@media (min-width: 1200px) {
+  :root {
+    --im-gutter: var(--im-50);
+  }
+}
+
+.im-seccion {
+  padding-block: var(--im-seccion);
+}
+
+.im-seccion--amplia {
+  padding-block: clamp(var(--im-50), 8vw, var(--im-117));
+}
+
+/* Split 50/50 asimetrico: en desktop dos columnas, en movil apiladas.
+   Alterna el orden con .im-split--invertido. */
+.im-split {
+  display: grid;
+  gap: var(--im-30);
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .im-split {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--im-50);
+  }
+  /* La asimetria real: el texto respira mas que la imagen. */
+  .im-split--texto-ancho {
+    grid-template-columns: 0.85fr 1.15fr;
+  }
+  .im-split--imagen-ancha {
+    grid-template-columns: 1.15fr 0.85fr;
+  }
+  .im-split--invertido > :first-child {
+    order: 2;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   4. CABECERA DE SECCION TIPO REVISTA
+   micro-label en mayusculas | regla de 1px | enlace-flecha
+   --------------------------------------------------------------------------- */
+.im-rubrica {
+  display: flex;
+  align-items: center;
+  gap: var(--im-15);
+  margin-bottom: var(--im-30);
+}
+
+.im-rubrica__label {
+  font-family: var(--im-texto);
+  font-size: var(--im-label);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Regla de 1px. Usa el degradado metalico como AREA, no como borde fino de
+   texto: es decoracion, cumple con la regla del oro. */
+.im-rubrica__regla {
+  flex: 1 1 auto;
+  height: 1px;
+  min-width: var(--im-20);
+  background: var(--kp-oro-horizontal);
+  border: 0;
+}
+
+.im-rubrica__enlace {
+  font-size: var(--im-texto-s);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Filete dorado como separador de secciones. */
+.im-filete {
+  height: 1px;
+  border: 0;
+  margin: 0;
+  background: var(--kp-oro-horizontal);
+}
+
+/* Micro-label suelto (kicker). */
+.im-label {
+  font-size: var(--im-label);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   5. TIPOGRAFIA DE PAGINA
+   --------------------------------------------------------------------------- */
+.im-display {
+  font-size: var(--im-display-xxl);
+  font-weight: 300;
+}
+
+.im-titulo-pagina {
+  font-size: var(--im-display-xl);
+  font-weight: 300;
+}
+
+.im-titulo-seccion {
+  font-size: var(--im-display-l);
+}
+
+.im-entradilla {
+  font-size: var(--im-texto-l);
+  line-height: 1.6;
+  color: var(--kp-ink-muted);
+  max-width: var(--im-medida);
+}
+
+.im-nota {
+  font-size: var(--im-texto-s);
+  color: var(--kp-ink-muted);
+  max-width: var(--im-medida);
+}
+
+/* ---------------------------------------------------------------------------
+   6. ENLACES Y ACCIONES
+   REGLA: cero botones rellenos de color como accion primaria.
+   Toda accion es un enlace con BORDE de 1px.
+   --------------------------------------------------------------------------- */
+.im a {
+  color: var(--kp-accent-ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+/* Enlace inline dentro de prosa: radio 3.75px en el resaltado de foco/hover. */
+.im-prosa a,
+.im-enlace-inline {
+  color: var(--kp-accent-ink);
+  border-radius: var(--im-radio-inline);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: background-color 0.18s ease;
+}
+
+/* SIN resaltado de fondo en el hover, a proposito.
+   Cualquier tinte dorado bajo el texto dorado baja el contraste por debajo de
+   4.5:1 (0.09 -> 4.24:1, 0.05 -> 4.48:1). El hover se expresa engrosando el
+   subrayado y pasando a tinta: se nota igual y mantiene el contraste AA. */
+.im-prosa a:hover,
+.im-enlace-inline:hover {
+  color: var(--kp-ink);
+  text-decoration-thickness: 2px;
+}
+
+/* La ACCION del sistema: outlined link. Nunca relleno solido. */
+.im-accion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--im-10);
+  padding: var(--im-12) var(--im-30);
+  border: 1px solid var(--kp-accent-ink);
+  border-radius: var(--im-radio-pildora);
+  background: transparent;
+  color: var(--kp-accent-ink);
+  font-family: var(--im-texto);
+  font-size: var(--im-texto-s);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  line-height: 1.2;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.im-accion:hover {
+  /* El hover invierte a tinta, no a oro: mantiene el contraste AA. */
+  background: var(--kp-ink);
+  border-color: var(--kp-ink);
+  color: var(--kp-bg);
+}
+
+/* Variante sobre fondo oscuro (pie). */
+.im-accion--claro {
+  border-color: var(--kp-accent);
+  color: var(--kp-bg);
+}
+
+.im-accion--claro:hover {
+  background: var(--kp-bg);
+  border-color: var(--kp-bg);
+  color: var(--kp-ink);
+}
+
+/* Enlace-flecha: el gesto de navegacion editorial. */
+.im-flecha {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--im-8);
+  color: var(--kp-accent-ink);
+  font-size: var(--im-texto-s);
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.im-flecha::after {
+  content: '\2192';
+  transition: transform 0.2s ease;
+}
+
+.im-flecha:hover {
+  border-bottom-color: var(--kp-accent-ink);
+}
+
+.im-flecha:hover::after {
+  transform: translateX(3px);
+}
+
+.im-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--im-15);
+  align-items: center;
+}
+
+/* ---------------------------------------------------------------------------
+   7. MARCO DE IMAGEN
+   Las fotos son de baja resolucion: el marco las protege y las contiene.
+   NUNCA a sangre completa.
+   --------------------------------------------------------------------------- */
+.im-marco {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--im-radio-marco);
+  border: 1px solid var(--kp-border);
+  background: var(--kp-surface);
+}
+
+.im-marco > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Marco que RESPETA la proporcion original de la imagen.
+   Las portadas del diario son heterogeneas (2 verticales 2:3, 6 cuadradas y
+   7 apaisadas 3:2) y varias llevan texto incrustado en la propia fotografia:
+   un recorte "cover" a 3:2 les corta ese texto. En la portada del articulo,
+   donde la imagen manda, se deja respirar completa y se limita la altura para
+   que no empuje la lectura fuera de pantalla. */
+.im-marco--intacto {
+  display: grid;
+  place-items: center;
+  background: var(--kp-bg);
+}
+
+/* Doble clase para ganar en especificidad a `.im-marco > img`, que declara
+   width/height 100% + object-fit cover unas reglas mas arriba. */
+.im-marco.im-marco--intacto > img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(70vh, 560px);
+  object-fit: contain;
+}
+
+/* Marco con relacion de aspecto fija, para rejillas homogeneas. */
+.im-marco--4x3 {
+  aspect-ratio: 4 / 3;
+}
+
+.im-marco--1x1 {
+  aspect-ratio: 1 / 1;
+}
+
+.im-marco--3x2 {
+  aspect-ratio: 3 / 2;
+}
+
+/* Marco de producto: la foto va PEQUENA dentro del marco.
+   Esto es deliberado: perdona la baja resolucion del material. */
+.im-marco--producto {
+  display: grid;
+  place-items: center;
+  padding: var(--im-30);
+  background: var(--kp-surface);
+}
+
+.im-marco--producto > img {
+  width: auto;
+  max-width: 72%;
+  max-height: 72%;
+  object-fit: contain;
+}
+
+/* ---------------------------------------------------------------------------
+   8. CABECERA DEL SITIO
+   --------------------------------------------------------------------------- */
+.im-cabecera {
+  background: var(--kp-bg);
+  position: relative;
+  z-index: 20;
+}
+
+.im-cabecera__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--im-20);
+  padding-block: var(--im-15);
+}
+
+.im-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--im-12);
+  text-decoration: none;
+  color: var(--kp-ink);
+}
+
+.im-logo__emblema {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: block;
+}
+
+.im-logo__texto {
+  font-family: var(--im-display);
+  font-weight: 400;
+  font-size: 1.125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.im-logo__lema {
+  display: block;
+  font-family: var(--im-texto);
+  font-size: 0.5625rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+  margin-top: var(--im-5);
+}
+
+/* Navegacion: enlaces en oro legible, sin relleno. */
+.im-nav ul {
+  display: flex;
+  align-items: center;
+  gap: var(--im-20);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.im-nav a {
+  font-size: var(--im-texto-s);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+  text-decoration: none;
+  padding-block: var(--im-5);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.im-nav a:hover {
+  border-bottom-color: var(--kp-accent-ink);
+}
+
+.im-nav a[aria-current='page'] {
+  color: var(--kp-ink);
+  border-bottom-color: var(--kp-ink);
+}
+
+/* Movil: la nav pasa a una fila con scroll propio, no a un menu oculto.
+   Es un sitio de 6 enlaces: esconderlos cuesta mas de lo que ahorra. */
+@media (max-width: 767px) {
+  .im-cabecera__barra {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--im-12);
+    padding-block: var(--im-12);
+  }
+
+  .im-nav {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .im-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .im-nav ul {
+    gap: var(--im-15);
+    padding-bottom: var(--im-5);
+  }
+
+  .im-nav a {
+    white-space: nowrap;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   9. PIE
+   Fondo oscuro con textura de lino, emblema y filete dorado.
+   --------------------------------------------------------------------------- */
+/* El lino de marca NO se tesela: el archivo (610x813) no es una trama continua,
+   lleva el wordmark incrustado, y al repetirlo salian varios "KAFFEEPLATZ"
+   compitiendo con el contenido. Se usa como UNA marca de agua unica, anclada a
+   la derecha y muy atenuada: se lee como textura, no como logo repetido. */
+.im-pie {
+  position: relative;
+  margin-top: var(--im-seccion-grande);
+  background-color: var(--im-oscuro);
+  color: var(--kp-bg);
+  border-top: 1px solid transparent;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.im-pie::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--kp-lino);
+  background-repeat: no-repeat;
+  background-position: right -10% center;
+  background-size: auto 150%;
+  opacity: 0.12;
+  mix-blend-mode: luminosity;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.im-pie__filete {
+  height: 2px;
+  border: 0;
+  margin: 0;
+  background: var(--kp-oro-horizontal);
+}
+
+.im-pie__cuerpo {
+  display: grid;
+  gap: var(--im-30);
+  padding-block: var(--im-50);
+}
+
+@media (min-width: 900px) {
+  .im-pie__cuerpo {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--im-50);
+    align-items: start;
+  }
+}
+
+.im-pie__emblema {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: block;
+  margin-bottom: var(--im-20);
+}
+
+.im-pie__lema {
+  font-family: var(--im-display);
+  font-weight: 300;
+  font-size: var(--im-display-m);
+  line-height: 1.15;
+  color: var(--kp-bg);
+  max-width: 16ch;
+}
+
+/* Sobre el fondo #1A1A1A, el crema da 15.8:1 y el oro claro #DEC185 da 10.9:1.
+   Aqui SI es legible porque el fondo es oscuro, no crema. */
+.im-pie a {
+  color: var(--kp-accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  border-radius: var(--im-radio-inline);
+}
+
+.im-pie a:hover {
+  color: var(--kp-bg);
+}
+
+.im-pie__bloque {
+  display: grid;
+  gap: var(--im-10);
+}
+
+.im-pie__titulo {
+  font-size: var(--im-label);
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  /* Sobre oscuro, el oro claro es seguro y evoca el metal del emblema. */
+  color: var(--kp-accent);
+  margin-bottom: var(--im-5);
+}
+
+.im-pie__dato {
+  font-size: var(--im-texto-s);
+  color: var(--kp-bg);
+  margin: 0;
+}
+
+.im-pie__nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--im-8);
+}
+
+.im-pie__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--im-8) var(--im-20);
+  justify-content: space-between;
+  padding-block: var(--im-20);
+  border-top: 1px solid rgb(222 193 133 / 0.22);
+  font-size: var(--im-texto-s);
+  color: var(--kp-bg);
+}
+
+/* ---------------------------------------------------------------------------
+   10. TARJETA DE PRODUCTO
+   Blanca, radio 25px, padding 30px, sobre crema. Sin sombra.
+   --------------------------------------------------------------------------- */
+[data-kp-rejilla='productos'] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--im-20);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
+}
+
+@media (min-width: 768px) {
+  [data-kp-rejilla='productos'] {
+    gap: var(--im-30);
+  }
+}
+
+.im [data-kp-tarjeta] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--kp-surface);
+  border: 1px solid var(--kp-border);
+  border-radius: var(--im-radio-marco);
+  padding: var(--im-20);
+  transition: border-color 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .im [data-kp-tarjeta] {
+    padding: var(--im-30);
+  }
+}
+
+.im [data-kp-tarjeta]:hover {
+  border-color: var(--kp-accent-ink);
+}
+
+.im [data-kp-tarjeta-enlace] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--im-20);
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* El media de la tarjeta es un marco interior: superficie crema dentro de la
+   tarjeta blanca, con la foto PEQUENA y centrada. */
+.im [data-kp-tarjeta-media] {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--im-radio-marco);
+  background: var(--kp-bg);
+  padding: var(--im-20);
+  overflow: hidden;
+}
+
+.im [data-kp-tarjeta-media] img {
+  width: auto;
+  max-width: 78%;
+  max-height: 78%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.im [data-kp-tarjeta-cuerpo] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--im-8);
+  flex: 1;
+}
+
+.im [data-kp-tarjeta-titulo] {
+  font-family: var(--im-display);
+  font-size: var(--im-display-s);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--kp-ink);
+}
+
+.im [data-kp-tarjeta-precio] {
+  font-family: var(--im-texto);
+  font-size: var(--im-texto-m);
+  color: var(--kp-ink-muted);
+  margin-top: auto;
+  padding-top: var(--im-8);
+}
+
+[data-kp-precio-prefijo] {
+  font-size: var(--im-texto-s);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.im [data-kp-agotado] {
+  font-size: var(--im-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kp-ink-muted);
+}
+
+/* La accion de la tarjeta: outlined link a ancho completo. */
+.im [data-kp-tarjeta] > [data-kp-whatsapp] {
+  margin-top: var(--im-20);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--im-8);
+  padding: var(--im-10) var(--im-20);
+  border: 1px solid var(--kp-accent-ink);
+  border-radius: var(--im-radio-pildora);
+  color: var(--kp-accent-ink);
+  font-size: var(--im-texto-s);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  text-align: center;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.im [data-kp-tarjeta] > [data-kp-whatsapp]:hover {
+  background: var(--kp-ink);
+  border-color: var(--kp-ink);
+  color: var(--kp-bg);
+}
+
+.im [data-kp-disponible='false'] [data-kp-tarjeta-media] img {
+  opacity: 0.55;
+}
+
+.im [data-kp-sin-imagen] {
+  font-size: var(--im-texto-s);
+  color: var(--kp-ink-muted);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------------------
+   11. TARJETA DE ARTICULO
+   --------------------------------------------------------------------------- */
+[data-kp-rejilla='articulos'] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--im-30);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}
+
+.im [data-kp-articulo] {
+  height: 100%;
+}
+
+.im [data-kp-articulo-enlace] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--im-20);
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.im [data-kp-articulo-media] {
+  border-radius: var(--im-radio-marco);
+  border: 1px solid var(--kp-border);
+  overflow: hidden;
+  background: var(--kp-surface);
+  aspect-ratio: 3 / 2;
+  display: grid;
+  place-items: center;
+}
+
+.im [data-kp-articulo-media] img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.im [data-kp-articulo-enlace]:hover [data-kp-articulo-media] img {
+  transform: scale(1.03);
+}
+
+.im [data-kp-articulo-cuerpo] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--im-10);
+}
+
+.im [data-kp-articulo-fecha] {
+  font-size: var(--im-label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+}
+
+.im [data-kp-articulo-titulo] {
+  font-family: var(--im-display);
+  font-size: var(--im-display-s);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--kp-ink);
+}
+
+.im [data-kp-articulo-enlace]:hover [data-kp-articulo-titulo] {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.im [data-kp-articulo-resumen] {
+  font-size: var(--im-texto-s);
+  color: var(--kp-ink-muted);
+  line-height: 1.6;
+}
+
+/* ---------------------------------------------------------------------------
+   12. PROSA DEL DIARIO
+   --------------------------------------------------------------------------- */
+.im-prosa {
+  max-width: var(--im-medida);
+  font-size: var(--im-texto-l);
+  line-height: 1.75;
+  color: var(--kp-ink);
+}
+
+.im-prosa > * + * {
+  margin-top: var(--im-20);
+}
+
+.im-prosa h2 {
+  font-size: var(--im-display-m);
+  font-weight: 400;
+  margin-top: var(--im-50);
+  line-height: 1.15;
+}
+
+.im-prosa h3 {
+  font-size: var(--im-display-s);
+  font-weight: 400;
+  margin-top: var(--im-30);
+}
+
+.im-prosa ul,
+.im-prosa ol {
+  padding-left: var(--im-20);
+}
+
+.im-prosa li + li {
+  margin-top: var(--im-10);
+}
+
+.im-prosa img {
+  border-radius: var(--im-radio-marco);
+  border: 1px solid var(--kp-border);
+  display: block;
+}
+
+.im-prosa blockquote {
+  margin: var(--im-30) 0;
+  padding: var(--im-20) var(--im-30);
+  border-left: 2px solid var(--kp-accent-ink);
+  border-radius: 0 var(--im-radio-marco) var(--im-radio-marco) 0;
+  background: var(--kp-surface);
+  font-family: var(--im-display);
+  font-weight: 300;
+  font-size: var(--im-display-s);
+  line-height: 1.35;
+  color: var(--kp-ink);
+}
+
+.im-prosa strong {
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   13. FICHA DE PRODUCTO
+   --------------------------------------------------------------------------- */
+.im-ficha {
+  display: grid;
+  gap: var(--im-30);
+}
+
+@media (min-width: 900px) {
+  .im-ficha {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--im-50);
+    align-items: start;
+  }
+}
+
+.im-ficha__galeria {
+  display: grid;
+  gap: var(--im-15);
+}
+
+@media (min-width: 900px) {
+  .im-ficha__galeria {
+    position: sticky;
+    top: var(--im-20);
+  }
+}
+
+.im-ficha__galeria-extra {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: var(--im-10);
+}
+
+.im-ficha__info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--im-20);
+}
+
+.im-ficha__titulo {
+  font-size: var(--im-display-l);
+  font-weight: 300;
+}
+
+.im-ficha__precio {
+  font-family: var(--im-display);
+  font-size: var(--im-display-m);
+  font-weight: 400;
+  color: var(--kp-ink);
+}
+
+.im-ficha__estado {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--im-8);
+  align-self: flex-start;
+  padding: var(--im-5) var(--im-15);
+  border-radius: var(--im-radio-pildora);
+  border: 1px solid var(--kp-border);
+  background: var(--kp-surface);
+  font-size: var(--im-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kp-ink-muted);
+}
+
+.im-ficha__estado[data-kp-disponible='true'] {
+  border-color: var(--kp-accent-ink);
+  color: var(--kp-accent-ink);
+}
+
+.im-ficha__descripcion {
+  font-size: var(--im-texto-m);
+  line-height: 1.7;
+  color: var(--kp-ink);
+}
+
+.im-ficha__descripcion > * + * {
+  margin-top: var(--im-15);
+}
+
+.im-ficha__descripcion ul,
+.im-ficha__descripcion ol {
+  padding-left: var(--im-20);
+}
+
+.im-ficha__descripcion a {
+  color: var(--kp-accent-ink);
+  border-radius: var(--im-radio-inline);
+}
+
+.im-ficha__descripcion img {
+  border-radius: var(--im-radio-marco);
+  border: 1px solid var(--kp-border);
+}
+
+.im-ficha__opciones {
+  display: grid;
+  gap: var(--im-15);
+  padding: var(--im-20);
+  border: 1px solid var(--kp-border);
+  border-radius: var(--im-radio-marco);
+  background: var(--kp-surface);
+}
+
+.im-ficha__opcion-nombre {
+  font-family: var(--im-texto);
+  font-size: var(--im-label);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+}
+
+.im-ficha__opciones ul {
+  list-style: none;
+  padding: 0;
+  margin-top: var(--im-10);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--im-8);
+}
+
+.im [data-kp-variante] {
+  padding: var(--im-5) var(--im-15);
+  border: 1px solid var(--kp-border);
+  border-radius: var(--im-radio-pildora);
+  font-size: var(--im-texto-s);
+  color: var(--kp-ink);
+}
+
+.im [data-kp-variante][data-kp-disponible='false'] {
+  color: var(--kp-ink-muted);
+  border-style: dashed;
+}
+
+.im-ficha__accion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--im-12);
+  padding-top: var(--im-20);
+  border-top: 1px solid var(--kp-border);
+}
+
+/* El "Pedir por WhatsApp": outlined link, NUNCA boton solido. */
+.im-ficha__accion [data-kp-whatsapp] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--im-10);
+  align-self: flex-start;
+  padding: var(--im-15) var(--im-30);
+  border: 1px solid var(--kp-accent-ink);
+  border-radius: var(--im-radio-pildora);
+  color: var(--kp-accent-ink);
+  font-size: var(--im-texto-m);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.im-ficha__accion [data-kp-whatsapp]:hover {
+  background: var(--kp-ink);
+  border-color: var(--kp-ink);
+  color: var(--kp-bg);
+}
+
+/* ---------------------------------------------------------------------------
+   14. MIGAS
+   --------------------------------------------------------------------------- */
+.im-migas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--im-8);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--im-texto-s);
+  color: var(--kp-ink-muted);
+}
+
+.im-migas a {
+  color: var(--kp-accent-ink);
+  text-decoration: none;
+  border-radius: var(--im-radio-inline);
+}
+
+.im-migas a:hover {
+  text-decoration: underline;
+}
+
+.im-migas__sep {
+  color: var(--kp-ink-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   15. LISTAS EDITORIALES (pasos, criterios, hechos, canales)
+   --------------------------------------------------------------------------- */
+.im-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--im-30);
+}
+
+@media (min-width: 768px) {
+  .im-lista--3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .im-lista--2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.im-lista__item {
+  display: grid;
+  gap: var(--im-10);
+  padding-top: var(--im-20);
+  border-top: 1px solid var(--kp-border);
+}
+
+.im-lista__numero {
+  font-family: var(--im-display);
+  font-size: var(--im-display-m);
+  font-weight: 300;
+  line-height: 1;
+  color: var(--kp-accent-ink);
+}
+
+.im-lista__titulo {
+  font-family: var(--im-display);
+  font-size: var(--im-display-s);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.im-lista__texto {
+  font-size: var(--im-texto-m);
+  color: var(--kp-ink-muted);
+  line-height: 1.65;
+}
+
+/* Tarjeta blanca sobre crema: la elevacion es cambio de superficie, no sombra. */
+.im-panel {
+  background: var(--kp-surface);
+  border: 1px solid var(--kp-border);
+  border-radius: var(--im-radio-marco);
+  padding: var(--im-20);
+}
+
+@media (min-width: 768px) {
+  .im-panel {
+    padding: var(--im-30);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   16. FORMULARIO
+   --------------------------------------------------------------------------- */
+.im [data-kp-formulario-contacto] {
+  display: grid;
+  gap: var(--im-20);
+}
+
+.im [data-kp-form] {
+  display: grid;
+  gap: var(--im-20);
+}
+
+@media (min-width: 700px) {
+  .im [data-kp-form] {
+    grid-template-columns: 1fr 1fr;
+  }
+  .im [data-kp-form] > [data-kp-campo]:nth-child(4),
+  .im [data-kp-form] > [data-kp-enviar],
+  .im [data-kp-form] > [data-kp-nota] {
+    grid-column: 1 / -1;
+  }
+}
+
+.im [data-kp-campo] {
+  display: grid;
+  gap: var(--im-8);
+}
+
+.im [data-kp-campo] label {
+  font-size: var(--im-label);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kp-ink-muted);
+}
+
+.im [data-kp-campo] input,
+.im [data-kp-campo] textarea {
+  width: 100%;
+  padding: var(--im-12) var(--im-20);
+  border: 1px solid var(--kp-border);
+  border-radius: var(--im-radio-pildora);
+  background: var(--kp-surface);
+  color: var(--kp-ink);
+  font-family: var(--im-texto);
+  font-size: var(--im-texto-m);
+}
+
+.im [data-kp-campo] textarea {
+  border-radius: var(--im-radio-marco);
+  resize: vertical;
+}
+
+.im [data-kp-campo] input:focus,
+.im [data-kp-campo] textarea:focus {
+  border-color: var(--kp-accent-ink);
+}
+
+/* El submit tambien es outlined, coherente con el sistema. */
+.im [data-kp-enviar] {
+  justify-self: flex-start;
+  padding: var(--im-12) var(--im-30);
+  border: 1px solid var(--kp-accent-ink);
+  border-radius: var(--im-radio-pildora);
+  background: transparent;
+  color: var(--kp-accent-ink);
+  font-family: var(--im-texto);
+  font-size: var(--im-texto-s);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.im [data-kp-enviar]:hover:not(:disabled) {
+  background: var(--kp-ink);
+  border-color: var(--kp-ink);
+  color: var(--kp-bg);
+}
+
+.im [data-kp-enviar]:disabled {
+  border-color: var(--kp-border);
+  color: var(--kp-ink-muted);
+  cursor: not-allowed;
+}
+
+.im [data-kp-aviso] {
+  padding: var(--im-20);
+  border: 1px solid var(--kp-accent-ink);
+  border-radius: var(--im-radio-marco);
+  background: var(--kp-surface);
+  font-size: var(--im-texto-s);
+  color: var(--kp-ink);
+  line-height: 1.6;
+}
+
+.im [data-kp-nota] {
+  font-size: var(--im-texto-s);
+  color: var(--kp-ink-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   17. BLOQUE PROVISIONAL (/cafe)
+   Debe seguir siendo INCONFUNDIBLE con el contenido definitivo.
+   Se reestila al lenguaje Imprenta pero conserva el borde discontinuo y la
+   trama diagonal que lo delatan.
+   --------------------------------------------------------------------------- */
+.im [data-kp-provisional] {
+  border: 2px dashed var(--kp-accent-ink);
+  border-radius: var(--im-radio-marco);
+  padding: var(--im-20);
+  background-color: transparent;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgb(143 103 36 / 0.05) 10px,
+    rgb(143 103 36 / 0.05) 20px
+  );
+}
+
+@media (min-width: 768px) {
+  .im [data-kp-provisional] {
+    padding: var(--im-30);
+  }
+}
+
+/* El bloque anidado no repite borde ni trama: solo el contenedor exterior. */
+.im [data-kp-provisional] [data-kp-provisional] {
+  border: 0;
+  padding: 0;
+  background-image: none;
+  border-radius: 0;
+}
+
+.im [data-kp-provisional-aviso] {
+  display: block;
+  margin-bottom: var(--im-30);
+  padding: var(--im-12) var(--im-20);
+  border-radius: var(--im-radio-pildora);
+  /* Relleno de oro: aqui el #DEC185 SI es correcto, porque es AREA y el texto
+     encima va en --kp-ink. */
+  background: var(--kp-accent);
+  color: var(--kp-ink);
+  font-size: var(--im-texto-s);
+  line-height: 1.5;
+}
+
+.im [data-kp-provisional] h2 {
+  font-size: var(--im-display-m);
+  margin-top: var(--im-50);
+}
+
+.im [data-kp-provisional] > section:first-of-type h2 {
+  margin-top: 0;
+}
+
+.im [data-kp-provisional] p {
+  color: var(--kp-ink);
+  max-width: var(--im-medida);
+  margin-top: var(--im-15);
+}
+
+.im [data-kp-lista='criterio'],
+.im [data-kp-lista='pendientes'],
+.im [data-kp-lista='hechos'],
+.im [data-kp-lista='canales'],
+.im [data-kp-lista='envios'] {
+  list-style: none;
+  margin: var(--im-20) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--im-20);
+}
+
+.im [data-kp-lista='pendientes'] li,
+.im [data-kp-lista='envios'] li {
+  padding-top: var(--im-12);
+  border-top: 1px solid var(--kp-border);
+  font-size: var(--im-texto-m);
+  color: var(--kp-ink);
+}
+
+.im [data-kp-lista='pendientes'] strong {
+  display: block;
+  font-size: var(--im-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kp-accent-ink);
+  font-weight: 500;
+  margin-bottom: var(--im-5);
+}
+
+/* ---------------------------------------------------------------------------
+   18. UTILIDADES
+   --------------------------------------------------------------------------- */
+.im-solo-lectores {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.im-centro {
+  display: grid;
+  gap: var(--im-20);
+  justify-items: start;
+}
+
+.im-pila-20 {
+  display: grid;
+  gap: var(--im-20);
+}
+
+.im-pila-30 {
+  display: grid;
+  gap: var(--im-30);
+}
+
+.im-pila-50 {
+  display: grid;
+  gap: var(--im-50);
+}
+
+.im-medida {
+  max-width: var(--im-medida);
+}
+
+/* El enlace de salto, en el lenguaje del sistema. */
+.im .kp-saltar:focus {
+  border-radius: var(--im-radio-pildora);
+  border: 1px solid var(--kp-accent-ink);
+  color: var(--kp-accent-ink);
+  font-size: var(--im-texto-s);
+}

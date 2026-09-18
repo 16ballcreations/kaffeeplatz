@@ -1,0 +1,34 @@
+{
+  "handle": "filtros-chemex",
+  "titulo": "Filtros Chemex",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>Los filtros de papel Chemex son esenciales para lograr el perfil de sabor distintivo de esta icónica cafetera. Fabricados con papel especializado, son un 20-30% más gruesos que los filtros estándar, lo que permite retener aceites no deseados y partículas de café, resultando en una taza más clara, dulce y con cuerpo equilibrado. Su forma cuadrada y pre-plegada facilita su uso y asegura una extracción uniforme. Perfectos para quienes buscan una experiencia de café más pura y refinada.</p>\n<p> </p>",
+  "descripcionTexto": "Los filtros de papel Chemex son esenciales para lograr el perfil de sabor distintivo de esta icónica cafetera. Fabricados con papel especializado, son un 20-30% más gruesos que los filtros estándar, lo que permite retener aceites no deseados y partículas de café, resultando en una taza más clara, dulce y con cuerpo equilibrado. Su forma cuadrada y pre-plegada facilita su uso y asegura una extracción uniforme. Perfectos para quienes buscan una experiencia de café más pura y refinada.",
+  "precio": 120000,
+  "precioFormateado": "$120.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "48420731060461",
+      "titulo": "120.000",
+      "precio": 120000,
+      "precioFormateado": "$120.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [
+    {
+      "nombre": "6 tazas",
+      "valores": [
+        "120.000"
+      ]
+    }
+  ],
+  "imagenes": [
+    {
+      "src": "/img/productos/filtros-chemex/filtros-chemex-1.jpg",
+      "alt": "Filtros Chemex"
+    }
+  ]
+}

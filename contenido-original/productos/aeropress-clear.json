@@ -1,0 +1,61 @@
+{
+  "handle": "aeropress-clear",
+  "title": "Aeropress Clear",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-03-03T19:08:48-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>La AeroPress Clear es la cafetera ideal para los amantes del café que buscan una preparación rápida y versátil. Su diseño en material transparente y resistente permite preparar desde un espresso hasta un café filtrado, resaltando los sabores y aromas del café de especialidad colombiano. Perfecta para el hogar, la oficina o viajes.</p>\n<p> </p>",
+  "body_text": "La AeroPress Clear es la cafetera ideal para los amantes del café que buscan una preparación rápida y versátil. Su diseño en material transparente y resistente permite preparar desde un espresso hasta un café filtrado, resaltando los sabores y aromas del café de especialidad colombiano. Perfecta para el hogar, la oficina o viajes.",
+  "variants": [
+    {
+      "id": 47804709830893,
+      "title": "Morado",
+      "price": "315000.00",
+      "compare_at_price": "320000.00",
+      "sku": null,
+      "available": true,
+      "option1": "Morado",
+      "option2": null,
+      "option3": null
+    },
+    {
+      "id": 47804709863661,
+      "title": "Verde",
+      "price": "315000.00",
+      "compare_at_price": "320000.00",
+      "sku": null,
+      "available": true,
+      "option1": "Verde",
+      "option2": null,
+      "option3": null
+    },
+    {
+      "id": 47804709896429,
+      "title": "Rosa",
+      "price": "315000.00",
+      "compare_at_price": "320000.00",
+      "sku": null,
+      "available": false,
+      "option1": "Rosa",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Color",
+      "values": [
+        "Morado",
+        "Verde",
+        "Rosa"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/Screenshot-2025-03-10-19-24-44-453_1.jpg?v=1741654828",
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_bc0488f6-2861-4dd7-84e8-03fe7588b1e0.jpg?v=1752188387",
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_719be9ff-3d3f-45bc-b77b-5ad1a0344a0b.jpg?v=1752188740"
+  ]
+}

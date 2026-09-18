@@ -1,0 +1,27 @@
+{
+  "handle": "servex-hario",
+  "titulo": "Server | Hario",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>El Hario Server 02 es el complemento perfecto para los amantes del café filtrado. Fabricado con vidrio resistente al calor, permite ver claramente la extracción mientras mantiene la temperatura ideal. Su diseño ergonómico incluye tapa y mango de plástico para un vertido cómodo y seguro. Con una capacidad de hasta 600ml, es ideal para preparar entre 2 a 4 tazas de café. Compatible con microondas y pensado para integrarse perfectamente con drippers como el V60, este server es tan funcional como estéticamente atractivo.</p>",
+  "descripcionTexto": "El Hario Server 02 es el complemento perfecto para los amantes del café filtrado. Fabricado con vidrio resistente al calor, permite ver claramente la extracción mientras mantiene la temperatura ideal. Su diseño ergonómico incluye tapa y mango de plástico para un vertido cómodo y seguro. Con una capacidad de hasta 600ml, es ideal para preparar entre 2 a 4 tazas de café. Compatible con microondas y pensado para integrarse perfectamente con drippers como el V60, este server es tan funcional como estéticamente atractivo.",
+  "precio": 120000,
+  "precioFormateado": "$120.000",
+  "disponible": false,
+  "variantes": [
+    {
+      "id": "48023415554285",
+      "titulo": "Server | Hario",
+      "precio": 120000,
+      "precioFormateado": "$120.000",
+      "disponible": false,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/servex-hario/servex-hario-1.webp",
+      "alt": "Server | Hario"
+    }
+  ]
+}

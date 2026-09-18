@@ -1,0 +1,34 @@
+{
+  "handle": "dripper-flor-de-loto",
+  "titulo": "V60 Suiren",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>El V60 Flor de Loto es un accesorio innovador para preparar café filtrado con calidad de barista. Su diseño en forma de flor permite una extracción uniforme, resaltando los sabores y aromas del café de especialidad colombiano. Ideal para quienes buscan mejorar su experiencia de método pour-over en casa o en una cafetería de especialidad.</p>",
+  "descripcionTexto": "El V60 Flor de Loto es un accesorio innovador para preparar café filtrado con calidad de barista. Su diseño en forma de flor permite una extracción uniforme, resaltando los sabores y aromas del café de especialidad colombiano. Ideal para quienes buscan mejorar su experiencia de método pour-over en casa o en una cafetería de especialidad.",
+  "precio": 85000,
+  "precioFormateado": "$85.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47826727207149",
+      "titulo": "Negro",
+      "precio": 85000,
+      "precioFormateado": "$85.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [
+    {
+      "nombre": "Color",
+      "valores": [
+        "Negro"
+      ]
+    }
+  ],
+  "imagenes": [
+    {
+      "src": "/img/productos/dripper-flor-de-loto/dripper-flor-de-loto-1.jpg",
+      "alt": "V60 Suiren"
+    }
+  ]
+}

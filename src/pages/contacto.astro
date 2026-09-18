@@ -1,0 +1,85 @@
+---
+/**
+ * /contacto — Canal directo.
+ *
+ * WhatsApp es el canal REAL. El formulario es una maqueta sin backend
+ * (ver FormularioContacto.astro).
+ *
+ * Los datos de cobertura, tiempos y horario salen de
+ * contenido-original/datos/politicas/. No se inventa ninguno.
+ */
+import Base from '../layouts/Base.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import FormularioContacto from '../components/FormularioContacto.astro';
+import { SITIO } from '../datos/sitio';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ContactPage',
+  name: 'Contacto KaffeePlatz',
+  description: 'Cómo contactar con KaffeePlatz: WhatsApp, correo y horario de atención.',
+};
+---
+
+<Base
+  titulo="Contacto"
+  descripcion="Escríbenos por WhatsApp al +57 301 380 9886 o a kaffeeplatz28@gmail.com. Atendemos de lunes a viernes, 9:00 a.m. a 6:00 p.m."
+  camino="/contacto"
+  migas={[{ nombre: 'Contacto', href: '/contacto' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado">
+    <p data-kp-kicker>Contacto</p>
+    <h1>Hablemos</h1>
+    <p data-kp-entradilla>
+      Aquí no hay carrito ni pasarela de pago: cada pedido se cierra hablando con nosotros. Cuéntanos
+      qué buscas y te ayudamos a elegir.
+    </p>
+  </header>
+
+  <section data-kp-seccion="canales" aria-labelledby="t-canales">
+    <h2 id="t-canales">Canales directos</h2>
+    <ul data-kp-lista="canales">
+      <li>
+        <h3>WhatsApp</h3>
+        <p>La vía más rápida. Te responde {SITIO.dueña}.</p>
+        <p><strong>{SITIO.whatsappVisible}</strong></p>
+        <BotonWhatsApp>Abrir WhatsApp</BotonWhatsApp>
+      </li>
+      <li>
+        <h3>Correo</h3>
+        <p>Para pedidos especiales, facturación o incidencias con un envío.</p>
+        <p><a href={`mailto:${SITIO.email}`}>{SITIO.email}</a></p>
+      </li>
+      <li>
+        <h3>Horario de atención</h3>
+        <p>Lunes a viernes, de 9:00 a.m. a 6:00 p.m. (hora de Colombia).</p>
+      </li>
+      <li>
+        <h3>Dónde estamos</h3>
+        <p>{SITIO.ciudad}. Atendemos 100% en línea, sin punto físico de venta.</p>
+      </li>
+    </ul>
+  </section>
+
+  <section data-kp-seccion="envios" aria-labelledby="t-envios">
+    <h2 id="t-envios">Envíos</h2>
+    <p>Enviamos a todo el territorio colombiano con transportadoras certificadas.</p>
+    <ul data-kp-lista="envios">
+      <li>Ciudades principales: 2 a 5 días hábiles.</li>
+      <li>Otras ciudades y municipios: 5 a 8 días hábiles.</li>
+      <li>Pedidos por encargo o especiales: 8 a 15 días hábiles, y te avisamos.</li>
+    </ul>
+    <p>
+      El costo del envío depende del destino y del peso del pedido; te lo confirmamos al cerrar la
+      compra. Si tu pedido llega con el empaque dañado, escríbenos de inmediato a {SITIO.email} con
+      fotos de lo que recibiste.
+    </p>
+  </section>
+
+  <section data-kp-seccion="formulario" aria-labelledby="t-formulario">
+    <h2 id="t-formulario">Escríbenos por formulario</h2>
+    <p>¿Prefieres dejarnos el mensaje por escrito? Rellena esto y te respondemos.</p>
+    <FormularioContacto />
+  </section>
+</Base>

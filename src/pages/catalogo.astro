@@ -1,0 +1,65 @@
+---
+/**
+ * /catalogo — Listado completo de los 25 productos.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import TarjetaProducto from '../components/TarjetaProducto.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import { ruta } from '../datos/sitio';
+
+const productos = (await getCollection('productos')).sort((a, b) => {
+  // Disponibles primero, luego alfabetico.
+  if (a.data.disponible !== b.data.disponible) return a.data.disponible ? -1 : 1;
+  return a.data.titulo.localeCompare(b.data.titulo, 'es');
+});
+
+const disponibles = productos.filter((p) => p.data.disponible).length;
+const agotados = productos.length - disponibles;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Catálogo KaffeePlatz',
+  numberOfItems: productos.length,
+  itemListElement: productos.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: p.data.titulo,
+    url: new URL(ruta(`/producto/${p.data.handle}`), Astro.site).toString(),
+  })),
+};
+---
+
+<Base
+  titulo="Catálogo"
+  descripcion="Todos los accesorios de café de especialidad de KaffeePlatz: métodos, filtros, hervidores, grameras y utensilios."
+  camino="/catalogo"
+  migas={[{ nombre: 'Catálogo', href: '/catalogo' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado">
+    <h1>Catálogo</h1>
+    <p data-kp-entradilla>
+      {productos.length} accesorios para preparar café de especialidad en casa. {disponibles}{' '}
+      disponibles y {agotados} agotados ahora mismo. Si algo aparece agotado, escríbenos: te
+      contamos cuándo vuelve.
+    </p>
+  </header>
+
+  <section aria-label="Productos">
+    <ul data-kp-rejilla="productos">
+      {
+        productos.map((p, i) => (
+          <li>
+            <TarjetaProducto producto={p.data} prioridad={i < 4}>
+              <BotonWhatsApp slot="acciones" producto={p.data}>
+                Preguntar por este
+              </BotonWhatsApp>
+            </TarjetaProducto>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>

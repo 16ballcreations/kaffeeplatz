@@ -1,0 +1,139 @@
+---
+/**
+ * /diario — Indice de los 16 articulos, lenguaje IMPRENTA.
+ *
+ * Aqui el lenguaje brilla: el articulo mas reciente va en split editorial
+ * 50/50 a toda la medida, y el resto en rejilla con cabecera tipo revista.
+ */
+import { getCollection } from 'astro:content';
+import Imprenta from '../../layouts/Imprenta.astro';
+import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
+import Imagen from '../../components/Imagen.astro';
+import { ruta } from '../../datos/sitio';
+
+const articulos = (await getCollection('diario')).sort(
+  (a, b) => b.data.fecha.getTime() - a.data.fecha.getTime()
+);
+
+/** El mas reciente se abre en split editorial; el resto va en rejilla. */
+const principal = articulos[0];
+const resto = articulos.slice(1);
+
+const fechaLegible = (f: Date) =>
+  f.toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Blog',
+  name: 'Diario KaffeePlatz',
+  description: 'Guías y apuntes sobre café de especialidad y métodos de preparación.',
+  blogPost: articulos.map((a) => ({
+    '@type': 'BlogPosting',
+    headline: a.data.titulo,
+    datePublished: a.data.fecha.toISOString().slice(0, 10),
+    author: { '@type': 'Person', name: a.data.autor },
+    url: new URL(ruta(`/diario/${a.data.handle}`), Astro.site).toString(),
+  })),
+};
+---
+
+<Imprenta
+  titulo="Diario"
+  descripcion="Guías prácticas de café de especialidad: métodos, molienda, conservación y errores comunes al preparar café en casa."
+  camino="/diario"
+  migas={[{ nombre: 'Diario', href: '/diario' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado" class="im-contenedor im-seccion--amplia">
+    <div class="im-split im-split--texto-ancho">
+      <div class="im-pila-20">
+        <p class="im-label">Diario</p>
+        <h1 class="im-titulo-pagina">Diario</h1>
+      </div>
+      <p data-kp-entradilla class="im-entradilla">
+        Lo que hemos ido aprendiendo preparando café: cómo funciona cada método, qué molienda pide,
+        cómo conservar el grano y en qué solemos equivocarnos. {articulos.length} artículos.
+      </p>
+    </div>
+  </header>
+
+  <hr class="im-filete" />
+
+  {/* ---------- Apertura: split editorial con el articulo mas reciente ---------- */}
+  {
+    principal && (
+      <section aria-labelledby="t-principal" class="im-contenedor im-seccion--amplia">
+        <div class="im-rubrica">
+          <span class="im-rubrica__label">Lo último</span>
+          <hr class="im-rubrica__regla" />
+          <span class="im-rubrica__enlace" style="color:var(--kp-ink-muted)">
+            {fechaLegible(principal.data.fecha)}
+          </span>
+        </div>
+
+        <div class="im-split im-split--imagen-ancha">
+          {principal.data.imagen ? (
+            <a href={ruta(`/diario/${principal.data.handle}`)} class="im-marco im-marco--intacto">
+              <Imagen
+                src={principal.data.imagen}
+                alt={`Portada de: ${principal.data.titulo}`}
+                prioridad
+              />
+            </a>
+          ) : (
+            <div class="im-marco im-marco--3x2" style="display:grid;place-items:center">
+              <span data-kp-sin-imagen>Sin imagen</span>
+            </div>
+          )}
+
+          <div class="im-pila-20">
+            <h2 id="t-principal" class="im-titulo-seccion">
+              <a
+                href={ruta(`/diario/${principal.data.handle}`)}
+                style="color:var(--kp-ink);text-decoration:none"
+              >
+                {principal.data.titulo}
+              </a>
+            </h2>
+            {principal.data.resumen && (
+              <p class="im-entradilla">{principal.data.resumen}</p>
+            )}
+            <p>
+              <a href={ruta(`/diario/${principal.data.handle}`)} class="im-accion">
+                Leer el artículo
+              </a>
+            </p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <hr class="im-filete" />
+
+  {/* ---------- Rejilla del resto ---------- */}
+  <section aria-label="Artículos" class="im-contenedor im-seccion--amplia">
+    <div class="im-rubrica">
+      <span class="im-rubrica__label">Archivo</span>
+      <hr class="im-rubrica__regla" />
+      <span class="im-rubrica__enlace" style="color:var(--kp-ink-muted)">
+        {resto.length} artículos más
+      </span>
+    </div>
+
+    <ul data-kp-rejilla="articulos">
+      {
+        resto.map((a, i) => (
+          <li>
+            <TarjetaArticulo articulo={a.data} prioridad={i < 2} />
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Imprenta>

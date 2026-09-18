@@ -1,0 +1,35 @@
+{
+  "handle": "filtro-de-acero-v60",
+  "title": "Filtro V60 | Acero",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-03-17T16:00:10-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>Una opción ecológica y práctica para preparar café filtrado sin necesidad de filtros de papel. Ideal para quienes buscan practicidad y una taza con más cuerpo y aceites naturales del café.</p>\n<p> </p>",
+  "body_text": "Una opción ecológica y práctica para preparar café filtrado sin necesidad de filtros de papel. Ideal para quienes buscan practicidad y una taza con más cuerpo y aceites naturales del café.",
+  "variants": [
+    {
+      "id": 47861692596461,
+      "title": "Default Title",
+      "price": "45000.00",
+      "compare_at_price": null,
+      "sku": "",
+      "available": true,
+      "option1": "Default Title",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Title",
+      "values": [
+        "Default Title"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/background-editor_output_5138184a-e964-405f-b3bf-2090b080a273.png?v=1745002666"
+  ]
+}

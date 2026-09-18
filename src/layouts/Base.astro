@@ -1,0 +1,106 @@
+---
+/**
+ * Base — layout compartido por las tres propuestas.
+ *
+ * Es deliberadamente ESQUELETICO: <head>, cabecera, main, pie. Los agentes de
+ * diseno pueden crear SU PROPIO layout que envuelva o sustituya a este, pero
+ * deben conservar: SEO.astro, el enlace de salto y la estructura de landmarks.
+ */
+import SEO from '../components/SEO.astro';
+import type { Miga } from '../components/SEO.astro';
+import { SITIO, NAVEGACION, ruta } from '../datos/sitio';
+import '../styles/marca.css';
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+  camino: string;
+  imagen?: string;
+  tipoOg?: 'website' | 'article';
+  migas?: Miga[];
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Clase del <body>, para que cada diseno marque su tema. */
+  claseCuerpo?: string;
+}
+
+const {
+  titulo,
+  descripcion,
+  camino,
+  imagen,
+  tipoOg,
+  migas,
+  jsonLd,
+  claseCuerpo = '',
+} = Astro.props as Props;
+
+const anio = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href={ruta('/favicon.svg')} type="image/svg+xml" />
+    <SEO
+      titulo={titulo}
+      descripcion={descripcion}
+      camino={camino}
+      imagen={imagen}
+      tipoOg={tipoOg}
+      migas={migas}
+      jsonLd={jsonLd}
+    />
+    <slot name="head" />
+  </head>
+
+  <body class={claseCuerpo} data-kp-pagina={camino}>
+    <a class="kp-saltar" href="#contenido">Saltar al contenido</a>
+
+    <header data-kp-cabecera>
+      <slot name="cabecera">
+        <a href={ruta('/')} data-kp-logo>
+          {/* PLACEHOLDER TEXTUAL: los assets del logo estan en marca/. */}
+          <span data-kp-logo-texto>{SITIO.nombre}</span>
+        </a>
+        <nav aria-label="Navegación principal" data-kp-nav>
+          <ul>
+            {
+              NAVEGACION.map((i) => (
+                <li>
+                  <a
+                    href={ruta(i.href)}
+                    aria-current={i.href === camino ? 'page' : undefined}
+                  >
+                    {i.etiqueta}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </slot>
+    </header>
+
+    <main id="contenido" data-kp-main>
+      <slot />
+    </main>
+
+    <footer data-kp-pie>
+      <slot name="pie">
+        <p data-kp-pie-lema>{SITIO.lema}</p>
+        <p data-kp-pie-contacto>
+          WhatsApp: <a href={`https://wa.me/${SITIO.whatsappNumero}`}>{SITIO.whatsappVisible}</a>
+          {' · '}
+          <a href={`mailto:${SITIO.email}`}>{SITIO.email}</a>
+        </p>
+        <p data-kp-pie-legal>
+          {SITIO.nombre} · {SITIO.ciudad} · Tienda 100% online
+        </p>
+        <p data-kp-pie-copy>© {anio} {SITIO.nombre}</p>
+      </slot>
+    </footer>
+  </body>
+</html>

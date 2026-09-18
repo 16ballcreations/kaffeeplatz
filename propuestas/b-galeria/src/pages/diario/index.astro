@@ -1,0 +1,117 @@
+---
+/**
+ * /diario — Índice de los 16 artículos. PROPUESTA B "GALERÍA".
+ *
+ * El primer artículo va destacado a lo ancho, en composición asimétrica: es
+ * donde el lenguaje da lo mejor, con la tipografía sobre crema llevando el peso.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Imagen from '../../components/Imagen.astro';
+import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
+import { ruta } from '../../datos/sitio';
+
+const articulos = (await getCollection('diario')).sort(
+  (a, b) => b.data.fecha.getTime() - a.data.fecha.getTime()
+);
+
+const [principal, ...resto] = articulos;
+
+const fechaPrincipal = principal.data.fecha.toLocaleDateString('es-CO', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+const isoPrincipal = principal.data.fecha.toISOString().slice(0, 10);
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Blog',
+  name: 'Diario KaffeePlatz',
+  description: 'Guías y apuntes sobre café de especialidad y métodos de preparación.',
+  blogPost: articulos.map((a) => ({
+    '@type': 'BlogPosting',
+    headline: a.data.titulo,
+    datePublished: a.data.fecha.toISOString().slice(0, 10),
+    author: { '@type': 'Person', name: a.data.autor },
+    url: new URL(ruta(`/diario/${a.data.handle}`), Astro.site).toString(),
+  })),
+};
+---
+
+<Base
+  titulo="Diario"
+  descripcion="Guías prácticas de café de especialidad: métodos, molienda, conservación y errores comunes al preparar café en casa."
+  camino="/diario"
+  migas={[{ nombre: 'Diario', href: '/diario' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado" class="g-seccion g-agua">
+    <div class="g-envoltura">
+      <div class="g-asim">
+        <div class="g-pila">
+          <p class="g-kicker">Guías y apuntes</p>
+          <h1 class="g-display-med">
+            el <span class="g-cursiva">diario</span>
+          </h1>
+        </div>
+        <div>
+          <p data-kp-entradilla class="g-entradilla">
+            Lo que hemos ido aprendiendo preparando café: cómo funciona cada método, qué molienda
+            pide, cómo conservar el grano y en qué solemos equivocarnos. {articulos.length}{' '}
+            artículos.
+          </p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  {/* ---------- Artículo principal, a lo ancho ---------- */}
+  <section class="g-seccion-ajustada" aria-label="Última entrada">
+    <div class="g-envoltura">
+      <a href={ruta(`/diario/${principal.data.handle}`)} class="g-destacado">
+        <div class="g-destacado-media">
+          {
+            principal.data.imagen ? (
+              <div class="g-marco g-marco-ancho">
+                <Imagen
+                  src={principal.data.imagen}
+                  alt={`Portada de: ${principal.data.titulo}`}
+                  prioridad
+                />
+              </div>
+            ) : (
+              <div class="g-marco g-marco-ancho g-marco-tipografico">
+                <span class="g-marco-tipografico-texto">diario</span>
+              </div>
+            )
+          }
+        </div>
+        <div class="g-destacado-cuerpo">
+          <p class="g-kicker">Lo último</p>
+          <h2 class="g-destacado-titulo">{principal.data.titulo}</h2>
+          <p class="g-texto">{principal.data.resumen}</p>
+          <p class="g-kicker-tenue">
+            <time datetime={isoPrincipal}>{fechaPrincipal}</time> · {principal.data.autor}
+          </p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  {/* ---------- El resto ---------- */}
+  <section aria-label="Artículos" class="g-seccion-ajustada">
+    <div class="g-envoltura">
+      <ul data-kp-rejilla="articulos">
+        {
+          resto.map((a, i) => (
+            <li>
+              <TarjetaArticulo articulo={a.data} prioridad={i < 2} />
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</Base>

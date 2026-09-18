@@ -1,0 +1,27 @@
+{
+  "handle": "micro-filters-aeroprees",
+  "titulo": "Filtro de papel Aeropress",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>Los filtros de papel para AeroPress garantizan una extracción limpia y libre de residuos, resaltando las notas y aromas del café. Fabricados con papel de alta calidad, permiten un flujo uniforme de agua y evitan la presencia de sedimentos en la taza. ¡Imprescindibles para los amantes del café filtrado!</p>",
+  "descripcionTexto": "Los filtros de papel para AeroPress garantizan una extracción limpia y libre de residuos, resaltando las notas y aromas del café. Fabricados con papel de alta calidad, permiten un flujo uniforme de agua y evitan la presencia de sedimentos en la taza. ¡Imprescindibles para los amantes del café filtrado!",
+  "precio": 60000,
+  "precioFormateado": "$60.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47779605086445",
+      "titulo": "Filtro de papel Aeropress",
+      "precio": 60000,
+      "precioFormateado": "$60.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/micro-filters-aeroprees/micro-filters-aeroprees-1.png",
+      "alt": "Filtro de papel Aeropress"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "handle": "grameras-digital",
+  "titulo": "Gramera digital | Nknove",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p><span>Precisión, estilo y funcionalidad en una sola balanza. Ideal para quienes buscan perfeccionar su receta de café con control exacto de peso y tiempo.</span></p>",
+  "descripcionTexto": "Precisión, estilo y funcionalidad en una sola balanza. Ideal para quienes buscan perfeccionar su receta de café con control exacto de peso y tiempo.",
+  "precio": 110000,
+  "precioFormateado": "$110.000",
+  "disponible": false,
+  "variantes": [
+    {
+      "id": "47779490267373",
+      "titulo": "Gramera digital | Nknove",
+      "precio": 110000,
+      "precioFormateado": "$110.000",
+      "disponible": false,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/grameras-digital/grameras-digital-1.jpg",
+      "alt": "Gramera digital | Nknove"
+    }
+  ]
+}

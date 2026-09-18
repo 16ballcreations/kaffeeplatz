@@ -1,0 +1,35 @@
+{
+  "handle": "aeropress",
+  "title": "Aeropress Original",
+  "vendor": "Mi tienda",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-02-24T17:35:25-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>La AeroPress Original es la cafetera perfecta para quienes buscan un café de alta calidad, con cuerpo y sabor excepcional. Su diseño compacto y versátil permite preparar café tipo espresso, filtrado o cold brew en minutos. Ideal para amantes del café que desean una extracción precisa y sin sedimentos. ¡Disfruta de un café con calidad de barista en cualquier lugar!</p>",
+  "body_text": "La AeroPress Original es la cafetera perfecta para quienes buscan un café de alta calidad, con cuerpo y sabor excepcional. Su diseño compacto y versátil permite preparar café tipo espresso, filtrado o cold brew en minutos. Ideal para amantes del café que desean una extracción precisa y sin sedimentos. ¡Disfruta de un café con calidad de barista en cualquier lugar!",
+  "variants": [
+    {
+      "id": 47779402514669,
+      "title": "Default Title",
+      "price": "260000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": true,
+      "option1": "Default Title",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Title",
+      "values": [
+        "Default Title"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/background-editor_output_b660dd04-c50e-411a-86cb-54ba7300f011.png?v=1741652388"
+  ]
+}

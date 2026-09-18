@@ -1,0 +1,47 @@
+{
+  "handle": "hervidor-mango-de-madera",
+  "title": "Jarra cuello de ganso (600 ml)",
+  "vendor": "Mi tienda",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-02-24T17:56:50-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>La jarra cuello de ganso es una herramienta esencial para los baristas y amantes del café filtrado. Su boquilla delgada y curva permite un vertido preciso y constante, ideal para preparar café con métodos manuales como V60, Kalita o Chemex. Fabricada en acero inoxidable con acabado negro mate, incluye un mango ergonómico de madera que garantiza un agarre cómodo y seguro. Su diseño sofisticado y funcional no solo embellece tu estación de café, sino que también mejora la calidad de la extracción gracias al control total del flujo de agua.</p>\n<p> </p>",
+  "body_text": "La jarra cuello de ganso es una herramienta esencial para los baristas y amantes del café filtrado. Su boquilla delgada y curva permite un vertido preciso y constante, ideal para preparar café con métodos manuales como V60, Kalita o Chemex. Fabricada en acero inoxidable con acabado negro mate, incluye un mango ergonómico de madera que garantiza un agarre cómodo y seguro. Su diseño sofisticado y funcional no solo embellece tu estación de café, sino que también mejora la calidad de la extracción gracias al control total del flujo de agua.",
+  "variants": [
+    {
+      "id": 47811711009005,
+      "title": "Blanco",
+      "price": "120000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": false,
+      "option1": "Blanco",
+      "option2": null,
+      "option3": null
+    },
+    {
+      "id": 47811711041773,
+      "title": "Negro",
+      "price": "120000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": false,
+      "option1": "Negro",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Color",
+      "values": [
+        "Blanco",
+        "Negro"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_f5ae03c2-06e4-4dc2-b343-8ff76a13d596.png?v=1766766652"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "handle": "hario-switch",
+  "titulo": "Hario Switch",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>La Hario V60 Switch es una evolución del tradicional dripper V60. Este modelo incorpora un sistema de válvula en la base que te permite decidir cuándo liberar la infusión, combinando así el método de goteo con el de inmersión.<br>Su diseño de vidrio resistente y base de silicona asegura estabilidad y durabilidad, mientras que los filtros de papel garantizan una taza limpia y balanceada.<br>Es ideal para quienes disfrutan experimentar y buscan explorar diferentes formas de extracción sin complicarse.</p>",
+  "descripcionTexto": "La Hario V60 Switch es una evolución del tradicional dripper V60. Este modelo incorpora un sistema de válvula en la base que te permite decidir cuándo liberar la infusión, combinando así el método de goteo con el de inmersión.\nSu diseño de vidrio resistente y base de silicona asegura estabilidad y durabilidad, mientras que los filtros de papel garantizan una taza limpia y balanceada.\nEs ideal para quienes disfrutan experimentar y buscan explorar diferentes formas de extracción sin complicarse.",
+  "precio": 230000,
+  "precioFormateado": "$230.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "48480386973933",
+      "titulo": "Hario Switch",
+      "precio": 230000,
+      "precioFormateado": "$230.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/hario-switch/hario-switch-1.jpg",
+      "alt": "Hario Switch"
+    }
+  ]
+}

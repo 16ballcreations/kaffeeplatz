@@ -1,0 +1,34 @@
+{
+  "handle": "prensa-francesa",
+  "titulo": "Prensa Francesa",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>La Prensa Francesa es un método de preparación icónico que resalta las notas más profundas y aromáticas del café. Su sistema de émbolo con filtro metálico permite una infusión completa del café molido, conservando los aceites esenciales que aportan textura y sabor.<br>Fabricada con materiales resistentes al calor y un diseño moderno, es perfecta para preparar hasta dos tazas de café equilibrado y aromático. Ideal para el día a día o para quienes buscan una experiencia artesanal sin complicaciones.</p>",
+  "descripcionTexto": "La Prensa Francesa es un método de preparación icónico que resalta las notas más profundas y aromáticas del café. Su sistema de émbolo con filtro metálico permite una infusión completa del café molido, conservando los aceites esenciales que aportan textura y sabor.\nFabricada con materiales resistentes al calor y un diseño moderno, es perfecta para preparar hasta dos tazas de café equilibrado y aromático. Ideal para el día a día o para quienes buscan una experiencia artesanal sin complicaciones.",
+  "precio": 38000,
+  "precioFormateado": "$38.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "48998219284717",
+      "titulo": "32000",
+      "precio": 38000,
+      "precioFormateado": "$38.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [
+    {
+      "nombre": "350ml",
+      "valores": [
+        "32000"
+      ]
+    }
+  ],
+  "imagenes": [
+    {
+      "src": "/img/productos/prensa-francesa/prensa-francesa-1.jpg",
+      "alt": "Prensa Francesa"
+    }
+  ]
+}

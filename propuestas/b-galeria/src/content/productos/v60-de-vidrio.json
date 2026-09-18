@@ -1,0 +1,27 @@
+{
+  "handle": "v60-de-vidrio",
+  "titulo": "V60 Glass",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>El V60 Glass ofrece la combinación perfecta entre diseño refinado y eficiencia en la preparación de café. Su estructura en vidrio resistente al calor permite observar todo el proceso de extracción, mientras su diseño en espiral optimiza el flujo de agua, promoviendo una taza limpia, brillante y con sabores bien definidos. Ideal para baristas y entusiastas que buscan un método versátil, controlado y estéticamente impecable.</p>",
+  "descripcionTexto": "El V60 Glass ofrece la combinación perfecta entre diseño refinado y eficiencia en la preparación de café. Su estructura en vidrio resistente al calor permite observar todo el proceso de extracción, mientras su diseño en espiral optimiza el flujo de agua, promoviendo una taza limpia, brillante y con sabores bien definidos. Ideal para baristas y entusiastas que buscan un método versátil, controlado y estéticamente impecable.",
+  "precio": 80000,
+  "precioFormateado": "$80.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47861798109421",
+      "titulo": "V60 Glass",
+      "precio": 80000,
+      "precioFormateado": "$80.000",
+      "disponible": true,
+      "sku": ""
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/v60-de-vidrio/v60-de-vidrio-1.jpg",
+      "alt": "V60 Glass"
+    }
+  ]
+}

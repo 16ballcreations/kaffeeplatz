@@ -1,0 +1,35 @@
+{
+  "handle": "server",
+  "title": "Server",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-02-24T19:11:55-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p><span>El server de vidrio es el complemento ideal para quienes disfrutan del café filtrado en casa o en la barra. Diseñado en vidrio de borosilicato, soporta altas temperaturas y es perfecto tanto para preparar como para servir el café directamente. Su forma curva ayuda a mantener el calor por más tiempo y su asa ergonómica proporciona comodidad al momento de verter. Compatible con diferentes métodos de extracción, es un accesorio versátil, elegante y funcional que no puede faltar en tu rutina cafetera.<br></span></p>",
+  "body_text": "El server de vidrio es el complemento ideal para quienes disfrutan del café filtrado en casa o en la barra. Diseñado en vidrio de borosilicato, soporta altas temperaturas y es perfecto tanto para preparar como para servir el café directamente. Su forma curva ayuda a mantener el calor por más tiempo y su asa ergonómica proporciona comodidad al momento de verter. Compatible con diferentes métodos de extracción, es un accesorio versátil, elegante y funcional que no puede faltar en tu rutina cafetera.",
+  "variants": [
+    {
+      "id": 47779595452653,
+      "title": "Default Title",
+      "price": "65000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": true,
+      "option1": "Default Title",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Title",
+      "values": [
+        "Default Title"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_72f8569e-7d61-4de8-bc28-17c4452db96b.jpg?v=1745615222"
+  ]
+}

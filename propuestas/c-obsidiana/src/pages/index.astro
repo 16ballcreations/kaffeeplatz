@@ -1,0 +1,141 @@
+---
+/**
+ * / — Portada. Propuesta C "OBSIDIANA".
+ *
+ * Solo cambia la COMPOSICION y las clases de estilo. El contenido y los textos
+ * son exactamente los de la base.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import TarjetaProducto from '../components/TarjetaProducto.astro';
+import TarjetaArticulo from '../components/TarjetaArticulo.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import { SITIO, ruta, recurso } from '../datos/sitio';
+
+const productos = await getCollection('productos');
+const destacados = productos
+  .filter((p) => p.data.destacado)
+  .sort((a, b) => b.data.precio - a.data.precio);
+
+const articulos = (await getCollection('diario'))
+  .sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime())
+  .slice(0, 3);
+---
+
+<Base
+  titulo={SITIO.nombre}
+  descripcion={SITIO.descripcion}
+  camino="/"
+  imagen={destacados[0]?.data.imagenes[0]?.src}
+>
+  <section data-kp-seccion="hero" class="c-hero">
+    <div>
+      <p data-kp-kicker>Café de especialidad · {SITIO.ciudad}</p>
+      <h1>{SITIO.lema}</h1>
+      <hr class="c-filete c-hero__filete" />
+      <p data-kp-entradilla>
+        Seleccionamos métodos, filtros y utensilios para que preparar café en casa deje de ser un
+        trámite y se convierta en un ritual. Cada pieza está elegida por cómo se comporta en la taza,
+        no por cómo se ve en la foto.
+      </p>
+      <p data-kp-acciones>
+        <a href={ruta('/catalogo')} data-kp-cta="primaria" class="c-accion">Ver el catálogo</a>
+        <BotonWhatsApp data-kp-cta="secundaria" clase="c-accion c-accion--sm">
+          Pregúntanos por WhatsApp
+        </BotonWhatsApp>
+      </p>
+    </div>
+
+    {/* El emblema protagonista. Medallon sobre lino oscuro: no necesita panel
+        claro, su propio fondo ya es oscuro. */}
+    <div class="c-hero__emblema">
+      <img
+        src={recurso('/img/marca/emblema.png')}
+        alt={`Emblema de ${SITIO.nombre}`}
+        width="980"
+        height="980"
+        loading="eager"
+        decoding="sync"
+        fetchpriority="high"
+      />
+    </div>
+  </section>
+
+  <section data-kp-seccion="destacados" aria-labelledby="t-destacados">
+    <div class="c-seccion__cabeza">
+      <h2 id="t-destacados">Selección destacada</h2>
+      <span class="c-folio">I · Catálogo</span>
+    </div>
+    <ul data-kp-rejilla="productos">
+      {
+        destacados.map((p, i) => (
+          <li>
+            <TarjetaProducto producto={p.data} prioridad={i === 0} />
+          </li>
+        ))
+      }
+    </ul>
+    <p data-kp-acciones>
+      <a href={ruta('/catalogo')} class="c-accion c-accion--sm">
+        Ver los {productos.length} productos
+      </a>
+    </p>
+  </section>
+
+  <section data-kp-seccion="promesa" aria-labelledby="t-promesa">
+    <div class="c-seccion__cabeza">
+      <h2 id="t-promesa">Cómo compras</h2>
+      <span class="c-folio">II · El método</span>
+    </div>
+    <ol data-kp-pasos>
+      <li>
+        <h3>Eliges</h3>
+        <p>Miras el catálogo y ves qué método encaja con la taza que buscas.</p>
+      </li>
+      <li>
+        <h3>Nos escribes</h3>
+        <p>
+          Nos hablas por WhatsApp. Te confirmamos disponibilidad, resolvemos dudas y acordamos el
+          envío contigo.
+        </p>
+      </li>
+      <li>
+        <h3>Preparas</h3>
+        <p>Te llega a casa y empiezas. En el diario tienes las guías de cada método.</p>
+      </li>
+    </ol>
+    <p data-kp-nota style="margin-top: var(--c-8)">
+      No hay carrito ni pasarela de pago: aquí se compra hablando con nosotros.
+    </p>
+  </section>
+
+  <section data-kp-seccion="diario" aria-labelledby="t-diario">
+    <div class="c-seccion__cabeza">
+      <h2 id="t-diario">Del diario</h2>
+      <span class="c-folio">III · Lectura</span>
+    </div>
+    <ul data-kp-rejilla="articulos">
+      {
+        articulos.map((a) => (
+          <li>
+            <TarjetaArticulo articulo={a.data} />
+          </li>
+        ))
+      }
+    </ul>
+    <p data-kp-acciones>
+      <a href={ruta('/diario')} class="c-accion c-accion--sm">Todos los artículos</a>
+    </p>
+  </section>
+
+  <section data-kp-seccion="sobre" aria-labelledby="t-sobre" class="c-cierre">
+    <h2 id="t-sobre">Sobre nosotros</h2>
+    <p style="margin-top: var(--c-5)">
+      Somos una marca colombiana de accesorios de café de especialidad. Trabajamos 100% en línea y
+      atendemos cada pedido de forma directa.
+    </p>
+    <p data-kp-acciones>
+      <a href={ruta('/nosotros')} class="c-accion c-accion--sm">Conócenos</a>
+    </p>
+  </section>
+</Base>

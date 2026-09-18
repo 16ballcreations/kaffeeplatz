@@ -1,0 +1,35 @@
+{
+  "handle": "mate-de-acero-inoxidable",
+  "title": "Mate de Acero Inoxidable",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2026-02-01T18:47:22-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>El mate de acero inoxidable es una versión moderna de un clásico infaltable. Fabricado con materiales duraderos y de alta calidad, conserva mejor la temperatura de la infusión y evita la absorción de sabores, permitiendo disfrutar cada cebada con el sabor puro de la yerba.</p>\n<p>Su diseño ergonómico brinda un agarre cómodo, mientras que su interior de acero inoxidable lo hace higiénico, resistente y perfecto para el uso diario. Ideal tanto para quienes toman mate en casa como para llevarlo a la oficina o de viaje.</p>",
+  "body_text": "El mate de acero inoxidable es una versión moderna de un clásico infaltable. Fabricado con materiales duraderos y de alta calidad, conserva mejor la temperatura de la infusión y evita la absorción de sabores, permitiendo disfrutar cada cebada con el sabor puro de la yerba.\n\nSu diseño ergonómico brinda un agarre cómodo, mientras que su interior de acero inoxidable lo hace higiénico, resistente y perfecto para el uso diario. Ideal tanto para quienes toman mate en casa como para llevarlo a la oficina o de viaje.",
+  "variants": [
+    {
+      "id": 49330408947949,
+      "title": "NEGRO",
+      "price": "108000.00",
+      "compare_at_price": "120000.00",
+      "sku": null,
+      "available": false,
+      "option1": "NEGRO",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "COLOR",
+      "values": [
+        "NEGRO"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_1f032329-b8b4-428d-9202-d9ed0f38f8fa.png?v=1769986946"
+  ]
+}

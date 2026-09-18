@@ -1,0 +1,35 @@
+{
+  "handle": "grameras-digital",
+  "title": "Gramera digital | Nknove",
+  "vendor": "Mi tienda",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-02-24T18:17:49-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p><span>Precisión, estilo y funcionalidad en una sola balanza. Ideal para quienes buscan perfeccionar su receta de café con control exacto de peso y tiempo.</span></p>",
+  "body_text": "Precisión, estilo y funcionalidad en una sola balanza. Ideal para quienes buscan perfeccionar su receta de café con control exacto de peso y tiempo.",
+  "variants": [
+    {
+      "id": 47779490267373,
+      "title": "Default Title",
+      "price": "110000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": false,
+      "option1": "Default Title",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Title",
+      "values": [
+        "Default Title"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_83183721-9425-4c34-ba3a-d32ea4bafdd1.jpg?v=1752085762"
+  ]
+}

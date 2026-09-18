@@ -1,0 +1,35 @@
+{
+  "handle": "hario-switch",
+  "title": "Hario Switch",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-08-19T13:13:01-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>La Hario V60 Switch es una evolución del tradicional dripper V60. Este modelo incorpora un sistema de válvula en la base que te permite decidir cuándo liberar la infusión, combinando así el método de goteo con el de inmersión.<br>Su diseño de vidrio resistente y base de silicona asegura estabilidad y durabilidad, mientras que los filtros de papel garantizan una taza limpia y balanceada.<br>Es ideal para quienes disfrutan experimentar y buscan explorar diferentes formas de extracción sin complicarse.</p>",
+  "body_text": "La Hario V60 Switch es una evolución del tradicional dripper V60. Este modelo incorpora un sistema de válvula en la base que te permite decidir cuándo liberar la infusión, combinando así el método de goteo con el de inmersión.\nSu diseño de vidrio resistente y base de silicona asegura estabilidad y durabilidad, mientras que los filtros de papel garantizan una taza limpia y balanceada.\nEs ideal para quienes disfrutan experimentar y buscan explorar diferentes formas de extracción sin complicarse.",
+  "variants": [
+    {
+      "id": 48480386973933,
+      "title": "Default Title",
+      "price": "230000.00",
+      "compare_at_price": "260000.00",
+      "sku": null,
+      "available": true,
+      "option1": "Default Title",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Title",
+      "values": [
+        "Default Title"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_33d456fd-3e8a-456c-b190-e1191dcc3e89.jpg?v=1762197971"
+  ]
+}

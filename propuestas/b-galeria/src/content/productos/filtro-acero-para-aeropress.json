@@ -1,0 +1,27 @@
+{
+  "handle": "filtro-acero-para-aeropress",
+  "titulo": "Filtro Acero para aeropress",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>Este filtro metálico para AeroPress es perfecto para quienes buscan una alternativa sostenible y reutilizable a los filtros de papel. Fabricado en acero inoxidable de grado alimenticio, permite una extracción más completa de los aceites naturales del café, resaltando notas más intensas en sabor y cuerpo. Su diseño microperforado asegura una filtración uniforme sin dejar sedimentos. Compatible con todos los modelos de AeroPress, es una herramienta ideal para baristas caseros o profesionales que buscan consistencia, practicidad y menor impacto ambiental.</p>",
+  "descripcionTexto": "Este filtro metálico para AeroPress es perfecto para quienes buscan una alternativa sostenible y reutilizable a los filtros de papel. Fabricado en acero inoxidable de grado alimenticio, permite una extracción más completa de los aceites naturales del café, resaltando notas más intensas en sabor y cuerpo. Su diseño microperforado asegura una filtración uniforme sin dejar sedimentos. Compatible con todos los modelos de AeroPress, es una herramienta ideal para baristas caseros o profesionales que buscan consistencia, practicidad y menor impacto ambiental.",
+  "precio": 22000,
+  "precioFormateado": "$22.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47779596632301",
+      "titulo": "Filtro Acero para aeropress",
+      "precio": 22000,
+      "precioFormateado": "$22.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/filtro-acero-para-aeropress/filtro-acero-para-aeropress-1.jpg",
+      "alt": "Filtro Acero para aeropress"
+    }
+  ]
+}

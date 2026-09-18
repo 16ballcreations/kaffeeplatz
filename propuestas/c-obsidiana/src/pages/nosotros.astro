@@ -1,0 +1,139 @@
+---
+/**
+ * /nosotros — Pagina NUEVA.
+ *
+ * El sitio viejo promete "Sobre nosotros" en la home pero la pagina no existia.
+ * Redactada con la voz de marca a partir de material REAL: el diario y las
+ * politicas de envio y contacto.
+ *
+ * NO HAY datos inventados de negocio: ni ano de fundacion, ni tamano del
+ * equipo, ni cifras de venta. Se habla del producto, del criterio de seleccion
+ * y del ritual. Lo unico que se afirma es lo verificado:
+ *   - Marca colombiana con base en Medellin
+ *   - 100% online, sin punto fisico
+ *   - Envios a todo el territorio colombiano
+ *   - Atencion directa por WhatsApp con Andreina Morales
+ */
+import Base from '../layouts/Base.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import { SITIO, ruta } from '../datos/sitio';
+---
+
+<Base
+  titulo="Nosotros"
+  descripcion="Quiénes somos en KaffeePlatz: una marca colombiana de accesorios de café de especialidad, 100% online, con un criterio claro para elegir cada pieza."
+  camino="/nosotros"
+  migas={[{ nombre: 'Nosotros', href: '/nosotros' }]}
+>
+  <header data-kp-seccion="encabezado" class="c-encabezado">
+    <p data-kp-kicker>Nosotros</p>
+    <h1>Café bien hecho, en tu propia cocina</h1>
+    <p data-kp-entradilla>
+      {SITIO.nombre} nace de una idea sencilla: el café que tomas en casa puede ser tan bueno como
+      el de tu cafetería favorita. No hace falta una barra profesional. Hace falta el equipo
+      adecuado y saber qué estás haciendo.
+    </p>
+  </header>
+
+  <section data-kp-seccion="criterio" aria-labelledby="t-criterio" class="c-prosa-seccion">
+    <h2 id="t-criterio">Cómo elegimos lo que vendemos</h2>
+    <p>
+      No traemos catálogo por traer catálogo. Cada método, cada filtro y cada utensilio que ves aquí
+      entra por una razón concreta: hace algo mejor que la alternativa, y se nota en la taza.
+    </p>
+    <ul data-kp-lista="criterio">
+      <li>
+        <h3>Que cambie la taza, no la foto</h3>
+        <p>
+          Una V60 y una prensa francesa no compiten: dan bebidas distintas. Una te da una taza
+          limpia y delicada; la otra, cuerpo y potencia. Te contamos cuál es cuál para que elijas
+          por sabor, no por moda.
+        </p>
+      </li>
+      <li>
+        <h3>Que aguante el uso diario</h3>
+        <p>
+          Vidrio borosilicato, acero inoxidable, piezas que se lavan fácil y no se rinden al tercer
+          mes. Un buen accesorio de café se compra una vez.
+        </p>
+      </li>
+      <li>
+        <h3>Que puedas empezar hoy</h3>
+        <p>
+          De nada sirve el mejor equipo si nadie te explica la molienda, la temperatura o el ratio.
+          Por eso el diario existe: cada método tiene su guía.
+        </p>
+      </li>
+    </ul>
+  </section>
+
+  <section data-kp-seccion="ritual" aria-labelledby="t-ritual" class="c-prosa-seccion">
+    <h2 id="t-ritual">El café como ritual, no como trámite</h2>
+    <p>
+      Preparar café a mano te obliga a parar diez minutos. Pesas, mueles, calientas el agua, viertes
+      despacio. Ese rato es medio punto de la experiencia; el otro medio está en el grano y en el
+      equipo.
+    </p>
+    <p>
+      Por eso insistimos tanto en los detalles que parecen pequeños: el molido correcto para cada
+      método, el agua a la temperatura adecuada, el café conservado como toca. Son la diferencia
+      entre una taza plana y una taza que te hace levantar la cabeza.
+    </p>
+    <p>
+      Nuestra frase es <strong>{SITIO.lema.toLowerCase()}</strong>, y va bastante en serio: no
+      vendemos objetos, acompañamos un hábito.
+    </p>
+  </section>
+
+  <section data-kp-seccion="como-funciona" aria-labelledby="t-como" class="c-prosa-seccion">
+    <h2 id="t-como">Cómo trabajamos</h2>
+    <ul data-kp-lista="hechos">
+      <li>
+        <h3>100% en línea</h3>
+        <p>
+          Estamos en {SITIO.ciudad} y atendemos solo por internet: no tenemos punto físico de
+          venta.
+        </p>
+      </li>
+      <li>
+        <h3>Atención directa</h3>
+        <p>
+          Cuando escribes por WhatsApp te responde {SITIO.dueña}, no un bot. Resolvemos dudas,
+          confirmamos disponibilidad y acordamos el envío contigo.
+        </p>
+      </li>
+      <li>
+        <h3>Envíos a todo Colombia</h3>
+        <p>
+          Trabajamos con transportadoras certificadas y cubrimos todo el territorio colombiano. Los
+          tiempos y costos los ves en la <a href={ruta('/contacto')}>página de contacto</a>.
+        </p>
+      </li>
+      <li>
+        <h3>Sin carrito ni pasarela</h3>
+        <p>
+          Cada pedido se cierra hablando. Nos parece más honesto: así sabemos qué necesitas antes de
+          que pagues nada.
+        </p>
+      </li>
+    </ul>
+  </section>
+
+  <section data-kp-seccion="cierre" aria-labelledby="t-cierre" class="c-cierre">
+    <h2 id="t-cierre">¿Empezamos?</h2>
+    <p>
+      Si no sabes por dónde entrar, escríbenos y te preguntamos tres cosas: cómo tomas el café, cuánto
+      tiempo le quieres dedicar por la mañana y qué presupuesto manejas. Con eso te decimos qué
+      método te conviene.
+    </p>
+    <p data-kp-acciones>
+      <BotonWhatsApp
+        clase="c-accion"
+        mensaje="Hola KaffeePlatz, estoy empezando con el café de especialidad. ¿Me ayudan a elegir un método?"
+      >
+        Cuéntanos qué buscas
+      </BotonWhatsApp>
+      <a href={ruta('/catalogo')} class="c-accion c-accion--sm">Ver el catálogo</a>
+    </p>
+  </section>
+</Base>

@@ -1,0 +1,35 @@
+{
+  "handle": "prensa-francesa-acero-inoxidable",
+  "title": "Prensa Francesa Acero Inoxidable",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-03-04T19:48:30-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>Disfruta de un café intenso y con cuerpo con esta prensa francesa de acero inoxidable. Su diseño elegante, duradero y térmico te permite preparar hasta 4 tazas de café o té con total comodidad. ¡Ideal para quienes valoran la simplicidad y el sabor puro!</p>",
+  "body_text": "Disfruta de un café intenso y con cuerpo con esta prensa francesa de acero inoxidable. Su diseño elegante, duradero y térmico te permite preparar hasta 4 tazas de café o té con total comodidad. ¡Ideal para quienes valoran la simplicidad y el sabor puro!",
+  "variants": [
+    {
+      "id": 47808444498157,
+      "title": "350ml",
+      "price": "120000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": true,
+      "option1": "350ml",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Capacidad",
+      "values": [
+        "350ml"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/background-editor_output_ecfef613-c315-4b0c-9f15-f367e76ff2a8.png?v=1752183147"
+  ]
+}

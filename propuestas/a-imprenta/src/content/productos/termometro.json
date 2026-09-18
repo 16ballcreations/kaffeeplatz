@@ -1,0 +1,31 @@
+{
+  "handle": "termometro",
+  "titulo": "Termómetro",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>El Termómetro para Café es la herramienta esencial para preparar café de especialidad con precisión. Controla la temperatura del agua y la leche para lograr una extracción perfecta y una textura ideal en tus bebidas. Ideal para baristas, cafeterías y amantes del café artesanal en Colombia.</p>",
+  "descripcionTexto": "El Termómetro para Café es la herramienta esencial para preparar café de especialidad con precisión. Controla la temperatura del agua y la leche para lograr una extracción perfecta y una textura ideal en tus bebidas. Ideal para baristas, cafeterías y amantes del café artesanal en Colombia.",
+  "precio": 25000,
+  "precioFormateado": "$25.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47779543744749",
+      "titulo": "Termómetro",
+      "precio": 25000,
+      "precioFormateado": "$25.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/termometro/termometro-1.png",
+      "alt": "Termómetro"
+    },
+    {
+      "src": "/img/productos/termometro/termometro-2.png",
+      "alt": "Termómetro — vista 2"
+    }
+  ]
+}

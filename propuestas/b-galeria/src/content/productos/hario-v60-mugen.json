@@ -1,0 +1,27 @@
+{
+  "handle": "hario-v60-mugen",
+  "titulo": "Hario V60 Mugen",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>El V60 Mugen de Hario es un dripper innovador que simplifica la preparación del café filtrado, ideal para quienes buscan un método práctico con una sola vertida y una taza limpia y balanceada.</p>",
+  "descripcionTexto": "El V60 Mugen de Hario es un dripper innovador que simplifica la preparación del café filtrado, ideal para quienes buscan un método práctico con una sola vertida y una taza limpia y balanceada.",
+  "precio": 120000,
+  "precioFormateado": "$120.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "48306363465965",
+      "titulo": "Hario V60 Mugen",
+      "precio": 120000,
+      "precioFormateado": "$120.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/hario-v60-mugen/hario-v60-mugen-1.jpg",
+      "alt": "Hario V60 Mugen"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "handle": "chemex",
+  "title": "Chemex Original",
+  "vendor": "Mi tienda",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-02-24T17:18:38-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>La Chemex Original es el método de filtrado ideal para preparar un café limpio, equilibrado y con notas brillantes. Su elegante diseño de vidrio con collar de madera no solo resalta en cualquier cocina, sino que también permite una extracción uniforme para disfrutar del auténtico café de especialidad colombiano.</p>",
+  "body_text": "La Chemex Original es el método de filtrado ideal para preparar un café limpio, equilibrado y con notas brillantes. Su elegante diseño de vidrio con collar de madera no solo resalta en cualquier cocina, sino que también permite una extracción uniforme para disfrutar del auténtico café de especialidad colombiano.",
+  "variants": [
+    {
+      "id": 47804654256365,
+      "title": "6 tazas",
+      "price": "320000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": true,
+      "option1": "6 tazas",
+      "option2": null,
+      "option3": null
+    },
+    {
+      "id": 47804654289133,
+      "title": "3 tazas",
+      "price": "285000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": true,
+      "option1": "3 tazas",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Tamaño",
+      "values": [
+        "6 tazas",
+        "3 tazas"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/Screenshot-2025-03-10-19-26-52-837_2.jpg?v=1741656671",
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/background-editor_output_bec792c9-bb9b-401f-8877-298a2a92d2f7.png?v=1742248609"
+  ]
+}

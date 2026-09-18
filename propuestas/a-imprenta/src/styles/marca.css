@@ -1,0 +1,130 @@
+@import 'tailwindcss';
+
+/* ===========================================================================
+   KaffeePlatz — tokens de marca
+   ---------------------------------------------------------------------------
+   Paleta verificada con contraste AA. NO cambies estos valores: los tres
+   disenos comparten esta base. Si un diseno necesita un color extra, lo define
+   en SU propia hoja, no aqui.
+
+   >>> REGLA CRITICA DEL ORO <<<
+   El oro tiene DOS tokens y NO son intercambiables:
+
+     --kp-accent      #dec185   SOLO como RELLENO DE FONDO.
+                                Contraste sobre crema = 1.85:1 -> FALLA AA.
+                                NUNCA lo uses como color de texto, de borde
+                                fino ni de icono sobre el fondo crema.
+
+     --kp-accent-ink  #8F6724   Para TEXTO, ENLACES, ICONOS y BORDES.
+                                Contraste sobre crema = 4.69:1 -> PASA AA.
+
+   Regla mnemotecnica: si el oro va a ser PINTADO como area, usa --kp-accent.
+   Si el oro va a ser LEIDO, usa --kp-accent-ink.
+
+   Sobre un relleno --kp-accent (#dec185) el texto debe ser --kp-ink (#1a1a1a).
+   =========================================================================== */
+
+@theme {
+  /* Fondo general. NUNCA blanco puro: el crema reconcilia el catalogo partido. */
+  --color-kp-bg: #fdf7e7;
+  /* Superficie de tarjeta. */
+  --color-kp-surface: #ffffff;
+  /* Borde por defecto. */
+  --color-kp-border: #ebe1c8;
+  /* Texto principal — 16.10:1 sobre crema. */
+  --color-kp-ink: #1a1a1a;
+  /* Texto secundario — 5.98:1 sobre crema. */
+  --color-kp-ink-muted: #6d5b4a;
+  /* ORO RELLENO — 1.85:1 sobre crema: NO usar como texto. */
+  --color-kp-accent: #dec185;
+  /* ORO TEXTO — 4.69:1 sobre crema: enlaces, iconos, bordes. */
+  --color-kp-accent-ink: #8f6724;
+  /* Ancla oscura para footer y secciones invertidas. */
+  --color-kp-anchor: #1a1a1a;
+}
+
+/* Las mismas variables como custom properties CSS planas, para los disenos
+   que prefieran var(--kp-*) en lugar de las utilidades de Tailwind. */
+:root {
+  --kp-bg: #fdf7e7;
+  --kp-surface: #ffffff;
+  --kp-border: #ebe1c8;
+  --kp-ink: #1a1a1a;
+  --kp-ink-muted: #6d5b4a;
+  --kp-accent: #dec185; /* SOLO relleno de fondo */
+  --kp-accent-deep: #8f6e3e; /* extremo oscuro del degradado metalico */
+  --kp-accent-ink: #8f6724; /* texto / bordes / iconos */
+  --kp-anchor: #1a1a1a;
+
+  /* El oro de marca NO es un plano: en el logo es una rampa que simula metal
+     grabado. Uselo en filetes, reglas, bordes gruesos y rellenos decorativos.
+     Para texto sigue siendo obligatorio --kp-accent-ink. */
+  --kp-oro: linear-gradient(145deg, #dec185 0%, #b89a5e 45%, #8f6e3e 100%);
+  --kp-oro-horizontal: linear-gradient(90deg, #8f6e3e 0%, #dec185 50%, #8f6e3e 100%);
+
+  /* Textura de lino: elemento de identidad, no decoracion. El medallon de marca
+     va sobre lino oscuro y la papeleria sobre lino claro. */
+  --kp-lino: url('/img/marca/textura-lino.png');
+}
+
+/* Filete dorado metalico — el gesto grafico de la marca. */
+.kp-filete {
+  height: 1px;
+  border: 0;
+  background: var(--kp-oro-horizontal);
+}
+
+/* Base minima y neutra. Los disenos sobreescriben tipografia y ritmo. */
+html {
+  background-color: var(--kp-bg);
+  color: var(--kp-ink);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Accesibilidad: foco siempre visible con el oro LEGIBLE. */
+:where(a, button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--kp-accent-ink);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Bloques PROVISIONALES (p.ej. /cafe).
+   Deben verse distintos del contenido definitivo para que nadie los confunda
+   con una promesa comercial. Los disenos pueden reestilarlo, pero NO deben
+   hacerlo indistinguible del resto de la pagina.
+   --------------------------------------------------------------------------- */
+[data-kp-provisional] {
+  border: 2px dashed var(--kp-accent-ink);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgb(143 103 36 / 0.04) 10px,
+    rgb(143 103 36 / 0.04) 20px
+  );
+}
+
+[data-kp-provisional-aviso] {
+  color: var(--kp-accent-ink);
+  font-size: 0.875rem;
+}
+
+/* Salto al contenido, para teclado y lectores de pantalla. */
+.kp-saltar {
+  position: absolute;
+  left: -9999px;
+}
+.kp-saltar:focus {
+  left: 0.5rem;
+  top: 0.5rem;
+  z-index: 50;
+  padding: 0.5rem 0.75rem;
+  background: var(--kp-surface);
+  color: var(--kp-ink);
+}

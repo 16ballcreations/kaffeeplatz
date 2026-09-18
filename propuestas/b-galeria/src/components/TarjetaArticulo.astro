@@ -1,0 +1,66 @@
+---
+/**
+ * TarjetaArticulo — PROPUESTA B "GALERÍA".
+ *
+ * Misma estructura y ganchos que la base. La portada va ENMARCADA (.g-marco,
+ * radio 15px, fondo propio) en vez de suelta, por la misma razón que en la
+ * tarjeta de producto: las fuentes son irregulares y el marco las reconcilia.
+ *
+ * Un artículo no tiene portada en el material
+ * (que-es-el-cafe-de-especialidad-y-por-que-esta-conquistando-al-mundo): en ese
+ * caso NO se deja un hueco roto, se compone una pieza tipográfica. En este
+ * lenguaje la tipografía sobre crema se sostiene sola.
+ */
+import type { CollectionEntry } from 'astro:content';
+import Imagen from './Imagen.astro';
+import { ruta } from '../datos/sitio';
+
+interface Props {
+  articulo: CollectionEntry<'diario'>['data'];
+  clase?: string;
+  prioridad?: boolean;
+  mostrarResumen?: boolean;
+}
+
+const { articulo, clase = '', prioridad = false, mostrarResumen = true } = Astro.props as Props;
+
+const enlace = ruta(`/diario/${articulo.handle}`);
+const iso = articulo.fecha.toISOString().slice(0, 10);
+const fechaLegible = articulo.fecha.toLocaleDateString('es-CO', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<article class={`g-tarjeta ${clase}`} data-kp-articulo>
+  <a href={enlace} data-kp-articulo-enlace>
+    <div data-kp-articulo-media>
+      <slot name="media">
+        {
+          articulo.imagen ? (
+            <div class="g-marco g-marco-ancho">
+              <Imagen
+                src={articulo.imagen}
+                alt={`Portada de: ${articulo.titulo}`}
+                prioridad={prioridad}
+              />
+            </div>
+          ) : (
+            <div class="g-marco g-marco-ancho g-marco-tipografico" data-kp-sin-imagen>
+              <span class="g-marco-tipografico-texto">diario</span>
+            </div>
+          )
+        }
+      </slot>
+    </div>
+
+    <div data-kp-articulo-cuerpo>
+      <time datetime={iso} data-kp-articulo-fecha>{fechaLegible}</time>
+      <h3 data-kp-articulo-titulo>{articulo.titulo}</h3>
+      {mostrarResumen && articulo.resumen && <p data-kp-articulo-resumen>{articulo.resumen}</p>}
+      <slot name="despues-resumen" />
+    </div>
+  </a>
+</article>

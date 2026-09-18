@@ -1,0 +1,174 @@
+---
+/**
+ * Base — layout de la propuesta C "OBSIDIANA".
+ *
+ * Sustituye al layout esqueletico de la base compartida, pero CONSERVA sus
+ * invariantes: SEO.astro intacto, el enlace de salto, los landmarks y la
+ * jerarquia de encabezados.
+ *
+ * Aporta: tema oscuro, cabecera con emblema + nav en serif italica, pie
+ * editorial y la carga de las dos familias tipograficas.
+ */
+import SEO from '../components/SEO.astro';
+import type { Miga } from '../components/SEO.astro';
+import { SITIO, NAVEGACION, ruta, recurso } from '../datos/sitio';
+import '../styles/obsidiana.css';
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+  camino: string;
+  imagen?: string;
+  tipoOg?: 'website' | 'article';
+  migas?: Miga[];
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  claseCuerpo?: string;
+}
+
+const {
+  titulo,
+  descripcion,
+  camino,
+  imagen,
+  tipoOg,
+  migas,
+  jsonLd,
+  claseCuerpo = '',
+} = Astro.props as Props;
+
+const anio = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#1A1A1A" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" href={ruta('/favicon.svg')} type="image/svg+xml" />
+
+    {/* Cormorant Garamond: serif de alto contraste con una cursiva excelente,
+        la firma de este lenguaje. Inter para UI y cuerpo. */}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Inter:wght@400;500;600&display=swap"
+    />
+
+    <SEO
+      titulo={titulo}
+      descripcion={descripcion}
+      camino={camino}
+      imagen={imagen}
+      tipoOg={tipoOg}
+      migas={migas}
+      jsonLd={jsonLd}
+    />
+    <slot name="head" />
+  </head>
+
+  <body class={`kp-obsidiana ${claseCuerpo}`.trim()} data-kp-pagina={camino}>
+    <a class="kp-saltar" href="#contenido">Saltar al contenido</a>
+
+    <header data-kp-cabecera class="c-cabecera">
+      <div class="c-limite c-cabecera__fila">
+        <a href={ruta('/')} data-kp-logo class="c-logo" aria-label={`${SITIO.nombre} — inicio`}>
+          {/* El emblema es un medallon sobre lino OSCURO: va directo sobre el
+              canvas negro sin panel claro, porque su fondo ya es oscuro. */}
+          <img
+            src={recurso('/img/marca/emblema.png')}
+            alt=""
+            class="c-logo__emblema"
+            width="44"
+            height="44"
+            loading="eager"
+            decoding="sync"
+          />
+          <img
+            src={recurso('/img/marca/wordmark.png')}
+            alt={SITIO.nombre}
+            class="c-logo__wordmark"
+            width="640"
+            height="130"
+            loading="eager"
+            decoding="sync"
+          />
+        </a>
+
+        <nav aria-label="Navegación principal" data-kp-nav class="c-nav">
+          <ul>
+            {
+              NAVEGACION.map((i) => (
+                <li>
+                  <a
+                    href={ruta(i.href)}
+                    aria-current={i.href === camino ? 'page' : undefined}
+                  >
+                    {i.etiqueta}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="contenido" data-kp-main class="c-limite">
+      <slot />
+    </main>
+
+    <footer data-kp-pie class="c-pie">
+      <div class="c-limite">
+        <div class="c-pie__rejilla">
+          <div>
+            <img
+              src={recurso('/img/marca/emblema.png')}
+              alt=""
+              class="c-pie__emblema"
+              width="96"
+              height="96"
+              loading="lazy"
+            />
+            <p data-kp-pie-lema class="c-pie__lema">{SITIO.lema}</p>
+            <p data-kp-pie-legal>
+              {SITIO.nombre} · {SITIO.ciudad} · Tienda 100% online
+            </p>
+          </div>
+
+          <div>
+            <h2>Índice</h2>
+            <ul>
+              {
+                NAVEGACION.map((i) => (
+                  <li>
+                    <a href={ruta(i.href)}>{i.etiqueta}</a>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+
+          <div>
+            <h2>Escríbenos</h2>
+            <p data-kp-pie-contacto>
+              <a href={`https://wa.me/${SITIO.whatsappNumero}`}>{SITIO.whatsappVisible}</a>
+            </p>
+            <p>
+              <a href={`mailto:${SITIO.email}`}>{SITIO.email}</a>
+            </p>
+            <p>Lunes a viernes, 9:00 a.m. – 6:00 p.m.</p>
+          </div>
+        </div>
+
+        <div class="c-pie__legal">
+          <p data-kp-pie-copy>© {anio} {SITIO.nombre}</p>
+          <p>Eleva tu experiencia cafetera</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,115 @@
+---
+/**
+ * SEO — metadatos, Open Graph, canonical y JSON-LD.
+ *
+ * El sitio viejo no tenia datos estructurados. Aqui se emiten:
+ *   - Organization  -> en el layout, en todas las paginas
+ *   - BreadcrumbList -> en todas las paginas
+ *   - Product       -> en las fichas de producto
+ *   - Article       -> en los articulos del diario
+ *
+ * Los agentes de diseno NO deben tocar este componente: si necesitan cambiar
+ * el titulo o la descripcion, se los pasan por props desde la pagina.
+ */
+import { SITIO, ruta } from '../datos/sitio';
+
+export interface Miga {
+  nombre: string;
+  /** Ruta interna sin `base`, p.ej. "/catalogo". */
+  href: string;
+}
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+  /** Ruta interna de la pagina actual, sin `base`. */
+  camino: string;
+  /** Imagen social, ruta de public/ o URL absoluta. */
+  imagen?: string;
+  /** "website" o "article". */
+  tipoOg?: 'website' | 'article';
+  /** Migas de pan, sin incluir "Inicio" (se antepone sola). */
+  migas?: Miga[];
+  /** JSON-LD adicional de la pagina (Product, Article...). */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** No indexar (util para maquetas provisionales). */
+  noIndex?: boolean;
+}
+
+const {
+  titulo,
+  descripcion,
+  camino,
+  imagen,
+  tipoOg = 'website',
+  migas = [],
+  jsonLd,
+  noIndex = false,
+} = Astro.props as Props;
+
+const base = new URL(import.meta.env.BASE_URL, Astro.site ?? 'https://16ballcreations.github.io');
+const absoluta = (c: string) =>
+  /^https?:\/\//.test(c) ? c : new URL(ruta(c), Astro.site ?? base).toString();
+
+const canonical = absoluta(camino);
+const tituloCompleto = titulo === SITIO.nombre ? titulo : `${titulo} | ${SITIO.nombre}`;
+const imagenOg = imagen ? absoluta(imagen) : undefined;
+
+/* ---- Organization: identidad de la marca ---- */
+const organizacion = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: SITIO.nombre,
+  url: absoluta('/'),
+  email: SITIO.email,
+  slogan: SITIO.lema,
+  description: SITIO.descripcion,
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Medellín',
+    addressCountry: 'CO',
+  },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    telephone: SITIO.whatsappVisible,
+    email: SITIO.email,
+    availableLanguage: ['es'],
+  },
+};
+
+/* ---- BreadcrumbList: en todas las paginas ---- */
+const listaMigas = [{ nombre: 'Inicio', href: '/' }, ...migas];
+const migasJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: listaMigas.map((m, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: m.nombre,
+    item: absoluta(m.href),
+  })),
+};
+
+const bloques = [organizacion, migasJsonLd, ...(jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [])];
+---
+
+<title>{tituloCompleto}</title>
+<meta name="description" content={descripcion} />
+<link rel="canonical" href={canonical} />
+{noIndex && <meta name="robots" content="noindex,nofollow" />}
+
+<meta property="og:site_name" content={SITIO.nombre} />
+<meta property="og:type" content={tipoOg} />
+<meta property="og:title" content={tituloCompleto} />
+<meta property="og:description" content={descripcion} />
+<meta property="og:url" content={canonical} />
+<meta property="og:locale" content="es_CO" />
+{imagenOg && <meta property="og:image" content={imagenOg} />}
+
+<meta name="twitter:card" content={imagenOg ? 'summary_large_image' : 'summary'} />
+<meta name="twitter:title" content={tituloCompleto} />
+<meta name="twitter:description" content={descripcion} />
+{imagenOg && <meta name="twitter:image" content={imagenOg} />}
+
+{bloques.map((b) => <script type="application/ld+json" set:html={JSON.stringify(b)} />)}

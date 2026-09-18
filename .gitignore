@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+*.log
+propuestas/*/node_modules
+propuestas/*/dist
+propuestas/*/.astro
+
+# Intermedios de la extraccion del CDR (79 MB, sin valor para el repo).
+# Los assets finales viven en public/img/marca/.
+# Los SVG de Inkscape tienen los degradados aplanados: no sirven.
+marca/bitmaps/
+marca/previews/
+marca/logo-completo.svg
+marca/logo-kaffeeplatz.svg
+marca/full-6000.png
+marca/logo-2400.png
+marca/logo-completo.png
+
+# Copias del contenido original dentro de cada propuesta (se duplican x3)
+propuestas/*/contenido-original/
+propuestas/*/marca/

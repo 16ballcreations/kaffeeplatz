@@ -1,0 +1,127 @@
+---
+/**
+ * /cafe — Linea futura de cafe en grano.
+ *
+ * ======================== AVISO PARA QUIEN EDITE ==========================
+ * El modelo de esta linea NO ESTA DEFINIDO todavia. No se sabe si KaffeePlatz
+ * sera curador de tostadores terceros o si tendra marca propia de tostion.
+ *
+ * Por eso el TONO ES NEUTRO a proposito: no afirma origen, ni finca, ni
+ * tostador, ni perfil, ni precio, ni fecha de lanzamiento.
+ *
+ * Todo el texto provisional va marcado de tres formas a la vez:
+ *   1. comentario HTML  <!-- PROVISIONAL -->
+ *   2. atributo         data-kp-provisional
+ *   3. visualmente      dentro de <div data-kp-provisional> con su aviso
+ *
+ * Cuando el negocio decida el modelo: sustituye los bloques marcados, quita
+ * los atributos data-kp-provisional y quita noIndex del <Base>.
+ * ==========================================================================
+ */
+import Base from '../layouts/Base.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import { SITIO, ruta } from '../datos/sitio';
+---
+
+<Base
+  titulo="Café en grano"
+  descripcion="La línea de café en grano de KaffeePlatz está en preparación. Te contamos en qué estamos trabajando y cómo enterarte cuando salga."
+  camino="/cafe"
+  migas={[{ nombre: 'Café', href: '/cafe' }]}
+>
+  <header data-kp-seccion="encabezado" class="c-encabezado">
+    <p data-kp-kicker>Próximamente</p>
+    <h1>Café en grano</h1>
+    <p data-kp-entradilla>
+      Llevamos tiempo ayudándote a preparar mejor café. El siguiente paso natural es el grano, y
+      estamos trabajando en ello.
+    </p>
+  </header>
+
+  <!-- PROVISIONAL -->
+  <!--
+    TEXTO PROVISIONAL. El modelo de la linea de cafe en grano esta SIN DEFINIR.
+    No afirmar si somos curadores de tostadores terceros o marca propia.
+    No anadir origenes, fincas, perfiles de tueste, precios ni fechas.
+  -->
+  <div data-kp-provisional role="note" aria-label="Contenido provisional">
+    <p data-kp-provisional-aviso>
+      <strong>Texto provisional.</strong> Esta sección es una maqueta: la línea de café en grano
+      todavía se está definiendo. Nada de lo que hay aquí abajo es un compromiso comercial.
+    </p>
+
+    <section data-kp-seccion="grano-intro" data-kp-provisional aria-labelledby="t-grano">
+      <h2 id="t-grano">En qué estamos</h2>
+      <p>
+        Estamos armando una propuesta de café en grano que esté a la altura del equipo que ya te
+        vendemos. Queremos que el grano y el método se acompañen, no que uno arruine al otro.
+      </p>
+      <p>
+        Todavía estamos cerrando cómo lo haremos. Cuando lo tengamos claro, lo contaremos aquí sin
+        adornos: qué café es, de dónde viene y por qué lo elegimos.
+      </p>
+    </section>
+
+    <section data-kp-seccion="grano-criterio" data-kp-provisional aria-labelledby="t-grano-criterio">
+      <h2 id="t-grano-criterio">Lo que sí tenemos decidido</h2>
+      <ul data-kp-lista="criterio">
+        <li>
+          <h3>Café de especialidad, sin medias tintas</h3>
+          <p>Si no da la talla en taza, no entra. Ese filtro ya lo aplicamos con los accesorios.</p>
+        </li>
+        <li>
+          <h3>Información honesta en la etiqueta</h3>
+          <p>
+            Queremos que sepas qué estás comprando y cómo prepararlo, no una etiqueta bonita sin
+            datos.
+          </p>
+        </li>
+        <li>
+          <h3>Pensado para los métodos que ya vendemos</h3>
+          <p>
+            Molienda y recomendaciones ajustadas a V60, Chemex, Aeropress y prensa francesa, que es
+            lo que tienes en casa.
+          </p>
+        </li>
+      </ul>
+    </section>
+
+    <section data-kp-seccion="grano-pendiente" data-kp-provisional aria-labelledby="t-pendiente">
+      <h2 id="t-pendiente">Lo que aún no podemos decirte</h2>
+      <ul data-kp-lista="pendientes">
+        <li>
+          <strong>PENDIENTE DE DEFINIR:</strong> el modelo de la línea (selección de tostadores
+          aliados o proyecto propio de tueste).
+        </li>
+        <li><strong>PENDIENTE DE DEFINIR:</strong> orígenes, variedades y perfiles disponibles.</li>
+        <li><strong>PENDIENTE DE DEFINIR:</strong> formatos, precios y frecuencia de reposición.</li>
+        <li><strong>PENDIENTE DE DEFINIR:</strong> fecha de lanzamiento.</li>
+      </ul>
+      <p data-kp-nota>
+        Preferimos dejarlo en blanco antes que prometerte algo que todavía no está cerrado.
+      </p>
+    </section>
+  </div>
+  <!-- /PROVISIONAL -->
+
+  <section data-kp-seccion="grano-aviso" aria-labelledby="t-aviso" class="c-prosa-seccion">
+    <h2 id="t-aviso">Avísame cuando salga</h2>
+    <p>
+      Si quieres ser de los primeros en probarlo, escríbenos por WhatsApp y te apuntamos. Te
+      avisaremos cuando la línea esté lista, sin llenarte el teléfono mientras tanto.
+    </p>
+    <p data-kp-acciones>
+      <BotonWhatsApp
+        clase="c-accion"
+        mensaje="Hola KaffeePlatz, quiero que me avisen cuando salga la línea de café en grano."
+      >
+        Quiero que me avisen
+      </BotonWhatsApp>
+    </p>
+    <p data-kp-nota>
+      Mientras tanto, en el <a href={ruta('/diario')}>diario</a> tienes guías sobre molienda, origen
+      y conservación del grano, y en el <a href={ruta('/catalogo')}>catálogo</a> el equipo para
+      prepararlo. También puedes escribirnos a {SITIO.email}.
+    </p>
+  </section>
+</Base>

@@ -1,0 +1,1784 @@
+/* ===========================================================================
+   OBSIDIANA — Propuesta C para KaffeePlatz
+   ---------------------------------------------------------------------------
+   Revista editorial impresa sobre papel negro.
+
+   Principios:
+     1. Canvas #1A1A1A (--kp-anchor, el negro oficial de marca).
+     2. La firma es el SERIF EN CURSIVA: titulares, nombres de producto y
+        enlaces de accion en Cormorant Garamond italica.
+     3. Sin CTA relleno. Las acciones son enlaces tipograficos.
+     4. Separacion por hairlines de 1px, no por sombras.
+     5. Radios de 4px. Excepcion: la pildora de precio, 60px.
+     6. Escala contenida: display 42px, heading 30-36px, body 16px.
+     7. Espaciado generoso: base 4px, section gap 80px, max-width 1400px.
+
+   >>> LA REGLA DEL ORO, REINTERPRETADA PARA TEMA OSCURO <<<
+   marca.css prohibe #dec185 como TEXTO porque sobre crema da 1.85:1.
+   Esa prohibicion es relativa al FONDO CREMA, no al color en si.
+   Sobre el canvas #1A1A1A el mismo oro da 9.07:1 -> PASA AA y AAA.
+   Aqui, y SOLO sobre superficie oscura, --kp-accent es legible.
+   En cuanto un elemento se apoya en un panel claro (--c-panel / crema),
+   el texto vuelve a --kp-ink y el oro legible vuelve a ser --kp-accent-ink.
+   =========================================================================== */
+
+@import './marca.css';
+
+:root {
+  /* --- Superficies oscuras -------------------------------------------- */
+  /* Canvas de pagina: el negro oficial de marca. */
+  --c-canvas: #1a1a1a;
+  /* Superficie elevada apenas: tarjetas y bloques sobre el canvas. */
+  --c-elevado: #212120;
+  /* Un escalon mas, para cabecera fija y zonas de cierre. */
+  --c-hondo: #151514;
+
+  /* --- Paneles claros (passe-partout de las imagenes) ------------------ */
+  /* Crema de marca. Es el marco de museo que aisla la foto del negro. */
+  --c-panel: #fdf7e7;
+  --c-panel-blanco: #ffffff;
+  /* Borde interior del panel, para que el crema no flote sin contorno. */
+  --c-panel-borde: #e8ddc2;
+
+  /* --- Texto sobre oscuro ---------------------------------------------- */
+  /* Principal: crema de marca sobre #1A1A1A = 15.28:1. */
+  --c-tinta: #fdf7e7;
+  /* Secundario: gris calido claro. Verificado AA, ver informe. */
+  --c-tinta-tenue: #b3ab9c;
+  /* Terciario, solo para metadatos cortos >=14px. Verificado AA. */
+  --c-tinta-sutil: #96907f;
+
+  /* --- Oro ------------------------------------------------------------- */
+  /* Sobre oscuro el oro claro SI se lee: 9.07:1. */
+  --c-oro: #dec185;
+  /* Oro para texto sobre panel CLARO. 4.69:1 sobre crema. */
+  --c-oro-legible: #8f6724;
+
+  /* --- Hairlines: la separacion de este lenguaje ----------------------- */
+  --c-hairline: rgb(253 247 231 / 0.14);
+  --c-hairline-fuerte: rgb(253 247 231 / 0.24);
+  --c-hairline-oro: rgb(222 193 133 / 0.38);
+
+  /* --- Tipografia ------------------------------------------------------ */
+  --c-serif: 'Cormorant Garamond', 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --c-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Escala CONTENIDA. Este lenguaje no usa display gigante. */
+  --c-t-display: 2.625rem; /* 42px */
+  --c-t-h1: 2.25rem; /* 36px */
+  --c-t-h2: 1.875rem; /* 30px */
+  --c-t-h3: 1.3125rem; /* 21px */
+  --c-t-body: 1rem; /* 16px */
+  --c-t-small: 0.875rem; /* 14px */
+  --c-t-micro: 0.75rem; /* 12px — solo versalitas con tracking */
+
+  /* --- Ritmo: base 4px ------------------------------------------------- */
+  --c-1: 0.25rem;
+  --c-2: 0.5rem;
+  --c-3: 0.75rem;
+  --c-4: 1rem;
+  --c-5: 1.25rem;
+  --c-6: 1.5rem;
+  --c-8: 2rem;
+  --c-10: 2.5rem;
+  --c-12: 3rem;
+  --c-16: 4rem;
+  --c-20: 5rem; /* 80px — el section gap */
+
+  --c-seccion: 5rem;
+  --c-ancho: 1400px;
+  --c-ancho-prosa: 40rem;
+
+  /* --- Radios ---------------------------------------------------------- */
+  --c-radio: 4px;
+  --c-radio-pildora: 60px;
+
+  /* Sombra al minimo: blur 10px al 5% es el techo del lenguaje. */
+  --c-sombra: 0 2px 10px rgb(0 0 0 / 0.05);
+}
+
+/* ===========================================================================
+   RESET Y BASE
+   =========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background-color: var(--c-canvas);
+  color: var(--c-tinta);
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+body.kp-obsidiana {
+  margin: 0;
+  min-height: 100vh;
+  /* overflow-x oculto como red de seguridad contra el scroll horizontal. */
+  overflow-x: hidden;
+  background-color: var(--c-canvas);
+  color: var(--c-tinta);
+  font-family: var(--c-sans);
+  font-size: var(--c-t-body);
+  font-weight: 400;
+  line-height: 1.65;
+  /* Antialiasing: mitiga el halation del texto claro sobre negro. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis-weight: none;
+  display: flex;
+  flex-direction: column;
+}
+
+/* La textura de lino de marca, a muy baja opacidad: da temperatura al negro
+   sin levantar su luminancia (queda por DEBAJO de todo el contenido). */
+body.kp-obsidiana::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--kp-lino);
+  background-size: 620px auto;
+  opacity: 0.05;
+  mix-blend-mode: soft-light;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ===========================================================================
+   TIPOGRAFIA — LA CURSIVA ES LA FIRMA
+   =========================================================================== */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 0.005em;
+  margin: 0;
+  color: var(--c-tinta);
+  /* Evita que el cursivo se recorte por la derecha en su caja. */
+  padding-right: 0.06em;
+}
+
+h1 {
+  font-size: var(--c-t-h1);
+}
+h2 {
+  font-size: var(--c-t-h2);
+}
+h3 {
+  font-size: var(--c-t-h3);
+  line-height: 1.25;
+}
+
+p {
+  margin: 0 0 var(--c-4);
+}
+
+a {
+  color: var(--c-oro);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+a:hover {
+  color: var(--c-tinta);
+}
+
+strong {
+  font-weight: 600;
+  color: var(--c-tinta);
+}
+
+/* Versalitas con tracking: el otro gesto del lenguaje editorial. */
+.c-kicker,
+[data-kp-kicker] {
+  font-family: var(--c-sans);
+  font-size: var(--c-t-micro);
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-tinta-tenue);
+  margin: 0 0 var(--c-4);
+}
+
+/* Enlace de accion: SIN boton. Serif italica + filete dorado que crece. */
+.c-accion {
+  display: inline-block;
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.375rem;
+  line-height: 1.3;
+  color: var(--c-oro);
+  text-decoration: none;
+  padding-bottom: var(--c-1);
+  border-bottom: 1px solid var(--c-hairline-oro);
+  transition:
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.c-accion:hover {
+  color: var(--c-tinta);
+  border-bottom-color: var(--c-tinta);
+}
+
+.c-accion--sm {
+  font-size: 1.125rem;
+}
+
+/* Sobre panel claro la accion cambia de oro: el claro no se lee en crema. */
+.c-panel .c-accion,
+.c-accion--sobre-claro {
+  color: var(--c-oro-legible);
+  border-bottom-color: rgb(143 103 36 / 0.4);
+}
+
+/* Filete dorado metalico — el gesto grafico de la marca. */
+.c-filete {
+  height: 1px;
+  width: 100%;
+  border: 0;
+  margin: 0;
+  background: var(--kp-oro-horizontal);
+  opacity: 0.55;
+}
+
+.c-hairline {
+  height: 1px;
+  width: 100%;
+  border: 0;
+  margin: 0;
+  background: var(--c-hairline);
+}
+
+/* ===========================================================================
+   ESTRUCTURA
+   =========================================================================== */
+
+.c-limite {
+  width: 100%;
+  max-width: var(--c-ancho);
+  margin-inline: auto;
+  padding-inline: var(--c-6);
+}
+
+@media (min-width: 768px) {
+  .c-limite {
+    padding-inline: var(--c-10);
+  }
+}
+
+[data-kp-main] {
+  flex: 1 0 auto;
+  display: block;
+}
+
+/* El ritmo vertical: 80px entre secciones. */
+[data-kp-main] > * + * {
+  margin-top: var(--c-seccion);
+}
+
+[data-kp-main] {
+  padding-block: var(--c-12) var(--c-seccion);
+}
+
+@media (min-width: 768px) {
+  [data-kp-main] {
+    padding-block: var(--c-16) calc(var(--c-seccion) * 1.2);
+  }
+}
+
+/* ===========================================================================
+   CABECERA — emblema + nav en serif italica + hairline dorado
+   =========================================================================== */
+
+.c-cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: rgb(21 21 20 / 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--c-hairline);
+}
+
+/* El hairline dorado bajo la cabecera. */
+.c-cabecera::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--kp-oro-horizontal);
+  opacity: 0.5;
+}
+
+.c-cabecera__fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c-4);
+  min-height: 72px;
+  padding-block: var(--c-3);
+}
+
+.c-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--c-3);
+  text-decoration: none;
+  color: var(--c-tinta);
+  flex-shrink: 0;
+}
+
+/* El emblema es un medallon sobre lino OSCURO: va directo sobre el canvas,
+   sin panel claro, porque su propio fondo ya es oscuro. */
+.c-logo__emblema {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.c-logo__wordmark {
+  height: 15px;
+  width: auto;
+}
+
+.c-nav ul {
+  display: flex;
+  align-items: center;
+  gap: var(--c-6);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* La navegacion en serif italica: convierte un menu funcional en un indice
+   curado. Es EL gesto de este lenguaje. */
+.c-nav a {
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.1875rem;
+  color: var(--c-tinta);
+  text-decoration: none;
+  padding-block: var(--c-1);
+  border-bottom: 1px solid transparent;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.c-nav a:hover {
+  color: var(--c-oro);
+  border-bottom-color: var(--c-hairline-oro);
+}
+
+.c-nav a[aria-current='page'] {
+  color: var(--c-oro);
+  border-bottom-color: var(--c-oro);
+}
+
+/* En movil la nav baja a una segunda linea con scroll horizontal CONTENIDO
+   (el scroll vive dentro del nav, nunca en la pagina). */
+@media (max-width: 899px) {
+  .c-cabecera__fila {
+    flex-wrap: wrap;
+    min-height: 0;
+    gap: var(--c-2);
+  }
+  .c-nav {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    border-top: 1px solid var(--c-hairline);
+    padding-top: var(--c-2);
+    padding-bottom: var(--c-2);
+    /* Sangra el padding del contenedor para que el scroll llegue al borde. */
+    margin-inline: calc(var(--c-6) * -1);
+    padding-inline: var(--c-6);
+  }
+  .c-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .c-nav ul {
+    gap: var(--c-5);
+    width: max-content;
+  }
+  .c-nav a {
+    font-size: 1.0625rem;
+  }
+}
+
+/* ===========================================================================
+   PIE
+   =========================================================================== */
+
+.c-pie {
+  flex-shrink: 0;
+  background-color: var(--c-hondo);
+  border-top: 1px solid var(--c-hairline);
+  margin-top: var(--c-seccion);
+  padding-block: var(--c-16) var(--c-10);
+}
+
+.c-pie__rejilla {
+  display: grid;
+  gap: var(--c-10);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .c-pie__rejilla {
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: var(--c-12);
+  }
+}
+
+.c-pie__emblema {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  margin-bottom: var(--c-4);
+}
+
+.c-pie__lema {
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.5rem;
+  line-height: 1.3;
+  color: var(--c-oro);
+  margin: 0 0 var(--c-3);
+}
+
+.c-pie h2 {
+  font-size: var(--c-t-micro);
+  font-family: var(--c-sans);
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-tinta-tenue);
+  margin-bottom: var(--c-4);
+}
+
+.c-pie ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--c-2);
+}
+
+.c-pie a {
+  color: var(--c-tinta);
+  text-decoration: none;
+  font-size: var(--c-t-small);
+  border-bottom: 1px solid transparent;
+}
+
+.c-pie a:hover {
+  color: var(--c-oro);
+  border-bottom-color: var(--c-hairline-oro);
+}
+
+.c-pie p {
+  font-size: var(--c-t-small);
+  color: var(--c-tinta-tenue);
+  margin: 0 0 var(--c-2);
+}
+
+.c-pie__legal {
+  margin-top: var(--c-10);
+  padding-top: var(--c-6);
+  border-top: 1px solid var(--c-hairline);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--c-2) var(--c-6);
+  justify-content: space-between;
+}
+
+.c-pie__legal p {
+  margin: 0;
+  font-size: var(--c-t-micro);
+  letter-spacing: 0.04em;
+  color: var(--c-tinta-sutil);
+}
+
+/* ===========================================================================
+   PANEL DE IMAGEN — LA DECISION CRITICA DE ESTA PROPUESTA
+   ---------------------------------------------------------------------------
+   Las fotos de KaffeePlatz son de baja resolucion y ~60% son recortes sobre
+   FONDO BLANCO. Sobre canvas negro, una foto recortada en blanco crearia un
+   bloque brillante flotando en negro.
+
+   Solucion: TODA imagen va dentro de un panel de superficie clara con radio
+   4px y padding generoso. El panel actua de passe-partout de museo: aisla la
+   foto del negro y neutraliza los fondos blancos, porque el blanco de la foto
+   funde con el crema del panel en lugar de chocar con el negro.
+
+   NINGUNA imagen del sitio va directamente sobre el canvas, salvo el emblema
+   de marca, que ya trae su propio fondo oscuro de lino.
+   =========================================================================== */
+
+.c-panel {
+  /* isolation: el multiply de la imagen debe resolverse contra el crema de
+     ESTE panel, no contra el canvas negro del stacking context de la pagina. */
+  isolation: isolate;
+  background-color: var(--c-panel);
+  border: 1px solid var(--c-panel-borde);
+  border-radius: var(--c-radio);
+  padding: var(--c-6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.c-panel img {
+  width: 100%;
+  height: 100%;
+  /* contain: nunca recorta. Las fotos ya son de baja resolucion; un cover
+     ampliaria el pixelado. */
+  object-fit: contain;
+  /* Mezcla el blanco del recorte con el crema del panel: los recortes sobre
+     blanco dejan de tener un borde visible dentro del passe-partout. */
+  mix-blend-mode: multiply;
+}
+
+/* Panel cuadrado, para rejillas homogeneas. */
+.c-panel--cuadrado {
+  aspect-ratio: 1 / 1;
+}
+
+.c-panel--4x3 {
+  aspect-ratio: 4 / 3;
+}
+
+.c-panel--holgado {
+  padding: var(--c-8);
+}
+
+/* Ausencia de imagen: el panel se convierte en una nota, nunca en un hueco. */
+.c-panel--vacio {
+  background-color: transparent;
+  border: 1px dashed var(--c-hairline-fuerte);
+  color: var(--c-tinta-sutil);
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: var(--c-t-body);
+  padding: var(--c-8);
+  text-align: center;
+}
+
+/* ===========================================================================
+   TARJETA DE PRODUCTO
+   =========================================================================== */
+
+[data-kp-rejilla='productos'] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--c-8);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+}
+
+@media (min-width: 640px) {
+  [data-kp-rejilla='productos'] {
+    gap: var(--c-10);
+  }
+}
+
+[data-kp-tarjeta] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--c-elevado);
+  border: 1px solid var(--c-hairline);
+  border-radius: var(--c-radio);
+  padding: var(--c-4);
+  transition:
+    border-color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+[data-kp-tarjeta]:hover {
+  border-color: var(--c-hairline-oro);
+  background-color: #252523;
+}
+
+[data-kp-tarjeta-enlace] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-4);
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+}
+
+/* La media de la tarjeta ES el panel claro. */
+[data-kp-tarjeta-media] {
+  isolation: isolate;
+  background-color: var(--c-panel);
+  border: 1px solid var(--c-panel-borde);
+  border-radius: var(--c-radio);
+  padding: var(--c-5);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+[data-kp-tarjeta-media] img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+[data-kp-tarjeta-cuerpo] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-2);
+  flex: 1;
+  padding-inline: var(--c-1);
+}
+
+/* El nombre del producto en serif italica: el indice curado. */
+[data-kp-tarjeta-titulo] {
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.375rem;
+  line-height: 1.22;
+  color: var(--c-tinta);
+  margin: 0;
+  transition: color 0.25s ease;
+}
+
+[data-kp-tarjeta-enlace]:hover [data-kp-tarjeta-titulo] {
+  color: var(--c-oro);
+}
+
+/* LA PILDORA DE PRECIO — la unica excepcion al radio de 4px. */
+[data-kp-tarjeta-precio] {
+  margin: var(--c-1) 0 0;
+}
+
+[data-kp-tarjeta-precio] [data-kp-precio] {
+  display: inline-block;
+  border: 1px solid var(--c-hairline-oro);
+  border-radius: var(--c-radio-pildora);
+  padding: var(--c-1) var(--c-4);
+  font-family: var(--c-sans);
+  font-size: var(--c-t-small);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--c-oro);
+  white-space: nowrap;
+}
+
+[data-kp-precio-prefijo] {
+  font-style: italic;
+  font-family: var(--c-serif);
+  font-size: 0.9375rem;
+}
+
+[data-kp-agotado] {
+  font-size: var(--c-t-micro);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-tinta-tenue);
+  margin: 0;
+}
+
+[data-kp-tarjeta][data-kp-disponible='false'] [data-kp-tarjeta-media] {
+  opacity: 0.66;
+}
+
+/* La accion de la tarjeta: enlace serif italica, separado por hairline. */
+[data-kp-tarjeta] [data-kp-whatsapp] {
+  display: inline-block;
+  margin-top: var(--c-4);
+  padding-top: var(--c-4);
+  border-top: 1px solid var(--c-hairline);
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.0625rem;
+  color: var(--c-oro);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+[data-kp-tarjeta] [data-kp-whatsapp]:hover {
+  color: var(--c-tinta);
+}
+
+[data-kp-sin-imagen] {
+  font-family: var(--c-serif);
+  font-style: italic;
+  color: var(--kp-ink-muted);
+  font-size: var(--c-t-small);
+}
+
+/* ===========================================================================
+   TARJETA DE ARTICULO
+   =========================================================================== */
+
+[data-kp-rejilla='articulos'] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--c-8);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+}
+
+@media (min-width: 900px) {
+  [data-kp-rejilla='articulos'] {
+    gap: var(--c-10);
+  }
+}
+
+[data-kp-articulo] {
+  height: 100%;
+  border-top: 1px solid var(--c-hairline-fuerte);
+  padding-top: var(--c-5);
+  transition: border-color 0.3s ease;
+}
+
+[data-kp-articulo]:hover {
+  border-top-color: var(--c-oro);
+}
+
+[data-kp-articulo-enlace] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-3);
+  text-decoration: none;
+  color: inherit;
+  height: 100%;
+}
+
+/* La portada del articulo tambien va en panel claro. */
+[data-kp-articulo-media] {
+  isolation: isolate;
+  background-color: var(--c-panel);
+  border: 1px solid var(--c-panel-borde);
+  border-radius: var(--c-radio);
+  padding: var(--c-3);
+  aspect-ratio: 16 / 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+[data-kp-articulo-media] img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+[data-kp-articulo-media]:has([data-kp-sin-imagen]) {
+  background-color: transparent;
+  border-style: dashed;
+  border-color: var(--c-hairline);
+}
+
+[data-kp-articulo-cuerpo] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-2);
+  flex: 1;
+}
+
+[data-kp-articulo-fecha] {
+  font-size: var(--c-t-micro);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-tinta-tenue);
+}
+
+[data-kp-articulo-titulo] {
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  color: var(--c-tinta);
+  margin: 0;
+  transition: color 0.25s ease;
+}
+
+[data-kp-articulo-enlace]:hover [data-kp-articulo-titulo] {
+  color: var(--c-oro);
+}
+
+[data-kp-articulo-resumen] {
+  font-size: var(--c-t-small);
+  line-height: 1.6;
+  color: var(--c-tinta-tenue);
+  margin: 0;
+}
+
+/* ===========================================================================
+   SECCIONES GENERICAS
+   =========================================================================== */
+
+.c-seccion__cabeza {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--c-3) var(--c-6);
+  padding-bottom: var(--c-4);
+  border-bottom: 1px solid var(--c-hairline);
+  margin-bottom: var(--c-10);
+}
+
+.c-seccion__cabeza h2 {
+  font-size: var(--c-t-h2);
+}
+
+/* Numeracion editorial de seccion, como en una revista. */
+.c-folio {
+  font-family: var(--c-sans);
+  font-size: var(--c-t-micro);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-tinta-sutil);
+}
+
+[data-kp-entradilla] {
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.375rem;
+  line-height: 1.5;
+  color: var(--c-tinta-tenue);
+  max-width: 46rem;
+  margin: 0 0 var(--c-6);
+}
+
+[data-kp-nota] {
+  font-size: var(--c-t-small);
+  color: var(--c-tinta-tenue);
+  line-height: 1.6;
+}
+
+[data-kp-acciones] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--c-4) var(--c-10);
+  margin-top: var(--c-8);
+}
+
+/* Encabezado de pagina interior. */
+.c-encabezado {
+  padding-bottom: var(--c-10);
+  border-bottom: 1px solid var(--c-hairline);
+}
+
+.c-encabezado h1 {
+  font-size: var(--c-t-display);
+  margin-bottom: var(--c-4);
+  max-width: 22ch;
+}
+
+@media (max-width: 640px) {
+  .c-encabezado h1 {
+    font-size: 2.125rem;
+  }
+}
+
+/* ===========================================================================
+   PORTADA
+   =========================================================================== */
+
+.c-hero {
+  display: grid;
+  gap: var(--c-12);
+  align-items: center;
+  grid-template-columns: 1fr;
+  padding-bottom: var(--c-12);
+  border-bottom: 1px solid var(--c-hairline);
+}
+
+@media (min-width: 900px) {
+  .c-hero {
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: var(--c-16);
+  }
+}
+
+.c-hero h1 {
+  /* Display CONTENIDO: 42px. La elegancia esta en la contencion. */
+  font-size: var(--c-t-display);
+  line-height: 1.1;
+  margin-bottom: var(--c-6);
+  max-width: 14ch;
+}
+
+@media (max-width: 640px) {
+  .c-hero h1 {
+    font-size: 2.125rem;
+  }
+}
+
+/* El emblema protagonista, con su halo de lino. Va sobre oscuro porque el
+   medallon ya trae su propio fondo de lino oscuro. */
+.c-hero__emblema {
+  justify-self: center;
+  position: relative;
+  width: min(340px, 78vw);
+  aspect-ratio: 1 / 1;
+}
+
+.c-hero__emblema img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  z-index: 1;
+}
+
+/* Halo dorado: un filete circular, no una sombra. */
+.c-hero__emblema::after {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1px solid var(--c-hairline-oro);
+}
+
+.c-hero__filete {
+  margin-bottom: var(--c-6);
+  max-width: 96px;
+}
+
+/* Pasos "Como compras": tres columnas separadas por hairlines. */
+[data-kp-pasos] {
+  list-style: none;
+  counter-reset: paso;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--c-8);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  [data-kp-pasos] {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+  }
+  [data-kp-pasos] > li {
+    padding-inline: var(--c-8);
+    border-left: 1px solid var(--c-hairline);
+  }
+  [data-kp-pasos] > li:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+  [data-kp-pasos] > li:last-child {
+    padding-right: 0;
+  }
+}
+
+[data-kp-pasos] > li {
+  counter-increment: paso;
+}
+
+[data-kp-pasos] > li::before {
+  content: counter(paso, decimal-leading-zero);
+  display: block;
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--c-oro);
+  margin-bottom: var(--c-3);
+}
+
+[data-kp-pasos] h3 {
+  margin-bottom: var(--c-2);
+}
+
+[data-kp-pasos] p {
+  color: var(--c-tinta-tenue);
+  font-size: var(--c-t-small);
+  margin: 0;
+}
+
+/* Bloque de cierre "Sobre nosotros" en la portada. */
+.c-cierre {
+  border: 1px solid var(--c-hairline);
+  border-radius: var(--c-radio);
+  padding: var(--c-10);
+  background-color: var(--c-hondo);
+}
+
+@media (min-width: 768px) {
+  .c-cierre {
+    padding: var(--c-12) var(--c-16);
+    text-align: center;
+  }
+  .c-cierre [data-kp-acciones] {
+    justify-content: center;
+  }
+  .c-cierre p {
+    margin-inline: auto;
+  }
+}
+
+.c-cierre p {
+  color: var(--c-tinta-tenue);
+  max-width: 52ch;
+}
+
+/* ===========================================================================
+   FICHA DE PRODUCTO
+   =========================================================================== */
+
+[data-kp-ficha] {
+  display: grid;
+  gap: var(--c-10);
+  grid-template-columns: 1fr;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  [data-kp-ficha] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--c-16);
+  }
+  [data-kp-ficha-galeria] {
+    position: sticky;
+    top: 104px;
+  }
+}
+
+/* La galeria: cada foto en su propio panel claro. */
+[data-kp-ficha-galeria] {
+  display: grid;
+  gap: var(--c-4);
+}
+
+[data-kp-ficha-galeria] > img {
+  isolation: isolate;
+  background-color: var(--c-panel);
+  border: 1px solid var(--c-panel-borde);
+  border-radius: var(--c-radio);
+  padding: var(--c-8);
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+/* A partir de la segunda foto, miniaturas en fila. */
+@media (min-width: 560px) {
+  [data-kp-ficha-galeria]:has(> img + img) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  [data-kp-ficha-galeria]:has(> img + img) > img:first-child {
+    grid-column: 1 / -1;
+  }
+  [data-kp-ficha-galeria]:has(> img + img) > img:not(:first-child) {
+    padding: var(--c-4);
+  }
+}
+
+[data-kp-ficha-galeria] [data-kp-sin-imagen] {
+  border: 1px dashed var(--c-hairline-fuerte);
+  border-radius: var(--c-radio);
+  padding: var(--c-16) var(--c-8);
+  text-align: center;
+  color: var(--c-tinta-sutil);
+  font-family: var(--c-serif);
+  font-style: italic;
+}
+
+[data-kp-ficha-info] h1 {
+  font-size: var(--c-t-display);
+  line-height: 1.12;
+  margin-bottom: var(--c-6);
+}
+
+@media (max-width: 640px) {
+  [data-kp-ficha-info] h1 {
+    font-size: 2rem;
+  }
+}
+
+[data-kp-vendor] {
+  font-size: var(--c-t-micro);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-tinta-tenue);
+  margin-bottom: var(--c-3);
+}
+
+/* La pildora de precio en la ficha: radio 60px, mas presente. */
+[data-kp-ficha-precio] {
+  margin: 0 0 var(--c-4);
+}
+
+[data-kp-ficha-precio] [data-kp-precio] {
+  display: inline-block;
+  border: 1px solid var(--c-hairline-oro);
+  border-radius: var(--c-radio-pildora);
+  padding: var(--c-2) var(--c-6);
+  font-family: var(--c-sans);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--c-oro);
+}
+
+[data-kp-ficha-estado] {
+  font-size: var(--c-t-micro);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-tinta-tenue);
+  padding-bottom: var(--c-6);
+  border-bottom: 1px solid var(--c-hairline);
+  margin-bottom: var(--c-6);
+}
+
+[data-kp-ficha-estado][data-kp-disponible='true'] {
+  color: var(--c-oro);
+}
+
+[data-kp-ficha-opciones] {
+  margin-bottom: var(--c-6);
+  padding-bottom: var(--c-6);
+  border-bottom: 1px solid var(--c-hairline);
+}
+
+[data-kp-opcion-nombre] {
+  font-size: var(--c-t-micro);
+  font-family: var(--c-sans);
+  font-style: normal;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-tinta-tenue);
+  margin-bottom: var(--c-3);
+}
+
+[data-kp-ficha-opciones] ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+[data-kp-variante] {
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.125rem;
+  color: var(--c-tinta);
+  padding-block: var(--c-3);
+  border-bottom: 1px solid var(--c-hairline);
+}
+
+[data-kp-variante]:last-child {
+  border-bottom: 0;
+}
+
+[data-kp-variante][data-kp-disponible='false'] {
+  color: var(--c-tinta-sutil);
+}
+
+[data-kp-variante] [data-kp-agotado] {
+  display: inline;
+  font-family: var(--c-sans);
+  font-style: normal;
+}
+
+/* Descripcion de producto: prosa a peso 400, nunca menos de 16px. */
+[data-kp-ficha-descripcion] {
+  font-size: var(--c-t-body);
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--c-tinta-tenue);
+  margin-bottom: var(--c-8);
+}
+
+[data-kp-ficha-descripcion] :is(p, ul, ol) {
+  margin: 0 0 var(--c-4);
+}
+
+[data-kp-ficha-descripcion] :is(ul, ol) {
+  padding-left: var(--c-5);
+}
+
+[data-kp-ficha-descripcion] li {
+  margin-bottom: var(--c-2);
+}
+
+[data-kp-ficha-descripcion] strong {
+  color: var(--c-tinta);
+}
+
+[data-kp-ficha-descripcion] :is(h2, h3, h4) {
+  font-size: var(--c-t-h3);
+  color: var(--c-tinta);
+  margin: var(--c-6) 0 var(--c-3);
+}
+
+[data-kp-ficha-descripcion] img {
+  isolation: isolate;
+  background-color: var(--c-panel);
+  border: 1px solid var(--c-panel-borde);
+  border-radius: var(--c-radio);
+  padding: var(--c-4);
+  margin-block: var(--c-4);
+  mix-blend-mode: multiply;
+}
+
+[data-kp-ficha-descripcion] a {
+  color: var(--c-oro);
+}
+
+/* La accion de compra: enlace serif italica dorado, NO un boton relleno. */
+[data-kp-ficha-accion] {
+  padding-top: var(--c-8);
+  border-top: 1px solid var(--c-hairline-oro);
+}
+
+[data-kp-ficha-accion] [data-kp-whatsapp] {
+  display: inline-block;
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.75rem;
+  line-height: 1.3;
+  color: var(--c-oro);
+  text-decoration: none;
+  padding-bottom: var(--c-2);
+  border-bottom: 1px solid var(--c-hairline-oro);
+  margin-bottom: var(--c-5);
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+[data-kp-ficha-accion] [data-kp-whatsapp]:hover {
+  color: var(--c-tinta);
+  border-bottom-color: var(--c-tinta);
+}
+
+[data-kp-ficha-accion] [data-kp-nota] {
+  margin: 0;
+}
+
+/* ===========================================================================
+   ARTICULO — EL PUNTO FUERTE: PROSA EN CREMA SOBRE NEGRO
+   ---------------------------------------------------------------------------
+   AVISO DE HALATION: el texto claro sobre fondo oscuro se "sangra"
+   opticamente, y el efecto empeora con pesos ligeros. Por eso la prosa larga
+   va a PESO 400 (nunca 300), a 17px y con line-height 1.75. El peso 300 y la
+   cursiva quedan reservados para titulares, que son cortos.
+   =========================================================================== */
+
+[data-kp-articulo-completo] {
+  max-width: var(--c-ancho-prosa);
+  margin-inline: auto;
+}
+
+[data-kp-articulo-encabezado] {
+  padding-bottom: var(--c-8);
+  border-bottom: 1px solid var(--c-hairline);
+  margin-bottom: var(--c-8);
+}
+
+[data-kp-articulo-encabezado] h1 {
+  font-size: var(--c-t-display);
+  line-height: 1.14;
+  margin-bottom: var(--c-4);
+}
+
+@media (max-width: 640px) {
+  [data-kp-articulo-encabezado] h1 {
+    font-size: 2rem;
+  }
+}
+
+[data-kp-articulo-meta] {
+  font-size: var(--c-t-micro);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-tinta-tenue);
+  margin-bottom: var(--c-5);
+}
+
+/* Portada del articulo: panel claro, tamano MODERADO, nunca a sangre. */
+[data-kp-articulo-portada] {
+  margin: 0 0 var(--c-10);
+  isolation: isolate;
+  background-color: var(--c-panel);
+  border: 1px solid var(--c-panel-borde);
+  border-radius: var(--c-radio);
+  padding: var(--c-4);
+}
+
+[data-kp-articulo-portada] img {
+  width: 100%;
+  border-radius: 2px;
+  mix-blend-mode: multiply;
+}
+
+/* --- La prosa --- */
+[data-kp-prosa] {
+  font-size: 1.0625rem; /* 17px */
+  font-weight: 400; /* NUNCA 300: el halation lo destruiria */
+  line-height: 1.75; /* >= 1.6, holgado */
+  color: var(--c-tinta-tenue);
+  /* Un pelo de tracking ayuda a separar las letras sangradas por el halo. */
+  letter-spacing: 0.006em;
+}
+
+[data-kp-prosa] p {
+  margin: 0 0 var(--c-6);
+}
+
+[data-kp-prosa] :is(h2, h3, h4) {
+  color: var(--c-tinta);
+  margin: var(--c-12) 0 var(--c-4);
+}
+
+[data-kp-prosa] h2 {
+  font-size: 1.75rem;
+  padding-top: var(--c-6);
+  border-top: 1px solid var(--c-hairline);
+}
+
+[data-kp-prosa] h3 {
+  font-size: 1.375rem;
+}
+
+[data-kp-prosa] :is(ul, ol) {
+  margin: 0 0 var(--c-6);
+  padding-left: var(--c-6);
+}
+
+[data-kp-prosa] li {
+  margin-bottom: var(--c-3);
+}
+
+[data-kp-prosa] li::marker {
+  color: var(--c-oro);
+}
+
+[data-kp-prosa] strong {
+  color: var(--c-tinta);
+  font-weight: 600;
+}
+
+[data-kp-prosa] em {
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.15em;
+  color: var(--c-tinta);
+}
+
+[data-kp-prosa] a {
+  color: var(--c-oro);
+}
+
+[data-kp-prosa] blockquote {
+  margin: var(--c-8) 0;
+  padding-left: var(--c-6);
+  border-left: 1px solid var(--c-hairline-oro);
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.375rem;
+  line-height: 1.5;
+  color: var(--c-tinta);
+}
+
+/* Cualquier imagen dentro de la prosa tambien recibe su panel. */
+[data-kp-prosa] img {
+  isolation: isolate;
+  background-color: var(--c-panel);
+  border: 1px solid var(--c-panel-borde);
+  border-radius: var(--c-radio);
+  padding: var(--c-4);
+  margin-block: var(--c-8);
+  mix-blend-mode: multiply;
+}
+
+[data-kp-prosa] hr {
+  border: 0;
+  height: 1px;
+  background: var(--c-hairline);
+  margin-block: var(--c-10);
+}
+
+[data-kp-prosa] table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--c-6);
+  font-size: var(--c-t-small);
+  display: block;
+  overflow-x: auto;
+}
+
+[data-kp-prosa] :is(th, td) {
+  border-bottom: 1px solid var(--c-hairline);
+  padding: var(--c-3);
+  text-align: left;
+}
+
+[data-kp-prosa] th {
+  color: var(--c-tinta);
+  font-weight: 600;
+}
+
+/* Cierre del articulo. */
+[data-kp-articulo-cierre] {
+  margin-top: var(--c-12);
+  padding-top: var(--c-8);
+  border-top: 1px solid var(--c-hairline-oro);
+}
+
+[data-kp-articulo-cierre] p {
+  color: var(--c-tinta-tenue);
+}
+
+[data-kp-articulo-cierre] [data-kp-whatsapp] {
+  display: inline-block;
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.5rem;
+  color: var(--c-oro);
+  text-decoration: none;
+  padding-bottom: var(--c-1);
+  border-bottom: 1px solid var(--c-hairline-oro);
+  margin-bottom: var(--c-6);
+  transition:
+    color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+[data-kp-articulo-cierre] [data-kp-whatsapp]:hover {
+  color: var(--c-tinta);
+  border-bottom-color: var(--c-tinta);
+}
+
+[data-kp-articulo-cierre] a:not([data-kp-whatsapp]) {
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.125rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--c-hairline-oro);
+}
+
+/* ===========================================================================
+   LISTAS EDITORIALES (nosotros, contacto, cafe)
+   =========================================================================== */
+
+[data-kp-lista] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--c-8);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  [data-kp-lista='criterio'],
+  [data-kp-lista='hechos'],
+  [data-kp-lista='canales'] {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--c-10);
+  }
+}
+
+[data-kp-lista] > li {
+  border-top: 1px solid var(--c-hairline);
+  padding-top: var(--c-5);
+}
+
+[data-kp-lista] h3 {
+  margin-bottom: var(--c-3);
+  color: var(--c-tinta);
+}
+
+[data-kp-lista] p {
+  color: var(--c-tinta-tenue);
+  font-size: var(--c-t-small);
+  line-height: 1.65;
+}
+
+[data-kp-lista='envios'],
+[data-kp-lista='pendientes'] {
+  gap: 0;
+}
+
+[data-kp-lista='envios'] > li,
+[data-kp-lista='pendientes'] > li {
+  padding-block: var(--c-3);
+  border-top: 1px solid var(--c-hairline);
+  color: var(--c-tinta-tenue);
+  font-size: var(--c-t-body);
+}
+
+[data-kp-lista='canales'] [data-kp-whatsapp] {
+  display: inline-block;
+  margin-top: var(--c-2);
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.1875rem;
+  color: var(--c-oro);
+  text-decoration: none;
+  border-bottom: 1px solid var(--c-hairline-oro);
+  padding-bottom: 2px;
+}
+
+[data-kp-lista='canales'] [data-kp-whatsapp]:hover {
+  color: var(--c-tinta);
+  border-bottom-color: var(--c-tinta);
+}
+
+/* Prosa de paginas estaticas (nosotros, contacto). */
+.c-prosa-seccion p {
+  color: var(--c-tinta-tenue);
+  max-width: 58ch;
+  line-height: 1.7;
+}
+
+.c-prosa-seccion h2 {
+  margin-bottom: var(--c-5);
+}
+
+/* ===========================================================================
+   /cafe — PROVISIONAL
+   ---------------------------------------------------------------------------
+   Sigue siendo VISUALMENTE DISTINGUIBLE del contenido definitivo: borde
+   discontinuo + trama diagonal, reinterpretados para el tema oscuro.
+   =========================================================================== */
+
+[data-kp-provisional] {
+  border: 1px dashed var(--c-hairline-oro);
+  border-radius: var(--c-radio);
+  padding: var(--c-8) var(--c-6);
+  background-color: rgb(253 247 231 / 0.02);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgb(222 193 133 / 0.035) 10px,
+    rgb(222 193 133 / 0.035) 20px
+  );
+}
+
+@media (min-width: 768px) {
+  [data-kp-provisional] {
+    padding: var(--c-12) var(--c-10);
+  }
+}
+
+/* Los bloques anidados no repiten el marco: quedaria ruidoso. */
+[data-kp-provisional] [data-kp-provisional] {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin-top: var(--c-12);
+}
+
+[data-kp-provisional-aviso] {
+  font-family: var(--c-sans);
+  font-size: var(--c-t-small);
+  line-height: 1.6;
+  color: var(--c-oro);
+  padding-bottom: var(--c-5);
+  margin-bottom: var(--c-8);
+  border-bottom: 1px dashed var(--c-hairline-oro);
+}
+
+[data-kp-provisional-aviso] strong {
+  color: var(--c-oro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: var(--c-t-micro);
+}
+
+[data-kp-lista='pendientes'] strong {
+  font-family: var(--c-sans);
+  font-size: var(--c-t-micro);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-oro);
+  display: block;
+  margin-bottom: var(--c-1);
+}
+
+/* ===========================================================================
+   FORMULARIO
+   =========================================================================== */
+
+[data-kp-formulario-contacto] {
+  max-width: 34rem;
+}
+
+[data-kp-aviso] {
+  border: 1px dashed var(--c-hairline-oro);
+  border-radius: var(--c-radio);
+  padding: var(--c-5);
+  font-size: var(--c-t-small);
+  line-height: 1.6;
+  color: var(--c-tinta-tenue);
+  margin-bottom: var(--c-8);
+}
+
+[data-kp-aviso] strong {
+  color: var(--c-oro);
+}
+
+[data-kp-campo] {
+  display: grid;
+  gap: var(--c-2);
+  margin-bottom: var(--c-5);
+}
+
+[data-kp-campo] label {
+  font-size: var(--c-t-micro);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-tinta-tenue);
+}
+
+[data-kp-campo] :is(input, textarea) {
+  width: 100%;
+  background-color: var(--c-hondo);
+  border: 1px solid var(--c-hairline-fuerte);
+  border-radius: var(--c-radio);
+  padding: var(--c-3) var(--c-4);
+  color: var(--c-tinta);
+  font-family: var(--c-sans);
+  font-size: var(--c-t-body);
+  line-height: 1.5;
+  transition: border-color 0.2s ease;
+}
+
+[data-kp-campo] :is(input, textarea):focus {
+  border-color: var(--c-oro);
+}
+
+[data-kp-campo] textarea {
+  resize: vertical;
+  min-height: 8rem;
+}
+
+/* Coherencia del sistema: el submit tampoco es un boton relleno. */
+[data-kp-enviar] {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--c-hairline-oro);
+  padding: 0 0 var(--c-1);
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.375rem;
+  color: var(--c-oro);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+[data-kp-enviar]:hover:not(:disabled) {
+  color: var(--c-tinta);
+  border-bottom-color: var(--c-tinta);
+}
+
+[data-kp-enviar]:disabled {
+  color: var(--c-tinta-sutil);
+  border-bottom-color: var(--c-hairline);
+  cursor: not-allowed;
+}
+
+/* ===========================================================================
+   ACCESIBILIDAD
+   =========================================================================== */
+
+/* Foco visible, en oro claro: sobre el canvas oscuro contrasta 9.07:1. */
+:where(a, button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--c-oro);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.kp-saltar {
+  position: absolute;
+  left: -9999px;
+}
+
+.kp-saltar:focus {
+  left: var(--c-4);
+  top: var(--c-4);
+  z-index: 60;
+  padding: var(--c-3) var(--c-5);
+  background: var(--c-panel);
+  color: var(--kp-ink);
+  border-radius: var(--c-radio);
+  font-family: var(--c-serif);
+  font-style: italic;
+  font-size: 1.125rem;
+  text-decoration: none;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -1,0 +1,160 @@
+---
+/**
+ * /producto/[handle] — Ficha de producto. 25 paginas.
+ */
+import type { GetStaticPaths } from 'astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Imagen from '../../components/Imagen.astro';
+import Precio from '../../components/Precio.astro';
+import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
+import TarjetaProducto from '../../components/TarjetaProducto.astro';
+import { SITIO, ruta } from '../../datos/sitio';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const productos = await getCollection('productos');
+  return productos.map((p) => ({
+    params: { handle: p.data.handle },
+    props: { producto: p, todos: productos },
+  }));
+};
+
+interface Props {
+  producto: CollectionEntry<'productos'>;
+  todos: CollectionEntry<'productos'>[];
+}
+
+const { producto, todos } = Astro.props as Props;
+const d = producto.data;
+
+const portada = d.imagenes[0];
+const hayRango = new Set(d.variantes.map((v) => v.precio)).size > 1;
+
+/** Relacionados: otros disponibles con imagen, cercanos en precio. */
+const relacionados = todos
+  .filter((p) => p.data.handle !== d.handle && p.data.disponible && p.data.imagenes.length > 0)
+  .sort((a, b) => Math.abs(a.data.precio - d.precio) - Math.abs(b.data.precio - d.precio))
+  .slice(0, 3);
+
+const url = new URL(ruta(`/producto/${d.handle}`), Astro.site).toString();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: d.titulo,
+  description: d.descripcionTexto,
+  sku: d.handle,
+  brand: { '@type': 'Brand', name: d.vendor },
+  image: d.imagenes.map((i) => new URL(ruta(i.src), Astro.site).toString()),
+  url,
+  offers:
+    d.variantes.length > 1
+      ? {
+          '@type': 'AggregateOffer',
+          priceCurrency: 'COP',
+          lowPrice: Math.min(...d.variantes.map((v) => v.precio)),
+          highPrice: Math.max(...d.variantes.map((v) => v.precio)),
+          offerCount: d.variantes.length,
+          availability: d.disponible
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          url,
+          seller: { '@type': 'Organization', name: SITIO.nombre },
+        }
+      : {
+          '@type': 'Offer',
+          priceCurrency: 'COP',
+          price: d.precio,
+          availability: d.disponible
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          url,
+          seller: { '@type': 'Organization', name: SITIO.nombre },
+        },
+};
+---
+
+<Base
+  titulo={d.titulo}
+  descripcion={d.descripcionTexto.slice(0, 160)}
+  camino={`/producto/${d.handle}`}
+  imagen={portada?.src}
+  migas={[
+    { nombre: 'Catálogo', href: '/catalogo' },
+    { nombre: d.titulo, href: `/producto/${d.handle}` },
+  ]}
+  jsonLd={jsonLd}
+>
+  <article data-kp-ficha>
+    <div data-kp-ficha-galeria>
+      {
+        d.imagenes.length > 0 ? (
+          d.imagenes.map((img, i) => (
+            <Imagen src={img.src} alt={img.alt} prioridad={i === 0} clase="w-full h-auto" />
+          ))
+        ) : (
+          <p data-kp-sin-imagen>Este producto todavía no tiene fotografía.</p>
+        )
+      }
+    </div>
+
+    <div data-kp-ficha-info>
+      <p data-kp-vendor>{d.vendor}</p>
+      <h1>{d.titulo}</h1>
+
+      <p data-kp-ficha-precio>
+        <Precio precioFormateado={d.precioFormateado} precio={d.precio} desde={hayRango} />
+      </p>
+
+      <p data-kp-ficha-estado data-kp-disponible={String(d.disponible)}>
+        {d.disponible ? 'Disponible' : 'Agotado por ahora'}
+      </p>
+
+      {
+        d.opciones.length > 0 && (
+          <div data-kp-ficha-opciones>
+            {d.opciones.map((o) => (
+              <div data-kp-opcion>
+                <h2 data-kp-opcion-nombre>{o.nombre}</h2>
+                <ul>
+                  {d.variantes.map((v) => (
+                    <li data-kp-variante data-kp-disponible={String(v.disponible)}>
+                      {v.titulo} — {v.precioFormateado}
+                      {!v.disponible && <span data-kp-agotado> (agotado)</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )
+      }
+
+      <div data-kp-ficha-descripcion set:html={d.descripcionHtml} />
+
+      <div data-kp-ficha-accion>
+        <BotonWhatsApp producto={d}>
+          {d.disponible ? 'Pedir por WhatsApp' : 'Avísame cuando vuelva'}
+        </BotonWhatsApp>
+        <p data-kp-nota>
+          Cerramos cada pedido por WhatsApp con {SITIO.dueña}. No hay carrito ni pago en línea.
+        </p>
+      </div>
+    </div>
+  </article>
+
+  {
+    relacionados.length > 0 && (
+      <section data-kp-seccion="relacionados" aria-labelledby="t-relacionados">
+        <h2 id="t-relacionados">También te puede servir</h2>
+        <ul data-kp-rejilla="productos">
+          {relacionados.map((p) => (
+            <li>
+              <TarjetaProducto producto={p.data} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Base>

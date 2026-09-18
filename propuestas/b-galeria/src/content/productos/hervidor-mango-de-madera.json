@@ -1,0 +1,43 @@
+{
+  "handle": "hervidor-mango-de-madera",
+  "titulo": "Jarra cuello de ganso (600 ml)",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>La jarra cuello de ganso es una herramienta esencial para los baristas y amantes del café filtrado. Su boquilla delgada y curva permite un vertido preciso y constante, ideal para preparar café con métodos manuales como V60, Kalita o Chemex. Fabricada en acero inoxidable con acabado negro mate, incluye un mango ergonómico de madera que garantiza un agarre cómodo y seguro. Su diseño sofisticado y funcional no solo embellece tu estación de café, sino que también mejora la calidad de la extracción gracias al control total del flujo de agua.</p>\n<p> </p>",
+  "descripcionTexto": "La jarra cuello de ganso es una herramienta esencial para los baristas y amantes del café filtrado. Su boquilla delgada y curva permite un vertido preciso y constante, ideal para preparar café con métodos manuales como V60, Kalita o Chemex. Fabricada en acero inoxidable con acabado negro mate, incluye un mango ergonómico de madera que garantiza un agarre cómodo y seguro. Su diseño sofisticado y funcional no solo embellece tu estación de café, sino que también mejora la calidad de la extracción gracias al control total del flujo de agua.",
+  "precio": 120000,
+  "precioFormateado": "$120.000",
+  "disponible": false,
+  "variantes": [
+    {
+      "id": "47811711009005",
+      "titulo": "Blanco",
+      "precio": 120000,
+      "precioFormateado": "$120.000",
+      "disponible": false,
+      "sku": null
+    },
+    {
+      "id": "47811711041773",
+      "titulo": "Negro",
+      "precio": 120000,
+      "precioFormateado": "$120.000",
+      "disponible": false,
+      "sku": null
+    }
+  ],
+  "opciones": [
+    {
+      "nombre": "Color",
+      "valores": [
+        "Blanco",
+        "Negro"
+      ]
+    }
+  ],
+  "imagenes": [
+    {
+      "src": "/img/productos/hervidor-mango-de-madera/hervidor-mango-de-madera-1.png",
+      "alt": "Jarra cuello de ganso (600 ml)"
+    }
+  ]
+}

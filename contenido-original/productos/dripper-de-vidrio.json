@@ -1,0 +1,36 @@
+{
+  "handle": "dripper-de-vidrio",
+  "title": "V60 Petal Glass",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-02-24T19:06:18-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>El V60 Petal Glass es un gotero de café elegante y funcional, ideal para preparar café filtrado con un sabor limpio y balanceado. Su diseño en vidrio con patrón en forma de pétalos mejora la extracción, resaltando las notas y aromas del café. ¡Perfecto para baristas y amantes del café de especialidad!</p>\n<p> </p>",
+  "body_text": "El V60 Petal Glass es un gotero de café elegante y funcional, ideal para preparar café filtrado con un sabor limpio y balanceado. Su diseño en vidrio con patrón en forma de pétalos mejora la extracción, resaltando las notas y aromas del café. ¡Perfecto para baristas y amantes del café de especialidad!",
+  "variants": [
+    {
+      "id": 47779579855085,
+      "title": "Default Title",
+      "price": "120000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": true,
+      "option1": "Default Title",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "Title",
+      "values": [
+        "Default Title"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/background-editor_output_9759f3dc-a9f5-4660-b6ef-54bc9ed5daca.png?v=1752183055",
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/51FE9xFY9JL.-AC_SL1364.jpg?v=1752183055"
+  ]
+}

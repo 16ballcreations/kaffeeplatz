@@ -1,0 +1,27 @@
+{
+  "handle": "hervidor-brewista",
+  "titulo": "Hervidor Brewista",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>Elegancia y precisión en cada vertido. Con control de temperatura ajustable, boquilla de cuello de cisne y un diseño moderno con detalles en madera, el Brewista Artisan es ideal para llevar tu café filtrado a otro nivel.</p>",
+  "descripcionTexto": "Elegancia y precisión en cada vertido. Con control de temperatura ajustable, boquilla de cuello de cisne y un diseño moderno con detalles en madera, el Brewista Artisan es ideal para llevar tu café filtrado a otro nivel.",
+  "precio": 950000,
+  "precioFormateado": "$950.000",
+  "disponible": false,
+  "variantes": [
+    {
+      "id": "48023424434413",
+      "titulo": "Hervidor Brewista",
+      "precio": 950000,
+      "precioFormateado": "$950.000",
+      "disponible": false,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/hervidor-brewista/hervidor-brewista-1.png",
+      "alt": "Hervidor Brewista"
+    }
+  ]
+}

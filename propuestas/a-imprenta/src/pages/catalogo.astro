@@ -1,0 +1,83 @@
+---
+/**
+ * /catalogo — Listado completo de los 25 productos, lenguaje IMPRENTA.
+ *
+ * Tarjetas blancas radio 25px sobre crema, con padding generoso y el producto
+ * PEQUENO dentro del marco: asi la baja resolucion del material no se nota.
+ */
+import { getCollection } from 'astro:content';
+import Imprenta from '../layouts/Imprenta.astro';
+import TarjetaProducto from '../components/TarjetaProducto.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import { ruta } from '../datos/sitio';
+
+const productos = (await getCollection('productos')).sort((a, b) => {
+  // Disponibles primero, luego alfabetico.
+  if (a.data.disponible !== b.data.disponible) return a.data.disponible ? -1 : 1;
+  return a.data.titulo.localeCompare(b.data.titulo, 'es');
+});
+
+const disponibles = productos.filter((p) => p.data.disponible).length;
+const agotados = productos.length - disponibles;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Catálogo KaffeePlatz',
+  numberOfItems: productos.length,
+  itemListElement: productos.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: p.data.titulo,
+    url: new URL(ruta(`/producto/${p.data.handle}`), Astro.site).toString(),
+  })),
+};
+---
+
+<Imprenta
+  titulo="Catálogo"
+  descripcion="Todos los accesorios de café de especialidad de KaffeePlatz: métodos, filtros, hervidores, grameras y utensilios."
+  camino="/catalogo"
+  migas={[{ nombre: 'Catálogo', href: '/catalogo' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado" class="im-contenedor im-seccion--amplia">
+    <div class="im-split im-split--texto-ancho">
+      <div class="im-pila-20">
+        <p class="im-label">Catálogo</p>
+        <h1 class="im-titulo-pagina">Catálogo</h1>
+      </div>
+      <p data-kp-entradilla class="im-entradilla">
+        {productos.length} accesorios para preparar café de especialidad en casa. {disponibles}{' '}
+        disponibles y {agotados} agotados ahora mismo. Si algo aparece agotado, escríbenos: te
+        contamos cuándo vuelve.
+      </p>
+    </div>
+  </header>
+
+  <hr class="im-filete" />
+
+  <section aria-label="Productos" class="im-contenedor im-seccion--amplia">
+    <div class="im-rubrica">
+      <span class="im-rubrica__label">{productos.length} piezas</span>
+      <hr class="im-rubrica__regla" />
+      <span class="im-rubrica__enlace" style="color:var(--kp-ink-muted)">
+        {disponibles} disponibles
+      </span>
+    </div>
+
+    <ul data-kp-rejilla="productos">
+      {
+        productos.map((p, i) => (
+          <li>
+            <TarjetaProducto producto={p.data} prioridad={i < 4}>
+              <BotonWhatsApp slot="acciones" producto={p.data}>
+                Preguntar por este
+              </BotonWhatsApp>
+            </TarjetaProducto>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Imprenta>

@@ -1,0 +1,27 @@
+{
+  "handle": "filtro-de-acero-chemex-3-tazas",
+  "titulo": "Filtro de Acero Chemex 3 tazas",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>Este filtro de acero inoxidable está diseñado específicamente para Chemex de 3 tazas. Su estructura de doble malla permite una excelente filtración conservando los aceites esenciales del café, lo que da como resultado una taza con más cuerpo y sabor. Al ser reutilizable, es ideal para quienes buscan una alternativa sostenible a los filtros de papel, sin sacrificar calidad ni practicidad.</p>\n<p>Gracias a su estructura robusta y fácil de limpiar, se convierte en un accesorio indispensable para los amantes del café que quieren simplificar su preparación sin perder la esencia del método Chemex.</p>",
+  "descripcionTexto": "Este filtro de acero inoxidable está diseñado específicamente para Chemex de 3 tazas. Su estructura de doble malla permite una excelente filtración conservando los aceites esenciales del café, lo que da como resultado una taza con más cuerpo y sabor. Al ser reutilizable, es ideal para quienes buscan una alternativa sostenible a los filtros de papel, sin sacrificar calidad ni practicidad.\n\nGracias a su estructura robusta y fácil de limpiar, se convierte en un accesorio indispensable para los amantes del café que quieren simplificar su preparación sin perder la esencia del método Chemex.",
+  "precio": 50000,
+  "precioFormateado": "$50.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "48374363652333",
+      "titulo": "Filtro de Acero Chemex 3 tazas",
+      "precio": 50000,
+      "precioFormateado": "$50.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/filtro-de-acero-chemex-3-tazas/filtro-de-acero-chemex-3-tazas-1.jpg",
+      "alt": "Filtro de Acero Chemex 3 tazas"
+    }
+  ]
+}

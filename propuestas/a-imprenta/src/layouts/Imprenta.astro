@@ -1,0 +1,187 @@
+---
+/**
+ * Imprenta — layout de la PROPUESTA A.
+ *
+ * Sustituye a Base.astro conservando lo obligatorio: SEO.astro intacto, el
+ * enlace de salto al contenido y la estructura de landmarks header/main/footer.
+ *
+ * Aporta: carga de fuentes, cabecera con emblema + filete dorado, migas y pie
+ * oscuro con textura de lino.
+ */
+import SEO from '../components/SEO.astro';
+import type { Miga } from '../components/SEO.astro';
+import { SITIO, NAVEGACION, ruta, recurso } from '../datos/sitio';
+import '../styles/imprenta.css';
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+  camino: string;
+  imagen?: string;
+  tipoOg?: 'website' | 'article';
+  migas?: Miga[];
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  claseCuerpo?: string;
+}
+
+const {
+  titulo,
+  descripcion,
+  camino,
+  imagen,
+  tipoOg,
+  migas = [],
+  jsonLd,
+  claseCuerpo = '',
+} = Astro.props as Props;
+
+const anio = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href={ruta('/favicon.svg')} type="image/svg+xml" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,300..500;1,300..400&family=Inter:wght@400;500;600&display=swap"
+    />
+
+    <SEO
+      titulo={titulo}
+      descripcion={descripcion}
+      camino={camino}
+      imagen={imagen}
+      tipoOg={tipoOg}
+      migas={migas}
+      jsonLd={jsonLd}
+    />
+    <slot name="head" />
+  </head>
+
+  <body class={`im ${claseCuerpo}`.trim()} data-kp-pagina={camino}>
+    <a class="kp-saltar" href="#contenido">Saltar al contenido</a>
+
+    <header data-kp-cabecera class="im-cabecera">
+      <div class="im-contenedor im-cabecera__barra">
+        <a href={ruta('/')} data-kp-logo class="im-logo">
+          <img
+            src={recurso('/img/marca/emblema.png')}
+            alt=""
+            width="44"
+            height="44"
+            class="im-logo__emblema"
+            decoding="async"
+          />
+          <span>
+            <span data-kp-logo-texto class="im-logo__texto">{SITIO.nombre}</span>
+            <span class="im-logo__lema">Accesorios de café</span>
+          </span>
+        </a>
+
+        <nav aria-label="Navegación principal" data-kp-nav class="im-nav">
+          <ul>
+            {
+              NAVEGACION.map((i) => (
+                <li>
+                  <a href={ruta(i.href)} aria-current={i.href === camino ? 'page' : undefined}>
+                    {i.etiqueta}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+      <hr class="im-filete" />
+    </header>
+
+    {
+      migas.length > 0 && (
+        <nav aria-label="Migas de pan" class="im-contenedor" style="padding-top:var(--im-20)">
+          <ol class="im-migas">
+            <li>
+              <a href={ruta('/')}>Inicio</a>
+            </li>
+            {migas.map((m, i) => (
+              <>
+                <li aria-hidden="true" class="im-migas__sep">
+                  /
+                </li>
+                <li>
+                  {i === migas.length - 1 ? (
+                    <span aria-current="page">{m.nombre}</span>
+                  ) : (
+                    <a href={ruta(m.href)}>{m.nombre}</a>
+                  )}
+                </li>
+              </>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+
+    <main id="contenido" data-kp-main>
+      <slot />
+    </main>
+
+    <footer data-kp-pie class="im-pie">
+      <hr class="im-pie__filete" />
+      <div class="im-contenedor">
+        <div class="im-pie__cuerpo">
+          <div>
+            <img
+              src={recurso('/img/marca/emblema.png')}
+              alt=""
+              width="76"
+              height="76"
+              class="im-pie__emblema"
+              loading="lazy"
+              decoding="async"
+            />
+            <p data-kp-pie-lema class="im-pie__lema">{SITIO.lema}</p>
+          </div>
+
+          <div class="im-pie__cuerpo-datos im-pila-30">
+            <div class="im-pie__bloque">
+              <p class="im-pie__titulo">Navegación</p>
+              <ul class="im-pie__nav">
+                {
+                  NAVEGACION.map((i) => (
+                    <li>
+                      <a href={ruta(i.href)}>{i.etiqueta}</a>
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
+
+            <div class="im-pie__bloque">
+              <p class="im-pie__titulo">Contacto</p>
+              <p data-kp-pie-contacto class="im-pie__dato">
+                WhatsApp:{' '}
+                <a href={`https://wa.me/${SITIO.whatsappNumero}`}>{SITIO.whatsappVisible}</a>
+              </p>
+              <p class="im-pie__dato">
+                <a href={`mailto:${SITIO.email}`}>{SITIO.email}</a>
+              </p>
+              <p class="im-pie__dato">Lunes a viernes, 9:00 a.m. – 6:00 p.m.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="im-pie__legal">
+          <p data-kp-pie-legal>{SITIO.nombre} · {SITIO.ciudad} · Tienda 100% online</p>
+          <p data-kp-pie-copy>© {anio} {SITIO.nombre}</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

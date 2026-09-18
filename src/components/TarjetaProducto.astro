@@ -1,0 +1,72 @@
+---
+/**
+ * TarjetaProducto — estructura semantica de una tarjeta de catalogo.
+ *
+ * NEUTRA a proposito: sin colores, sombras ni tipografia. Cada diseno estiliza
+ * con `clase` o apuntando a los atributos data-kp-* desde su propia hoja.
+ *
+ * Ganchos disponibles:
+ *   [data-kp-tarjeta]  [data-kp-tarjeta-media]  [data-kp-tarjeta-cuerpo]
+ *   [data-kp-tarjeta-titulo]  [data-kp-tarjeta-precio]  [data-kp-agotado]
+ *
+ * Slots: "media", "antes-titulo", "despues-precio", "acciones".
+ */
+import type { CollectionEntry } from 'astro:content';
+import Imagen from './Imagen.astro';
+import Precio from './Precio.astro';
+import { ruta } from '../datos/sitio';
+
+interface Props {
+  producto: CollectionEntry<'productos'>['data'];
+  clase?: string;
+  /** "eager" para las primeras tarjetas visibles. */
+  prioridad?: boolean;
+  /** Oculta el precio (algun diseno puede quererlo). */
+  mostrarPrecio?: boolean;
+}
+
+const { producto, clase = '', prioridad = false, mostrarPrecio = true } = Astro.props as Props;
+
+const portada = producto.imagenes[0];
+const enlace = ruta(`/producto/${producto.handle}`);
+/** Hay rango de precios cuando las variantes no valen todas lo mismo. */
+const hayRango = new Set(producto.variantes.map((v) => v.precio)).size > 1;
+---
+
+<article class={clase} data-kp-tarjeta data-kp-disponible={String(producto.disponible)}>
+  <a href={enlace} data-kp-tarjeta-enlace>
+    <div data-kp-tarjeta-media>
+      <slot name="media">
+        {
+          portada ? (
+            <Imagen src={portada.src} alt={portada.alt} prioridad={prioridad} clase="w-full h-auto" />
+          ) : (
+            <span data-kp-sin-imagen>Sin imagen</span>
+          )
+        }
+      </slot>
+    </div>
+
+    <div data-kp-tarjeta-cuerpo>
+      <slot name="antes-titulo" />
+      <h3 data-kp-tarjeta-titulo>{producto.titulo}</h3>
+
+      {
+        mostrarPrecio && (
+          <p data-kp-tarjeta-precio>
+            <Precio
+              precioFormateado={producto.precioFormateado}
+              precio={producto.precio}
+              desde={hayRango}
+            />
+          </p>
+        )
+      }
+
+      {!producto.disponible && <p data-kp-agotado>Agotado</p>}
+      <slot name="despues-precio" />
+    </div>
+  </a>
+
+  <slot name="acciones" />
+</article>

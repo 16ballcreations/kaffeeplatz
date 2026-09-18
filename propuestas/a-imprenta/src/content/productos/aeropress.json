@@ -1,0 +1,28 @@
+{
+  "handle": "aeropress",
+  "titulo": "Aeropress Original",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>La AeroPress Original es la cafetera perfecta para quienes buscan un café de alta calidad, con cuerpo y sabor excepcional. Su diseño compacto y versátil permite preparar café tipo espresso, filtrado o cold brew en minutos. Ideal para amantes del café que desean una extracción precisa y sin sedimentos. ¡Disfruta de un café con calidad de barista en cualquier lugar!</p>",
+  "descripcionTexto": "La AeroPress Original es la cafetera perfecta para quienes buscan un café de alta calidad, con cuerpo y sabor excepcional. Su diseño compacto y versátil permite preparar café tipo espresso, filtrado o cold brew en minutos. Ideal para amantes del café que desean una extracción precisa y sin sedimentos. ¡Disfruta de un café con calidad de barista en cualquier lugar!",
+  "precio": 260000,
+  "precioFormateado": "$260.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47779402514669",
+      "titulo": "Aeropress Original",
+      "precio": 260000,
+      "precioFormateado": "$260.000",
+      "disponible": true,
+      "sku": null
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/aeropress/aeropress-1.png",
+      "alt": "Aeropress Original"
+    }
+  ],
+  "destacado": true
+}

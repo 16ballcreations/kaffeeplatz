@@ -1,0 +1,27 @@
+{
+  "handle": "filtro-de-acero-v60",
+  "titulo": "Filtro V60 | Acero",
+  "vendor": "KaffeePlatz",
+  "descripcionHtml": "<p>Una opción ecológica y práctica para preparar café filtrado sin necesidad de filtros de papel. Ideal para quienes buscan practicidad y una taza con más cuerpo y aceites naturales del café.</p>\n<p> </p>",
+  "descripcionTexto": "Una opción ecológica y práctica para preparar café filtrado sin necesidad de filtros de papel. Ideal para quienes buscan practicidad y una taza con más cuerpo y aceites naturales del café.",
+  "precio": 45000,
+  "precioFormateado": "$45.000",
+  "disponible": true,
+  "variantes": [
+    {
+      "id": "47861692596461",
+      "titulo": "Filtro V60 | Acero",
+      "precio": 45000,
+      "precioFormateado": "$45.000",
+      "disponible": true,
+      "sku": ""
+    }
+  ],
+  "opciones": [],
+  "imagenes": [
+    {
+      "src": "/img/productos/filtro-de-acero-v60/filtro-de-acero-v60-1.png",
+      "alt": "Filtro V60 | Acero"
+    }
+  ]
+}

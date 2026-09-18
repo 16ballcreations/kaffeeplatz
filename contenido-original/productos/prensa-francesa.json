@@ -1,0 +1,35 @@
+{
+  "handle": "prensa-francesa",
+  "title": "Prensa Francesa",
+  "vendor": "Kaffee Platz",
+  "product_type": "",
+  "tags": [],
+  "published_at": "2025-11-03T14:04:19-05:00",
+  "updated_at": "2026-09-18T10:04:23-05:00",
+  "body_html": "<p>La Prensa Francesa es un método de preparación icónico que resalta las notas más profundas y aromáticas del café. Su sistema de émbolo con filtro metálico permite una infusión completa del café molido, conservando los aceites esenciales que aportan textura y sabor.<br>Fabricada con materiales resistentes al calor y un diseño moderno, es perfecta para preparar hasta dos tazas de café equilibrado y aromático. Ideal para el día a día o para quienes buscan una experiencia artesanal sin complicaciones.</p>",
+  "body_text": "La Prensa Francesa es un método de preparación icónico que resalta las notas más profundas y aromáticas del café. Su sistema de émbolo con filtro metálico permite una infusión completa del café molido, conservando los aceites esenciales que aportan textura y sabor.\nFabricada con materiales resistentes al calor y un diseño moderno, es perfecta para preparar hasta dos tazas de café equilibrado y aromático. Ideal para el día a día o para quienes buscan una experiencia artesanal sin complicaciones.",
+  "variants": [
+    {
+      "id": 48998219284717,
+      "title": "32000",
+      "price": "38000.00",
+      "compare_at_price": null,
+      "sku": null,
+      "available": true,
+      "option1": "32000",
+      "option2": null,
+      "option3": null
+    }
+  ],
+  "options": [
+    {
+      "name": "350ml",
+      "values": [
+        "32000"
+      ]
+    }
+  ],
+  "images": [
+    "https://cdn.shopify.com/s/files/1/0740/1088/6381/files/rn-image_picker_lib_temp_7fff51ea-eb74-4e95-9e3a-14628d5959c5.jpg?v=1762196643"
+  ]
+}

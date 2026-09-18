@@ -1,0 +1,139 @@
+---
+/**
+ * Base — layout de la PROPUESTA B "GALERÍA".
+ *
+ * Conserva de la base compartida: SEO.astro, el enlace de salto, la estructura
+ * de landmarks (header / main / footer) y los ganchos data-kp-*.
+ * Cambia: la composición de cabecera y pie, y la carga tipográfica.
+ *
+ * Tipografía: UNA sola familia (Poppins, 200-800). Es el principio rector de
+ * este lenguaje: la unidad tipográfica ES el carácter. Poppins es geométrica-
+ * humanista, del mismo linaje que la `Geometr415 Blk BT` que declara el CDR de
+ * marca, así que encaja con la identidad.
+ */
+import SEO from '../components/SEO.astro';
+import type { Miga } from '../components/SEO.astro';
+import { SITIO, NAVEGACION, ruta, recurso } from '../datos/sitio';
+import '../styles/marca.css';
+import '../styles/galeria.css';
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+  camino: string;
+  imagen?: string;
+  tipoOg?: 'website' | 'article';
+  migas?: Miga[];
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  /** Clase del <body>, para que cada diseno marque su tema. */
+  claseCuerpo?: string;
+}
+
+const {
+  titulo,
+  descripcion,
+  camino,
+  imagen,
+  tipoOg,
+  migas,
+  jsonLd,
+  claseCuerpo = '',
+} = Astro.props as Props;
+
+const anio = new Date().getFullYear();
+
+/** La planta del emblema, para la marca de agua a gran escala. */
+const emblema = recurso('/img/marca/emblema.png');
+---
+
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#fdf7e7" />
+    <link rel="icon" href={ruta('/favicon.svg')} type="image/svg+xml" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400&display=swap"
+    />
+
+    <SEO
+      titulo={titulo}
+      descripcion={descripcion}
+      camino={camino}
+      imagen={imagen}
+      tipoOg={tipoOg}
+      migas={migas}
+      jsonLd={jsonLd}
+    />
+    <slot name="head" />
+  </head>
+
+  <body class={claseCuerpo} data-kp-pagina={camino} style={`--g-emblema: url('${emblema}')`}>
+    <a class="kp-saltar" href="#contenido">Saltar al contenido</a>
+
+    <header data-kp-cabecera>
+      <slot name="cabecera">
+        <div class="g-cabecera-interior">
+          <a href={ruta('/')} data-kp-logo>
+            <span data-kp-logo-texto>{SITIO.nombre}</span>
+            <span class="g-logo-sub">coffee plant</span>
+          </a>
+          <nav aria-label="Navegación principal" data-kp-nav>
+            <ul>
+              {
+                NAVEGACION.map((i) => (
+                  <li>
+                    <a
+                      href={ruta(i.href)}
+                      aria-current={i.href === camino ? 'page' : undefined}
+                    >
+                      {i.etiqueta}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </nav>
+        </div>
+      </slot>
+    </header>
+
+    <main id="contenido" data-kp-main>
+      <slot />
+    </main>
+
+    <footer data-kp-pie>
+      <slot name="pie">
+        <div class="g-pie-interior">
+          <div class="g-pie-rejilla">
+            <div>
+              <p data-kp-pie-lema>
+                eleva tu experiencia <span class="g-cursiva">cafetera</span>
+              </p>
+            </div>
+            <div class="g-pie-datos">
+              <p data-kp-pie-contacto>
+                WhatsApp <a href={`https://wa.me/${SITIO.whatsappNumero}`}>{SITIO.whatsappVisible}</a>
+              </p>
+              <p><a href={`mailto:${SITIO.email}`}>{SITIO.email}</a></p>
+              <p data-kp-pie-legal>
+                {SITIO.ciudad} · Tienda 100% online, sin punto físico
+              </p>
+              <p>Lunes a viernes, 9:00 a.m. – 6:00 p.m.</p>
+            </div>
+          </div>
+          <div class="g-pie-cierre">
+            <p data-kp-pie-copy>© {anio} {SITIO.nombre}</p>
+            <p>Accesorios de café de especialidad</p>
+          </div>
+        </div>
+      </slot>
+    </footer>
+  </body>
+</html>
