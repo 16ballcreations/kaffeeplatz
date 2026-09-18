@@ -36,6 +36,12 @@ const {
 } = Astro.props as Props;
 
 const anio = new Date().getFullYear();
+
+/* og:image — si la pagina no aporta imagen propia, cae al EMBLEMA OFICIAL
+   (1200x1200, el tamano que piden las tarjetas sociales). SEO.astro ya lo
+   convierte a URL ABSOLUTA con `absoluta()`, incluyendo el `base`: aqui basta
+   con pasarle la ruta de public/ sin prefijo. */
+const imagenSocial = imagen ?? '/img/marca/emblema.png';
 ---
 
 <!doctype html>
@@ -44,7 +50,10 @@ const anio = new Date().getFullYear();
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <link rel="icon" href={ruta('/favicon.svg')} type="image/svg+xml" />
+    {/* Favicon oficial: el icono de marca (180x180). Se sirve por `ruta()`
+        para que respete el `base` de GitHub Pages. */}
+    <link rel="icon" href={recurso('/img/marca/icono.png')} type="image/png" sizes="180x180" />
+    <link rel="apple-touch-icon" href={recurso('/img/marca/icono.png')} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -57,7 +66,7 @@ const anio = new Date().getFullYear();
       titulo={titulo}
       descripcion={descripcion}
       camino={camino}
-      imagen={imagen}
+      imagen={imagenSocial}
       tipoOg={tipoOg}
       migas={migas}
       jsonLd={jsonLd}
@@ -71,11 +80,17 @@ const anio = new Date().getFullYear();
     <header data-kp-cabecera class="im-cabecera">
       <div class="im-contenedor im-cabecera__barra">
         <a href={ruta('/')} data-kp-logo class="im-logo">
+          {/* Emblema OFICIAL. Se sirve emblema-sm.png (320x320), no el de
+              1200x1200: a 44px de caja el archivo grande solo pesaba. El
+              medallon tiene fondo propio (lino oscuro) y asi debe verse.
+              `alt` VACIO a proposito: el nombre de la marca ya va como texto
+              justo al lado, dentro del mismo enlace. Con alt="KaffeePlatz" el
+              lector de pantalla anunciaria la marca dos veces. */}
           <img
-            src={recurso('/img/marca/emblema.png')}
+            src={recurso('/img/marca/emblema-sm.png')}
             alt=""
-            width="44"
-            height="44"
+            width="320"
+            height="320"
             class="im-logo__emblema"
             decoding="async"
           />
@@ -137,11 +152,12 @@ const anio = new Date().getFullYear();
       <div class="im-contenedor">
         <div class="im-pie__cuerpo">
           <div>
+            {/* Emblema OFICIAL, version pequena: se pinta a 76px. */}
             <img
-              src={recurso('/img/marca/emblema.png')}
+              src={recurso('/img/marca/emblema-sm.png')}
               alt=""
-              width="76"
-              height="76"
+              width="320"
+              height="320"
               class="im-pie__emblema"
               loading="lazy"
               decoding="async"

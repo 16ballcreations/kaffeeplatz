@@ -13,7 +13,10 @@ import Base from '../layouts/Base.astro';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
 import TarjetaArticulo from '../components/TarjetaArticulo.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
-import { SITIO, ruta } from '../datos/sitio';
+import { SITIO, ruta, recurso } from '../datos/sitio';
+
+/** El emblema OFICIAL, a tamaño grande, para presidir el hero. */
+const emblema = recurso('/img/marca/emblema.png');
 
 const productos = await getCollection('productos');
 const destacados = productos
@@ -30,23 +33,35 @@ const disponibles = productos.filter((p) => p.data.disponible).length;
 const totalArticulos = (await getCollection('diario')).length;
 ---
 
-<Base
-  titulo={SITIO.nombre}
-  descripcion={SITIO.descripcion}
-  camino="/"
-  imagen={destacados[0]?.data.imagenes[0]?.src}
->
-  {/* ---------- HERO: display gigante, asimétrico, con marca de agua ---------- */}
-  <section data-kp-seccion="hero" class="g-seccion g-agua">
+{/* La imagen social de la PORTADA es el EMBLEMA, no una foto de producto:
+    al compartir el enlace de la marca lo que debe aparecer es la marca.
+    Base.astro usa el emblema por defecto, así que no se pasa `imagen`. */}
+<Base titulo={SITIO.nombre} descripcion={SITIO.descripcion} camino="/">
+  {/* ---------- HERO: el EMBLEMA COMPLETO preside la portada ----------
+       Antes aquí había una marca de agua difuminada al 5%, recortada por el
+       borde derecho: no se veía el logo entero en ningún punto del sitio.
+       Ahora el medallón oficial se muestra ENTERO, a 420px, como primera
+       pieza de la composición asimétrica. Al ser un círculo oscuro sobre el
+       crema contrasta solo, sin marco ni sombra.                          */}
+  <section data-kp-seccion="hero" class="g-seccion g-hero">
     <div class="g-envoltura">
-      <div class="g-asim">
+      <div class="g-hero-rejilla">
+        <div class="g-hero-marca">
+          <img
+            src={emblema}
+            alt={`Emblema de ${SITIO.nombre} — Coffee Plant`}
+            width="420"
+            height="420"
+            class="g-emblema g-emblema-hero"
+            fetchpriority="high"
+            decoding="async"
+          />
+        </div>
         <div class="g-pila">
           <p data-kp-kicker class="g-kicker">Café de especialidad · {SITIO.ciudad}</p>
           <h1 class="g-display">
             eleva tu experiencia <span class="g-cursiva">cafetera</span>
           </h1>
-        </div>
-        <div class="g-pila">
           <p data-kp-entradilla class="g-entradilla">
             Seleccionamos métodos, filtros y utensilios para que preparar café en casa deje de ser un
             trámite y se convierta en un ritual. Cada pieza está elegida por cómo se comporta en la
@@ -65,8 +80,12 @@ const totalArticulos = (await getCollection('diario')).length;
     </div>
   </section>
 
-  {/* ---------- BLOQUE DE DATO GIGANTE: cifras reales del catálogo ---------- */}
-  <section class="g-seccion-ajustada" aria-label="El catálogo en cifras">
+  {/* ---------- ANCLA OSCURA: el bloque de dato gigante a sangre ----------
+       Es la sección que rompe la planitud. Negro #1a1a1a con la textura de
+       lino de marca, y las cifras en oro #dec185 (10.01:1 sobre negro: aquí
+       el oro SÍ es color de texto legítimo). El mejor componente de este
+       lenguaje, sobre la superficie donde más rinde.                       */}
+  <section class="g-seccion-ajustada g-ancla" aria-label="El catálogo en cifras">
     <div class="g-envoltura">
       <div class="g-datos">
         <div class="g-dato">
@@ -88,7 +107,7 @@ const totalArticulos = (await getCollection('diario')).length;
     </div>
   </section>
 
-  {/* ---------- DESTACADOS ---------- */}
+  {/* ---------- DESTACADOS — sobre crema, el fondo por defecto ---------- */}
   <section data-kp-seccion="destacados" aria-labelledby="t-destacados" class="g-seccion">
     <div class="g-envoltura">
       <div class="g-cabecera-seccion">
@@ -121,8 +140,8 @@ const totalArticulos = (await getCollection('diario')).length;
     </div>
   </section>
 
-  {/* ---------- CÓMO COMPRAS ---------- */}
-  <section data-kp-seccion="promesa" aria-labelledby="t-promesa" class="g-seccion g-linea-sup">
+  {/* ---------- CÓMO COMPRAS — superficie ARENA, el crema profundo ---------- */}
+  <section data-kp-seccion="promesa" aria-labelledby="t-promesa" class="g-seccion g-sup-arena">
     <div class="g-envoltura">
       <div class="g-cabecera-seccion">
         <div class="g-pila-ajustada">
@@ -158,8 +177,11 @@ const totalArticulos = (await getCollection('diario')).length;
     </div>
   </section>
 
-  {/* ---------- DEL DIARIO ---------- */}
-  <section data-kp-seccion="diario" aria-labelledby="t-diario" class="g-seccion">
+  {/* ---------- DEL DIARIO — superficie HUESO ----------
+       No blanca: las tarjetas de artículo SON blancas y sobre blanco puro
+       perderían el marco. El hueso las despega y mantiene la foto protegida
+       dentro de su tarjeta, que es lo que ya estaba bien resuelto.        */}
+  <section data-kp-seccion="diario" aria-labelledby="t-diario" class="g-seccion g-sup-hueso">
     <div class="g-envoltura">
       <div class="g-cabecera-seccion">
         <div class="g-pila-ajustada">
@@ -191,14 +213,32 @@ const totalArticulos = (await getCollection('diario')).length;
     </div>
   </section>
 
-  {/* ---------- SOBRE NOSOTROS ---------- */}
-  <section data-kp-seccion="sobre" aria-labelledby="t-sobre" class="g-seccion g-linea-sup g-agua g-agua-izq">
+  {/* ---------- FILETE DE ORO: banda de relleno, sin texto ----------
+       El oro #dec185 como ÁREA pintada, que es su único uso correcto sobre
+       claro. Separa el diario de la sección de marca y da un hito de color
+       puro en mitad del scroll.                                           */}
+  <div class="g-banda-oro" role="presentation"></div>
+
+  {/* ---------- SOBRE NOSOTROS — el emblema vuelve a aparecer entero ----------
+       Aquí vivía la otra marca de agua difuminada (a la izquierda). Se ha
+       sustituido por el emblema completo a 300px sobre la superficie crema.
+       Dos apariciones enteras en el home, más la cabecera y el pie.       */}
+  <section data-kp-seccion="sobre" aria-labelledby="t-sobre" class="g-seccion">
     <div class="g-envoltura">
-      <div class="g-asim-inv">
-        <div>
-          <p class="g-kicker">Quiénes somos</p>
+      <div class="g-asim-inv g-sobre-rejilla">
+        <div class="g-sobre-marca">
+          <img
+            src={emblema}
+            alt={`Emblema de ${SITIO.nombre}`}
+            width="300"
+            height="300"
+            class="g-emblema g-emblema-med"
+            loading="lazy"
+            decoding="async"
+          />
         </div>
         <div class="g-pila">
+          <p class="g-kicker">Quiénes somos</p>
           <h2 id="t-sobre" class="g-display-med">
             sobre <span class="g-cursiva">nosotros</span>
           </h2>

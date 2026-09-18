@@ -28,36 +28,40 @@ const articulos = (await getCollection('diario'))
   camino="/"
   imagen={destacados[0]?.data.imagenes[0]?.src}
 >
+  {/* HERO a sangre completa: fondo profundo + lino de marca + emblema grande.
+      La rejilla interior recupera el limite de 1400px. */}
   <section data-kp-seccion="hero" class="c-hero">
-    <div>
-      <p data-kp-kicker>Café de especialidad · {SITIO.ciudad}</p>
-      <h1>{SITIO.lema}</h1>
-      <hr class="c-filete c-hero__filete" />
-      <p data-kp-entradilla>
-        Seleccionamos métodos, filtros y utensilios para que preparar café en casa deje de ser un
-        trámite y se convierta en un ritual. Cada pieza está elegida por cómo se comporta en la taza,
-        no por cómo se ve en la foto.
-      </p>
-      <p data-kp-acciones>
-        <a href={ruta('/catalogo')} data-kp-cta="primaria" class="c-accion">Ver el catálogo</a>
-        <BotonWhatsApp data-kp-cta="secundaria" clase="c-accion c-accion--sm">
-          Pregúntanos por WhatsApp
-        </BotonWhatsApp>
-      </p>
-    </div>
+    <div class="c-limite c-hero__rejilla">
+      <div>
+        <p data-kp-kicker>Café de especialidad · {SITIO.ciudad}</p>
+        <h1>{SITIO.lema}</h1>
+        <hr class="c-filete c-hero__filete" />
+        <p data-kp-entradilla>
+          Seleccionamos métodos, filtros y utensilios para que preparar café en casa deje de ser un
+          trámite y se convierta en un ritual. Cada pieza está elegida por cómo se comporta en la
+          taza, no por cómo se ve en la foto.
+        </p>
+        <p data-kp-acciones>
+          <a href={ruta('/catalogo')} data-kp-cta="primaria" class="c-accion">Ver el catálogo</a>
+          <BotonWhatsApp data-kp-cta="secundaria" clase="c-accion c-accion--sm">
+            Pregúntanos por WhatsApp
+          </BotonWhatsApp>
+        </p>
+      </div>
 
-    {/* El emblema protagonista. Medallon sobre lino oscuro: no necesita panel
-        claro, su propio fondo ya es oscuro. */}
-    <div class="c-hero__emblema">
-      <img
-        src={recurso('/img/marca/emblema.png')}
-        alt={`Emblema de ${SITIO.nombre}`}
-        width="980"
-        height="980"
-        loading="eager"
-        decoding="sync"
-        fetchpriority="high"
-      />
+      {/* El emblema protagonista, en su version grande de 1200px. Medallon
+          sobre lino oscuro: no necesita panel claro, su fondo ya es oscuro. */}
+      <div class="c-hero__emblema">
+        <img
+          src={recurso('/img/marca/emblema.png')}
+          alt={`Emblema de ${SITIO.nombre}`}
+          width="1200"
+          height="1200"
+          loading="eager"
+          decoding="sync"
+          fetchpriority="high"
+        />
+      </div>
     </div>
   </section>
 
@@ -82,31 +86,41 @@ const articulos = (await getCollection('diario'))
     </p>
   </section>
 
-  <section data-kp-seccion="promesa" aria-labelledby="t-promesa">
-    <div class="c-seccion__cabeza">
-      <h2 id="t-promesa">Cómo compras</h2>
-      <span class="c-folio">II · El método</span>
+  {/* LA FRANJA CLARA. Es el contraste que rompe la monotonia del negro: crema
+      #FDF7E7 a sangre completa, con el lino en multiply haciendo de papel y
+      la planta crema como marca de agua. Sobre crema vuelve a mandar la regla
+      del oro: aqui el oro legible es #8F6724, nunca #DEC185. */}
+  <section
+    data-kp-seccion="promesa"
+    aria-labelledby="t-promesa"
+    class="c-franja c-franja--crema c-lino c-lino--claro c-franja--planta"
+  >
+    <div class="c-limite">
+      <div class="c-seccion__cabeza">
+        <h2 id="t-promesa">Cómo compras</h2>
+        <span class="c-folio">II · El método</span>
+      </div>
+      <ol data-kp-pasos>
+        <li>
+          <h3>Eliges</h3>
+          <p>Miras el catálogo y ves qué método encaja con la taza que buscas.</p>
+        </li>
+        <li>
+          <h3>Nos escribes</h3>
+          <p>
+            Nos hablas por WhatsApp. Te confirmamos disponibilidad, resolvemos dudas y acordamos el
+            envío contigo.
+          </p>
+        </li>
+        <li>
+          <h3>Preparas</h3>
+          <p>Te llega a casa y empiezas. En el diario tienes las guías de cada método.</p>
+        </li>
+      </ol>
+      <p data-kp-nota style="margin-top: var(--c-8)">
+        No hay carrito ni pasarela de pago: aquí se compra hablando con nosotros.
+      </p>
     </div>
-    <ol data-kp-pasos>
-      <li>
-        <h3>Eliges</h3>
-        <p>Miras el catálogo y ves qué método encaja con la taza que buscas.</p>
-      </li>
-      <li>
-        <h3>Nos escribes</h3>
-        <p>
-          Nos hablas por WhatsApp. Te confirmamos disponibilidad, resolvemos dudas y acordamos el
-          envío contigo.
-        </p>
-      </li>
-      <li>
-        <h3>Preparas</h3>
-        <p>Te llega a casa y empiezas. En el diario tienes las guías de cada método.</p>
-      </li>
-    </ol>
-    <p data-kp-nota style="margin-top: var(--c-8)">
-      No hay carrito ni pasarela de pago: aquí se compra hablando con nosotros.
-    </p>
   </section>
 
   <section data-kp-seccion="diario" aria-labelledby="t-diario">

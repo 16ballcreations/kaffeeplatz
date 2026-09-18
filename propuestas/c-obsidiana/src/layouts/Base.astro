@@ -37,6 +37,11 @@ const {
 } = Astro.props as Props;
 
 const anio = new Date().getFullYear();
+
+/* og:image por defecto: el emblema oficial. SEO.astro lo convierte a URL
+   absoluta. Las paginas que traen imagen propia (productos, articulos) la
+   siguen pasando por props y tienen prioridad. */
+const imagenSocial = imagen ?? '/img/marca/emblema.png';
 ---
 
 <!doctype html>
@@ -45,9 +50,11 @@ const anio = new Date().getFullYear();
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content="#1A1A1A" />
+    <meta name="theme-color" content="#111111" />
     <meta name="color-scheme" content="dark" />
-    <link rel="icon" href={ruta('/favicon.svg')} type="image/svg+xml" />
+    {/* Favicon oficial: el icono de marca de 180x180, servido por ruta(). */}
+    <link rel="icon" href={recurso('/img/marca/icono.png')} type="image/png" sizes="180x180" />
+    <link rel="apple-touch-icon" href={recurso('/img/marca/icono.png')} />
 
     {/* Cormorant Garamond: serif de alto contraste con una cursiva excelente,
         la firma de este lenguaje. Inter para UI y cuerpo. */}
@@ -62,7 +69,7 @@ const anio = new Date().getFullYear();
       titulo={titulo}
       descripcion={descripcion}
       camino={camino}
-      imagen={imagen}
+      imagen={imagenSocial}
       tipoOg={tipoOg}
       migas={migas}
       jsonLd={jsonLd}
@@ -76,26 +83,24 @@ const anio = new Date().getFullYear();
     <header data-kp-cabecera class="c-cabecera">
       <div class="c-limite c-cabecera__fila">
         <a href={ruta('/')} data-kp-logo class="c-logo" aria-label={`${SITIO.nombre} — inicio`}>
-          {/* El emblema es un medallon sobre lino OSCURO: va directo sobre el
-              canvas negro sin panel claro, porque su fondo ya es oscuro. */}
+          {/* LOGO OFICIAL. Antes: emblema.png de 1200px reescalado a 44px
+              (1,6 MB para un icono) + wordmark.png, que era el recorte viejo.
+              Ahora: emblema-sm.png, la version oficial de cabecera (320px),
+              con el wordmark ya dentro del medallon.
+
+              El medallon va con alt="" porque el nombre accesible del enlace
+              lo aporta el <span> de al lado; si ambos lo dijeran, un lector
+              de pantalla anunciaria "KaffeePlatz KaffeePlatz". */}
           <img
-            src={recurso('/img/marca/emblema.png')}
+            src={recurso('/img/marca/emblema-sm.png')}
             alt=""
             class="c-logo__emblema"
-            width="44"
-            height="44"
+            width="320"
+            height="320"
             loading="eager"
             decoding="sync"
           />
-          <img
-            src={recurso('/img/marca/wordmark.png')}
-            alt={SITIO.nombre}
-            class="c-logo__wordmark"
-            width="640"
-            height="130"
-            loading="eager"
-            decoding="sync"
-          />
+          <span class="c-logo__nombre">{SITIO.nombre}</span>
         </a>
 
         <nav aria-label="Navegación principal" data-kp-nav class="c-nav">
@@ -125,12 +130,14 @@ const anio = new Date().getFullYear();
       <div class="c-limite">
         <div class="c-pie__rejilla">
           <div>
+            {/* Emblema oficial de 320px: el de 1200px era un desperdicio de
+                1,6 MB para pintarlo a 112px. */}
             <img
-              src={recurso('/img/marca/emblema.png')}
+              src={recurso('/img/marca/emblema-sm.png')}
               alt=""
               class="c-pie__emblema"
-              width="96"
-              height="96"
+              width="320"
+              height="320"
               loading="lazy"
             />
             <p data-kp-pie-lema class="c-pie__lema">{SITIO.lema}</p>

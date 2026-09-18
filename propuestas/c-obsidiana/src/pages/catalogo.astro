@@ -39,13 +39,15 @@ const jsonLd = {
   jsonLd={jsonLd}
 >
   <header data-kp-seccion="encabezado" class="c-encabezado">
-    <p data-kp-kicker>Índice de piezas</p>
-    <h1>Catálogo</h1>
-    <p data-kp-entradilla>
-      {productos.length} accesorios para preparar café de especialidad en casa. {disponibles}{' '}
-      disponibles y {agotados} agotados ahora mismo. Si algo aparece agotado, escríbenos: te
-      contamos cuándo vuelve.
-    </p>
+    <div class="c-encabezado__interior">
+      <p data-kp-kicker>Índice de piezas</p>
+      <h1>Catálogo</h1>
+      <p data-kp-entradilla>
+        {productos.length} accesorios para preparar café de especialidad en casa. {disponibles}{' '}
+        disponibles y {agotados} agotados ahora mismo. Si algo aparece agotado, escríbenos: te
+        contamos cuándo vuelve.
+      </p>
+    </div>
   </header>
 
   <section aria-label="Productos">

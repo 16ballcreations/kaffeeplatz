@@ -26,13 +26,15 @@ import { SITIO, ruta } from '../datos/sitio';
   migas={[{ nombre: 'Nosotros', href: '/nosotros' }]}
 >
   <header data-kp-seccion="encabezado" class="c-encabezado">
-    <p data-kp-kicker>Nosotros</p>
-    <h1>Café bien hecho, en tu propia cocina</h1>
-    <p data-kp-entradilla>
-      {SITIO.nombre} nace de una idea sencilla: el café que tomas en casa puede ser tan bueno como
-      el de tu cafetería favorita. No hace falta una barra profesional. Hace falta el equipo
-      adecuado y saber qué estás haciendo.
-    </p>
+    <div class="c-encabezado__interior">
+      <p data-kp-kicker>Nosotros</p>
+      <h1>Café bien hecho, en tu propia cocina</h1>
+      <p data-kp-entradilla>
+        {SITIO.nombre} nace de una idea sencilla: el café que tomas en casa puede ser tan bueno como
+        el de tu cafetería favorita. No hace falta una barra profesional. Hace falta el equipo
+        adecuado y saber qué estás haciendo.
+      </p>
+    </div>
   </header>
 
   <section data-kp-seccion="criterio" aria-labelledby="t-criterio" class="c-prosa-seccion">

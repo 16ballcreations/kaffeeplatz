@@ -33,11 +33,42 @@
   --g-track-display: -0.065em;
   --g-track-titulo: -0.04em;
 
-  /* Superficies propias de este lenguaje, derivadas de los tokens de marca.
-     No redefinen ningún color de marca: son mezclas para separar planos. */
+  /* -------------------------------------------------------------------------
+     ESCALA DE SUPERFICIES — el ritmo de fondos de esta propuesta.
+     Son tokens PROPIOS de la propuesta B. No redefinen ningún valor de marca:
+     marca.css sigue intacto. Van de lo más claro a lo más oscuro y el home
+     los alterna para que el ojo tenga hitos en vez de un beige continuo.
+
+       1. --kp-surface  #ffffff  blanco   — tarjetas y bandas de reposo
+       2. --kp-bg       #fdf7e7  crema    — fondo por defecto de la página
+       3. --g-hueso     #f7efdb  hueso    — crema un punto más denso
+       4. --g-arena     #f5ebd3  arena    — crema PROFUNDO, sección entera
+       5. --kp-accent   #dec185  oro      — banda de relleno, texto tinta
+       6. --kp-anchor   #1a1a1a  negro    — sección de ANCLA, a sangre
+     ------------------------------------------------------------------------- */
   --g-hueso: #f7efdb; /* crema un punto más denso, para zonas de reposo */
+  --g-arena: #f5ebd3; /* crema PROFUNDO — el escalón que rompe la planitud */
   --g-linea: var(--kp-border);
   --g-linea-fuerte: #ddd0ae;
+
+  /* Líneas sobre superficies oscuras: el 1px tiene que seguir leyéndose. */
+  --g-linea-oscura: #3a3631;
+  --g-linea-oscura-fuerte: #4d473f;
+
+  /* Tinta invertida. Sobre #1a1a1a el crema da 16.27:1 y el oro #dec185
+     da 10.01:1 — ahí el oro SÍ es color de texto legítimo. */
+  --g-tinta-inv: #fdf7e7;
+  --g-tinta-inv-muted: #c9bfa8;
+
+  /* ORO LEGIBLE SOBRE ARENA.
+     --kp-accent-ink (#8f6724) pasa AA sobre crema (4.75:1) pero sobre el
+     crema profundo #f5ebd3 cae a 4.28:1 y FALLA para texto pequeño: el
+     kicker son 11px. Este es el mismo oro un punto más oscuro, tono
+     idéntico, y pasa en TODAS las superficies claras de la escala:
+       blanco 5.77 · crema 5.39 · hueso 5.03 · arena 4.86
+     Se usa donde el oro se LEE sobre superficie clara. El relleno sigue
+     siendo --kp-accent y jamás es texto sobre claro. */
+  --g-oro-texto: #845f21;
 }
 
 /* ---------------------------------------------------------------------------
@@ -149,7 +180,7 @@ a {
   font-size: 0.6875rem;
   letter-spacing: 0.17em;
   text-transform: uppercase;
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   margin: 0;
 }
 
@@ -277,7 +308,7 @@ a {
 /* Píldora de contorno: borde en oro LEGIBLE (#8f6724), nunca en #dec185. */
 .g-pildora-linea {
   background: transparent;
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   border-color: var(--kp-accent-ink);
 }
 
@@ -373,7 +404,7 @@ a {
   font-size: 0.6875rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   margin: 0 0 8px;
 }
 
@@ -422,10 +453,23 @@ a {
   overflow: hidden;
   aspect-ratio: 4 / 3;
   display: grid;
-  place-items: center;
+  /* La pista debe ser EXACTAMENTE la caja del marco. Con `place-items:center`
+     la fila se dimensionaba al contenido, así que una portada de 1024x1536
+     estiraba la fila a 585px dentro de un marco de 219px y el recorte visible
+     caía en una banda vacía de la foto. Fijando la pista a 100%, `height:100%`
+     del <img> tiene contra qué resolverse y `object-fit: cover` recorta bien. */
+  grid-template-columns: 100%;
+  grid-template-rows: 100%;
+  place-items: stretch;
 }
 
+/* La imagen LLENA el marco y se recorta dentro de él.
+   `grid-area: 1/1` es necesario: el marco es un grid con place-items:center y
+   sin él la imagen se dimensionaba por su propia relación de aspecto (una
+   portada de 1024x1536 se estiraba a 585px dentro de un marco de 219px) y lo
+   que se veía era la banda central vacía de la foto, no la foto. */
 .g-marco > img {
+  grid-area: 1 / 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -459,18 +503,23 @@ a {
   overflow: hidden;
 }
 
+/* Aquí sí procede una marca de agua: es el relleno de una foto AUSENTE, no la
+   identidad de la página. Se usa la PLANTA en marrón (elemento gráfico
+   recurrente de la marca), no el emblema, que se reserva para verse entero. */
 .g-marco-tipografico::after {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: var(--g-emblema);
-  background-size: 62%;
+  background-image: var(--g-planta);
+  background-size: auto 78%;
   background-repeat: no-repeat;
-  background-position: 118% 50%;
-  opacity: 0.07;
+  background-position: 108% 50%;
+  opacity: 0.1;
 }
 
+/* El texto del marco tipográfico sí se centra dentro de su pista. */
 .g-marco-tipografico-texto {
+  place-self: center;
   font-weight: 200;
   font-size: clamp(2.25rem, 6vw, 3.5rem);
   letter-spacing: -0.06em;
@@ -499,35 +548,263 @@ a {
 }
 
 /* ---------------------------------------------------------------------------
-   7. Marca de agua — la planta del emblema a gran escala
+   7. IDENTIDAD DE MARCA — el emblema, completo y presente
+   ---------------------------------------------------------------------------
+   Antes aquí vivía una marca de agua difuminada al 5% de opacidad, recortada
+   por el borde de la sección. El cliente la señaló con razón: un logo que no
+   se ve entero en ningún sitio no comunica marca. Se ha eliminado.
+
+   En su lugar, el emblema OFICIAL se muestra entero. El PNG es un medallón
+   circular sobre lino oscuro con fondo propio recortado en círculo, así que
+   sobre el crema de la página contrasta solo, sin necesidad de marco ni
+   sombra (y este lenguaje no admite sombras).
    --------------------------------------------------------------------------- */
-.g-agua {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
+
+/* HERO: el emblema a la izquierda, el discurso a la derecha. Mantiene la
+   asimetría del lenguaje (no es 50/50) y da al medallón sitio propio. */
+.g-hero-rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 56px;
+  align-items: center;
 }
 
-.g-agua::before {
+.g-hero-marca {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* Sección de marca al cierre del home: el emblema acompaña al texto. */
+.g-sobre-rejilla {
+  align-items: center;
+}
+
+.g-sobre-marca {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* BANDA DE ORO: relleno puro, sin texto. El uso correcto del #dec185 sobre
+   claro — pintado como área, nunca leído. */
+.g-banda-oro {
+  height: 10px;
+  background: var(--kp-accent);
+}
+
+/* El emblema como pieza de composición. Tamaño fluido, siempre cuadrado,
+   nunca deformado: el PNG es 1200x1200 y `aspect-ratio: 1` lo respeta. */
+.g-emblema {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+/* Emblema del HERO: la pieza que preside la portada. */
+.g-emblema-hero {
+  width: min(420px, 100%);
+  margin-inline: auto;
+}
+
+/* Emblema mediano, para presidir una sección interior. */
+.g-emblema-med {
+  width: min(300px, 72vw);
+  margin-inline: auto;
+}
+
+/* Emblema de la cabecera: el logo real, no el wordmark compuesto en vivo. */
+.g-emblema-cabecera {
+  width: 40px;
+  height: 40px;
+  aspect-ratio: 1;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* Emblema del pie, sobre la superficie oscura del ancla. */
+.g-emblema-pie {
+  width: 96px;
+  height: 96px;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+/* ---------------------------------------------------------------------------
+   7b. RITMO DE SUPERFICIES — el ojo necesita hitos
+   ---------------------------------------------------------------------------
+   Antes las tres páginas eran #fdf7e7 de principio a fin: una lámina de beige
+   sin escalones. Estas clases pintan la sección ENTERA a sangre (el fondo sale
+   del contenedor, el contenido sigue dentro de .g-envoltura) y se alternan
+   para que cada sección se lea como una pieza distinta.
+   --------------------------------------------------------------------------- */
+
+/* Superficie BLANCA: banda de reposo, máxima luz. */
+.g-sup-blanca {
+  background: var(--kp-surface);
+}
+
+/* Superficie HUESO: un escalón por debajo del crema. */
+.g-sup-hueso {
+  background: var(--g-hueso);
+}
+
+/* Superficie ARENA: el crema PROFUNDO. El escalón más útil, porque se separa
+   del fondo de página sin salirse de la familia cálida de la marca. */
+.g-sup-arena {
+  background: var(--g-arena);
+}
+
+/* Dentro de arena, las celdas de dato y las tarjetas necesitan su propio
+   fondo para que la rejilla de 1px siga leyéndose. */
+.g-sup-arena .g-dato {
+  background: var(--g-arena);
+}
+
+.g-sup-hueso .g-dato {
+  background: var(--g-hueso);
+}
+
+.g-sup-blanca .g-dato {
+  background: var(--kp-surface);
+}
+
+/* Superficie ORO: banda de relleno #dec185 con texto TINTA encima (10.01:1).
+   Es el único uso correcto del oro claro: pintado como área, nunca leído
+   sobre claro. */
+.g-sup-oro {
+  background: var(--kp-accent);
+  color: var(--kp-ink);
+}
+
+.g-sup-oro .g-kicker {
+  /* Sobre el oro relleno el kicker vuelve a tinta: el oro sobre oro no existe. */
+  color: var(--kp-ink);
+}
+
+.g-sup-oro .g-texto,
+.g-sup-oro .g-nota,
+.g-sup-oro .g-entradilla {
+  color: var(--kp-ink);
+}
+
+/* ---------------------------------------------------------------------------
+   7c. SUPERFICIE DE ANCLA — la sección oscura a sangre
+   ---------------------------------------------------------------------------
+   Al menos una por página en el home. Lleva la textura de lino de marca, que
+   según MARCA.md es identidad y no decoración: el medallón vive sobre lino
+   oscuro, así que la sección oscura del sitio hereda ese mismo material.
+
+   Contraste verificado sobre #1a1a1a:
+     crema  #fdf7e7 -> 16.27:1
+     oro    #dec185 -> 10.01:1   (aquí el oro SÍ es texto)
+     muted  #c9bfa8 ->  9.53:1
+   --------------------------------------------------------------------------- */
+.g-ancla {
+  position: relative;
+  background-color: var(--kp-anchor);
+  color: var(--g-tinta-inv);
+  isolation: isolate;
+}
+
+/* El lino de marca, muy tenue, sobre el negro. Es textura de material, no
+   imagen: se repite y no compite con el texto.
+
+   NOTA sobre el asset: `public/img/marca/textura-lino.png` NO se puede usar
+   como patrón. Trae la palabra "KAFFEEPLATZ" rotulada en la franja superior
+   y el tejido ocupa solo un subrectángulo con márgenes transparentes, así
+   que al repetirlo salía el rótulo en mosaico por toda la sección.
+   Se ha derivado un tile limpio y sin costura (`/marca-b/lino-tile.png`,
+   256x256) recortando SOLO la zona de tejido del asset oficial y espejándola.
+   Mismo material de marca, apto para repetir. */
+.g-ancla::before {
   content: '';
   position: absolute;
+  inset: 0;
   z-index: -1;
-  top: 50%;
-  right: -12%;
-  width: min(620px, 62vw);
-  aspect-ratio: 1;
-  transform: translateY(-50%);
-  background-image: var(--g-emblema);
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.05;
+  background-image: var(--g-lino-tile);
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0.2;
+  mix-blend-mode: screen;
   pointer-events: none;
 }
 
-/* Variante a la izquierda, para alternar. */
-.g-agua-izq::before {
-  right: auto;
-  left: -14%;
+/* Toda la tipografía del ancla se invierte. */
+.g-ancla .g-display,
+.g-ancla .g-display-med,
+.g-ancla .g-display-min,
+.g-ancla .g-h2,
+.g-ancla .g-h3 {
+  color: var(--g-tinta-inv);
+}
+
+.g-ancla .g-entradilla,
+.g-ancla .g-texto,
+.g-ancla .g-nota {
+  color: var(--g-tinta-inv-muted);
+}
+
+/* EL ORO COMO TEXTO: solo aquí, sobre el ancla. 10.01:1. */
+.g-ancla .g-kicker {
+  color: var(--kp-accent);
+}
+
+/* Las líneas de 1px del ancla: la estructura se sigue sosteniendo sin sombras. */
+.g-ancla .g-datos {
+  background: var(--g-linea-oscura);
+  border-block-color: var(--g-linea-oscura);
+}
+
+/* EL BLOQUE DE DATO GIGANTE SOBRE OSCURO — la cifra en oro.
+   Es el mejor componente de este lenguaje y sobre el ancla es donde más rinde. */
+.g-ancla .g-dato {
+  background: transparent;
+}
+
+.g-ancla .g-dato-cifra {
+  color: var(--kp-accent); /* 10.01:1 sobre #1a1a1a */
+}
+
+.g-ancla .g-dato-etiqueta {
+  color: var(--g-tinta-inv);
+}
+
+.g-ancla .g-dato-pie {
+  color: var(--g-tinta-inv-muted);
+}
+
+/* Celdas del dato sobre ancla: el gap de 1px necesita que la celda tape. */
+.g-ancla .g-datos > .g-dato {
+  background: var(--kp-anchor);
+  position: relative;
+}
+
+/* Píldoras dentro del ancla. */
+.g-ancla .g-pildora-linea {
+  color: var(--kp-accent);
+  border-color: var(--kp-accent);
+}
+
+.g-ancla .g-pildora-linea:hover {
+  background: var(--kp-accent);
+  color: var(--kp-ink);
+}
+
+.g-ancla .g-enlace {
+  color: var(--kp-accent);
+  border-bottom-color: var(--g-linea-oscura-fuerte);
+}
+
+.g-ancla .g-enlace:hover {
+  border-bottom-color: var(--kp-accent);
+}
+
+/* Foco visible sobre oscuro: el oro de marca, que aquí sí contrasta. */
+.g-ancla :where(a, button, input, textarea, select, summary):focus-visible {
+  outline-color: var(--kp-accent);
 }
 
 /* ---------------------------------------------------------------------------
@@ -554,16 +831,27 @@ a {
   gap: 24px;
 }
 
-/* El wordmark, compuesto en la misma familia. El PNG de marca es crema sobre
-   transparente y sería invisible sobre este fondo; además, componerlo en vivo
-   refuerza el principio 1 (una sola familia). */
+/* LA CABECERA LLEVA EL LOGO REAL.
+   Antes el wordmark se componía en vivo con Poppins porque no había asset
+   utilizable. Ahora existe el emblema oficial (emblema-sm.png, 320x320, un
+   medallón circular con fondo propio), así que se usa: un logo de verdad
+   junto al nombre. La tipografía del nombre sigue siendo Poppins, de modo
+   que el principio 1 se mantiene en todo lo demás. */
 [data-kp-logo] {
   text-decoration: none;
   color: var(--kp-ink);
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.55em;
+  align-items: center;
+  gap: 0.7em;
   flex-shrink: 0;
+}
+
+/* El nombre y su bajada, apilados junto al medallón. */
+.g-logo-texto-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.05;
 }
 
 [data-kp-logo-texto] {
@@ -578,7 +866,7 @@ a {
   font-size: 0.625rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
 }
 
 [data-kp-nav] ul {
@@ -618,8 +906,10 @@ a {
   border-color: var(--g-linea-fuerte);
 }
 
+/* EL PIE ES SUPERFICIE DE ANCLA.
+   Cierra el documento en negro con el lino de marca y el emblema completo:
+   la última cosa que se ve al terminar de leer es la marca, entera. */
 [data-kp-pie] {
-  border-top: 1px solid var(--g-linea);
   margin-top: var(--g-seccion);
 }
 
@@ -627,14 +917,21 @@ a {
   width: 100%;
   max-width: var(--g-ancho);
   margin-inline: auto;
-  padding: 64px var(--g-gutter) 48px;
+  padding: 72px var(--g-gutter) 48px;
 }
 
 .g-pie-rejilla {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  grid-template-columns: auto minmax(0, 6fr) minmax(0, 5fr);
   gap: 48px;
   align-items: start;
+}
+
+/* El emblema del pie, primera celda de la rejilla. */
+.g-pie-marca {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 [data-kp-pie-lema] {
@@ -651,18 +948,19 @@ a {
   flex-direction: column;
   gap: 10px;
   font-size: 0.875rem;
-  color: var(--kp-ink-muted);
+  color: var(--g-tinta-inv-muted); /* 9.53:1 sobre #1a1a1a */
   margin: 0;
 }
 
+/* Sobre el ancla el oro de marca SÍ es texto legible: 10.01:1. */
 .g-pie-datos a {
-  color: var(--kp-accent-ink);
+  color: var(--kp-accent);
   text-decoration: none;
-  border-bottom: 1px solid var(--g-linea-fuerte);
+  border-bottom: 1px solid var(--g-linea-oscura-fuerte);
 }
 
 .g-pie-datos a:hover {
-  border-bottom-color: var(--kp-accent-ink);
+  border-bottom-color: var(--kp-accent);
 }
 
 [data-kp-pie-contacto],
@@ -674,13 +972,18 @@ a {
 .g-pie-cierre {
   margin-top: 48px;
   padding-top: 24px;
-  border-top: 1px solid var(--g-linea);
+  border-top: 1px solid var(--g-linea-oscura);
   display: flex;
   flex-wrap: wrap;
   gap: 8px 28px;
   justify-content: space-between;
   font-size: 0.8125rem;
-  color: var(--kp-ink-muted);
+  color: var(--g-tinta-inv-muted);
+}
+
+/* El lema del pie, en crema sobre el ancla: 16.27:1. */
+[data-kp-pie-lema] {
+  color: var(--g-tinta-inv);
 }
 
 /* ---------------------------------------------------------------------------
@@ -767,7 +1070,7 @@ a {
   font-size: 0.6875rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
 }
 
 [data-kp-articulo-titulo] {
@@ -872,7 +1175,7 @@ a {
 }
 
 [data-kp-prosa] a {
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   text-decoration: none;
   border-bottom: 1px solid var(--g-linea-fuerte);
 }
@@ -901,7 +1204,7 @@ a {
 }
 
 [data-kp-prosa] li::marker {
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
 }
 
 [data-kp-prosa] img {
@@ -959,11 +1262,11 @@ a {
 }
 
 [data-kp-ficha-descripcion] li::marker {
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
 }
 
 [data-kp-ficha-descripcion] a {
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
 }
 
 /* ---------------------------------------------------------------------------
@@ -991,7 +1294,7 @@ a {
 }
 
 [data-kp-aviso] strong {
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   font-weight: 600;
 }
 
@@ -1101,7 +1404,7 @@ a {
 }
 
 [data-kp-provisional-aviso] {
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   font-size: 0.875rem;
   line-height: 1.6;
   margin: 0;
@@ -1185,7 +1488,7 @@ a {
   font-size: 4.5rem;
   line-height: 0.9;
   letter-spacing: -0.06em;
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   margin-bottom: 16px;
 }
 
@@ -1229,7 +1532,7 @@ a {
 
 .g-lista-simple strong {
   font-weight: 600;
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   letter-spacing: 0.02em;
 }
 
@@ -1256,7 +1559,7 @@ a {
 }
 
 .g-enlace {
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   text-decoration: none;
   font-weight: 500;
   font-size: 0.9375rem;
@@ -1338,7 +1641,7 @@ a {
 }
 
 .g-chip-disponible {
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
   border-color: var(--kp-accent-ink);
   background: transparent;
 }
@@ -1433,7 +1736,7 @@ a {
 }
 
 .g-destacado:hover .g-destacado-titulo {
-  color: var(--kp-accent-ink);
+  color: var(--g-oro-texto);
 }
 
 .g-destacado:hover .g-marco {
@@ -1511,11 +1814,19 @@ a {
   /* La composición asimétrica colapsa a una columna. */
   .g-asim,
   .g-asim-inv,
+  .g-hero-rejilla,
   .g-cabecera-seccion,
   .g-pie-rejilla {
     grid-template-columns: minmax(0, 1fr);
     gap: 28px;
     align-items: start;
+  }
+
+  /* En una columna el emblema va ARRIBA, presidiendo: es lo primero que se
+     ve al abrir el sitio en el móvil. */
+  .g-hero-marca,
+  .g-sobre-marca {
+    justify-content: flex-start;
   }
 
   .g-cabecera-seccion {
@@ -1531,20 +1842,13 @@ a {
     order: 1;
   }
 
-  /* En una columna la marca de agua caía justo detrás del párrafo y estorbaba
-     la lectura. Se ancla arriba (a la altura del titular, no del cuerpo), se
-     sale más por el borde y baja de opacidad. */
-  .g-agua::before {
-    width: min(420px, 70vw);
-    opacity: 0.028;
-    top: 0;
-    right: -26%;
-    transform: none;
+  /* El emblema del hero se reduce y se centra sobre el titular. */
+  .g-emblema-hero {
+    width: min(260px, 62vw);
   }
 
-  .g-agua-izq::before {
-    left: auto;
-    right: -26%;
+  .g-emblema-med {
+    width: min(210px, 54vw);
   }
 }
 

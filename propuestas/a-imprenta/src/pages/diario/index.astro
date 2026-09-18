@@ -49,7 +49,8 @@ const jsonLd = {
   migas={[{ nombre: 'Diario', href: '/diario' }]}
   jsonLd={jsonLd}
 >
-  <header data-kp-seccion="encabezado" class="im-contenedor im-seccion--amplia">
+  <header data-kp-seccion="encabezado" class="im-banda im-banda--crema">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-split im-split--texto-ancho">
       <div class="im-pila-20">
         <p class="im-label">Diario</p>
@@ -60,6 +61,7 @@ const jsonLd = {
         cómo conservar el grano y en qué solemos equivocarnos. {articulos.length} artículos.
       </p>
     </div>
+  </div>
   </header>
 
   <hr class="im-filete" />
@@ -67,7 +69,8 @@ const jsonLd = {
   {/* ---------- Apertura: split editorial con el articulo mas reciente ---------- */}
   {
     principal && (
-      <section aria-labelledby="t-principal" class="im-contenedor im-seccion--amplia">
+      <section aria-labelledby="t-principal" class="im-banda im-banda--blanco">
+    <div class="im-contenedor im-seccion--amplia">
         <div class="im-rubrica">
           <span class="im-rubrica__label">Lo último</span>
           <hr class="im-rubrica__regla" />
@@ -110,14 +113,16 @@ const jsonLd = {
             </p>
           </div>
         </div>
-      </section>
+      </div>
+  </section>
     )
   }
 
   <hr class="im-filete" />
 
   {/* ---------- Rejilla del resto ---------- */}
-  <section aria-label="Artículos" class="im-contenedor im-seccion--amplia">
+  <section aria-label="Artículos" class="im-banda im-banda--hueso">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-rubrica">
       <span class="im-rubrica__label">Archivo</span>
       <hr class="im-rubrica__regla" />
@@ -135,5 +140,6 @@ const jsonLd = {
         ))
       }
     </ul>
+  </div>
   </section>
 </Imprenta>

@@ -29,8 +29,16 @@ const TOKEN = {
   '--kp-anchor': '#1a1a1a',
   /* Superficies propias de la propuesta B */
   '--g-hueso': '#f7efdb',
+  '--g-arena': '#f5ebd3',
   '--g-linea': '#ebe1c8',
   '--g-linea-fuerte': '#ddd0ae',
+  /* Superficie de ancla e invertidos */
+  '--g-linea-oscura': '#3a3631',
+  '--g-linea-oscura-fuerte': '#4d473f',
+  '--g-tinta-inv': '#fdf7e7',
+  '--g-tinta-inv-muted': '#c9bfa8',
+  /* Oro legible sobre superficie clara (incluida la arena) */
+  '--g-oro-texto': '#845f21',
 };
 
 /* --- Utilidades de color --- */
@@ -82,25 +90,25 @@ const PARES = [
   ['Titular display (h1/h2)', '--kp-ink', '--kp-bg', 96, false],
   ['Entradilla', '--kp-ink-muted', '--kp-bg', 21, false],
   ['Nota / .g-nota', '--kp-ink-muted', '--kp-bg', 14, false],
-  ['Kicker (oro legible)', '--kp-accent-ink', '--kp-bg', 11, true],
+  ['Kicker (oro legible)', '--g-oro-texto', '--kp-bg', 11, true],
   ['Kicker tenue', '--kp-ink-muted', '--kp-bg', 11, true],
-  ['Enlace .g-enlace', '--kp-accent-ink', '--kp-bg', 15, false],
+  ['Enlace .g-enlace', '--g-oro-texto', '--kp-bg', 15, false],
 
   // --- Bloque de dato gigante (fondo crema) ---
   ['Cifra gigante', '--kp-ink', '--kp-bg', 130, false],
-  ['Etiqueta de dato', '--kp-accent-ink', '--kp-bg', 11, true],
+  ['Etiqueta de dato', '--g-oro-texto', '--kp-bg', 11, true],
   ['Pie de dato', '--kp-ink-muted', '--kp-bg', 14, false],
-  ['Ordinal de paso', '--kp-accent-ink', '--kp-bg', 72, false],
+  ['Ordinal de paso', '--g-oro-texto', '--kp-bg', 72, false],
 
   // --- Listas de líneas (celdas con fondo crema) ---
   ['Título de lista h3', '--kp-ink', '--kp-bg', 18, false],
   ['Texto de lista', '--kp-ink-muted', '--kp-bg', 15, false],
-  ['Marcador PENDIENTE', '--kp-accent-ink', '--kp-bg', 15, true],
+  ['Marcador PENDIENTE', '--g-oro-texto', '--kp-bg', 15, true],
 
   // --- Tarjetas (fondo blanco de superficie) ---
   ['Título de tarjeta', '--kp-ink', '--kp-surface', 17, false],
   ['Resumen de artículo', '--kp-ink-muted', '--kp-surface', 15, false],
-  ['Fecha de artículo', '--kp-accent-ink', '--kp-surface', 11, true],
+  ['Fecha de artículo', '--g-oro-texto', '--kp-surface', 11, true],
   ['Chip neutro', '--kp-ink-muted', '--kp-surface', 12, true],
   ['Chip agotado', '--kp-ink-muted', '--kp-surface', 12, true],
 
@@ -109,7 +117,7 @@ const PARES = [
   ['CHIP PRECIO: texto tinta sobre relleno #dec185', '--kp-ink', '--kp-accent', 13, false],
 
   // --- Píldoras de contorno e inversas ---
-  ['Píldora contorno (oro legible)', '--kp-accent-ink', '--kp-bg', 15, false],
+  ['Píldora contorno (oro legible)', '--g-oro-texto', '--kp-bg', 15, false],
   ['Píldora contorno :hover (blanco sobre oro legible)', '#ffffff', '--kp-accent-ink', 15, false],
   ['Píldora tinta (blanco sobre tinta)', '#ffffff', '--kp-ink', 15, false],
   ['Botón enviar (blanco sobre tinta)', '#ffffff', '--kp-ink', 15, false],
@@ -117,34 +125,87 @@ const PARES = [
 
   // --- Cabecera y pie ---
   ['Wordmark', '--kp-ink', '--kp-bg', 17, true],
-  ['Subtítulo del wordmark', '--kp-accent-ink', '--kp-bg', 10, true],
+  ['Subtítulo del wordmark', '--g-oro-texto', '--kp-bg', 10, true],
   ['Enlace de nav', '--kp-ink-muted', '--kp-bg', 14, false],
   ['Enlace de nav activo', '--kp-ink', '--kp-bg', 14, false],
   ['Lema del pie', '--kp-ink', '--kp-bg', 60, false],
   ['Datos del pie', '--kp-ink-muted', '--kp-bg', 14, false],
-  ['Enlace del pie', '--kp-accent-ink', '--kp-bg', 14, false],
+  ['Enlace del pie', '--g-oro-texto', '--kp-bg', 14, false],
 
   // --- Prosa del artículo ---
   ['Prosa: párrafo', '--kp-ink', '--kp-bg', 17, false],
   ['Prosa: h2', '--kp-ink', '--kp-bg', 36, false],
-  ['Prosa: enlace', '--kp-accent-ink', '--kp-bg', 17, false],
+  ['Prosa: enlace', '--g-oro-texto', '--kp-bg', 17, false],
   ['Prosa: cita', '--kp-ink', '--kp-bg', 19, false],
 
   // --- Formulario (panel blanco) ---
   ['Etiqueta de campo', '--kp-ink-muted', '--kp-surface', 11, true],
   ['Valor del campo (sobre crema)', '--kp-ink', '--kp-bg', 16, false],
   ['Aviso pendiente (sobre crema)', '--kp-ink-muted', '--kp-bg', 14, false],
-  ['Aviso pendiente: destacado', '--kp-accent-ink', '--kp-bg', 14, true],
+  ['Aviso pendiente: destacado', '--g-oro-texto', '--kp-bg', 14, true],
 
   // --- Bloque provisional (/cafe): trama sobre crema ---
-  ['Aviso provisional', '--kp-accent-ink', '--kp-bg', 14, false],
+  ['Aviso provisional', '--g-oro-texto', '--kp-bg', 14, false],
   ['Texto provisional', '--kp-ink-muted', '--kp-bg', 17, false],
 
   // --- Marco tipográfico (sustituto de foto ausente) ---
   ['Marco tipográfico (sobre hueso)', '--kp-ink-muted', '--g-hueso', 56, false],
   ['Ficha: precio como dato', '--kp-ink', '--kp-bg', 88, false],
   ['Ficha: variante', '--kp-ink-muted', '--kp-bg', 15, false],
-  ['Ficha: chip disponible', '--kp-accent-ink', '--kp-surface', 12, true],
+  ['Ficha: chip disponible', '--g-oro-texto', '--kp-surface', 12, true],
+
+  /* =======================================================================
+     RITMO DE SUPERFICIES — pares nuevos de esta iteración.
+     El home ya no es crema de principio a fin: alterna blanco, crema, hueso,
+     arena, oro y una sección de ancla negra. Cada superficie se audita.
+     ======================================================================= */
+
+  // --- Superficie HUESO (#f7efdb): sección "del diario" del home ---
+  ['HUESO: titular de sección', '--kp-ink', '--g-hueso', 48, false],
+  ['HUESO: kicker (oro legible)', '--g-oro-texto', '--g-hueso', 11, true],
+  ['HUESO: nota de apoyo', '--kp-ink-muted', '--g-hueso', 14, false],
+  ['HUESO: entradilla', '--kp-ink-muted', '--g-hueso', 21, false],
+  ['HUESO: enlace .g-enlace', '--g-oro-texto', '--g-hueso', 15, false],
+
+  // --- Superficie ARENA (#f5ebd3): "cómo compras" y cabeceras de internas ---
+  ['ARENA: titular display', '--kp-ink', '--g-arena', 96, false],
+  ['ARENA: titular h2', '--kp-ink', '--g-arena', 48, false],
+  ['ARENA: kicker (oro legible)', '--g-oro-texto', '--g-arena', 11, true],
+  ['ARENA: entradilla', '--kp-ink-muted', '--g-arena', 21, false],
+  ['ARENA: nota de apoyo', '--kp-ink-muted', '--g-arena', 14, false],
+  ['ARENA: texto de paso', '--kp-ink-muted', '--g-arena', 15, false],
+  ['ARENA: título de paso h3', '--kp-ink', '--g-arena', 18, false],
+  ['ARENA: ordinal de paso', '--g-oro-texto', '--g-arena', 72, false],
+  ['ARENA: cifra de dato', '--kp-ink', '--g-arena', 130, false],
+  ['ARENA: etiqueta de dato', '--g-oro-texto', '--g-arena', 11, true],
+  ['ARENA: pie de dato', '--kp-ink-muted', '--g-arena', 14, false],
+  ['ARENA: enlace .g-enlace', '--g-oro-texto', '--g-arena', 15, false],
+  ['ARENA: píldora contorno', '--g-oro-texto', '--g-arena', 15, false],
+
+  // --- Banda de ORO RELLENO (#dec185) con texto TINTA encima ---
+  ['ORO: texto tinta sobre banda', '--kp-ink', '--kp-accent', 17, false],
+  ['ORO: kicker tinta sobre banda', '--kp-ink', '--kp-accent', 11, true],
+
+  /* --- SECCIÓN DE ANCLA (#1a1a1a) con textura de lino ---
+     Aquí, y SOLO aquí, el oro #dec185 es color de texto: 10.01:1. */
+  ['ANCLA: cifra gigante en ORO #dec185', '--kp-accent', '--kp-anchor', 130, false],
+  ['ANCLA: etiqueta de dato (crema)', '--g-tinta-inv', '--kp-anchor', 11, true],
+  ['ANCLA: pie de dato (crema apagado)', '--g-tinta-inv-muted', '--kp-anchor', 14, false],
+  ['ANCLA: kicker en ORO #dec185', '--kp-accent', '--kp-anchor', 11, true],
+  ['ANCLA: titular display (crema)', '--g-tinta-inv', '--kp-anchor', 96, false],
+  ['ANCLA: titular h2 (crema)', '--g-tinta-inv', '--kp-anchor', 48, false],
+  ['ANCLA: entradilla (crema apagado)', '--g-tinta-inv-muted', '--kp-anchor', 21, false],
+  ['ANCLA: texto corrido (crema apagado)', '--g-tinta-inv-muted', '--kp-anchor', 17, false],
+  ['ANCLA: nota (crema apagado)', '--g-tinta-inv-muted', '--kp-anchor', 14, false],
+  ['ANCLA: enlace en ORO #dec185', '--kp-accent', '--kp-anchor', 15, false],
+  ['ANCLA: píldora contorno en ORO', '--kp-accent', '--kp-anchor', 15, false],
+  ['ANCLA: píldora contorno :hover (tinta sobre oro)', '--kp-ink', '--kp-accent', 15, false],
+
+  // --- PIE, que ahora es superficie de ancla ---
+  ['PIE ANCLA: lema (crema)', '--g-tinta-inv', '--kp-anchor', 60, false],
+  ['PIE ANCLA: datos (crema apagado)', '--g-tinta-inv-muted', '--kp-anchor', 14, false],
+  ['PIE ANCLA: enlace en ORO #dec185', '--kp-accent', '--kp-anchor', 14, false],
+  ['PIE ANCLA: cierre / copyright', '--g-tinta-inv-muted', '--kp-anchor', 13, false],
 ];
 
 /* --- Cálculo --- */
@@ -201,17 +262,38 @@ try {
   process.exit(1);
 }
 
+/*
+ * La regla se aplica SOBRE FONDO CLARO. Sobre la superficie de ancla
+ * (#1a1a1a) el #dec185 da 10.01:1 y es texto perfectamente legible, así que
+ * las reglas cuyo selector vive dentro de `.g-ancla` (o del pie, que ES
+ * ancla) quedan exentas. Todo lo demás sigue prohibido.
+ */
+const ES_OSCURO = /\.g-ancla|\[data-kp-pie\]|\.g-pie-/;
+
+/** Trocea el CSS en reglas {selector, cuerpo} para poder mirar el contexto. */
+const reglas = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+  selector: m[1].trim(),
+  cuerpo: m[2],
+}));
+
 const infracciones = [];
-// #dec185 (o var(--kp-accent)) como COLOR DE TEXTO
-for (const m of css.matchAll(/(?<![-\w])color\s*:\s*(#dec185|var\(--kp-accent\))/gi)) {
-  infracciones.push(`color de texto: ${m[0]}`);
-}
-// #dec185 como color de BORDE
-for (const m of css.matchAll(/border[a-z-]*\s*:\s*[^;{}]*(#dec185|var\(--kp-accent\))[^;{}]*/gi)) {
-  infracciones.push(`borde: ${m[0].trim()}`);
-}
-for (const m of css.matchAll(/border-[a-z-]*color\s*:\s*(#dec185|var\(--kp-accent\))/gi)) {
-  infracciones.push(`borde: ${m[0].trim()}`);
+for (const { selector, cuerpo } of reglas) {
+  const exento = ES_OSCURO.test(selector);
+  // #dec185 (o var(--kp-accent)) como COLOR DE TEXTO
+  for (const m of cuerpo.matchAll(/(?<![-\w])color\s*:\s*(#dec185|var\(--kp-accent\))/gi)) {
+    if (!exento) infracciones.push(`color de texto en "${selector}": ${m[0]}`);
+  }
+  // #dec185 como color de BORDE
+  for (const m of cuerpo.matchAll(
+    /border[a-z-]*\s*:\s*[^;{}]*(#dec185|var\(--kp-accent\))[^;{}]*/gi
+  )) {
+    if (!exento) infracciones.push(`borde en "${selector}": ${m[0].trim()}`);
+  }
+  for (const m of cuerpo.matchAll(
+    /border-[a-z-]*color\s*:\s*(#dec185|var\(--kp-accent\))/gi
+  )) {
+    if (!exento) infracciones.push(`borde en "${selector}": ${m[0].trim()}`);
+  }
 }
 
 if (infracciones.length === 0) {

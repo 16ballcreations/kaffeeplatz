@@ -34,12 +34,14 @@ const ratio = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-// --- Superficies del sistema ------------------------------------------------
-const CANVAS = '#1a1a1a';
-const ELEVADO = '#212120';
-const ELEVADO_HOVER = '#252523';
-const HONDO = '#151514';
-const PANEL = '#fdf7e7';
+// --- ESCALONADO DE SUPERFICIES (revision: la pagina se veia plana) ---------
+const ABISMO = '#111111';        // pie, hero, encabezados interiores
+const CANVAS = '#1a1a1a';        // base de pagina
+const ELEVADO = '#232320';       // tarjetas
+const ELEVADO_HOVER = '#2e2b28'; // tarjeta en hover
+const PANEL_OSCURO = '#2a2724';  // bloque de cierre, el escalon mas alto
+const HONDO = '#151514';         // cabecera fija e inputs
+const PANEL = '#fdf7e7';         // crema: paneles de imagen Y franja clara
 const PANEL_BLANCO = '#ffffff';
 
 // --- Tintas -----------------------------------------------------------------
@@ -50,6 +52,8 @@ const ORO = '#dec185';
 const ORO_LEGIBLE = '#8f6724';
 const INK = '#1a1a1a';
 const INK_MUTED = '#6d5b4a';
+// Tinta secundaria de las franjas CLARAS nuevas.
+const INK_CREMA_TENUE = '#5c4c3e';
 
 /**
  * @typedef {[uso: string, fg: string, bg: string, tipo: string, umbral: number]} Par
@@ -92,6 +96,27 @@ const PARES = [
   ['Panel blanco: texto oscuro', INK, PANEL_BLANCO, 'normal', 4.5],
   ['Salto al contenido (crema/oscuro)', INK, PANEL, 'grande', 3.0],
 
+  // ---- ESCALONADO NUEVO: texto sobre cada nivel de superficie ----------
+  ['Abismo #111: cuerpo (crema)', TINTA, ABISMO, 'normal', 4.5],
+  ['Abismo #111: atenuado', TENUE, ABISMO, 'normal', 4.5],
+  ['Abismo #111: sutil 12px', SUTIL, ABISMO, 'normal', 4.5],
+  ['Abismo #111: oro (titulares hero)', ORO, ABISMO, 'normal', 4.5],
+  ['Panel oscuro #2A2724: cuerpo', TINTA, PANEL_OSCURO, 'normal', 4.5],
+  ['Panel oscuro #2A2724: atenuado', TENUE, PANEL_OSCURO, 'normal', 4.5],
+  ['Panel oscuro #2A2724: oro', ORO, PANEL_OSCURO, 'normal', 4.5],
+  ['Elevado #232320: sutil 12px', SUTIL, ELEVADO, 'normal', 4.5],
+
+  // ---- FRANJA CLARA a sangre (seccion de contraste nueva) --------------
+  ['Franja crema: titulares h2', INK, PANEL, 'normal', 4.5],
+  ['Franja crema: h3 de paso', INK, PANEL, 'normal', 4.5],
+  ['Franja crema: prosa secundaria', INK_CREMA_TENUE, PANEL, 'normal', 4.5],
+  ['Franja crema: nota / kicker', ORO_LEGIBLE, PANEL, 'normal', 4.5],
+  ['Franja crema: folio de seccion', ORO_LEGIBLE, PANEL, 'normal', 4.5],
+  ['Franja crema: numeral de paso', ORO_LEGIBLE, PANEL, 'normal', 4.5],
+  ['Franja crema: enlace de accion', ORO_LEGIBLE, PANEL, 'normal', 4.5],
+  ['Franja crema: enlace en hover', INK, PANEL, 'normal', 4.5],
+  ['Franja crema: foco (oro oscuro)', ORO_LEGIBLE, PANEL, 'no-texto', 3.0],
+
   // ---- /cafe provisional ------------------------------------------------
   ['Provisional: aviso (oro)', ORO, CANVAS, 'normal', 4.5],
   ['Provisional: prosa atenuada', TENUE, CANVAS, 'normal', 4.5],
@@ -110,12 +135,15 @@ const HAIRLINES = [
   ['Hairline fuerte (24%) vs canvas', [253, 247, 231, 0.24], CANVAS, 'decorativo'],
   ['Hairline oro (38%) vs canvas', [222, 193, 133, 0.38], CANVAS, 'decorativo'],
   ['Hairline oro (38%) vs elevado', [222, 193, 133, 0.38], ELEVADO, 'decorativo'],
+  ['Hairline base (14%) vs abismo', [253, 247, 231, 0.14], ABISMO, 'decorativo'],
+  ['Hairline oro (38%) vs abismo', [222, 193, 133, 0.38], ABISMO, 'decorativo'],
+  ['Hairline base (14%) vs panel oscuro', [253, 247, 231, 0.14], PANEL_OSCURO, 'decorativo'],
 ];
 
 const fmt = (n) => n.toFixed(2).padStart(6);
 
 console.log('\n══════════════════════════════════════════════════════════════════════════════');
-console.log('  OBSIDIANA — CONTRASTE WCAG 2.1  (canvas #1A1A1A)');
+console.log('  OBSIDIANA — CONTRASTE WCAG 2.1  (4 niveles de superficie + franja crema)');
 console.log('══════════════════════════════════════════════════════════════════════════════\n');
 console.log(
   '| Uso                                     | Texto   | Fondo   |  Ratio | Umbral | AA  | AAA |'

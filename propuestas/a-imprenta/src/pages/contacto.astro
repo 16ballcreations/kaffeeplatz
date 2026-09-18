@@ -26,7 +26,8 @@ const jsonLd = {
   migas={[{ nombre: 'Contacto', href: '/contacto' }]}
   jsonLd={jsonLd}
 >
-  <header data-kp-seccion="encabezado" class="im-contenedor im-seccion--amplia">
+  <header data-kp-seccion="encabezado" class="im-banda im-banda--crema">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-split im-split--texto-ancho">
       <div class="im-pila-20">
         <p data-kp-kicker class="im-label">Contacto</p>
@@ -37,11 +38,13 @@ const jsonLd = {
         Cuéntanos qué buscas y te ayudamos a elegir.
       </p>
     </div>
+  </div>
   </header>
 
   <hr class="im-filete" />
 
-  <section data-kp-seccion="canales" aria-labelledby="t-canales" class="im-contenedor im-seccion--amplia">
+  <section data-kp-seccion="canales" aria-labelledby="t-canales" class="im-banda im-banda--blanco">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-rubrica">
       <span class="im-rubrica__label">Canales</span>
       <hr class="im-rubrica__regla" />
@@ -81,11 +84,13 @@ const jsonLd = {
         </p>
       </li>
     </ul>
+  </div>
   </section>
 
   <hr class="im-filete" />
 
-  <section data-kp-seccion="envios" aria-labelledby="t-envios" class="im-contenedor im-seccion--amplia">
+  <section data-kp-seccion="envios" aria-labelledby="t-envios" class="im-banda im-banda--hueso">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-rubrica">
       <span class="im-rubrica__label">Envíos</span>
       <hr class="im-rubrica__regla" />
@@ -110,11 +115,13 @@ const jsonLd = {
         </p>
       </div>
     </div>
+  </div>
   </section>
 
   <hr class="im-filete" />
 
-  <section data-kp-seccion="formulario" aria-labelledby="t-formulario" class="im-contenedor im-seccion--amplia">
+  <section data-kp-seccion="formulario" aria-labelledby="t-formulario" class="im-banda im-banda--crema">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-rubrica">
       <span class="im-rubrica__label">Formulario</span>
       <hr class="im-rubrica__regla" />
@@ -128,5 +135,6 @@ const jsonLd = {
     <div class="im-panel">
       <FormularioContacto />
     </div>
+  </div>
   </section>
 </Imprenta>

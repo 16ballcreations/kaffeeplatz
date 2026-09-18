@@ -74,6 +74,44 @@
 
   /* Superficie oscura del pie, con lino de marca */
   --im-oscuro: var(--kp-anchor);
+
+  /* -------------------------------------------------------------------------
+     RITMO DE SUPERFICIES  (tokens PROPIOS de esta propuesta)
+     -------------------------------------------------------------------------
+     marca.css NO se toca. El crema profundo es un tono derivado que vive solo
+     aqui: es el escalon intermedio que faltaba entre el crema (#FDF7E7) y el
+     blanco (#FFFFFF) para que el ojo distinga secciones contiguas sin recurrir
+     a bordes ni sombras.
+
+       --im-sup-crema    #FDF7E7  el fondo general de marca
+       --im-sup-blanco   #FFFFFF  superficie elevada
+       --im-sup-hueso    #F5EBD3  crema profundo — derivado, propio
+       --im-sup-oscuro   #1A1A1A  ancla, corta la pagina
+
+     Los cuatro se usan como FONDO. El texto encima se decide por superficie,
+     y todos los pares estan auditados en scripts/contraste.mjs. */
+  --im-sup-crema: var(--kp-bg);
+  --im-sup-blanco: var(--kp-surface);
+  --im-sup-hueso: #f5ebd3;
+  --im-sup-oscuro: var(--kp-anchor);
+
+  /* Oro legible SOBRE HUESO.
+     --------------------------------------------------------------------
+     --kp-accent-ink (#8F6724) esta calibrado contra el crema #FDF7E7, donde
+     da 4.75:1. Sobre el hueso #F5EBD3, que es mas oscuro, cae a 4.28:1 y
+     FALLA AA. Lo detecto scripts/contraste.mjs.
+
+     Se resuelve oscureciendo el oro un punto SOLO en esta banda, en lugar de
+     aclarar el hueso: el unico hueso que salvaba el #8F6724 era #F9F1E0, y a
+     1.05:1 contra el crema ya no se distinguia como superficie, que es
+     justamente lo que habia que arreglar.
+
+     #855E20 sobre hueso = 4.89:1 -> PASA. Es un tono derivado, propio de esta
+     propuesta: marca.css no se toca. */
+  --im-oro-hueso: #855e20;
+
+  /* Borde de transicion entre dos superficies claras contiguas. */
+  --im-sup-linea: var(--kp-border);
 }
 
 /* ---------------------------------------------------------------------------
@@ -240,6 +278,254 @@ body.im {
   background: var(--kp-oro-horizontal);
 }
 
+/* ---------------------------------------------------------------------------
+   4b. RITMO DE SUPERFICIES
+   ---------------------------------------------------------------------------
+   El problema que resuelve: antes TODAS las secciones iban sobre el mismo
+   crema y se distinguian solo por espaciado vertical. El resultado se percibia
+   plano. Aqui cada seccion se declara como BANDA a sangre completa (`.im-banda`)
+   con una superficie explicita, y el contenido sigue centrado dentro por el
+   `.im-contenedor` interior.
+
+   Secuencia del home:
+     crema -> blanco -> hueso -> NEGRO (ancla) -> crema
+
+   Reglas:
+     - La banda pinta el fondo de borde a borde de la ventana.
+     - La transicion entre dos bandas CLARAS lleva un borde de 1px.
+     - La transicion hacia/desde la banda OSCURA no lleva borde: el salto de
+       superficie ya es el limite, y ahi va el filete dorado.
+   --------------------------------------------------------------------------- */
+.im-banda {
+  position: relative;
+  /* La banda es a sangre: el padding lateral lo pone el contenedor interior. */
+  width: 100%;
+}
+
+.im-banda--crema {
+  background-color: var(--im-sup-crema);
+}
+
+.im-banda--blanco {
+  background-color: var(--im-sup-blanco);
+}
+
+.im-banda--hueso {
+  background-color: var(--im-sup-hueso);
+}
+
+/* Sobre hueso, todo el oro LEGIBLE sube a --im-oro-hueso para no perder AA.
+   Solo afecta a texto, iconos y bordes de accion: los filetes y degradados
+   decorativos siguen con el oro de marca, porque no son texto. */
+.im-banda--hueso .im-label,
+.im-banda--hueso .im-rubrica__label,
+.im-banda--hueso .im-flecha,
+.im-banda--hueso .im-lista__numero,
+.im .im-banda--hueso [data-kp-articulo-fecha],
+.im-banda--hueso .im-migas a,
+.im-banda--hueso a {
+  color: var(--im-oro-hueso);
+}
+
+.im-banda--hueso .im-accion,
+.im .im-banda--hueso [data-kp-whatsapp],
+.im .im-banda--hueso [data-kp-enviar] {
+  color: var(--im-oro-hueso);
+  border-color: var(--im-oro-hueso);
+}
+
+/* El hover sigue invirtiendo a tinta, que ya pasa AA de sobra. */
+.im-banda--hueso .im-accion:hover,
+.im .im-banda--hueso [data-kp-whatsapp]:hover,
+.im .im-banda--hueso [data-kp-enviar]:hover:not(:disabled) {
+  background: var(--kp-ink);
+  border-color: var(--kp-ink);
+  color: var(--kp-bg);
+}
+
+.im-banda--hueso .im-flecha:hover {
+  border-bottom-color: var(--im-oro-hueso);
+}
+
+.im-banda--hueso :where(a, button, input, textarea, select, summary):focus-visible {
+  outline-color: var(--im-oro-hueso);
+}
+
+/* Linea de 1px entre superficies claras contiguas: marca el limite sin ruido. */
+.im-banda--blanco + .im-banda--hueso,
+.im-banda--hueso + .im-banda--blanco,
+.im-banda--crema + .im-banda--blanco,
+.im-banda--blanco + .im-banda--crema,
+.im-banda--crema + .im-banda--hueso,
+.im-banda--hueso + .im-banda--crema {
+  border-top: 1px solid var(--im-sup-linea);
+}
+
+/* ---- Banda ANCLA: la seccion oscura a sangre completa ----
+   Es el hito que corta la pagina por la mitad y el gesto que mas impacto
+   aporta. Coherente con el emblema, que es un medallon oscuro sobre lino. */
+.im-banda--oscura {
+  background-color: var(--im-sup-oscuro);
+  color: var(--kp-bg);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Lino de marca como textura de la banda oscura. Igual que en el pie: NO se
+   tesela (el archivo lleva el wordmark incrustado), se ancla una sola vez y
+   muy atenuado, para que se lea como material y no como logo repetido. */
+.im-banda--oscura::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--kp-lino);
+  background-repeat: no-repeat;
+  background-position: left -15% center;
+  background-size: auto 160%;
+  opacity: 0.1;
+  mix-blend-mode: luminosity;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Sobre #1A1A1A el crema da 15.94:1 y el oro claro #DEC185 da 10.35:1: aqui el
+   #DEC185 SI es valido como texto, porque la prohibicion es relativa al fondo
+   claro. Ambos pares estan en la tabla de contraste. */
+.im-banda--oscura .im-titulo-seccion,
+.im-banda--oscura .im-display,
+.im-banda--oscura h2,
+.im-banda--oscura h3 {
+  color: var(--kp-bg);
+}
+
+.im-banda--oscura .im-entradilla,
+.im-banda--oscura .im-lista__texto,
+.im-banda--oscura .im-nota {
+  /* --kp-ink-muted (#6D5B4A) sobre negro da 2.7:1 y FALLA. Sobre oscuro el
+     texto secundario se resuelve con el crema al 78%, no con el marron. */
+  color: rgb(253 247 231 / 0.78);
+}
+
+.im-banda--oscura .im-label,
+.im-banda--oscura .im-rubrica__label,
+.im-banda--oscura .im-lista__numero {
+  color: var(--kp-accent);
+}
+
+.im-banda--oscura .im-lista__item {
+  border-top-color: rgb(222 193 133 / 0.3);
+}
+
+.im-banda--oscura .im-accion {
+  border-color: var(--kp-accent);
+  color: var(--kp-accent);
+}
+
+.im-banda--oscura .im-accion:hover {
+  background: var(--kp-bg);
+  border-color: var(--kp-bg);
+  color: var(--kp-ink);
+}
+
+.im-banda--oscura .im-flecha {
+  color: var(--kp-accent);
+}
+
+.im-banda--oscura .im-flecha:hover {
+  border-bottom-color: var(--kp-accent);
+}
+
+.im-banda--oscura a {
+  color: var(--kp-accent);
+}
+
+/* Foco visible sobre oscuro: el oro legible (#8F6724) se pierde contra el
+   negro, asi que sobre la banda oscura el anillo pasa al oro claro. */
+.im-banda--oscura :where(a, button, input, textarea, select, summary):focus-visible {
+  outline-color: var(--kp-accent);
+}
+
+/* ---- Tarjetas de articulo sobre la banda oscura ----
+   Los colores por defecto estan calculados para fondo claro y sobre negro
+   fallarian: el titulo en --kp-ink (#1A1A1A) seria invisible y el resumen en
+   --kp-ink-muted (#6D5B4A) da 2.7:1. Se reasignan los tres.
+
+   OJO CON LA ESPECIFICIDAD: las reglas base son `.im [data-kp-articulo-*]`,
+   que puntuan (0,1,1) igual que `.im-banda--oscura [data-kp-articulo-*]` y van
+   DESPUES en la hoja, asi que ganarian por orden. Por eso aqui se escribe
+   `.im .im-banda--oscura ...` (0,2,1): sin esto los titulos del diario salen
+   en tinta oscura sobre el negro y son ilegibles. */
+.im .im-banda--oscura [data-kp-articulo-titulo] {
+  color: var(--kp-bg);
+}
+
+.im .im-banda--oscura [data-kp-articulo-resumen] {
+  color: rgb(253 247 231 / 0.78);
+}
+
+.im .im-banda--oscura [data-kp-articulo-fecha] {
+  color: var(--kp-accent);
+}
+
+/* El media del articulo conserva superficie clara: las portadas son fotos con
+   fondos claros y sobre negro el marco blanco las sostiene mejor. */
+.im .im-banda--oscura [data-kp-articulo-media] {
+  background: var(--im-sup-crema);
+  border-color: rgb(222 193 133 / 0.35);
+}
+
+.im .im-banda--oscura [data-kp-sin-imagen] {
+  color: var(--kp-ink-muted);
+}
+
+/* ---- Marca de agua de planta ----
+   Elemento grafico de identidad, no decoracion generica. Se coloca con
+   `aria-hidden` y no compite con el texto: queda detras y muy atenuada. */
+.im-planta {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  z-index: -1;
+}
+
+/* Planta CREMA sobre superficie clara: marca de agua sutil. */
+.im-planta--clara {
+  right: -4%;
+  bottom: -8%;
+  width: clamp(220px, 32vw, 440px);
+  height: auto;
+  opacity: 0.55;
+}
+
+/* Planta ORO sobre la banda oscura: el tratamiento metalico de marca. */
+.im-planta--oro {
+  right: 2%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: clamp(180px, 26vw, 360px);
+  height: auto;
+  opacity: 0.85;
+}
+
+/* En movil la marca de agua estorba mas de lo que aporta: se retira. */
+@media (max-width: 899px) {
+  .im-planta--clara {
+    opacity: 0.3;
+    width: clamp(160px, 46vw, 240px);
+    right: -12%;
+  }
+  .im-planta--oro {
+    display: none;
+  }
+}
+
+/* Las bandas con marca de agua recortan, para que la planta no genere scroll
+   horizontal al desbordar por la derecha. */
+.im-banda--con-planta {
+  overflow: hidden;
+  isolation: isolate;
+}
+
 /* Micro-label suelto (kicker). */
 .im-label {
   font-size: var(--im-label);
@@ -256,6 +542,42 @@ body.im {
 .im-display {
   font-size: var(--im-display-xxl);
   font-weight: 300;
+}
+
+/* ---- HERO: mas presencia ----
+   El titular manda por TAMANO, no por peso: sube a 128px en desktop (el
+   display normal llega a 112) y se aprieta el interletraje, que es lo que hace
+   que una serif ligera a gran tamano se lea como pieza impresa y no como texto
+   grande. El peso sigue en 300. */
+.im-hero {
+  padding-block: clamp(var(--im-50), 9vw, var(--im-234));
+}
+
+.im-hero__display {
+  font-size: clamp(3rem, 1.1rem + 8.1vw, 8rem); /* 48 -> 128 */
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 0.98;
+}
+
+/* El emblema en el hero: el medallon a gran tamano, que es el activo de marca
+   con mas fuerza. Lleva fondo propio (lino oscuro), asi que NO se le pone
+   marco ni borde: es una pieza cerrada. */
+.im-hero__emblema {
+  display: block;
+  width: clamp(150px, 20vw, 260px);
+  height: auto;
+  border-radius: 50%;
+  margin-bottom: var(--im-30);
+}
+
+/* Regla dorada bajo el kicker del hero: ancla el bloque de texto. */
+.im-hero__regla {
+  height: 2px;
+  border: 0;
+  margin: 0;
+  width: clamp(80px, 12vw, 160px);
+  background: var(--kp-oro-horizontal);
 }
 
 .im-titulo-pagina {
@@ -733,6 +1055,44 @@ body.im {
 
 .im [data-kp-tarjeta]:hover {
   border-color: var(--kp-accent-ink);
+}
+
+/* Las tarjetas son BLANCAS sobre crema. Si la banda ya es blanca, la tarjeta
+   desapareceria: sobre blanco se invierte y toma el crema como superficie, de
+   modo que el contraste tarjeta/fondo se conserva en las dos direcciones. */
+.im-banda--blanco .im [data-kp-tarjeta],
+.im .im-banda--blanco [data-kp-tarjeta] {
+  background: var(--im-sup-crema);
+}
+
+.im .im-banda--blanco [data-kp-tarjeta-media] {
+  background: var(--im-sup-blanco);
+}
+
+/* Sobre hueso, la tarjeta blanca ya destaca: solo se refuerza el borde. */
+.im .im-banda--hueso [data-kp-tarjeta] {
+  border-color: #e3d5b4;
+}
+
+/* El media de la tarjeta sobre hueso mantiene el crema, no el hueso, para que
+   el escalon tarjeta -> media siga leyendose. */
+.im .im-banda--hueso [data-kp-tarjeta-media] {
+  background: var(--im-sup-crema);
+}
+
+/* El marco de imagen sobre banda blanca: el interior pasa a crema para que la
+   foto no flote sobre un blanco continuo. */
+.im-banda--blanco .im-marco,
+.im-banda--blanco .im-marco--producto {
+  background: var(--im-sup-crema);
+}
+
+/* Y sobre la banda oscura, el marco se mantiene claro: las fotos de producto
+   tienen fondo blanco quemado y sobre negro se verian como recortes sucios. */
+.im-banda--oscura .im-marco,
+.im-banda--oscura .im-marco--producto {
+  background: var(--im-sup-crema);
+  border-color: rgb(222 193 133 / 0.35);
 }
 
 .im [data-kp-tarjeta-enlace] {
@@ -1230,6 +1590,21 @@ body.im {
   border: 1px solid var(--kp-border);
   border-radius: var(--im-radio-marco);
   padding: var(--im-20);
+}
+
+/* Sobre banda blanca el panel se invierte a crema: si no, desapareceria. */
+.im-banda--blanco .im-panel {
+  background: var(--im-sup-crema);
+}
+
+/* Sobre hueso el panel blanco ya destaca; solo se refuerza el borde. */
+.im-banda--hueso .im-panel {
+  border-color: #e3d5b4;
+}
+
+/* La cita del diario tambien es una superficie: se invierte sobre blanco. */
+.im-banda--blanco .im-prosa blockquote {
+  background: var(--im-sup-crema);
 }
 
 @media (min-width: 768px) {

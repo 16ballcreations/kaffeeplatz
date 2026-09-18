@@ -33,7 +33,7 @@ const {
   titulo,
   descripcion,
   camino,
-  imagen,
+  imagen: imagenProp,
   tipoOg,
   migas,
   jsonLd,
@@ -42,8 +42,19 @@ const {
 
 const anio = new Date().getFullYear();
 
-/** La planta del emblema, para la marca de agua a gran escala. */
-const emblema = recurso('/img/marca/emblema.png');
+/**
+ * Assets OFICIALES de marca. Antes la cabecera componía el wordmark en vivo
+ * con tipografía y el único uso del emblema era una marca de agua difuminada.
+ * Ahora el emblema es el logo real y se muestra ENTERO.
+ */
+const emblemaSm = recurso('/img/marca/emblema-sm.png'); // 320x320, cabecera y pie
+/** La planta marrón: marca de agua legítima (relleno de foto ausente). */
+const planta = recurso('/img/marca/planta-marron.png');
+/** Tile de lino sin costura, derivado del asset oficial. Ver galeria.css §7c. */
+const linoTile = recurso('/marca-b/lino-tile.png');
+
+/** og:image: el emblema en grande, en URL ABSOLUTA. SEO.astro la resuelve. */
+const imagenSocial = imagenProp ?? '/img/marca/emblema.png';
 ---
 
 <!doctype html>
@@ -53,7 +64,10 @@ const emblema = recurso('/img/marca/emblema.png');
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
     <meta name="theme-color" content="#fdf7e7" />
-    <link rel="icon" href={ruta('/favicon.svg')} type="image/svg+xml" />
+
+    {/* Favicon con el ICONO OFICIAL de marca (180x180), no el placeholder. */}
+    <link rel="icon" href={ruta('/img/marca/icono.png')} type="image/png" sizes="180x180" />
+    <link rel="apple-touch-icon" href={ruta('/img/marca/icono.png')} sizes="180x180" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -66,7 +80,7 @@ const emblema = recurso('/img/marca/emblema.png');
       titulo={titulo}
       descripcion={descripcion}
       camino={camino}
-      imagen={imagen}
+      imagen={imagenSocial}
       tipoOg={tipoOg}
       migas={migas}
       jsonLd={jsonLd}
@@ -74,15 +88,30 @@ const emblema = recurso('/img/marca/emblema.png');
     <slot name="head" />
   </head>
 
-  <body class={claseCuerpo} data-kp-pagina={camino} style={`--g-emblema: url('${emblema}')`}>
+  <body
+    class={claseCuerpo}
+    data-kp-pagina={camino}
+    style={`--g-planta: url('${planta}'); --g-lino-tile: url('${linoTile}')`}
+  >
     <a class="kp-saltar" href="#contenido">Saltar al contenido</a>
 
     <header data-kp-cabecera>
       <slot name="cabecera">
         <div class="g-cabecera-interior">
           <a href={ruta('/')} data-kp-logo>
-            <span data-kp-logo-texto>{SITIO.nombre}</span>
-            <span class="g-logo-sub">coffee plant</span>
+            {/* EL LOGO REAL: el medallón oficial, entero, junto al nombre. */}
+            <img
+              src={emblemaSm}
+              alt=""
+              width="40"
+              height="40"
+              class="g-emblema-cabecera"
+              decoding="async"
+            />
+            <span class="g-logo-texto-grupo">
+              <span data-kp-logo-texto>{SITIO.nombre}</span>
+              <span class="g-logo-sub">coffee plant</span>
+            </span>
           </a>
           <nav aria-label="Navegación principal" data-kp-nav>
             <ul>
@@ -108,10 +137,22 @@ const emblema = recurso('/img/marca/emblema.png');
       <slot />
     </main>
 
-    <footer data-kp-pie>
+    <footer data-kp-pie class="g-ancla">
       <slot name="pie">
         <div class="g-pie-interior">
           <div class="g-pie-rejilla">
+            {/* El emblema cierra el documento: lo último que se ve es la marca. */}
+            <div class="g-pie-marca">
+              <img
+                src={emblemaSm}
+                alt={`Emblema de ${SITIO.nombre}`}
+                width="96"
+                height="96"
+                class="g-emblema-pie"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
             <div>
               <p data-kp-pie-lema>
                 eleva tu experiencia <span class="g-cursiva">cafetera</span>

@@ -79,7 +79,8 @@ const jsonLd = {
 >
   <article data-kp-articulo-completo>
     {/* ---------- Cabecera editorial ---------- */}
-    <header data-kp-articulo-encabezado class="im-contenedor im-seccion--amplia">
+    <header data-kp-articulo-encabezado class="im-banda im-banda--crema">
+    <div class="im-contenedor im-seccion--amplia">
       <div class="im-rubrica">
         <span data-kp-kicker class="im-rubrica__label">Diario</span>
         <hr class="im-rubrica__regla" />
@@ -95,7 +96,8 @@ const jsonLd = {
       </p>
 
       {d.resumen && <p data-kp-entradilla class="im-entradilla" style="margin-top:var(--im-20)">{d.resumen}</p>}
-    </header>
+    </div>
+  </header>
 
     {/* ---------- Portada SIEMPRE enmarcada, nunca a sangre ---------- */}
     {
@@ -114,15 +116,17 @@ const jsonLd = {
       )
     }
 
-    {/* ---------- Prosa ---------- */}
-    <div class="im-contenedor">
-      <div data-kp-prosa class="im-prosa">
-        <Content />
-      </div>
-    </div>
+    {/* ---------- Prosa — banda BLANCA ----------
+        La lectura larga va sobre blanco: separa el cuerpo del articulo del
+        encabezado crema y da la superficie mas limpia al texto corrido. */}
+    <div class="im-banda im-banda--blanco">
+      <div class="im-contenedor im-seccion--amplia">
+        <div data-kp-prosa class="im-prosa">
+          <Content />
+        </div>
 
     {/* ---------- Cierre ---------- */}
-    <aside data-kp-articulo-cierre class="im-contenedor" style="margin-top:var(--im-50)">
+    <aside data-kp-articulo-cierre style="margin-top:var(--im-50)">
       <div class="im-panel im-medida im-pila-20">
         <p class="im-label">¿Dudas?</p>
         <p style="font-family:var(--im-display);font-weight:300;font-size:var(--im-display-s);line-height:1.3">
@@ -139,13 +143,16 @@ const jsonLd = {
         </div>
       </div>
     </aside>
+      </div>
+    </div>
   </article>
 
   {
     otros.length > 0 && (
       <>
         <hr class="im-filete" style="margin-top:var(--im-50)" />
-        <section data-kp-seccion="mas-diario" aria-labelledby="t-mas" class="im-contenedor im-seccion--amplia">
+        <section data-kp-seccion="mas-diario" aria-labelledby="t-mas" class="im-banda im-banda--hueso">
+    <div class="im-contenedor im-seccion--amplia">
           <div class="im-rubrica">
             <span class="im-rubrica__label">Sigue leyendo</span>
             <hr class="im-rubrica__regla" />
@@ -165,7 +172,8 @@ const jsonLd = {
               </li>
             ))}
           </ul>
-        </section>
+        </div>
+  </section>
       </>
     )
   }

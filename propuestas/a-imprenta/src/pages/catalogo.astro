@@ -41,7 +41,8 @@ const jsonLd = {
   migas={[{ nombre: 'Catálogo', href: '/catalogo' }]}
   jsonLd={jsonLd}
 >
-  <header data-kp-seccion="encabezado" class="im-contenedor im-seccion--amplia">
+  <header data-kp-seccion="encabezado" class="im-banda im-banda--crema">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-split im-split--texto-ancho">
       <div class="im-pila-20">
         <p class="im-label">Catálogo</p>
@@ -53,11 +54,13 @@ const jsonLd = {
         contamos cuándo vuelve.
       </p>
     </div>
+  </div>
   </header>
 
   <hr class="im-filete" />
 
-  <section aria-label="Productos" class="im-contenedor im-seccion--amplia">
+  <section aria-label="Productos" class="im-banda im-banda--blanco">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-rubrica">
       <span class="im-rubrica__label">{productos.length} piezas</span>
       <hr class="im-rubrica__regla" />
@@ -79,5 +82,6 @@ const jsonLd = {
         ))
       }
     </ul>
+  </div>
   </section>
 </Imprenta>

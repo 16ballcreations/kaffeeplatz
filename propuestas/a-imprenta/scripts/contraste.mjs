@@ -72,11 +72,27 @@ const T = {
   border: '#ebe1c8',
   ink: '#1a1a1a',
   inkMuted: '#6d5b4a',
-  accent: '#dec185', // SOLO relleno
+  accent: '#dec185', // SOLO relleno sobre claro; sobre oscuro SI es texto
   accentDeep: '#8f6e3e',
   accentInk: '#8f6724', // texto/bordes
   anchor: '#1a1a1a',
+
+  /* Tokens PROPIOS de la propuesta (no estan en marca.css). */
+  hueso: '#f5ebd3', // crema profundo: escalon intermedio del ritmo
+  oroHueso: '#855e20', // oro legible recalibrado para el hueso
 };
+
+/* Mezcla un color con alfa sobre un fondo opaco, para evaluar los textos
+   semitransparentes de la banda oscura (crema al 78%). */
+function mezclar(frente, alfa, fondo) {
+  const f = hexARgb(frente);
+  const b = hexARgb(fondo);
+  const c = f.map((v, i) => Math.round(v * alfa + b[i] * (1 - alfa)));
+  return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('');
+}
+
+/* Texto secundario sobre la banda oscura: crema #FDF7E7 al 78% sobre #1A1A1A. */
+T.cremaSobreOscuro78 = mezclar(T.bg, 0.78, T.anchor);
 
 /* --------------------------------------------------------------------------
    Pares texto/fondo que el diseno usa REALMENTE.
@@ -140,6 +156,53 @@ const PARES = [
   ['Estado agotado (ink-muted) sobre blanco', T.inkMuted, T.surface, 11, false],
   ['Precio de ficha sobre crema (>=24px)', T.ink, T.bg, 24, false],
   ['Variante (ink) sobre blanco', T.ink, T.surface, 14, false],
+
+  /* =======================================================================
+     RITMO DE SUPERFICIES — pares NUEVOS
+     =======================================================================
+     Superficies: crema #FDF7E7 · blanco #FFFFFF · hueso #F5EBD3 · negro #1A1A1A
+     Todo par texto/fondo que aparece en las bandas queda evaluado aqui.
+     ======================================================================= */
+
+  // --- Banda HUESO (crema profundo, token propio) ---
+  ['HUESO: cuerpo (ink) sobre hueso', T.ink, T.hueso, 16, false],
+  ['HUESO: texto secundario (ink-muted) sobre hueso', T.inkMuted, T.hueso, 16, false],
+  ['HUESO: nota pequena (ink-muted) sobre hueso', T.inkMuted, T.hueso, 14, false],
+  ['HUESO: titulo de seccion sobre hueso (>=30px)', T.ink, T.hueso, 30, false],
+  /* OJO: sobre hueso el oro NO es --kp-accent-ink sino --im-oro-hueso.
+     El #8F6724 aqui daria 4.28:1 y FALLA; por eso esta banda usa #855E20. */
+  ['HUESO: enlace/label oro (im-oro-hueso) sobre hueso', T.oroHueso, T.hueso, 16, false],
+  ['HUESO: micro-label oro 11px sobre hueso', T.oroHueso, T.hueso, 11, false],
+  ['HUESO: accion outlined oro sobre hueso', T.oroHueso, T.hueso, 14, false],
+  ['HUESO: numero de paso oro 24px+ sobre hueso', T.oroHueso, T.hueso, 24, false],
+  ['HUESO: hover de accion, crema sobre tinta', T.bg, T.ink, 14, false],
+
+  // --- Banda OSCURA (ancla #1A1A1A) ---
+  // Aqui el #DEC185 SI es texto valido: la prohibicion es relativa al fondo.
+  ['ANCLA: titular display crema sobre negro (>=30px)', T.bg, T.anchor, 30, false],
+  ['ANCLA: cuerpo crema sobre negro', T.bg, T.anchor, 16, false],
+  ['ANCLA: texto secundario crema 78% sobre negro', T.cremaSobreOscuro78, T.anchor, 16, false],
+  ['ANCLA: nota crema 78% sobre negro 14px', T.cremaSobreOscuro78, T.anchor, 14, false],
+  ['ANCLA: micro-label ORO #DEC185 11px sobre negro', T.accent, T.anchor, 11, false],
+  ['ANCLA: enlace ORO #DEC185 sobre negro', T.accent, T.anchor, 16, false],
+  ['ANCLA: enlace-flecha ORO 14px sobre negro', T.accent, T.anchor, 14, false],
+  ['ANCLA: numero de paso ORO 24px+ sobre negro', T.accent, T.anchor, 24, false],
+  ['ANCLA: accion outlined ORO 14px sobre negro', T.accent, T.anchor, 14, false],
+  ['ANCLA: hover de accion, tinta sobre crema', T.ink, T.bg, 14, false],
+  // Tarjetas de articulo dentro de la banda oscura
+  ['ANCLA: titulo de articulo crema sobre negro (20px)', T.bg, T.anchor, 20, false],
+  ['ANCLA: resumen de articulo crema 78% sobre negro', T.cremaSobreOscuro78, T.anchor, 14, false],
+  ['ANCLA: fecha de articulo ORO 11px sobre negro', T.accent, T.anchor, 11, false],
+  // El marco de la foto se mantiene claro dentro de la banda oscura
+  ['ANCLA: "Sin imagen" (ink-muted) sobre marco crema', T.inkMuted, T.bg, 14, false],
+
+  // --- Tarjetas invertidas sobre banda BLANCA ---
+  // Sobre blanco la tarjeta pasa a crema, y su media pasa a blanco.
+  ['BLANCO: titulo de tarjeta (ink) sobre tarjeta crema', T.ink, T.bg, 20, false],
+  ['BLANCO: precio de tarjeta (ink-muted) sobre tarjeta crema', T.inkMuted, T.bg, 16, false],
+  ['BLANCO: agotado (ink-muted) sobre tarjeta crema', T.inkMuted, T.bg, 11, false],
+  ['BLANCO: prosa del diario (ink) sobre blanco', T.ink, T.surface, 17, false],
+  ['BLANCO: cita del diario (ink) sobre crema invertido', T.ink, T.bg, 20, false],
 ];
 
 /* --------------------------------------------------------------------------
@@ -273,6 +336,36 @@ if (violaciones === 0) {
 } else {
   console.log(`  ${violaciones} VIOLACIONES ENCONTRADAS`);
 }
+
+/* --------------------------------------------------------------------------
+   REGLA DEL HUESO: sobre la banda #F5EBD3 el oro de marca #8F6724 solo da
+   4.28:1 y FALLA AA. Esa banda debe usar #855E20 (--im-oro-hueso).
+   Esta comprobacion evita que la regresion vuelva sin que nadie se entere.
+   -------------------------------------------------------------------------- */
+
+console.log('');
+console.log('REGLA DEL HUESO — sobre #F5EBD3 el oro debe ser #855E20, no #8F6724');
+console.log('='.repeat(104));
+
+/* Se extraen los bloques de reglas cuyo selector menciona .im-banda--hueso y
+   se comprueba que ninguno asigne el oro calibrado-para-crema. */
+const bloquesHueso = [...plano.matchAll(/([^{}]*\.im-banda--hueso[^{}]*)\{([^}]*)\}/gi)];
+let fallosHueso = 0;
+
+for (const [, selector, cuerpo] of bloquesHueso) {
+  if (/(?:^|[;\s])(?:color|border-color|border(?:-top|-right|-bottom|-left)?)\s*:[^;]*#8f6724/i.test(cuerpo)) {
+    fallosHueso++;
+    console.log(`  VIOLACION: ${selector.trim()} { ${cuerpo.trim()} }`);
+  }
+}
+
+console.log(`  bloques con .im-banda--hueso analizados: ${bloquesHueso.length}`);
+if (fallosHueso === 0) {
+  console.log('  OK — la banda hueso no usa el oro de crema como texto ni borde.');
+} else {
+  console.log(`  ${fallosHueso} VIOLACIONES: usan #8F6724 sobre hueso (4.28:1, falla AA).`);
+}
+violaciones += fallosHueso;
 
 console.log('='.repeat(104));
 console.log('');

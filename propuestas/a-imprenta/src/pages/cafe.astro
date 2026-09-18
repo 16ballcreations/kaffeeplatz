@@ -32,7 +32,8 @@ import { SITIO, ruta } from '../datos/sitio';
   camino="/cafe"
   migas={[{ nombre: 'Café', href: '/cafe' }]}
 >
-  <header data-kp-seccion="encabezado" class="im-contenedor im-seccion--amplia">
+  <header data-kp-seccion="encabezado" class="im-banda im-banda--crema">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-split im-split--texto-ancho">
       <div class="im-pila-20">
         <p data-kp-kicker class="im-label">Próximamente</p>
@@ -43,6 +44,7 @@ import { SITIO, ruta } from '../datos/sitio';
         estamos trabajando en ello.
       </p>
     </div>
+  </div>
   </header>
 
   <hr class="im-filete" />
@@ -53,6 +55,10 @@ import { SITIO, ruta } from '../datos/sitio';
     No afirmar si somos curadores de tostadores terceros o marca propia.
     No anadir origenes, fincas, perfiles de tueste, precios ni fechas.
   -->
+  {/* Banda BLANCA: separa el bloque provisional del encabezado crema y de la
+      seccion hueso que va debajo. El borde discontinuo y la trama diagonal que
+      lo delatan como provisional se conservan intactos. */}
+  <div class="im-banda im-banda--blanco">
   <div class="im-contenedor im-seccion--amplia">
     <div data-kp-provisional role="note" aria-label="Contenido provisional">
       <p data-kp-provisional-aviso>
@@ -117,11 +123,13 @@ import { SITIO, ruta } from '../datos/sitio';
       </section>
     </div>
   </div>
+  </div>
   <!-- /PROVISIONAL -->
 
   <hr class="im-filete" />
 
-  <section data-kp-seccion="grano-aviso" aria-labelledby="t-aviso" class="im-contenedor im-seccion--amplia">
+  <section data-kp-seccion="grano-aviso" aria-labelledby="t-aviso" class="im-banda im-banda--hueso">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-rubrica">
       <span class="im-rubrica__label">Lista de espera</span>
       <hr class="im-rubrica__regla" />
@@ -150,5 +158,6 @@ import { SITIO, ruta } from '../datos/sitio';
         </p>
       </div>
     </div>
+  </div>
   </section>
 </Imprenta>

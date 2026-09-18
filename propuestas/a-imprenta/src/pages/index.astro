@@ -11,7 +11,7 @@ import TarjetaProducto from '../components/TarjetaProducto.astro';
 import TarjetaArticulo from '../components/TarjetaArticulo.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import Imagen from '../components/Imagen.astro';
-import { SITIO, ruta } from '../datos/sitio';
+import { SITIO, ruta, recurso } from '../datos/sitio';
 
 const productos = await getCollection('productos');
 const destacados = productos
@@ -34,66 +34,101 @@ const sobreImg = destacados[1]?.data.imagenes[0] ?? heroImg;
   camino="/"
   imagen={heroImg?.src}
 >
-  {/* ---------- HERO: titular gigante + split 50/50 ---------- */}
-  <section data-kp-seccion="hero" class="im-contenedor im-seccion--amplia">
-    <div class="im-split im-split--texto-ancho">
-      <div class="im-pila-30">
-        <p data-kp-kicker class="im-label">Café de especialidad · {SITIO.ciudad}</p>
-        <h1 class="im-display">{SITIO.lema}</h1>
-        <p data-kp-entradilla class="im-entradilla">
-          Seleccionamos métodos, filtros y utensilios para que preparar café en casa deje de ser un
-          trámite y se convierta en un ritual. Cada pieza está elegida por cómo se comporta en la
-          taza, no por cómo se ve en la foto.
-        </p>
-        <p data-kp-acciones class="im-acciones">
-          <a href={ruta('/catalogo')} data-kp-cta="primaria" class="im-accion">Ver el catálogo</a>
-          <BotonWhatsApp data-kp-cta="secundaria" clase="im-accion">
-            Pregúntanos por WhatsApp
-          </BotonWhatsApp>
-        </p>
+  {/* ==========================================================================
+       RITMO DE SUPERFICIES DEL HOME
+       crema (hero) -> blanco (destacados) -> hueso (metodo)
+         -> NEGRO (ancla/diario) -> crema (sobre nosotros)
+       Cada seccion es una BANDA a sangre completa; el contenido va centrado
+       dentro por el .im-contenedor interior.
+     ========================================================================== */}
+
+  {/* ---------- HERO — banda CREMA ---------- */}
+  <section data-kp-seccion="hero" class="im-banda im-banda--crema im-banda--con-planta">
+    {/* Planta crema como marca de agua: identidad, no decoracion generica. */}
+    <img
+      src={recurso('/img/marca/planta-crema.png')}
+      alt=""
+      aria-hidden="true"
+      width="900"
+      height="938"
+      class="im-planta im-planta--clara"
+      decoding="async"
+    />
+
+    <div class="im-contenedor im-hero">
+      <div class="im-split im-split--texto-ancho">
+        <div class="im-pila-30">
+          {/* El emblema oficial a gran tamano: el activo de marca con mas
+              fuerza, y coherente con el medallon oscuro. */}
+          <img
+            src={recurso('/img/marca/emblema.png')}
+            alt=""
+            aria-hidden="true"
+            width="1200"
+            height="1200"
+            class="im-hero__emblema"
+            fetchpriority="high"
+            decoding="async"
+          />
+          <p data-kp-kicker class="im-label">Café de especialidad · {SITIO.ciudad}</p>
+          <hr class="im-hero__regla" />
+          <h1 class="im-hero__display">{SITIO.lema}</h1>
+          <p data-kp-entradilla class="im-entradilla">
+            Seleccionamos métodos, filtros y utensilios para que preparar café en casa deje de ser un
+            trámite y se convierta en un ritual. Cada pieza está elegida por cómo se comporta en la
+            taza, no por cómo se ve en la foto.
+          </p>
+          <p data-kp-acciones class="im-acciones">
+            <a href={ruta('/catalogo')} data-kp-cta="primaria" class="im-accion">Ver el catálogo</a>
+            <BotonWhatsApp data-kp-cta="secundaria" clase="im-accion">
+              Pregúntanos por WhatsApp
+            </BotonWhatsApp>
+          </p>
+        </div>
+
+        {
+          heroImg && (
+            <div class="im-marco im-marco--producto im-marco--4x3">
+              <Imagen src={heroImg.src} alt={heroImg.alt} prioridad />
+            </div>
+          )
+        }
+      </div>
+    </div>
+  </section>
+
+  <hr class="im-filete" />
+
+  {/* ---------- DESTACADOS — banda BLANCA ---------- */}
+  <section data-kp-seccion="destacados" aria-labelledby="t-destacados" class="im-banda im-banda--blanco">
+    <div class="im-contenedor im-seccion--amplia">
+      <div class="im-rubrica">
+        <span class="im-rubrica__label">Selección</span>
+        <hr class="im-rubrica__regla" />
+        <a href={ruta('/catalogo')} class="im-rubrica__enlace im-flecha">
+          Ver los {productos.length} productos
+        </a>
       </div>
 
-      {
-        heroImg && (
-          <div class="im-marco im-marco--producto im-marco--4x3">
-            <Imagen src={heroImg.src} alt={heroImg.alt} prioridad />
-          </div>
-        )
-      }
+      <h2 id="t-destacados" class="im-titulo-seccion im-medida" style="margin-bottom:var(--im-30)">
+        Selección destacada
+      </h2>
+
+      <ul data-kp-rejilla="productos">
+        {
+          destacados.map((p, i) => (
+            <li>
+              <TarjetaProducto producto={p.data} prioridad={i === 0} />
+            </li>
+          ))
+        }
+      </ul>
     </div>
   </section>
 
-  <hr class="im-filete" />
-
-  {/* ---------- DESTACADOS ---------- */}
-  <section data-kp-seccion="destacados" aria-labelledby="t-destacados" class="im-contenedor im-seccion--amplia">
-    <div class="im-rubrica">
-      <span class="im-rubrica__label">Selección</span>
-      <hr class="im-rubrica__regla" />
-      <a href={ruta('/catalogo')} class="im-rubrica__enlace im-flecha">
-        Ver los {productos.length} productos
-      </a>
-    </div>
-
-    <h2 id="t-destacados" class="im-titulo-seccion im-medida" style="margin-bottom:var(--im-30)">
-      Selección destacada
-    </h2>
-
-    <ul data-kp-rejilla="productos">
-      {
-        destacados.map((p, i) => (
-          <li>
-            <TarjetaProducto producto={p.data} prioridad={i === 0} />
-          </li>
-        ))
-      }
-    </ul>
-  </section>
-
-  <hr class="im-filete" />
-
-  {/* ---------- CÓMO COMPRAS ---------- */}
-  <section data-kp-seccion="promesa" aria-labelledby="t-promesa" class="im-contenedor im-seccion--amplia">
+  {/* ---------- CÓMO COMPRAS — banda HUESO (crema profundo) ---------- */}
+  <section data-kp-seccion="promesa" aria-labelledby="t-promesa" class="im-banda im-banda--hueso">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-rubrica">
       <span class="im-rubrica__label">El método</span>
       <hr class="im-rubrica__regla" />
@@ -131,37 +166,53 @@ const sobreImg = destacados[1]?.data.imagenes[0] ?? heroImg;
     <p data-kp-nota class="im-nota" style="margin-top:var(--im-30)">
       No hay carrito ni pasarela de pago: aquí se compra hablando con nosotros.
     </p>
-  </section>
-
-  <hr class="im-filete" />
-
-  {/* ---------- DEL DIARIO ---------- */}
-  <section data-kp-seccion="diario" aria-labelledby="t-diario" class="im-contenedor im-seccion--amplia">
-    <div class="im-rubrica">
-      <span class="im-rubrica__label">Diario</span>
-      <hr class="im-rubrica__regla" />
-      <a href={ruta('/diario')} class="im-rubrica__enlace im-flecha">Todos los artículos</a>
     </div>
-
-    <h2 id="t-diario" class="im-titulo-seccion im-medida" style="margin-bottom:var(--im-30)">
-      Del diario
-    </h2>
-
-    <ul data-kp-rejilla="articulos">
-      {
-        articulos.map((a) => (
-          <li>
-            <TarjetaArticulo articulo={a.data} />
-          </li>
-        ))
-      }
-    </ul>
   </section>
 
   <hr class="im-filete" />
 
-  {/* ---------- SOBRE NOSOTROS: split invertido ---------- */}
-  <section data-kp-seccion="sobre" aria-labelledby="t-sobre" class="im-contenedor im-seccion--amplia">
+  {/* ---------- DEL DIARIO — banda ANCLA (negro a sangre completa) ----------
+       Este es el hito que corta la pagina. Sobre #1A1A1A el crema da 15.94:1 y
+       el oro #DEC185 da 10.35:1: aqui el oro SI se usa como texto. */}
+  <section data-kp-seccion="diario" aria-labelledby="t-diario" class="im-banda im-banda--oscura">
+    {/* Planta en degradado oro: el tratamiento de marca para fondo oscuro. */}
+    <img
+      src={recurso('/img/marca/planta-oro.png')}
+      alt=""
+      aria-hidden="true"
+      width="900"
+      height="1245"
+      class="im-planta im-planta--oro"
+      loading="lazy"
+      decoding="async"
+    />
+
+    <div class="im-contenedor im-seccion--amplia">
+      <div class="im-rubrica">
+        <span class="im-rubrica__label">Diario</span>
+        <hr class="im-rubrica__regla" />
+        <a href={ruta('/diario')} class="im-rubrica__enlace im-flecha">Todos los artículos</a>
+      </div>
+
+      <h2 id="t-diario" class="im-titulo-seccion im-medida" style="margin-bottom:var(--im-30)">
+        Del diario
+      </h2>
+
+      <ul data-kp-rejilla="articulos">
+        {
+          articulos.map((a) => (
+            <li>
+              <TarjetaArticulo articulo={a.data} />
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  {/* ---------- SOBRE NOSOTROS — vuelta a CREMA: cierra el ciclo ---------- */}
+  <section data-kp-seccion="sobre" aria-labelledby="t-sobre" class="im-banda im-banda--crema">
+    <div class="im-contenedor im-seccion--amplia">
     <div class="im-split im-split--invertido im-split--imagen-ancha">
       {
         sobreImg && (
@@ -180,6 +231,7 @@ const sobreImg = destacados[1]?.data.imagenes[0] ?? heroImg;
         </p>
         <p><a href={ruta('/nosotros')} class="im-accion">Conócenos</a></p>
       </div>
+    </div>
     </div>
   </section>
 </Imprenta>

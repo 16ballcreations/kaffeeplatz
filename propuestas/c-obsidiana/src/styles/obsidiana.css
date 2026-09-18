@@ -4,14 +4,19 @@
    Revista editorial impresa sobre papel negro.
 
    Principios:
-     1. Canvas #1A1A1A (--kp-anchor, el negro oficial de marca).
-     2. La firma es el SERIF EN CURSIVA: titulares, nombres de producto y
-        enlaces de accion en Cormorant Garamond italica.
-     3. Sin CTA relleno. Las acciones son enlaces tipograficos.
+     1. Canvas #1A1A1A (--kp-anchor, el negro oficial de marca), escalonado en
+        cuatro niveles de superficie para que las secciones se distingan.
+     2. LA CURSIVA ES SOLO PARA TITULOS. Revision de cliente: la cursiva como
+        sistema (nav, precios, productos, acciones) dificultaba la lectura.
+        Ahora es un ACENTO, no un cuerpo: h1, h2 y el titular del hero la
+        llevan; todo lo demas va en redonda.
+     3. Sin CTA relleno. Las acciones son enlaces tipograficos serif REDONDOS.
      4. Separacion por hairlines de 1px, no por sombras.
      5. Radios de 4px. Excepcion: la pildora de precio, 60px.
-     6. Escala contenida: display 42px, heading 30-36px, body 16px.
+     6. Display con IMPACTO: 88px en desktop, 40px en movil.
      7. Espaciado generoso: base 4px, section gap 80px, max-width 1400px.
+     8. Contraste claro/oscuro: al menos una seccion crema a sangre completa
+        rompe la monotonia del negro.
 
    >>> LA REGLA DEL ORO, REINTERPRETADA PARA TEMA OSCURO <<<
    marca.css prohibe #dec185 como TEXTO porque sobre crema da 1.85:1.
@@ -25,12 +30,22 @@
 @import './marca.css';
 
 :root {
-  /* --- Superficies oscuras -------------------------------------------- */
-  /* Canvas de pagina: el negro oficial de marca. */
+  /* --- ESCALONADO DE SUPERFICIES OSCURAS ------------------------------- */
+  /* Revision de cliente: "la pagina no invita a la lectura por plana".
+     Antes casi todo era #1A1A1A. Ahora hay cuatro niveles declarados, y cada
+     seccion se apoya en uno distinto para que el ojo perciba profundidad.
+
+       --c-abismo  #111111  el mas profundo: pie y franjas de cierre
+       --c-canvas  #1A1A1A  base de pagina (el negro oficial de marca)
+       --c-elevado #232320  tarjetas y bloques que flotan sobre el canvas
+       --c-panel-oscuro #2A2724  paneles calidos, el escalon mas alto  */
+  --c-abismo: #111111;
   --c-canvas: #1a1a1a;
-  /* Superficie elevada apenas: tarjetas y bloques sobre el canvas. */
-  --c-elevado: #212120;
-  /* Un escalon mas, para cabecera fija y zonas de cierre. */
+  --c-elevado: #232320;
+  --c-panel-oscuro: #2a2724;
+  /* Hover de tarjeta: un escalon por encima del elevado. */
+  --c-elevado-hover: #2e2b28;
+  /* Alias historico: la cabecera fija y los inputs usan el nivel profundo. */
   --c-hondo: #151514;
 
   /* --- Paneles claros (passe-partout de las imagenes) ------------------ */
@@ -39,6 +54,12 @@
   --c-panel-blanco: #ffffff;
   /* Borde interior del panel, para que el crema no flote sin contorno. */
   --c-panel-borde: #e8ddc2;
+
+  /* --- Tintas sobre CREMA (secciones claras a sangre) ------------------ */
+  /* Sobre #FDF7E7 vuelve a mandar la regla del oro de marca.ext:
+     el oro que se LEE es --kp-accent-ink, nunca #DEC185. */
+  --c-tinta-oscura: #1a1a1a;
+  --c-tinta-oscura-tenue: #5c4c3e;
 
   /* --- Texto sobre oscuro ---------------------------------------------- */
   /* Principal: crema de marca sobre #1A1A1A = 15.28:1. */
@@ -54,6 +75,14 @@
   /* Oro para texto sobre panel CLARO. 4.69:1 sobre crema. */
   --c-oro-legible: #8f6724;
 
+  /* --- Elementos graficos de marca ------------------------------------- */
+  /* La planta de cafe en degradado metalico: sobre negro es el acento grafico
+     natural. La version crema queda para las franjas claras.
+     Las rutas se escriben con raiz de public/ (igual que --kp-lino en
+     marca.css) y Vite les inyecta el `base` del subdirectorio en el build. */
+  --c-planta-oro: url('/img/marca/planta-oro.png');
+  --c-planta-crema: url('/img/marca/planta-crema.png');
+
   /* --- Hairlines: la separacion de este lenguaje ----------------------- */
   --c-hairline: rgb(253 247 231 / 0.14);
   --c-hairline-fuerte: rgb(253 247 231 / 0.24);
@@ -63,10 +92,13 @@
   --c-serif: 'Cormorant Garamond', 'EB Garamond', Georgia, 'Times New Roman', serif;
   --c-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* Escala CONTENIDA. Este lenguaje no usa display gigante. */
-  --c-t-display: 2.625rem; /* 42px */
-  --c-t-h1: 2.25rem; /* 36px */
-  --c-t-h2: 1.875rem; /* 30px */
+  /* ESCALA CON IMPACTO. Revision de cliente: "dale mas impacto al titulo".
+     El display sube de 42px a 88px en desktop y escala con el viewport hasta
+     40px en movil. La elegancia ya no la da la contencion del tamano, la dan
+     el peso 300, el tracking negativo y el aire alrededor. */
+  --c-t-display: clamp(2.5rem, 1.15rem + 6vw, 5.5rem); /* 40px -> 88px */
+  --c-t-h1: clamp(2.125rem, 1.35rem + 3.4vw, 4rem); /* 34px -> 64px */
+  --c-t-h2: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem); /* 28px -> 40px */
   --c-t-h3: 1.3125rem; /* 21px */
   --c-t-body: 1rem; /* 16px */
   --c-t-small: 0.875rem; /* 14px */
@@ -145,18 +177,82 @@ body.kp-obsidiana {
   flex-direction: column;
 }
 
-/* La textura de lino de marca, a muy baja opacidad: da temperatura al negro
-   sin levantar su luminancia (queda por DEBAJO de todo el contenido). */
+/* LA TEXTURA DE LINO — pieza unica, NUNCA teselada.
+   ---------------------------------------------------------------------------
+   textura-lino.png NO es una trama repetible: es un bitmap de 610x813 con el
+   wordmark "KAFFEEPLATZ" impreso en la banda superior y margenes
+   transparentes. Teselarla (como hacia la version anterior a 620px) repetia
+   ese wordmark por toda la pagina.
+
+   Tratamiento: `background-repeat: no-repeat` + `background-size: cover` y un
+   `background-position` que encuadra la ZONA DE TEJIDO, dejando fuera la
+   banda del wordmark. Asi se usa como pieza unica recortada, que es lo que
+   el asset admite.
+
+   El velo global sube de 0.05 a 0.09: el cliente pidio mas presencia de
+   textura. Sigue por DEBAJO de todo el contenido y en soft-light, asi que
+   modula el negro sin levantar su luminancia ni tocar ningun contraste. */
 body.kp-obsidiana::before {
   content: '';
   position: fixed;
-  inset: 0;
+  /* Se extiende un 20% por encima del viewport para que la banda del
+     wordmark del bitmap quede fuera de cuadro a cualquier ancho. */
+  top: -20%;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: -1;
   pointer-events: none;
   background-image: var(--kp-lino);
-  background-size: 620px auto;
-  opacity: 0.05;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center bottom;
+  opacity: 0.09;
   mix-blend-mode: soft-light;
+}
+
+/* ===========================================================================
+   SUPERFICIES CON TEXTURA — utilidades de profundidad
+   ---------------------------------------------------------------------------
+   Revision de cliente: "incluir algo mas de texturas y contrastes de colores".
+   Dos utilidades reutilizables, ambas decorativas y por debajo del contenido.
+   =========================================================================== */
+
+/* Lino como fondo de una PIEZA concreta (hero, franja de ancla, panel).
+   Igual que arriba: recortado, nunca teselado. */
+.c-lino {
+  position: relative;
+  isolation: isolate;
+  /* Recorta el sobrante del pseudo-elemento, que se sale por arriba. */
+  overflow: hidden;
+}
+
+.c-lino::before {
+  content: '';
+  position: absolute;
+  /* Ver la nota de .c-hero::before: el -20% superior deja fuera de cuadro la
+     banda con el wordmark que trae el bitmap. */
+  top: -20%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--kp-lino);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center bottom;
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+  border-radius: inherit;
+}
+
+/* Sobre crema el lino se comporta como papel verjurado. Opacidad BAJA (0.14):
+   a 0.3 el tejido ensuciaba el texto y bajaba el contraste real por debajo de
+   lo medido. Se nota el grano, pero la tinta manda. */
+.c-lino--claro::before {
+  opacity: 0.14;
+  mix-blend-mode: multiply;
 }
 
 img {
@@ -166,22 +262,51 @@ img {
 }
 
 /* ===========================================================================
-   TIPOGRAFIA — LA CURSIVA ES LA FIRMA
+   TIPOGRAFIA — LA CURSIVA ES UN ACENTO, NO UN SISTEMA
+   ---------------------------------------------------------------------------
+   REVISION DE CLIENTE (textual):
+     "existen MUCHAS LETRAS CURSIVAS QUE SE COMPLICAN PARA LA LECTURA.
+      Deja solo los titulos de esa forma, el resto no los pongas en cursiva."
+
+   REGLA VIGENTE, sin excepciones:
+     - CURSIVA: solo h1 y h2 (incluido el titular del hero). Ahi la cursiva es
+       la firma de marca y se queda.
+     - REDONDA: absolutamente todo lo demas. Navegacion, nombres de producto,
+       precios, enlaces de accion, variantes, metadatos, entradillas, prosa,
+       h3/h4 y el lema del pie.
+
+   h3 y h4 BAJAN A REDONDA a proposito: en tarjetas y listas funcionan como
+   etiquetas de lectura rapida, no como titulares de seccion. Mantienen la
+   serif, que es lo que conserva el tono editorial.
    =========================================================================== */
 
 h1,
-h2,
-h3,
-h4 {
+h2 {
   font-family: var(--c-serif);
+  /* LA CURSIVA, aqui y solo aqui. */
   font-style: italic;
-  font-weight: 400;
-  line-height: 1.15;
-  letter-spacing: 0.005em;
+  /* Peso 300: a 64-88px el trazo fino luce, y ademas alivia el halation del
+     texto claro sobre negro. */
+  font-weight: 300;
+  line-height: 1.08;
+  /* Tracking negativo: a tamano grande el texto necesita cerrar filas. */
+  letter-spacing: -0.015em;
   margin: 0;
   color: var(--c-tinta);
   /* Evita que el cursivo se recorte por la derecha en su caja. */
   padding-right: 0.06em;
+}
+
+/* h3 y h4: serif REDONDA. Son etiquetas, no titulares. */
+h3,
+h4 {
+  font-family: var(--c-serif);
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0;
+  margin: 0;
+  color: var(--c-tinta);
 }
 
 h1 {
@@ -227,13 +352,17 @@ strong {
   margin: 0 0 var(--c-4);
 }
 
-/* Enlace de accion: SIN boton. Serif italica + filete dorado que crece. */
+/* Enlace de accion: SIN boton. Serif REDONDA + filete dorado.
+   Antes era cursiva; el cliente pidio cursiva solo en titulos. Sigue siendo
+   serif (no es un boton relleno), pero ahora se lee de corrido. El peso sube
+   a 500 para compensar el paso de cursiva a redonda. */
 .c-accion {
   display: inline-block;
   font-family: var(--c-serif);
-  font-style: italic;
-  font-weight: 400;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.375rem;
+  letter-spacing: 0.01em;
   line-height: 1.3;
   color: var(--c-oro);
   text-decoration: none;
@@ -305,6 +434,14 @@ strong {
   margin-top: var(--c-seccion);
 }
 
+/* Las franjas a sangre traen su propio padding vertical: si ademas heredaran
+   el margen de 80px, el hueco se duplicaria y la franja dejaria de leerse
+   como un bloque contiguo. Se anula a ambos lados. */
+[data-kp-main] > .c-franja + *,
+[data-kp-main] > * + .c-franja {
+  margin-top: 0;
+}
+
 [data-kp-main] {
   padding-block: var(--c-12) var(--c-seccion);
 }
@@ -323,7 +460,7 @@ strong {
   position: sticky;
   top: 0;
   z-index: 40;
-  background-color: rgb(21 21 20 / 0.94);
+  background-color: rgb(17 17 17 / 0.94);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--c-hairline);
@@ -362,15 +499,30 @@ strong {
 /* El emblema es un medallon sobre lino OSCURO: va directo sobre el canvas,
    sin panel claro, porque su propio fondo ya es oscuro. */
 .c-logo__emblema {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.c-logo__wordmark {
-  height: 15px;
-  width: auto;
+/* El nombre de marca junto al medallon, en versalitas con tracking.
+   Sustituye al wordmark.png recortado que se veia mal. */
+.c-logo__nombre {
+  font-family: var(--c-serif);
+  font-style: normal;
+  font-weight: 500;
+  font-size: 1.125rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-tinta);
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .c-logo__nombre {
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+  }
 }
 
 .c-nav ul {
@@ -382,13 +534,16 @@ strong {
   padding: 0;
 }
 
-/* La navegacion en serif italica: convierte un menu funcional en un indice
-   curado. Es EL gesto de este lenguaje. */
+/* NAVEGACION EN REDONDA. Era cursiva; el cliente la senalo como una de las
+   zonas que costaba leer, y tenia razon: un menu se escanea, no se lee, y la
+   cursiva penaliza justo el escaneo. Se mantiene la serif para no perder el
+   tono editorial, pero en redonda y con un pelo de tracking. */
 .c-nav a {
   font-family: var(--c-serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 1.1875rem;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 1.125rem;
+  letter-spacing: 0.015em;
   color: var(--c-tinta);
   text-decoration: none;
   padding-block: var(--c-1);
@@ -445,12 +600,30 @@ strong {
    PIE
    =========================================================================== */
 
+/* El pie baja al nivel ABISMO (#111111): es el cierre mas profundo de la
+   pagina y debe leerse como suelo, no como una seccion mas. */
 .c-pie {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   flex-shrink: 0;
-  background-color: var(--c-hondo);
+  background-color: var(--c-abismo);
   border-top: 1px solid var(--c-hairline);
   margin-top: var(--c-seccion);
   padding-block: var(--c-16) var(--c-10);
+}
+
+/* Filete dorado metalico rematando el pie por arriba. */
+.c-pie::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--kp-oro-horizontal);
+  opacity: 0.45;
+  pointer-events: none;
 }
 
 .c-pie__rejilla {
@@ -467,15 +640,17 @@ strong {
 }
 
 .c-pie__emblema {
-  width: 96px;
-  height: 96px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
-  margin-bottom: var(--c-4);
+  margin-bottom: var(--c-5);
 }
 
+/* El lema del pie NO es un titulo (va en <p>): redonda. */
 .c-pie__lema {
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.5rem;
   line-height: 1.3;
   color: var(--c-oro);
@@ -596,7 +771,7 @@ strong {
   border: 1px dashed var(--c-hairline-fuerte);
   color: var(--c-tinta-sutil);
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
   font-size: var(--c-t-body);
   padding: var(--c-8);
   text-align: center;
@@ -637,7 +812,7 @@ strong {
 
 [data-kp-tarjeta]:hover {
   border-color: var(--c-hairline-oro);
-  background-color: #252523;
+  background-color: var(--c-elevado-hover);
 }
 
 [data-kp-tarjeta-enlace] {
@@ -678,13 +853,16 @@ strong {
   padding-inline: var(--c-1);
 }
 
-/* El nombre del producto en serif italica: el indice curado. */
+/* El nombre del producto EN REDONDA. Era cursiva y es probablemente el caso
+   mas sangrante que senalo el cliente: son nombres tecnicos y largos
+   ("Molino manual Timemore C3 ESP Pro") repetidos 25 veces en una rejilla.
+   En cursiva eso es una pared ilegible. */
 [data-kp-tarjeta-titulo] {
   font-family: var(--c-serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 1.375rem;
-  line-height: 1.22;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 1.3125rem;
+  line-height: 1.28;
   color: var(--c-tinta);
   margin: 0;
   transition: color 0.25s ease;
@@ -712,10 +890,13 @@ strong {
   white-space: nowrap;
 }
 
+/* El prefijo "desde": redonda, en la sans de la pildora. */
 [data-kp-precio-prefijo] {
-  font-style: italic;
-  font-family: var(--c-serif);
-  font-size: 0.9375rem;
+  font-style: normal;
+  font-family: var(--c-sans);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
 }
 
 [data-kp-agotado] {
@@ -730,14 +911,15 @@ strong {
   opacity: 0.66;
 }
 
-/* La accion de la tarjeta: enlace serif italica, separado por hairline. */
+/* La accion de la tarjeta: enlace serif REDONDA, separado por hairline. */
 [data-kp-tarjeta] [data-kp-whatsapp] {
   display: inline-block;
   margin-top: var(--c-4);
   padding-top: var(--c-4);
   border-top: 1px solid var(--c-hairline);
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.0625rem;
   color: var(--c-oro);
   text-decoration: none;
@@ -750,7 +932,7 @@ strong {
 
 [data-kp-sin-imagen] {
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
   color: var(--kp-ink-muted);
   font-size: var(--c-t-small);
 }
@@ -835,12 +1017,15 @@ strong {
   color: var(--c-tinta-tenue);
 }
 
+/* Titular de tarjeta de articulo EN REDONDA: los titulos del diario son
+   largos (12-16 palabras) y en cursiva eran el peor bloque de lectura del
+   sitio. Es un enlace de lista, no un titular de pagina. */
 [data-kp-articulo-titulo] {
   font-family: var(--c-serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 1.5rem;
-  line-height: 1.2;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 1.4375rem;
+  line-height: 1.28;
   color: var(--c-tinta);
   margin: 0;
   transition: color 0.25s ease;
@@ -861,7 +1046,11 @@ strong {
    SECCIONES GENERICAS
    =========================================================================== */
 
+/* Cabeza de seccion: el filete inferior pasa de hairline plano a DEGRADADO
+   metalico. Es el mismo gesto del oro de marca y da un acento de color donde
+   antes solo habia una linea gris. */
 .c-seccion__cabeza {
+  position: relative;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -870,6 +1059,17 @@ strong {
   padding-bottom: var(--c-4);
   border-bottom: 1px solid var(--c-hairline);
   margin-bottom: var(--c-10);
+}
+
+.c-seccion__cabeza::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: clamp(120px, 26%, 280px);
+  height: 1px;
+  background: var(--kp-oro-horizontal);
+  opacity: 0.85;
 }
 
 .c-seccion__cabeza h2 {
@@ -886,12 +1086,15 @@ strong {
   color: var(--c-tinta-sutil);
 }
 
+/* LA ENTRADILLA EN REDONDA. Era cursiva y es prosa de 3-4 lineas: el caso
+   exacto que el cliente describio como "se complica para la lectura".
+   Serif redonda, line-height 1.6 y un pelo mas de cuerpo. */
 [data-kp-entradilla] {
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
   font-weight: 400;
-  font-size: 1.375rem;
-  line-height: 1.5;
+  font-size: 1.4375rem;
+  line-height: 1.6;
   color: var(--c-tinta-tenue);
   max-width: 46rem;
   margin: 0 0 var(--c-6);
@@ -911,56 +1114,320 @@ strong {
   margin-top: var(--c-8);
 }
 
-/* Encabezado de pagina interior. */
+/* ===========================================================================
+   FRANJAS A SANGRE — EL CONTRASTE QUE PIDIO EL CLIENTE
+   ---------------------------------------------------------------------------
+   "la pagina si bien es sobria, no invita a la lectura por plana."
+
+   El main esta limitado a 1400px con padding lateral. Para romper esa caja,
+   una franja se estira a todo el ancho de la ventana con el truco de los
+   margenes negativos calculados sobre 50vw, y recupera su propio limite
+   interior. Sin overflow horizontal: el body ya lleva overflow-x hidden como
+   red de seguridad, pero el calculo no lo necesita.
+   =========================================================================== */
+
+.c-franja {
+  /* Estira hasta los bordes de la ventana desde dentro del contenedor. */
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  padding-block: var(--c-16);
+}
+
+@media (min-width: 768px) {
+  .c-franja {
+    padding-block: calc(var(--c-seccion) * 1.1);
+  }
+}
+
+/* El contenido de la franja recupera el limite de lectura. */
+.c-franja > .c-limite {
+  max-width: var(--c-ancho);
+}
+
+/* --- Franja CREMA: el respiro claro -----------------------------------
+   La seccion de contraste que rompe la monotonia del negro. Aqui vuelve a
+   mandar la regla del oro de la marca: sobre crema el oro legible es
+   --kp-accent-ink (#8F6724), NUNCA #DEC185. */
+.c-franja--crema {
+  background-color: var(--c-panel);
+  color: var(--c-tinta-oscura);
+  border-block: 1px solid var(--c-panel-borde);
+}
+
+.c-franja--crema :is(h1, h2, h3, h4) {
+  color: var(--c-tinta-oscura);
+}
+
+/* TODO texto de la franja clara vuelve a tinta oscura.
+   Aviso: varias reglas de componente ([data-kp-pasos] p, [data-kp-nota],
+   [data-kp-lista] p...) fijan --c-tinta-tenue, que esta calculado para fondo
+   NEGRO y sobre crema da 1.9:1. Hay que ganarles en especificidad de forma
+   explicita o el texto queda ilegible. */
+.c-franja--crema p,
+.c-franja--crema [data-kp-pasos] p,
+.c-franja--crema [data-kp-lista] p,
+.c-franja--crema [data-kp-entradilla],
+.c-franja--crema [data-kp-nota],
+.c-franja--crema li,
+.c-franja--crema [data-kp-articulo-resumen] {
+  color: var(--c-tinta-oscura-tenue);
+}
+
+/* Texto de cuerpo principal y elementos fuertes: tinta plena. */
+.c-franja--crema strong,
+.c-franja--crema [data-kp-prosa] {
+  color: var(--c-tinta-oscura);
+}
+
+.c-franja--crema [data-kp-kicker],
+.c-franja--crema .c-folio {
+  color: var(--c-oro-legible);
+}
+
+.c-franja--crema .c-seccion__cabeza {
+  border-bottom-color: rgb(143 103 36 / 0.25);
+}
+
+/* Enlaces y acciones sobre crema: oro legible, no oro claro. */
+.c-franja--crema .c-accion,
+.c-franja--crema [data-kp-whatsapp],
+.c-franja--crema a {
+  color: var(--c-oro-legible);
+  border-bottom-color: rgb(143 103 36 / 0.4);
+}
+
+.c-franja--crema .c-accion:hover,
+.c-franja--crema [data-kp-whatsapp]:hover {
+  color: var(--c-tinta-oscura);
+  border-bottom-color: var(--c-tinta-oscura);
+}
+
+.c-franja--crema [data-kp-pasos] > li {
+  border-left-color: rgb(26 26 26 / 0.14);
+}
+
+.c-franja--crema [data-kp-pasos] > li::before {
+  color: var(--c-oro-legible);
+}
+
+.c-franja--crema [data-kp-nota] {
+  color: var(--c-tinta-oscura-tenue);
+}
+
+/* El foco sobre crema necesita el oro oscuro para verse. */
+.c-franja--crema :where(a, button):focus-visible {
+  outline-color: var(--c-oro-legible);
+}
+
+/* La planta crema como marca de agua de la franja clara. Va sobre crema, asi
+   que se usa la version crema del asset reforzada con multiply. */
+.c-franja--planta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.c-franja--planta::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  right: -4rem;
+  bottom: -5rem;
+  width: 340px;
+  height: 354px;
+  background-image: var(--c-planta-crema);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  /* 0.22, no 0.5: la planta es marca de agua, y a mas opacidad competia con
+     el texto de la tercera columna en lugar de acompanarlo. */
+  opacity: 0.22;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .c-franja--planta::after {
+    width: 200px;
+    height: 208px;
+    right: -3.5rem;
+    bottom: -3rem;
+    opacity: 0.16;
+  }
+}
+
+/* --- Franja ABISMO: el escalon mas profundo ---------------------------- */
+.c-franja--abismo {
+  background-color: var(--c-abismo);
+  border-block: 1px solid var(--c-hairline);
+}
+
+/* Encabezado de pagina interior: mismo impacto que el hero, en franja propia
+   con lino y fondo profundo. Asi las internas tampoco arrancan planas. */
 .c-encabezado {
-  padding-bottom: var(--c-10);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-top: calc(var(--c-12) * -1);
+  padding-block: var(--c-12) var(--c-12);
+  background-color: var(--c-abismo);
   border-bottom: 1px solid var(--c-hairline);
 }
 
-.c-encabezado h1 {
-  font-size: var(--c-t-display);
-  margin-bottom: var(--c-4);
-  max-width: 22ch;
+@media (min-width: 768px) {
+  .c-encabezado {
+    margin-top: calc(var(--c-16) * -1);
+    padding-block: var(--c-16);
+  }
 }
 
-@media (max-width: 640px) {
-  .c-encabezado h1 {
-    font-size: 2.125rem;
+.c-encabezado::before {
+  content: '';
+  position: absolute;
+  /* Ver .c-hero::before: deja fuera de cuadro la banda del wordmark. */
+  top: -20%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image: var(--kp-lino);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center bottom;
+  opacity: 0.14;
+  mix-blend-mode: soft-light;
+}
+
+/* El contenido del encabezado recupera el limite de lectura.
+   OJO: el limite se aplica a un CONTENEDOR interior, no a cada hijo. Si se
+   pone `margin-inline: auto` en los hijos, cualquiera que tenga su propio
+   max-width (el h1 lo tiene, 18ch) se CENTRA respecto al resto, que queda
+   alineado a la izquierda. Ese bug se vio en /catalogo. */
+.c-encabezado__interior {
+  max-width: var(--c-ancho);
+  margin-inline: auto;
+  padding-inline: var(--c-6);
+}
+
+@media (min-width: 768px) {
+  .c-encabezado__interior {
+    padding-inline: var(--c-10);
   }
+}
+
+.c-encabezado h1 {
+  font-size: var(--c-t-h1);
+  line-height: 1.04;
+  margin-bottom: var(--c-5);
+  max-width: 18ch;
 }
 
 /* ===========================================================================
    PORTADA
    =========================================================================== */
 
+/* EL HERO — franja a sangre, con lino y el emblema de protagonista.
+   Sale de la caja de 1400px para ocupar todo el ancho, se apoya en el nivel
+   ABISMO y lleva la textura de lino como pieza recortada. Asi la portada
+   arranca con profundidad en lugar de con negro plano. */
 .c-hero {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  /* Compensa el padding-block superior del main: el hero pega arriba. */
+  margin-top: calc(var(--c-12) * -1);
+  padding-block: var(--c-16) var(--c-16);
+  background-color: var(--c-abismo);
+  border-bottom: 1px solid var(--c-hairline);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .c-hero {
+    margin-top: calc(var(--c-16) * -1);
+    padding-block: calc(var(--c-seccion) * 1.1);
+  }
+}
+
+/* El lino del hero: pieza unica recortada, NO teselada.
+   ---------------------------------------------------------------------------
+   CUIDADO: textura-lino.png lleva el wordmark "KAFFEEPLATZ" impreso en su
+   banda superior (aprox. el 11% de alto) y margenes transparentes. Con
+   `cover` a secas, en viewports estrechos esa banda entraba en cuadro y se
+   veian letras fantasma gigantes detras del texto.
+
+   Solucion: el pseudo-elemento se hace MAS ALTO que su caja y se desplaza
+   hacia arriba, de modo que la banda del wordmark queda SIEMPRE por encima
+   del area visible, sea cual sea el ancho. `overflow: hidden` del .c-hero
+   recorta el sobrante. */
+.c-hero::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  /* -18% arriba: expulsa del cuadro la banda del wordmark. */
+  top: -18%;
+  bottom: 0;
+  z-index: -2;
+  pointer-events: none;
+  background-image: var(--kp-lino);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center bottom;
+  opacity: 0.16;
+  mix-blend-mode: soft-light;
+}
+
+/* Halo dorado radial detras del emblema: separa el medallon del fondo sin
+   usar sombra. Se apaga en movil, donde el emblema es mas pequeno. */
+.c-hero::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: 12%;
+  width: 520px;
+  height: 520px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(222 193 133 / 0.09) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+@media (max-width: 899px) {
+  .c-hero::after {
+    display: none;
+  }
+}
+
+.c-hero__rejilla {
   display: grid;
-  gap: var(--c-12);
+  gap: var(--c-10);
   align-items: center;
   grid-template-columns: 1fr;
-  padding-bottom: var(--c-12);
-  border-bottom: 1px solid var(--c-hairline);
 }
 
 @media (min-width: 900px) {
-  .c-hero {
-    grid-template-columns: 1.15fr 0.85fr;
+  .c-hero__rejilla {
+    grid-template-columns: 1.1fr 0.9fr;
     gap: var(--c-16);
   }
 }
 
+/* EL TITULAR CON IMPACTO: de 42px fijos a 40->88px fluidos.
+   Es lo primero que se ve y ahora manda en la pagina. */
 .c-hero h1 {
-  /* Display CONTENIDO: 42px. La elegancia esta en la contencion. */
   font-size: var(--c-t-display);
-  line-height: 1.1;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
   margin-bottom: var(--c-6);
-  max-width: 14ch;
-}
-
-@media (max-width: 640px) {
-  .c-hero h1 {
-    font-size: 2.125rem;
-  }
+  max-width: 11ch;
+  /* El titular es el unico texto que puede permitirse crema pura a 88px. */
+  color: var(--c-tinta);
 }
 
 /* El emblema protagonista, con su halo de lino. Va sobre oscuro porque el
@@ -968,7 +1435,9 @@ strong {
 .c-hero__emblema {
   justify-self: center;
   position: relative;
-  width: min(340px, 78vw);
+  /* Mas protagonismo: de 340px a 420px. El medallon es el mejor activo de
+     marca sobre fondo oscuro, porque su propio fondo ya es lino oscuro. */
+  width: min(420px, 74vw);
   aspect-ratio: 1 / 1;
 }
 
@@ -1027,33 +1496,70 @@ strong {
   counter-increment: paso;
 }
 
+/* Numeral de paso: cifra decorativa, en redonda como el resto. Gana tamano
+   para que funcione como ancla visual de la columna. */
 [data-kp-pasos] > li::before {
   content: counter(paso, decimal-leading-zero);
   display: block;
   font-family: var(--c-serif);
-  font-style: italic;
-  font-size: 2rem;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 2.75rem;
   line-height: 1;
   color: var(--c-oro);
-  margin-bottom: var(--c-3);
+  margin-bottom: var(--c-4);
 }
 
 [data-kp-pasos] h3 {
   margin-bottom: var(--c-2);
 }
 
+/* Los pasos son prosa de lectura, no metadatos: 16px y line-height holgado.
+   A 14px la franja clara se leia apretada. */
 [data-kp-pasos] p {
   color: var(--c-tinta-tenue);
-  font-size: var(--c-t-small);
+  font-size: var(--c-t-body);
+  line-height: 1.65;
   margin: 0;
 }
 
-/* Bloque de cierre "Sobre nosotros" en la portada. */
+/* Bloque de cierre "Sobre nosotros": nivel PANEL OSCURO (#2A2724), el escalon
+   mas alto y el mas calido. Lleva la planta dorada como marca de agua. */
 .c-cierre {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   border: 1px solid var(--c-hairline);
   border-radius: var(--c-radio);
   padding: var(--c-10);
-  background-color: var(--c-hondo);
+  background-color: var(--c-panel-oscuro);
+}
+
+/* La planta de oro como elemento grafico, sangrando por la derecha. */
+.c-cierre::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: -3rem;
+  translate: 0 -50%;
+  width: 260px;
+  height: 360px;
+  background-image: var(--c-planta-oro);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .c-cierre::before {
+    width: 170px;
+    height: 235px;
+    right: -3.5rem;
+    opacity: 0.09;
+  }
 }
 
 @media (min-width: 768px) {
@@ -1134,7 +1640,7 @@ strong {
   text-align: center;
   color: var(--c-tinta-sutil);
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
 }
 
 [data-kp-ficha-info] h1 {
@@ -1213,10 +1719,12 @@ strong {
   gap: 0;
 }
 
+/* Variantes EN REDONDA: llevan cifras de precio y codigos, y la cursiva
+   deformaba justo los numeros. El cliente las cito explicitamente. */
 [data-kp-variante] {
   font-family: var(--c-serif);
-  font-style: italic;
-  font-size: 1.125rem;
+  font-style: normal;
+  font-size: 1.0625rem;
   color: var(--c-tinta);
   padding-block: var(--c-3);
   border-bottom: 1px solid var(--c-hairline);
@@ -1281,7 +1789,9 @@ strong {
   color: var(--c-oro);
 }
 
-/* La accion de compra: enlace serif italica dorado, NO un boton relleno. */
+/* La accion de compra: enlace serif REDONDA dorado, NO un boton relleno.
+   "Pedir por WhatsApp" es el ejemplo literal que puso el cliente. Sigue sin
+   ser boton (el brief lo pide), pero ahora se lee sin esfuerzo. */
 [data-kp-ficha-accion] {
   padding-top: var(--c-8);
   border-top: 1px solid var(--c-hairline-oro);
@@ -1290,8 +1800,8 @@ strong {
 [data-kp-ficha-accion] [data-kp-whatsapp] {
   display: inline-block;
   font-family: var(--c-serif);
-  font-style: italic;
-  font-weight: 400;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.75rem;
   line-height: 1.3;
   color: var(--c-oro);
@@ -1416,10 +1926,14 @@ strong {
   font-weight: 600;
 }
 
+/* <em> es enfasis SEMANTICO del autor dentro del Markdown: son palabras
+   sueltas y la cursiva ahi es su significado, no una decision de estilo.
+   Se conserva, pero SIN agrandar el cuerpo (antes 1.15em, lo que rompia la
+   linea base). Queda igualada al texto que la rodea. */
 [data-kp-prosa] em {
-  font-family: var(--c-serif);
+  font-family: inherit;
   font-style: italic;
-  font-size: 1.15em;
+  font-size: 1em;
   color: var(--c-tinta);
 }
 
@@ -1427,14 +1941,15 @@ strong {
   color: var(--c-oro);
 }
 
+/* Cita destacada: serif REDONDA. Es un parrafo entero, no un titulo. */
 [data-kp-prosa] blockquote {
   margin: var(--c-8) 0;
   padding-left: var(--c-6);
-  border-left: 1px solid var(--c-hairline-oro);
+  border-left: 2px solid var(--c-hairline-oro);
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
   font-size: 1.375rem;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--c-tinta);
 }
 
@@ -1490,7 +2005,8 @@ strong {
 [data-kp-articulo-cierre] [data-kp-whatsapp] {
   display: inline-block;
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.5rem;
   color: var(--c-oro);
   text-decoration: none;
@@ -1509,7 +2025,8 @@ strong {
 
 [data-kp-articulo-cierre] a:not([data-kp-whatsapp]) {
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.125rem;
   text-decoration: none;
   border-bottom: 1px solid var(--c-hairline-oro);
@@ -1547,10 +2064,12 @@ strong {
   color: var(--c-tinta);
 }
 
+/* Prosa de las listas editoriales: 16px minimo, como exige el brief.
+   Estaba a 14px, que sobre negro y con halation se lee peor de lo que mide. */
 [data-kp-lista] p {
   color: var(--c-tinta-tenue);
-  font-size: var(--c-t-small);
-  line-height: 1.65;
+  font-size: var(--c-t-body);
+  line-height: 1.7;
 }
 
 [data-kp-lista='envios'],
@@ -1570,7 +2089,8 @@ strong {
   display: inline-block;
   margin-top: var(--c-2);
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.1875rem;
   color: var(--c-oro);
   text-decoration: none;
@@ -1587,11 +2107,25 @@ strong {
 .c-prosa-seccion p {
   color: var(--c-tinta-tenue);
   max-width: 58ch;
+  font-size: var(--c-t-body);
   line-height: 1.7;
 }
 
 .c-prosa-seccion h2 {
   margin-bottom: var(--c-5);
+}
+
+/* Filete dorado sobre el titulo de cada seccion de prosa: marca el arranque
+   y aporta el acento metalico de marca en paginas que si no serian un bloque
+   continuo de texto sobre negro. */
+.c-prosa-seccion h2::before {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 1px;
+  margin-bottom: var(--c-5);
+  background: var(--kp-oro-horizontal);
+  opacity: 0.75;
 }
 
 /* ===========================================================================
@@ -1721,7 +2255,8 @@ strong {
   border-bottom: 1px solid var(--c-hairline-oro);
   padding: 0 0 var(--c-1);
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.375rem;
   color: var(--c-oro);
   cursor: pointer;
@@ -1766,7 +2301,8 @@ strong {
   color: var(--kp-ink);
   border-radius: var(--c-radio);
   font-family: var(--c-serif);
-  font-style: italic;
+  font-style: normal;
+  font-weight: 500;
   font-size: 1.125rem;
   text-decoration: none;
 }
