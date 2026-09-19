@@ -5,7 +5,7 @@
 import type { GetStaticPaths } from 'astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import Imagen from '../../components/Imagen.astro';
+import GaleriaProducto from '../../components/GaleriaProducto.astro';
 import Precio from '../../components/Precio.astro';
 import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
 import TarjetaProducto from '../../components/TarjetaProducto.astro';
@@ -87,15 +87,14 @@ const jsonLd = {
 >
   <article data-kp-ficha>
     <div data-kp-ficha-galeria>
-      {
-        d.imagenes.length > 0 ? (
-          d.imagenes.map((img, i) => (
-            <Imagen src={img.src} alt={img.alt} prioridad={i === 0} clase="w-full h-auto" />
-          ))
-        ) : (
-          <p data-kp-sin-imagen>Este producto todavía no tiene fotografía.</p>
-        )
-      }
+      {/* La galeria es seleccionable: imagen grande arriba, miniaturas debajo.
+          Ver src/components/GaleriaProducto.astro para el patron de
+          accesibilidad y el vinculo (preparado) imagen<->variante. */}
+      <GaleriaProducto
+        imagenes={d.imagenes}
+        titulosVariante={d.variantes.map((v) => v.titulo)}
+        titulo={d.titulo}
+      />
     </div>
 
     <div data-kp-ficha-info>
@@ -118,7 +117,11 @@ const jsonLd = {
                 <h2 data-kp-opcion-nombre>{o.nombre}</h2>
                 <ul>
                   {d.variantes.map((v) => (
-                    <li data-kp-variante data-kp-disponible={String(v.disponible)}>
+                    <li
+                      data-kp-variante
+                      data-kp-disponible={String(v.disponible)}
+                      data-variante-titulo={v.titulo}
+                    >
                       {v.titulo} — {v.precioFormateado}
                       {!v.disponible && <span data-kp-agotado> (agotado)</span>}
                     </li>

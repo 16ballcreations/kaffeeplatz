@@ -129,6 +129,28 @@ const PARES = [
   ['Tarjeta agotada: titulo atenuado', TENUE, ELEVADO, 'normal', 4.5],
   ['Tarjeta agotada: linea "Agotado"', SUTIL, ELEVADO, 'normal', 4.5],
 
+  // ---- GALERIA SELECCIONABLE DE LA FICHA (revision de cliente) ---------
+  // El borde activo de la miniatura se dibuja contra el CREMA del propio
+  // panel, no contra el negro: aqui manda la regla del oro de marca.css y el
+  // oro que vale es #8F6724, no #DEC185. Umbral 3.0 (1.4.11, no textual).
+  ['Galería: borde miniatura activa (oro legible)', ORO_LEGIBLE, PANEL, 'no-texto', 3.0],
+  // El borde de la miniatura INACTIVA es el hairline interior del passe-partout
+  // (#E8DDC2 sobre su propio crema = 1.26:1): es decoracion del panel, NO el
+  // indicador de estado, asi que medirlo contra 3.0 seria medir la cosa
+  // equivocada. Lo que distingue activa de inactiva son dos senales, y las dos
+  // se miden aparte: el BORDE ORO de la activa (fila de arriba, 4.75:1) y la
+  // diferencia de luminosidad por la atenuacion (fila de abajo). Lo que separa
+  // cualquier miniatura de su fondo es el panel contra el canvas: 16.27:1.
+  // #807D76 = el crema #FDF7E7 al 45% compuesto sobre el canvas #1A1A1A, que
+  // es LO QUE EL OJO VE de una miniatura inactiva (opacity no cambia el color
+  // declarado, cambia el compuesto). Medir #FDF7E7 aqui seria medir un color
+  // que no aparece en pantalla.
+  ['Galería: activa vs inactiva (atenuación .45)', PANEL, '#807d76', 'no-texto', 3.0],
+  ['Galería: miniatura inactiva vs canvas', '#807d76', CANVAS, 'no-texto', 3.0],
+  ['Galería: foco de miniatura (oro claro/canvas)', ORO, CANVAS, 'no-texto', 3.0],
+  ['Galería: panel de miniatura vs canvas', PANEL, CANVAS, 'no-texto', 3.0],
+  ['Galería: visor (crema) vs canvas', PANEL, CANVAS, 'no-texto', 3.0],
+
   // ---- /cafe provisional ------------------------------------------------
   ['Provisional: aviso (oro)', ORO, CANVAS, 'normal', 4.5],
   ['Provisional: prosa atenuada', TENUE, CANVAS, 'normal', 4.5],

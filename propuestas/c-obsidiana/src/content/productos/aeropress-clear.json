@@ -45,16 +45,19 @@
   ],
   "imagenes": [
     {
-      "src": "/img/productos/aeropress-clear/aeropress-clear-1.jpg",
-      "alt": "Aeropress Clear"
+      "src": "/img/productos/aeropress-clear/aeropress-clear-2.jpg",
+      "alt": "Aeropress Clear — Morado",
+      "variante": "Morado"
     },
     {
-      "src": "/img/productos/aeropress-clear/aeropress-clear-2.jpg",
-      "alt": "Aeropress Clear — vista 2"
+      "src": "/img/productos/aeropress-clear/aeropress-clear-1.jpg",
+      "alt": "Aeropress Clear — Rosa",
+      "variante": "Rosa"
     },
     {
       "src": "/img/productos/aeropress-clear/aeropress-clear-3.jpg",
-      "alt": "Aeropress Clear — vista 3"
+      "alt": "Aeropress Clear — Verde",
+      "variante": "Verde"
     }
   ],
   "destacado": true,

@@ -24,6 +24,9 @@ const CONTENEDORES_PANEL = [
   'data-kp-tarjeta-media',
   'data-kp-articulo-media',
   'data-kp-ficha-galeria',
+  // Galeria seleccionable: el visor y CADA miniatura son paneles claros.
+  'data-kp-galeria-principal',
+  'data-kp-galeria-mini',
   'data-kp-articulo-portada',
   'data-kp-prosa',
   'data-kp-ficha-descripcion',
@@ -31,7 +34,11 @@ const CONTENEDORES_PANEL = [
 ];
 
 /** Imagenes exentas: llevan su propio fondo oscuro de marca. */
-const EXENTAS = [/\/img\/marca\/emblema\.png/, /\/img\/marca\/wordmark\.png/];
+/* `emblema-sm.png` es la variante pequena del mismo medallon (la usa la
+   cabecera fija en todas las paginas). Lleva el mismo fondo de lino oscuro,
+   asi que esta exenta por el mismo motivo que `emblema.png`: el patron
+   anterior pedia un `.png` literal detras de "emblema" y no la cubria. */
+const EXENTAS = [/\/img\/marca\/emblema(-[a-z]+)?\.png/, /\/img\/marca\/wordmark\.png/];
 
 /** @param {string} dir @returns {AsyncGenerator<string>} */
 async function* html(dir) {

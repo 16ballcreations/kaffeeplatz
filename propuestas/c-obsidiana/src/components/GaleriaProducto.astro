@@ -1,0 +1,289 @@
+---
+/**
+ * GaleriaProducto — galeria seleccionable de la ficha de producto.
+ *
+ * EL PROBLEMA QUE RESUELVE (peticion textual del cliente)
+ * ---------------------------------------------------------------------------
+ * "en el aeropress clear tenemos tres colores, rosa, morado y verde, pero no
+ * son seleccionables para verse en grande".
+ *
+ * Antes la ficha apilaba TODAS las fotos al mismo tamano, una debajo de otra:
+ * no habia imagen principal ni nocion de seleccion. Ahora hay una jerarquia
+ * explicita: UNA imagen grande arriba (el objeto de atencion) y una fila de
+ * miniaturas debajo (el indice).
+ *
+ * ESTRUCTURA
+ * ---------------------------------------------------------------------------
+ *   [data-kp-galeria]
+ *     [data-kp-galeria-principal]   <- panel claro grande, 1 sola <img>
+ *     [data-kp-galeria-miniaturas]  <- <ul> de <button>, cada uno su panel
+ *     [data-kp-galeria-estado]      <- region aria-live, invisible
+ *
+ * Solo hay UNA <img> grande en el DOM y se le cambian `src`/`alt`. No se
+ * duplica el marcado ni se ocultan copias: el navegador ya tiene las fotos en
+ * cache porque las miniaturas apuntan a los mismos ficheros.
+ *
+ * MEJORA PROGRESIVA (mismo criterio que FiltrosCategoria)
+ * ---------------------------------------------------------------------------
+ * Sin JavaScript la ficha sigue siendo USABLE, no solo visible:
+ *   - La imagen grande es la primera foto, servida en el HTML.
+ *   - Las miniaturas se pintan como <a href="ruta-de-la-foto">: sin JS son
+ *     enlaces reales al fichero de imagen, asi que el usuario todavia puede
+ *     ver cada foto a tamano completo. Un <button> sin JS seria un boton
+ *     muerto, y eso si seria peor que no ponerlo.
+ *   - El script las CONVIERTE a role="button" + aria-pressed y les quita la
+ *     navegacion. La conversion es lo primero que hace, antes de escuchar
+ *     ningun evento: nunca hay un instante con semantica mixta.
+ *
+ * POR QUE aria-pressed Y NO EL PATRON DE PESTANAS
+ * ---------------------------------------------------------------------------
+ * Se descarto role="tablist"/"tab"/"tabpanel" por dos razones:
+ *   1. No hay varios paneles. Hay UN visor cuyo contenido se sustituye. El
+ *      patron de pestanas describe N paneles con N cabeceras, y forzarlo aqui
+ *      obligaria a inventar un tabpanel por foto solo para cumplir el ARIA.
+ *   2. El patron de pestanas exige tabindex movil (flechas navegan, Tab sale
+ *      del grupo de una vez). Eso ESCONDE miniaturas del recorrido de Tab, y
+ *      el encargo pide explicitamente "Tab entre ellas".
+ * Con aria-pressed cada miniatura es un conmutador independiente, todas estan
+ * en el orden de tabulacion y Enter/Espacio las activan de forma nativa.
+ * Ademas es el patron que ya usa FiltrosCategoria en esta misma propuesta:
+ * un solo vocabulario de interaccion en todo el sitio.
+ *
+ * VINCULO IMAGEN <-> VARIANTE (preparado, no inventado)
+ * ---------------------------------------------------------------------------
+ * Cada miniatura emite `data-variante` si su imagen trae el campo `variante`
+ * (ver el comentario largo en src/content.config.ts). Hoy NINGUN producto lo
+ * trae, asi que el atributo no se imprime y el vinculo queda inerte.
+ * El dia que se rellene, el script lo activa solo en las dos direcciones:
+ * miniatura -> variante y variante -> foto grande.
+ * Los vinculos que apunten a una variante inexistente se ignoran aqui mismo,
+ * en el servidor: mas vale una galeria sin vinculo que un vinculo roto.
+ */
+import { recurso } from '../datos/sitio';
+
+interface ImagenProducto {
+  src: string;
+  alt: string;
+  variante?: string;
+}
+
+interface Props {
+  imagenes: ImagenProducto[];
+  /** Titulos de variante reales, para descartar vinculos que no casen. */
+  titulosVariante?: string[];
+  /** Nombre del producto: contextualiza la etiqueta de las miniaturas. */
+  titulo: string;
+}
+
+const { imagenes, titulosVariante = [], titulo } = Astro.props as Props;
+
+/* Un vinculo solo cuenta si apunta a una variante que EXISTE. Asi un dato mal
+   escrito por el cliente ("Morada" por "Morado") degrada a galeria sin vinculo
+   en vez de romper la seleccion. */
+const variantesValidas = new Set(titulosVariante);
+const imgs = imagenes.map((img) => ({
+  ...img,
+  variante: img.variante && variantesValidas.has(img.variante) ? img.variante : undefined,
+}));
+
+const principal = imgs[0];
+/* Un producto de una sola foto no necesita indice de fotos: 21 de los 25
+   estan en este caso y una fila de una miniatura solo seria ruido. */
+const hayMiniaturas = imgs.length > 1;
+---
+
+{
+  principal ? (
+    <div
+      data-kp-galeria
+      data-kp-galeria-multiple={String(hayMiniaturas)}
+      data-titulo={titulo}
+    >
+      <div data-kp-galeria-principal>
+        <img
+          data-kp-galeria-img
+          src={recurso(principal.src)}
+          alt={principal.alt}
+          loading="eager"
+          decoding="sync"
+          fetchpriority="high"
+        />
+      </div>
+
+      {hayMiniaturas && (
+        <ul data-kp-galeria-miniaturas aria-label={`Fotos de ${titulo}`}>
+          {imgs.map((img, i) => (
+            <li>
+              {/* Sin JS esto es un ENLACE al fichero de la foto, y nada mas.
+                  Ojo: NO se emite `aria-pressed` aqui. Un enlace con
+                  aria-pressed es ARIA invalido (el atributo pertenece al rol
+                  boton), y un lector de pantalla sin JS anunciaria un estado
+                  de pulsacion sobre algo que solo navega. El estado lo pone el
+                  script en el mismo momento en que convierte el enlace en
+                  boton: asi el atributo y el rol que lo justifica aparecen
+                  juntos, nunca por separado. */}
+              <a
+                data-kp-galeria-mini
+                data-indice={String(i)}
+                data-src={recurso(img.src)}
+                data-alt={img.alt}
+                data-variante={img.variante}
+                href={recurso(img.src)}
+                style={`background-image: url("${recurso(img.src)}")`}
+              >
+                {/* LA FOTO DE LA MINIATURA SE PINTA COMO `background-image`
+                    (arriba, en el style del <a>), no con este <img>.
+
+                    POR QUE, y no es un capricho: las fotos 2 y 3 de
+                    aeropress-clear miden 3116px de lado. Compuestas con
+                    `mix-blend-mode: multiply` dentro de un cuadro de 66px,
+                    Chrome fallaba al rasterizar la capa y pintaba el cuadro
+                    GRIS. El fallo iba saltando de una miniatura a otra segun
+                    la carga, y ni `contain: paint` ni promocionar la capa con
+                    `translateZ(0)` lo quitaban del todo. Como fondo, el
+                    navegador escala la imagen por otra ruta y se pinta bien
+                    siempre (verificado en navegador con las tres).
+
+                    Entonces, por que se queda este <img>? Por accesibilidad y
+                    por el caso sin JS: un `background-image` no tiene `alt` ni
+                    lo ve un lector de pantalla, y sin JS la miniatura sigue
+                    siendo un enlace que debe poder describirse. El <img> aporta
+                    el texto alternativo; el fondo aporta el pixel. Por eso se
+                    oculta con `opacity: 0` en la hoja de estilos y NO con
+                    `display:none` ni `visibility:hidden`, que lo sacarian del
+                    arbol de accesibilidad. */}
+                <img src={recurso(img.src)} alt={img.alt} loading="eager" decoding="async" />
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Anuncio para lectores de pantalla. Va vacio en el HTML: si trajera
+          texto, algunos lectores lo leerian al cargar la pagina como si algo
+          hubiera cambiado. Solo el script lo rellena, y solo al cambiar. */}
+      <p data-kp-galeria-estado aria-live="polite" class="sr-only" />
+    </div>
+  ) : (
+    <p data-kp-sin-imagen>Este producto todavía no tiene fotografía.</p>
+  )
+}
+
+<script>
+  /**
+   * Galeria seleccionable, en cliente y sin framework.
+   *
+   * Recorre todas las galerias de la pagina (hoy solo hay una por ficha, pero
+   * el script no depende de ello) y no reconstruye DOM: cambia `src`/`alt` de
+   * la imagen grande y alterna `aria-pressed` en las miniaturas.
+   */
+  for (const galeria of document.querySelectorAll<HTMLElement>('[data-kp-galeria]')) {
+    const grande = galeria.querySelector<HTMLImageElement>('[data-kp-galeria-img]');
+    const lista = galeria.querySelector<HTMLElement>('[data-kp-galeria-miniaturas]');
+    const estado = galeria.querySelector<HTMLElement>('[data-kp-galeria-estado]');
+    if (!grande || !lista) continue;
+
+    const minis = Array.from(lista.querySelectorAll<HTMLAnchorElement>('[data-kp-galeria-mini]'));
+    if (minis.length < 2) continue;
+
+    /* CONVERSION A BOTON, antes de escuchar nada.
+       Los <a> existen para que la galeria sirva sin JS. Aqui si hay JS, asi
+       que dejan de ser navegacion y pasan a ser conmutadores:
+         - role="button": lo que ES ahora, no lo que era.
+         - se quita href: un enlace sin destino no debe anunciarse como enlace,
+           y ademas evita que un clic con el boton central abra la foto suelta.
+         - tabindex="0": sin href, un <a> sale del orden de tabulacion. Esto lo
+           devuelve, que es justo lo que pide el encargo ("Tab entre ellas"). */
+    minis.forEach((m, i) => {
+      m.setAttribute('role', 'button');
+      m.removeAttribute('href');
+      m.tabIndex = 0;
+      /* El estado inicial se escribe AQUI, junto al rol que lo hace valido:
+         la primera foto es la que el visor ya esta mostrando. */
+      m.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
+    });
+
+    /* La lista de variantes de la ficha. Puede no existir (producto sin
+       opciones) y hoy el vinculo esta inerte porque ninguna imagen trae
+       `data-variante`. Ver content.config.ts. */
+    const itemsVariante = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-kp-variante]')
+    );
+
+    const seleccionar = (indice: number, anunciar: boolean) => {
+      const mini = minis[indice];
+      if (!mini) return;
+
+      const src = mini.dataset.src;
+      const alt = mini.dataset.alt;
+      if (!src) return;
+
+      grande.src = src;
+      /* El alt viaja con la foto: si la imagen grande cambia y el alt no, un
+         lector de pantalla describiria la foto anterior. */
+      grande.alt = alt || '';
+
+      for (const m of minis) {
+        m.setAttribute('aria-pressed', String(m === mini));
+      }
+
+      /* VINCULO CON LA VARIANTE. Inerte mientras `data-variante` no exista. */
+      const variante = mini.dataset.variante;
+      if (variante && itemsVariante.length) {
+        for (const li of itemsVariante) {
+          li.setAttribute('data-kp-variante-activa', String(li.dataset.varianteTitulo === variante));
+        }
+      }
+
+      /* El anuncio solo en interaccion real: en la carga inicial no ha
+         cambiado nada que merezca interrumpir al lector. */
+      if (anunciar && estado) {
+        estado.textContent = `Foto ${indice + 1} de ${minis.length}. ${alt || ''}`.trim();
+      }
+    };
+
+    /* Delegacion: un solo listener para todas las miniaturas. */
+    lista.addEventListener('click', (e) => {
+      const mini = (e.target as HTMLElement).closest<HTMLElement>('[data-kp-galeria-mini]');
+      if (!mini) return;
+      e.preventDefault();
+      seleccionar(Number(mini.dataset.indice), true);
+    });
+
+    /* Un <a role="button"> sin href NO activa con Espacio por su cuenta (eso
+       solo lo hace un <button> real), y con Enter tampoco al faltar el href.
+       Se implementan los dos, que es lo que el patron de boton exige. */
+    lista.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+      const mini = (e.target as HTMLElement).closest<HTMLElement>('[data-kp-galeria-mini]');
+      if (!mini) return;
+      /* Espacio hace scroll de pagina por defecto: se corta. */
+      e.preventDefault();
+      seleccionar(Number(mini.dataset.indice), true);
+    });
+
+    /* SENTIDO INVERSO: elegir variante -> cambiar la foto grande.
+       Tambien inerte hoy. Solo se engancha si ALGUNA imagen trae vinculo, para
+       no volver clicables unas variantes que no harian nada. */
+    const hayVinculo = minis.some((m) => m.dataset.variante);
+    if (hayVinculo) {
+      for (const li of itemsVariante) {
+        const titulo = li.dataset.varianteTitulo;
+        if (!titulo) continue;
+        const i = minis.findIndex((m) => m.dataset.variante === titulo);
+        if (i < 0) continue;
+        li.setAttribute('data-kp-variante-clicable', 'true');
+        li.tabIndex = 0;
+        li.setAttribute('role', 'button');
+        li.addEventListener('click', () => seleccionar(i, true));
+        li.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+          e.preventDefault();
+          seleccionar(i, true);
+        });
+      }
+      /* Estado inicial coherente de la lista de variantes. */
+      seleccionar(0, false);
+    }
+  }
+</script>

@@ -1602,34 +1602,204 @@ strong {
   }
 }
 
-/* La galeria: cada foto en su propio panel claro. */
+/* ---------------------------------------------------------------------------
+   GALERIA SELECCIONABLE DE LA FICHA
+   ---------------------------------------------------------------------------
+   Revision de cliente: "que la lista de imagenes este abajo y en la img grande
+   este la seleccionada". Antes esto era una pila de fotos del mismo tamano,
+   sin jerarquia ni seleccion. Ahora: visor grande arriba, indice abajo.
+
+   EL PASSE-PARTOUT NO SE NEGOCIA. Tanto el visor como CADA miniatura son
+   paneles claros por derecho propio. Es el invariante de esta propuesta
+   (~60% de las fotos son recortes sobre blanco; sobre el negro serian parches
+   brillantes). Verificado por scripts/paneles.mjs.
+   --------------------------------------------------------------------------- */
+
 [data-kp-ficha-galeria] {
   display: grid;
   gap: var(--c-4);
 }
 
-[data-kp-ficha-galeria] > img {
+[data-kp-galeria] {
+  display: grid;
+  gap: var(--c-3);
+  /* min-width:0 para que el contenedor de miniaturas pueda encogerse dentro
+     del grid de la ficha en vez de empujar la pagina a lo ancho. */
+  min-width: 0;
+}
+
+/* --- EL VISOR ------------------------------------------------------------ */
+
+[data-kp-galeria-principal] {
   isolation: isolate;
   background-color: var(--c-panel);
   border: 1px solid var(--c-panel-borde);
   border-radius: var(--c-radio);
   padding: var(--c-8);
-  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Cuadrado: las fotos tienen proporciones dispares y sin una caja fija la
+     pagina daria un salto de layout al cambiar de foto. */
   aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+[data-kp-galeria-img] {
+  /* DEUDA CONOCIDA (BASE.md §8): 25/25 productos tienen la principal por
+     debajo de 1200px y 18 vienen de captura de movil. `contain` + un tope en
+     el tamano nativo evitan ampliarlas: mas vale una foto pequena centrada en
+     su panel que una estirada y borrosa. */
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
+  /* Funde el blanco del recorte con el crema del panel. */
   mix-blend-mode: multiply;
 }
 
-/* A partir de la segunda foto, miniaturas en fila. */
-@media (min-width: 560px) {
-  [data-kp-ficha-galeria]:has(> img + img) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  [data-kp-ficha-galeria]:has(> img + img) > img:first-child {
-    grid-column: 1 / -1;
-  }
-  [data-kp-ficha-galeria]:has(> img + img) > img:not(:first-child) {
-    padding: var(--c-4);
+/* --- EL INDICE DE MINIATURAS -------------------------------------------- */
+
+/* Con una sola foto la fila de miniaturas sobra: no se pinta (21 de 25
+   productos). El atributo lo decide el servidor, no el CSS. */
+[data-kp-galeria-miniaturas] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: var(--c-2);
+  /* Si no caben, el scroll ocurre DENTRO de esta fila, nunca en la pagina. */
+  overflow-x: auto;
+  /* El foco en oro tiene outline-offset 3px: sin este aire, el anillo de la
+     primera y la ultima miniatura se cortaria contra el borde del scroller. */
+  padding-block: 3px;
+  scroll-padding-inline: var(--c-2);
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-hairline-fuerte) transparent;
+}
+
+[data-kp-galeria-miniaturas] > li {
+  /* Base fija y sin encogerse: 4 fotos no adelgazan las miniaturas hasta lo
+     ilegible, simplemente activan el scroll de la fila. */
+  flex: 0 0 auto;
+  width: 84px;
+}
+
+/* La miniatura ES un panel claro, igual que el visor. */
+[data-kp-galeria-mini] {
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  padding: var(--c-2);
+  background-color: var(--c-panel);
+  /* INACTIVA: hairline neutro y la foto atenuada (ver opacity abajo). */
+  border: 1px solid var(--c-panel-borde);
+  border-radius: var(--c-radio);
+  cursor: pointer;
+  overflow: hidden;
+  /* Sin JS es un <a>: se le quita el subrayado heredado. */
+  text-decoration: none;
+  /* La foto viaja como background-image en el atributo style (ver
+     GaleriaProducto.astro: evita el fallo de rasterizado del multiply sobre
+     imagenes de 3000px). `contain` respeta la proporcion y no amplia. */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  /* El multiply se aplica entre el fondo-foto y el color crema del panel:
+     mismo efecto de passe-partout que en el visor, funde el recorte blanco. */
+  background-blend-mode: multiply;
+  transition:
+    border-color 0.3s ease,
+    opacity 0.3s ease;
+}
+
+/* El <img> de la miniatura NO se ve: la foto la pinta el background del <a>.
+   Se mantiene en el DOM porque es quien lleva el `alt`, y se oculta con
+   `opacity: 0` —nunca con display:none ni visibility:hidden— para que siga
+   estando en el arbol de accesibilidad y los lectores de pantalla puedan
+   nombrar cada miniatura. Ocupa su caja para no alterar el layout. */
+[data-kp-galeria-mini] img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  opacity: 0;
+}
+
+/* ESTADO ACTIVO — la decision y su porque.
+   Se marca de DOS formas a la vez, no una:
+     1. BORDE EN ORO LEGIBLE (#8F6724, no #DEC185). El borde se dibuja contra
+        el crema #FDF7E7 del propio panel, no contra el negro de la pagina, asi
+        que aqui manda la regla del oro de marca.css: el oro claro daria 1.85:1
+        y fallaria. #8F6724 sobre crema da 4.69:1, muy por encima del 3.0 que
+        1.4.11 exige a un componente no textual.
+     2. ATENUACION de las inactivas (opacity .45). El borde solo seria una
+        diferencia de color de 1px; atenuar lo que NO esta elegido cambia
+        tambien la luminosidad del bloque entero y se lee de un vistazo.
+        El .45 no es estetico, es medido: el crema al 45% sobre el canvas
+        compone #807D76, que da 3.84:1 contra el crema pleno de la activa
+        -> pasa el 3.0 de 1.4.11. Con el .55 que se probo primero se quedaba
+        en 2.84:1 y FALLABA: la senal de estado habria dependido solo del
+        borde. Bajar mas (.40) oscurecia la foto hasta dificultar reconocerla.
+   Se hacen las dos porque ninguna basta sola: el borde es preciso pero
+   discreto, la atenuacion es evidente pero imprecisa. Y ninguna de las dos es
+   el unico canal de informacion: `aria-pressed` lo dice a los lectores de
+   pantalla. */
+[data-kp-galeria-mini] {
+  opacity: 0.45;
+}
+
+[data-kp-galeria-mini][aria-pressed='true'] {
+  opacity: 1;
+  /* 2px: a 1px el oro oscuro sobre crema casi no se distingue del borde
+     neutro del panel a distancia de lectura. */
+  border: 2px solid var(--c-oro-legible);
+  padding: calc(var(--c-2) - 1px);
+}
+
+[data-kp-galeria-mini]:hover {
+  opacity: 1;
+  border-color: var(--c-oro-legible);
+}
+
+/* El foco va en oro CLARO porque el anillo se dibuja FUERA del panel, sobre el
+   canvas negro: ahi #DEC185 da 9.07:1. Es el mismo anillo del resto del sitio. */
+[data-kp-galeria-mini]:focus-visible {
+  outline: 2px solid var(--c-oro);
+  outline-offset: 3px;
+  opacity: 1;
+}
+
+/* SIN JS: las miniaturas siguen siendo enlaces al fichero y el visor esta fijo
+   en la primera foto. Ahi no hay "elegida", asi que no se atenua ninguna: las
+   tres se ven por igual, que es la verdad de ese estado. En cuanto el script
+   corre, quita el href y empieza a mandar la regla de la atenuacion. */
+[data-kp-galeria-mini][href] {
+  opacity: 1;
+}
+
+/* --- Vinculo imagen<->variante: estilos listos, hoy sin efecto -----------
+   Ninguna imagen trae `variante` todavia (ver content.config.ts), asi que el
+   script no pone estos atributos y estas reglas no casan con nada. Quedan
+   escritas para que el dia que el cliente rellene el dato no haya que tocar
+   tambien la hoja de estilos. */
+[data-kp-variante][data-kp-variante-clicable='true'] {
+  cursor: pointer;
+}
+
+[data-kp-variante][data-kp-variante-activa='true'] {
+  color: var(--c-oro);
+}
+
+@media (max-width: 559px) {
+  /* En movil el visor gana aire: es el elemento principal y la columna es
+     estrecha. Las miniaturas se quedan igual, con su scroll propio. */
+  [data-kp-galeria-principal] {
+    padding: var(--c-6);
   }
 }
 

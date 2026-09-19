@@ -14,6 +14,49 @@ const imagenProducto = z.object({
   src: z.string(),
   /** Texto alternativo: obligatorio, nunca vacio. */
   alt: z.string().min(1),
+  /**
+   * Variante a la que corresponde ESTA foto. OPCIONAL, y hoy vacio en los 25
+   * productos.
+   *
+   * POR QUE ESTA VACIO
+   * -------------------------------------------------------------------------
+   * El respaldo de Shopify no exporto la asociacion imagen->variante. En
+   * `aeropress-clear` hay 3 fotos y 3 colores (Morado, Verde, Rosa), pero los
+   * `alt` son genericos ("Aeropress Clear", "— vista 2", "— vista 3"): el dato
+   * de que foto es de que color NO EXISTE en el material. No se inventa, igual
+   * que no se invento `coleccion` (ver abajo).
+   *
+   * COMO SE RELLENARA
+   * -------------------------------------------------------------------------
+   * El valor es el TITULO EXACTO de la variante, tal cual aparece en
+   * `variantes[].titulo`. Para aeropress-clear quedaria asi, una vez el
+   * cliente confirme que foto es cada color:
+   *
+   *   "imagenes": [
+   *     { "src": ".../aeropress-clear-1.jpg", "alt": "...", "variante": "Morado" },
+   *     { "src": ".../aeropress-clear-2.jpg", "alt": "...", "variante": "Verde"  },
+   *     { "src": ".../aeropress-clear-3.jpg", "alt": "...", "variante": "Rosa"   }
+   *   ]
+   *
+   * El sitio de la correccion es `scripts/normalizar.mjs` + regenerar, NUNCA
+   * el JSON a mano (regla de BASE.md §7).
+   *
+   * QUE PASARA ENTONCES, SIN TOCAR UNA LINEA MAS DE CODIGO
+   * -------------------------------------------------------------------------
+   * La galeria (`GaleriaProducto.astro`) ya lee este campo y lo emite como
+   * `data-variante` en cada miniatura. En cuanto aparezca:
+   *   1. Al pulsar una miniatura se marcara tambien la variante correspondiente
+   *      en la lista de opciones de la ficha.
+   *   2. Al elegir una variante en esa lista, la foto grande cambiara sola.
+   * Mientras el campo siga ausente, la galeria funciona exactamente igual, solo
+   * que sin ese vinculo: es una mejora aditiva, no un requisito.
+   *
+   * NOTA: no se valida contra los titulos de `variantes` porque zod valida cada
+   * imagen de forma aislada, sin acceso a sus hermanas. La comprobacion de que
+   * el titulo existe de verdad se hace en la galeria (§ GaleriaProducto), que
+   * descarta en silencio los vinculos que no casen con ninguna variante.
+   */
+  variante: z.string().optional(),
 });
 
 const variante = z.object({
