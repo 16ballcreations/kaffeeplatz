@@ -2621,7 +2621,23 @@ strong {
 }
 
 /* El tejido de marca, teselado. A 176px el navegador SIEMPRE reduce el tile
-   de 512px, nunca lo amplia: no se pixela a ningun ancho. */
+   de 512px, nunca lo amplia: no se pixela a ningun ancho.
+
+   OPACIDAD 0.32 — mismo criterio que las franjas crema: el tejido debe
+   leerse como lino, no como un velo. Sobre fondo oscuro el lino ACLARA
+   (se superpone normal, no en multiply), asi que el peor caso para el
+   texto claro es el punto mas CLARO del tejido. Medido sobre el tile ya
+   reducido a 176px, percentil 98:
+
+     opacidad   peor caso   crema   tinta tenue   oro
+       0.16      #352E29    12.38      5.82      7.62
+       0.32      #41362E    10.95      5.14      6.73
+       0.40      #463930    10.27      4.82      6.32
+       0.50      #4E3E34     9.47      4.45 X    5.82
+
+   0.32 deja margen holgado en los tres colores que esta seccion usa.
+   La tinta SUTIL (#96907F) no llega a AA aqui (3.68:1) — ver la regla de
+   abajo: no se usa en esta seccion y queda neutralizada por si acaso. */
 [data-kp-seccion='envios']::before {
   content: '';
   position: absolute;
@@ -2630,8 +2646,17 @@ strong {
   background-image: var(--c-lino-tile);
   background-repeat: repeat;
   background-size: 176px;
-  opacity: 0.16;
+  opacity: 0.32;
   pointer-events: none;
+}
+
+/* Red de seguridad: el lino aclara el fondo lo suficiente como para que la
+   tinta sutil (reservada a folios y legales) caiga por debajo de AA. Hoy
+   esta seccion solo lleva h2, parrafos y lista, ninguno la usa; si alguien
+   anade manana un folio o una nota legal aqui, que herede la tinta tenue,
+   que si pasa (5.14:1). */
+[data-kp-seccion='envios'] {
+  --c-tinta-sutil: #b3ab9c;
 }
 
 /* Filete dorado arriba: marca el corte con el gesto grafico de la marca en
@@ -2645,10 +2670,17 @@ strong {
   background: var(--kp-oro-horizontal);
 }
 
-/* El contenido recupera el limite de lectura, que el 100vw le habia quitado. */
-[data-kp-seccion='envios'] > * {
-  max-width: var(--c-ancho);
-  margin-inline: auto;
+/* El contenido recupera el limite de lectura, que el 100vw le habia quitado.
+   OJO: el limite se aplica con un display:grid en el PADRE, no con
+   max-width + margin:auto en cada hijo. Con lo segundo cada elemento se
+   centraba respecto a SU PROPIO ancho: los parrafos (mas anchos) quedaban
+   desplazados respecto a la lista (mas estrecha) y el bloque se veia
+   descuadrado. Una sola columna centrada alinea a todos por su borde
+   izquierdo, como el resto de secciones. */
+[data-kp-seccion='envios'] {
+  display: grid;
+  grid-template-columns: minmax(0, var(--c-ancho));
+  justify-content: center;
   padding-inline: var(--c-6);
 }
 
