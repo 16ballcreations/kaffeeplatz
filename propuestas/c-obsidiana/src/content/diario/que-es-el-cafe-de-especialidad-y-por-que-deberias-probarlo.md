@@ -5,6 +5,7 @@ fecha: 2025-04-21
 autor: "Andreina Morales"
 resumen: "En este blog te explicamos qué significa realmente \\\"café de especialidad\\\", qué lo diferencia del café tradicional, cómo reconocerlo, por qué vale la pena probarlo y qué accesorios necesitas para prepararlo en casa como un experto."
 imagen: "/img/diario/que-es-el-cafe-de-especialidad-y-por-que-deberias-probarlo.png"
+categoria: grano
 ---
 Si estás empezando a interesarte más por el mundo del café, es muy probable que ya hayas escuchado el término "café de especialidad". Pero… ¿qué significa realmente?, ¿es solo una moda?, ¿vale la pena pagar más por él?
 

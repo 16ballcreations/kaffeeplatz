@@ -1,0 +1,139 @@
+---
+/**
+ * FiltrosCategoria — barra de filtrado por categoria, en el cliente.
+ *
+ * UNA sola implementacion para /catalogo y /diario. Ambas paginas tienen el
+ * mismo problema (una rejilla de fichas que hay que poder filtrar por un
+ * campo `categoria`), asi que comparten componente, estilos y script en vez
+ * de mantener dos copias que se desincronizarian a la primera correccion.
+ *
+ * CONTRATO CON LA PAGINA QUE LO USA
+ * ---------------------------------------------------------------------------
+ * 1. El componente pinta la barra de botones y la region aria-live.
+ * 2. La pagina pinta su propia rejilla, y marca cada elemento con
+ *    `data-categoria="<id>"`.
+ * 3. Se conectan por `objetivo`: el selector CSS de la rejilla a filtrar.
+ *
+ * MEJORA PROGRESIVA
+ * ---------------------------------------------------------------------------
+ * La barra nace con el atributo `hidden` y solo el script la revela. Sin
+ * JavaScript no se muestra una fila de botones que no harian nada, y la
+ * rejilla se queda con TODO visible, que es el comportamiento correcto.
+ *
+ * ACCESIBILIDAD
+ * ---------------------------------------------------------------------------
+ * - Son <button> reales: Tab los alcanza y Enter/Espacio los activan sin
+ *   escribir gestion de teclado a mano.
+ * - `aria-pressed` refleja cual esta activo (son conmutadores, no enlaces).
+ * - Una region `aria-live="polite"` anuncia el recuento tras cada filtrado.
+ */
+import type { Categoria } from '../datos/categorias';
+
+interface Props {
+  /** Categorias a ofrecer (ya filtradas a las que tienen contenido). */
+  categorias: Categoria[];
+  /** Recuento por id de categoria. */
+  conteo: Map<string, number>;
+  /** Total de elementos, para la pildora "Todos". */
+  total: number;
+  /** Selector CSS de la rejilla a filtrar. */
+  objetivo: string;
+  /** Etiqueta del grupo, para lectores de pantalla. */
+  etiqueta?: string;
+  /** Palabra a usar en el anuncio: "producto" / "artículo". */
+  sustantivo?: string;
+  /** Texto del estado vacio. */
+  textoVacio?: string;
+}
+
+const {
+  categorias,
+  conteo,
+  total,
+  objetivo,
+  etiqueta = 'Filtrar por categoría',
+  sustantivo = 'producto',
+  textoVacio = 'No hay nada en esta categoría.',
+} = Astro.props as Props;
+
+/* Un id unico por instancia: permite dos barras en una misma pagina sin que
+   los `aria-labelledby` colisionen. */
+const uid = `f${Math.random().toString(36).slice(2, 8)}`;
+---
+
+<div data-kp-filtros data-objetivo={objetivo} data-sustantivo={sustantivo} hidden>
+  <h2 class="sr-only" id={`t-${uid}`}>{etiqueta}</h2>
+  <div role="group" aria-labelledby={`t-${uid}`} data-kp-filtros-grupo>
+    <button type="button" data-kp-filtro="todos" aria-pressed="true">
+      Todos <span data-kp-filtro-n>{total}</span>
+    </button>
+    {
+      categorias.map((c) => (
+        <button type="button" data-kp-filtro={c.id} aria-pressed="false">
+          {c.nombre} <span data-kp-filtro-n>{conteo.get(c.id)}</span>
+        </button>
+      ))
+    }
+  </div>
+  <p data-kp-filtros-estado aria-live="polite" class="sr-only"></p>
+  <p data-kp-sin-resultados hidden>{textoVacio}</p>
+</div>
+
+<script>
+  /**
+   * Filtrado por categoria, en cliente y sin framework.
+   *
+   * Recorre TODAS las barras presentes en la pagina, asi que el mismo script
+   * sirve para /catalogo y /diario sin condicionales por pagina.
+   *
+   * No se reconstruye el DOM: solo se alterna el atributo `hidden` de cada
+   * elemento. Asi las imagenes no se vuelven a descargar y no se pierde el
+   * foco del teclado ni el estado de hover.
+   */
+  for (const caja of document.querySelectorAll<HTMLElement>('[data-kp-filtros]')) {
+    const grupo = caja.querySelector<HTMLElement>('[data-kp-filtros-grupo]');
+    const estado = caja.querySelector<HTMLElement>('[data-kp-filtros-estado]');
+    const vacio = caja.querySelector<HTMLElement>('[data-kp-sin-resultados]');
+    const objetivo = caja.dataset.objetivo;
+    const sustantivo = caja.dataset.sustantivo || 'producto';
+    if (!grupo || !objetivo) continue;
+
+    const rejilla = document.querySelector<HTMLElement>(objetivo);
+    if (!rejilla) continue;
+
+    const items = Array.from(rejilla.children) as HTMLElement[];
+    if (!items.length) continue;
+
+    // Hay JS y hay rejilla: ya se puede mostrar la barra.
+    caja.hidden = false;
+
+    const botones = Array.from(grupo.querySelectorAll<HTMLButtonElement>('[data-kp-filtro]'));
+
+    const aplicar = (cat: string) => {
+      let visibles = 0;
+      for (const li of items) {
+        const coincide = cat === 'todos' || li.dataset.categoria === cat;
+        li.hidden = !coincide;
+        if (coincide) visibles++;
+      }
+
+      for (const b of botones) {
+        b.setAttribute('aria-pressed', String(b.dataset.kpFiltro === cat));
+      }
+
+      if (vacio) vacio.hidden = visibles > 0;
+
+      /* El recuento se construye del numero real, nunca se escribe a mano.
+         Plural en español: 1 producto / 2 productos. */
+      if (estado) {
+        const plural = visibles === 1 ? sustantivo : `${sustantivo}s`;
+        estado.textContent = `${visibles} ${plural}`;
+      }
+    };
+
+    grupo.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-kp-filtro]');
+      if (b?.dataset.kpFiltro) aplicar(b.dataset.kpFiltro);
+    });
+  }
+</script>

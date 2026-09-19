@@ -1,5 +1,6 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { IDS_CATEGORIA, IDS_CATEGORIA_DIARIO } from './datos/categorias';
 
 /**
  * Colecciones tipadas de KaffeePlatz.
@@ -47,6 +48,28 @@ const productos = defineCollection({
     opciones: z.array(opcion).default([]),
     imagenes: z.array(imagenProducto).default([]),
     coleccion: z.string().optional(),
+    /**
+     * Categoria del producto (agrupacion por tipo de objeto).
+     *
+     * El dato VIAJA CON EL PRODUCTO, dentro de su propio JSON, que es
+     * exactamente como lo devolveria una API. Asi, el dia que estos productos
+     * lleguen por HTTP, este mismo esquema zod sirve de validador de la
+     * respuesta sin tocar nada mas.
+     *
+     * Se valida contra los ids reales de src/datos/categorias.ts: si un
+     * producto trae una categoria que no existe en el catalogo, el BUILD
+     * FALLA en vez de tragarse el dato en silencio. Y si un producto llega
+     * sin categoria, cae a 'otros' por defecto, que es un valor con nombre
+     * visible y sitio en la barra de filtros, no un hueco.
+     *
+     * Nota: `coleccion` (arriba) es el campo heredado del respaldo de
+     * Shopify. Esta vacio en los 25 productos porque el respaldo no traia la
+     * pertenencia producto->coleccion. Se deja intacto para no romper nada;
+     * `categoria` es el campo que se usa de verdad.
+     */
+    categoria: z
+      .enum(IDS_CATEGORIA as [string, ...string[]])
+      .default('otros'),
     destacado: z.boolean().optional(),
   }),
 });
@@ -61,6 +84,16 @@ const diario = defineCollection({
     resumen: z.string(),
     /** Portada servida desde public/, p.ej. "/img/diario/<handle>.png" */
     imagen: z.string().optional(),
+    /**
+     * Tema del articulo. Mismo criterio que en productos: el dato viaja en el
+     * frontmatter del propio .md, que es donde lo pondria un CMS y lo que
+     * devolveria una API. Validado contra los ids reales de
+     * src/datos/categorias.ts (CATEGORIAS_DIARIO): un tema inexistente rompe
+     * el build en vez de colarse. Sin categoria, cae a 'otros'.
+     */
+    categoria: z
+      .enum(IDS_CATEGORIA_DIARIO as [string, ...string[]])
+      .default('otros'),
   }),
 });
 

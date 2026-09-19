@@ -1,14 +1,29 @@
 ---
 /**
- * /diario — Indice de los 16 articulos.
+ * /diario — Indice del diario, con filtro por tema.
+ *
+ * Los recuentos salen SIEMPRE del dato (articulos.length, conteo por
+ * categoria): anadir o retirar articulos no desactualiza ningun texto.
  */
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
 import { ruta } from '../../datos/sitio';
+import { CATEGORIAS_DIARIO } from '../../datos/categorias';
+import FiltrosCategoria from '../../components/FiltrosCategoria.astro';
 
 const articulos = (await getCollection('diario')).sort(
   (a, b) => b.data.fecha.getTime() - a.data.fecha.getTime()
+);
+
+/* Solo se ofrecen los temas que tienen articulos, con su recuento real. */
+const conteo = new Map<string, number>();
+for (const a of articulos) {
+  conteo.set(a.data.categoria, (conteo.get(a.data.categoria) ?? 0) + 1);
+}
+
+const temasConArticulos = CATEGORIAS_DIARIO.filter((c) => (conteo.get(c.id) ?? 0) > 0).sort(
+  (a, b) => a.orden - b.orden,
 );
 
 const jsonLd = {
@@ -45,10 +60,21 @@ const jsonLd = {
   </header>
 
   <section aria-label="Artículos">
+    {/* Mismo componente que /catalogo: una sola implementacion de filtros. */}
+    <FiltrosCategoria
+      categorias={temasConArticulos}
+      conteo={conteo}
+      total={articulos.length}
+      objetivo='[data-kp-rejilla="articulos"]'
+      etiqueta="Filtrar artículos por tema"
+      sustantivo="artículo"
+      textoVacio="No hay artículos en este tema."
+    />
+
     <ul data-kp-rejilla="articulos">
       {
         articulos.map((a, i) => (
-          <li>
+          <li data-categoria={a.data.categoria}>
             <TarjetaArticulo articulo={a.data} prioridad={i < 3} />
           </li>
         ))

@@ -1,18 +1,35 @@
 ---
 /**
- * /catalogo — Listado completo de los 25 productos.
+ * /catalogo — Listado completo del catalogo, con filtro por categoria.
+ *
+ * El recuento de productos NO se escribe a mano en ningun sitio: se deriva
+ * siempre del dato, asi que anadir o quitar productos no desactualiza nada.
  */
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import { ruta } from '../datos/sitio';
+import { CATEGORIAS } from '../datos/categorias';
+import FiltrosCategoria from '../components/FiltrosCategoria.astro';
 
 const productos = (await getCollection('productos')).sort((a, b) => {
   // Disponibles primero, luego alfabetico.
   if (a.data.disponible !== b.data.disponible) return a.data.disponible ? -1 : 1;
   return a.data.titulo.localeCompare(b.data.titulo, 'es');
 });
+
+/* Solo se ofrecen como filtro las categorias que TIENEN productos, y el
+   recuento sale de contar el dato. Si una categoria se queda vacia (o si se
+   anade una nueva al catalogo de categorias), esta barra se ajusta sola. */
+const conteo = new Map<string, number>();
+for (const p of productos) {
+  conteo.set(p.data.categoria, (conteo.get(p.data.categoria) ?? 0) + 1);
+}
+
+const categoriasConProductos = CATEGORIAS.filter((c) => (conteo.get(c.id) ?? 0) > 0).sort(
+  (a, b) => a.orden - b.orden,
+);
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -37,7 +54,7 @@ const jsonLd = {
 >
   <header data-kp-seccion="encabezado" class="c-encabezado">
     <div class="c-encabezado__interior">
-      <p data-kp-kicker>Lista de accesorios</p>
+      <p data-kp-kicker>Lista de productos</p>
       <h1>Catálogo</h1>
       <p data-kp-entradilla>
         Tenemos variedad de métodos, accesorios y consumibles para preparar café. Si hay algo que no
@@ -47,10 +64,22 @@ const jsonLd = {
   </header>
 
   <section aria-label="Productos">
+    {/* La barra de filtros es un componente compartido con /diario: una sola
+        implementacion de markup, estilos y JS para las dos rejillas. */}
+    <FiltrosCategoria
+      categorias={categoriasConProductos}
+      conteo={conteo}
+      total={productos.length}
+      objetivo='[data-kp-rejilla="productos"]'
+      etiqueta="Filtrar productos por categoría"
+      sustantivo="producto"
+      textoVacio="No hay productos en esta categoría."
+    />
+
     <ul data-kp-rejilla="productos">
       {
         productos.map((p, i) => (
-          <li>
+          <li data-categoria={p.data.categoria}>
             <TarjetaProducto producto={p.data} prioridad={i < 4}>
               <BotonWhatsApp slot="acciones" producto={p.data}>
                 Preguntar por este
@@ -60,5 +89,6 @@ const jsonLd = {
         ))
       }
     </ul>
+
   </section>
 </Base>

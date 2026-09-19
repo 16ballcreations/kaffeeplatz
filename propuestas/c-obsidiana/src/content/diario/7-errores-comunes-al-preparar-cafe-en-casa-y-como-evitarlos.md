@@ -5,6 +5,7 @@ fecha: 2025-04-14
 autor: "Andreina Morales"
 resumen: "En este blog te contamos los 7 errores más comunes que arruinan el sabor del café en casa: desde el mal molido hasta el agua incorrecta. Aprende a identificarlos, corregirlos y empieza a preparar café como un profesional."
 imagen: "/img/diario/7-errores-comunes-al-preparar-cafe-en-casa-y-como-evitarlos.png"
+categoria: tecnica
 ---
 Hacer café parece sencillo: agua caliente, café molido y listo. Pero si alguna vez has sentido que tu taza no tiene el sabor que esperabas —muy amarga, muy ácida o simplemente insípida— es probable que estés cometiendo uno de los errores más comunes.
 

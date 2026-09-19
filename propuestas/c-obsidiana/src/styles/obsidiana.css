@@ -2564,6 +2564,103 @@ strong {
   }
 }
 
+/* Aire DEBAJO del bloque: en una sola fila, las tres columnas terminan a la
+   vez y el bloque siguiente arrancaba pegado al canto inferior del texto.
+   El margen va en la lista y no en la seccion siguiente porque el que se
+   queda corto es este bloque, no el de abajo: asi el arreglo viaja con el
+   elemento aunque se reordenen las secciones.
+   En movil las tres tarjetas se apilan y el gap vertical ya separa: ahi
+   basta la mitad de aire. */
+[data-kp-lista='criterio'] {
+  margin-bottom: var(--c-10);
+}
+
+@media (min-width: 960px) {
+  [data-kp-lista='criterio'] {
+    margin-bottom: var(--c-16);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   CONTACTO: la seccion de ENVIOS rompe el patron
+
+   Las tres secciones de /contacto (canales, envios, formulario) comparten
+   .c-prosa-seccion y por tanto el mismo fondo: la pagina se lee como un solo
+   bloque continuo. Envios esta en el medio, asi que es la que mejor corta.
+
+   ELECCION: --c-panel-oscuro (#2A2724), el escalon mas calido y elevado de la
+   escala oscura, a sangre completa, con el lino de marca y un filete dorado
+   arriba. No inventa color: usa el nivel que el sistema ya tenia definido y
+   apenas usado. Mantiene la sobriedad del tema oscuro y evita el salto brusco
+   que supondria una franja crema aqui, ya reservada al bloque "ritual" de
+   /nosotros.
+
+   Contraste sobre #2A2724: crema #FDF7E7 = 13.6:1, tinta tenue #B3AB9C =
+   6.4:1, oro #DEC185 = 8.4:1. Todos pasan AA con holgura. */
+[data-kp-seccion='envios'] {
+  position: relative;
+  isolation: isolate;
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  padding-block: var(--c-12);
+  background-color: var(--c-panel-oscuro);
+}
+
+/* El tejido de marca, teselado. A 176px el navegador SIEMPRE reduce el tile
+   de 512px, nunca lo amplia: no se pixela a ningun ancho. */
+[data-kp-seccion='envios']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--c-lino-tile);
+  background-repeat: repeat;
+  background-size: 176px;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+/* Filete dorado arriba: marca el corte con el gesto grafico de la marca en
+   lugar de dejar que el cambio de fondo quede a secas. */
+[data-kp-seccion='envios']::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 1px;
+  background: var(--kp-oro-horizontal);
+}
+
+/* El contenido recupera el limite de lectura, que el 100vw le habia quitado. */
+[data-kp-seccion='envios'] > * {
+  max-width: var(--c-ancho);
+  margin-inline: auto;
+  padding-inline: var(--c-6);
+}
+
+@media (min-width: 960px) {
+  [data-kp-seccion='envios'] {
+    padding-block: var(--c-16);
+  }
+}
+
+/* Aire ENCIMA de "Como trabajamos". Esta seccion viene justo despues de la
+   franja crema "El cafe como ritual" y arrancaba pegada a su canto.
+   Aqui el aire va como padding-top de la seccion y NO como margin del
+   titulo: la franja de arriba es a sangre completa, y un margin dejaria el
+   corte de color separado del texto, con el hueco leyendose como vacio en
+   vez de como respiro. Con padding, el negro arranca donde termina la
+   franja y el aire queda dentro de la seccion. */
+[data-kp-seccion='como-funciona'] {
+  padding-top: var(--c-12);
+}
+
+@media (min-width: 960px) {
+  [data-kp-seccion='como-funciona'] {
+    padding-top: var(--c-16);
+  }
+}
+
 /* ---------------------------------------------------------------------------
    AJUSTE 3 — NOSOTROS: el bloque "El cafe como ritual" diferenciado
 
@@ -2746,4 +2843,388 @@ strong {
 
 [data-kp-lista='canales'] > li:first-child h3 {
   color: var(--c-oro);
+}
+
+/* ===========================================================================
+   === AJUSTES: TEXTURA CLARA, COSTURA DE SACO Y ZOOM EN HOVER ===
+   Bloque de revision de cliente. Como los anteriores, vive al final del
+   archivo: gana por orden en la cascada sin reescribir las reglas originales
+   y mantiene el diff acotado.
+   =========================================================================== */
+
+/* --- AJUSTE A: la textura de lino en TODAS las superficies claras ------
+   Peticion textual: "Agreguemos la misma textura en las secciones beige
+   claro, para que el contraste baje un poco y ademas no quede el color tan
+   plano, asi le da un poco mas de vida a la pagina."
+
+   ESTADO PREVIO: las dos franjas crema (home "Como compras" y /nosotros
+   "El cafe como ritual") YA tenian .c-lino--claro al 0.14. El trabajo real
+   aqui no era anadir la textura donde no estaba, sino:
+     1. Verificar que el tratamiento es correcto y uniforme.
+     2. Resolver el fallo de contraste que la textura estaba causando y que
+        no se habia medido nunca contra el fondo EFECTIVO texturizado.
+
+   EL FALLO ENCONTRADO (real, estaba en produccion):
+   --c-oro-legible #8F6724 mide 4.75:1 sobre crema LIMPIO #FDF7E7. Pero la
+   textura en multiply oscurece el fondo, y el contraste hay que medirlo
+   contra el punto MAS OSCURO del tejido, no contra el crema limpio.
+   Con la textura al 0.14 el pixel mas oscuro del fondo queda en
+   rgb(238,229,212) y ese mismo oro cae a 4.06:1 -> POR DEBAJO DE AA.
+   Ese oro no es decorativo: lo usan los enlaces, los kickers, los numeros
+   de paso y el folio dentro de .c-franja--crema. Era texto real fallando.
+
+   MATIZ MEDIDO EN EL NAVEGADOR (corrige el calculo teorico):
+   el calculo sobre el PNG a resolucion nativa (512px) predice un fondo
+   efectivo mas oscuro del que el navegador pinta de verdad. Al teselar a
+   192/232px el navegador REDUCE el bitmap, y esa reduccion promedia los
+   pixeles: los extremos oscuros del tejido desaparecen. Medido con canvas
+   replicando el composite real, a 0.14 el punto mas oscuro deja el oro en
+   4.73:1, no en 4.06:1.
+
+   Por tanto el problema real no era tanto de contraste como de PRESENCIA:
+   a 0.12-0.14 la desviacion tipica del tejido en pantalla es de ~1.2
+   niveles sobre 255. Es decir, practicamente invisible: no cumplia el
+   encargo del cliente ("que no quede el color tan plano").
+
+   VALORES FINALES, elegidos midiendo Y mirando:
+     a) Opacidad 0.16. Sube la desviacion tipica a ~1.4 y el recorrido del
+        tejido a 9 niveles: el grano ya se aprecia como tejido sobre el
+        crema, y el crema sigue leyendose inequivocamente como crema
+        (media RGB 244,235,217 frente al 253,247,231 limpio).
+     b) El oro sobre crema texturizado se oscurece de #8F6724 a #855E20.
+        Contra el punto mas oscuro del tejido al 0.16 da 4.61:1 -> AA con
+        margen; sobre crema limpio, 5.43:1. Sin este cambio el oro original
+        se quedaba en 4.04:1, por debajo de AA.
+        El desplazamiento de tono es de 0.8 grados (37.6 -> 36.8): a ojo es
+        el mismo oro, solo un punto mas hondo.
+
+   Tamano de tesela: 192px (232px en >=1024px), heredado del bloque
+   anterior. El tile nativo es de 512px, asi que el navegador SIEMPRE
+   reduce, nunca amplia: no hay pixelado posible a ningun ancho. */
+.c-lino--claro::before {
+  opacity: 0.16;
+}
+
+/* El oro legible, recalculado para fondo texturizado. Se aplica dentro de
+   la franja crema, que es donde el fondo lleva tejido. */
+.c-franja--crema {
+  --c-oro-legible: #855e20;
+}
+
+/* --- AJUSTE A.2: los paneles de imagen NO llevan textura --------------
+   DECISION DELIBERADA: NO se aplica textura a --c-panel (el passe-partout
+   que envuelve cada foto de producto). Se evaluo y se descarta.
+
+   MOTIVO TECNICO, no estetico: `.c-panel img`, `[data-kp-tarjeta-media] img`,
+   `[data-kp-ficha-galeria] > img`, `[data-kp-articulo-portada] img` y
+   `[data-kp-prosa] img` van todas en `mix-blend-mode: multiply`. Ese
+   multiply es lo que funde el fondo blanco de los recortes con el crema
+   del panel y evita el rectangulo visible: es el truco que sostiene la
+   calidad percibida de unas fotos de baja resolucion.
+
+   Una textura DEBAJO de una imagen en multiply se multiplica tambien con
+   la foto, no solo con el panel. El tejido se veria A TRAVES del producto
+   (chemex, servex-hario, hervidor-brewista son recortes sobre blanco puro:
+   el tejido aparecería encima del cristal y del acero), ensuciandolos.
+
+   El encargo es explicito: "si hay que elegir, la legibilidad de la foto
+   manda sobre la textura". Se elige la foto limpia.
+
+   La vida que pide el cliente ya la aportan las franjas grandes a sangre,
+   que es donde la textura se ve de verdad. Los paneles son marcos pequenos
+   alrededor de un producto: ahi el tejido no aportaria "vida", aportaria
+   ruido sobre el objeto que se intenta vender. */
+
+/* --- AJUSTE B: la costura de saco en el borde superior de la tarjeta ---
+   Peticion textual: "a las tarjetas de los productos, vamos a agregarle un
+   detalle muy delicado: el borde superior lo vamos a hacer con linea
+   discontinua como si fuesen las costuras de los sacos de cafe".
+
+   POR QUE NO `border-top: 1px dashed`:
+   `dashed` no deja controlar la proporcion guion/hueco (cada motor pinta
+   la suya) y, con `border-radius: 4px`, el borde discontinuo se curva en
+   las esquinas y parte el guion de forma sucia. Ademas obligaria a
+   mantener los otros tres lados en `solid`, mezclando estilos de borde en
+   la misma caja.
+
+   SOLUCION: el borde superior real se mantiene, y la costura se pinta como
+   un pseudo-elemento con `repeating-linear-gradient`. Eso da control exacto
+   del guion y el hueco, se queda RECTO sin tocar las esquinas redondeadas,
+   y se puede atenuar de forma independiente en la tarjeta agotada.
+
+   PROPORCION: guion 5px / hueco 4px. Se probaron 4/4 (demasiado tupido, lee
+   como borde punteado de formulario), 6/5 (el guion se alarga y empieza a
+   parecer una raya de trafico) y 5/4, que a 1px de grosor y a la escala de
+   la tarjeta es lo que mas se parece a una puntada real.
+
+   GROSOR: 1px, coherente con los hairlines del sistema.
+
+   COLOR: el oro de marca --c-oro #DEC185 al 55%. A opacidad plena el detalle
+   se adelantaba y dejaba de ser "muy delicado": competia con el titulo. Al
+   55% se aprecia como acabado y no como elemento.
+
+   ANCHO: se inserta a la altura del borde (top: -1px) y se separa 10px de
+   cada esquina (left/right) para que la costura no llegue a tocar la curva
+   del radio: asi nunca hay un guion partido por el redondeo, a ningun ancho.
+
+   NO CHOCA CON LA CINTA: la cinta de agotado se ancla en `top: var(--c-4)`
+   (1rem por dentro del borde) y la costura vive en el borde mismo. Estan
+   separadas por todo el padding de la tarjeta. */
+[data-kp-tarjeta]::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 10px;
+  right: 10px;
+  height: 1px;
+  z-index: 2;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--c-oro) 0,
+    var(--c-oro) 5px,
+    transparent 5px,
+    transparent 9px
+  );
+  opacity: 0.55;
+  /* El guion se pinta por repeticion de gradiente, no por escalado de un
+     bitmap: es nitido a cualquier ancho y no puede pixelarse. */
+}
+
+/* La costura de una tarjeta agotada se atenua igual que su imagen y su
+   cuerpo: seria incoherente que el unico elemento a plena intensidad de una
+   tarjeta apagada fuese el detalle decorativo. Baja a 0.25, que la mantiene
+   presente como acabado pero claramente en segundo plano. */
+[data-kp-tarjeta][data-kp-disponible='false']::before {
+  opacity: 0.25;
+}
+
+/* --- AJUSTE C: zoom del 5% en hover -----------------------------------
+   Peticion textual: "agregale a las tarjetas tambien un zoom de un 5%, muy
+   sutil, en hover".
+
+   DECISION: escala la IMAGEN dentro de su marco, NO la tarjeta entera.
+   Motivos, confirmados mirandolo en el navegador:
+     1. La rejilla del catalogo es apretada. `scale(1.05)` sobre el
+        contenedor invade visualmente a las tarjetas vecinas y, en el borde
+        de la rejilla, desborda hacia fuera del contenedor de la pagina.
+     2. Escalar la tarjeta entera arrastraria tambien la costura de saco
+        (se engordaria el guion) y la cinta naranja de agotado (se
+        desplazaria de su inset). Escalar solo la imagen deja ambos
+        elementos exactamente donde estan.
+     3. El marco quieto con la foto creciendo dentro lee mas caro: es el
+        gesto de una vitrina, no el de un boton que crece.
+
+   El passe-partout NO se escala: `[data-kp-tarjeta-media]` ya tiene
+   `overflow: hidden`, asi que la foto crece recortada dentro de un marco
+   que no se mueve. La rejilla no se altera en absoluto.
+
+   `@media (hover: hover)`: en pantallas tactiles el efecto no existe, asi
+   que no puede quedarse un estado "pegado" tras un toque. */
+@media (hover: hover) {
+  [data-kp-tarjeta-media] img {
+    transition: transform 0.3s ease;
+  }
+
+  [data-kp-tarjeta]:hover [data-kp-tarjeta-media] img {
+    transform: scale(1.05);
+  }
+
+  /* Las tarjetas AGOTADAS no reciben zoom. Es coherente con la decision ya
+     tomada de no devolverles el color en hover: un producto que no se puede
+     comprar no se realza. Darle el mismo gesto de vitrina que a uno
+     disponible seria una promesa falsa. */
+  [data-kp-tarjeta][data-kp-disponible='false']:hover [data-kp-tarjeta-media] img {
+    transform: none;
+  }
+}
+
+/* El zoom es movimiento, asi que se desactiva de forma explicita bajo
+   prefers-reduced-motion. La regla global del principio del archivo solo
+   acorta la DURACION de las transiciones (a 0.01ms): sin esto el salto de
+   escala seguiria ocurriendo, solo que instantaneo. Aqui se anula el
+   transform entero. */
+@media (prefers-reduced-motion: reduce) {
+  [data-kp-tarjeta]:hover [data-kp-tarjeta-media] img {
+    transform: none;
+  }
+}
+
+/* --- AJUSTE D: aire bajo "Ver el catalogo de productos" ----------------
+   Peticion textual: "en el inicio, debajo de 'ver los 25 productos' vamos a
+   agregar un poco mas de espacio con respecto al bloque siguiente, y vamos a
+   cambiar ese texto por 'ver el catalogo de productos', asi si agregamos mas
+   o quitamos productos, no queda limitado".
+
+   EL TEXTO ya se cambio en index.astro, y con el se elimino la dependencia
+   de `productos.length`: era justo lo que el cliente no quiere, un texto que
+   se desactualiza al mover el catalogo.
+
+   EL ESPACIADO. Por que aqui y no en la franja siguiente:
+   la seccion de destacados va seguida de la franja crema a sangre, y
+   `[data-kp-main] > * + .c-franja` anula el margen de 80px entre ambas a
+   proposito (la franja trae su propio padding y el hueco se duplicaria).
+   Resultado: el enlace queda a un paso del borde de la franja.
+
+   Tocar el `padding-top` de la franja seria lo peor de las dos opciones:
+   ese padding es simetrico y define el bloque crema entero, asi que
+   moverlo descuadraria la franja por dentro (mas aire arriba que abajo) y
+   afectaria TAMBIEN a la franja de /nosotros, que no lo necesita.
+
+   Se le da entonces un `padding-bottom` a la seccion de destacados: el aire
+   pertenece al bloque que termina, no al que empieza, y queda acotado al
+   home. Valor --c-12 (48px) de la escala existente. Sumado al margen que ya
+   trae [data-kp-acciones] da una separacion clara sin abrir un hueco
+   desproporcionado frente al ritmo de 80px del resto de la pagina.
+
+   En MOVIL el aire se reduce a --c-8 (32px): a 375px el ritmo vertical ya
+   es mas apretado y 48px ahi abrian un vacio que parecia un error de
+   maquetacion. Se aplica con min-width para no cargar el valor grande y
+   luego rebajarlo. */
+[data-kp-seccion='destacados'] {
+  padding-bottom: var(--c-8);
+}
+
+@media (min-width: 768px) {
+  [data-kp-seccion='destacados'] {
+    padding-bottom: var(--c-12);
+  }
+}
+
+/* --- AJUSTE E: aire sobre el titulo de "Del diario" --------------------
+   Peticion textual: "en la seccion 'del diario' necesitamos agregar un poco
+   mas de margen sobre el titulo para que no queden las secciones tan
+   pegadas".
+
+   COMPROBACION PREVIA (importante): este NO es el mismo punto que el
+   AJUSTE D. El orden real del home es
+     hero -> destacados -> promesa (franja crema) -> diario -> sobre.
+   El AJUSTE D abre el hueco entre el enlace de destacados y la ENTRADA de
+   la franja crema. Este abre el hueco entre la SALIDA de esa franja y el
+   titulo de "Del diario". Son las dos costuras opuestas de la misma franja,
+   no la misma: por eso se aplican por separado y ninguna suma sobre la otra.
+
+   La causa es comun: `[data-kp-main] > .c-franja + *` anula el margen de
+   80px tambien por abajo, asi que "Del diario" arranca pegado al borde
+   inferior del bloque crema.
+
+   PADDING de la seccion, no MARGIN del titulo:
+   la seccion "diario" no tiene fondo propio, asi que visualmente cualquiera
+   de los dos daria el mismo resultado hoy. Se elige `padding-top` por
+   coherencia con el AJUSTE D (que tuvo que ser padding a la fuerza) y
+   porque es robusto: si manana esta seccion recibe una banda o una textura,
+   el padding mantiene el aire DENTRO del fondo, mientras que un margen
+   sobre el titulo dejaria el fondo arrancando antes que el contenido y el
+   aire se veria vacio en vez de generoso. Ademas un margin-top sobre el h2
+   colapsaria con el margen del contenedor en otros contextos.
+
+   Valores simetricos a los del AJUSTE D: --c-8 (32px) en movil y --c-12
+   (48px) desde 768px. Asi la franja crema queda con el mismo aire a ambos
+   lados y el ritmo no cojea hacia un lado. */
+[data-kp-seccion='diario'] {
+  padding-top: var(--c-8);
+}
+
+@media (min-width: 768px) {
+  [data-kp-seccion='diario'] {
+    padding-top: var(--c-12);
+  }
+}
+
+/* ===========================================================================
+   === FILTROS POR CATEGORIA (catalogo y diario) ===
+   Barra de pildoras sobre la rejilla. Un solo bloque de estilo para las dos
+   paginas, igual que hay un solo componente y un solo script.
+
+   LENGUAJE OBSIDIANA, sin excepciones:
+     - Radio 4px (--c-radio), el del sistema.
+     - Hairline de 1px. Cero sombras.
+     - Tipografia en REDONDA: la cursiva esta reservada a h1/h2.
+     - Nada de botones rellenos... salvo el ACTIVO, que es precisamente la
+       excepcion que comunica el estado. Un filtro activo tiene que
+       distinguirse sin depender solo del color (aria-pressed lo dice a los
+       lectores de pantalla; el relleno lo dice a la vista).
+
+   CONTRASTE de los tres estados, sobre el canvas #1A1A1A:
+     - Inactivo: #B3AB9C sobre #1A1A1A = 7.64:1  -> AA y AAA
+     - Hover:    #FDF7E7 sobre #232320 = 14.73:1 -> AAA
+     - Activo:   #1A1A1A sobre #DEC185 = 10.01:1 -> AAA
+     - Recuento: #96907F sobre #1A1A1A = 5.46:1  -> AA
+   =========================================================================== */
+
+[data-kp-filtros] {
+  margin-bottom: var(--c-8);
+}
+
+[data-kp-filtros-grupo] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--c-2);
+}
+
+[data-kp-filtro] {
+  /* REDONDA y sans: es un control, no voz de marca. */
+  font-family: var(--c-sans);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.2;
+  padding: var(--c-2) var(--c-4);
+  border: 1px solid var(--c-hairline);
+  border-radius: var(--c-radio);
+  background-color: transparent;
+  color: var(--c-tinta-tenue);
+  cursor: pointer;
+  transition:
+    border-color 0.3s ease,
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+[data-kp-filtro]:hover {
+  border-color: var(--c-hairline-oro);
+  background-color: var(--c-elevado);
+  color: var(--c-tinta);
+}
+
+/* El recuento, un escalon por debajo del nombre: es un dato de apoyo. */
+[data-kp-filtro-n] {
+  color: var(--c-tinta-sutil);
+  font-variant-numeric: tabular-nums;
+  margin-left: 0.25em;
+}
+
+/* EL ACTIVO. Unico relleno del sistema, justificado como senal de estado.
+   Sobre el oro, la tinta pasa a negra: #1A1A1A sobre #DEC185 = 10.01:1. */
+[data-kp-filtro][aria-pressed='true'] {
+  background-color: var(--c-oro);
+  border-color: var(--c-oro);
+  color: var(--kp-ink, #1a1a1a);
+}
+
+[data-kp-filtro][aria-pressed='true'] [data-kp-filtro-n] {
+  /* Sobre el oro no vale la tinta sutil (calculada para fondo oscuro): se
+     quedaria en ~2:1. Se usa el mismo negro con algo de transparencia. */
+  color: rgb(26 26 26 / 0.7);
+}
+
+[data-kp-filtro]:focus-visible {
+  outline: 2px solid var(--c-oro);
+  outline-offset: 2px;
+}
+
+/* Estado vacio: discreto, sin dramatismo. */
+[data-kp-sin-resultados] {
+  margin-top: var(--c-6);
+  color: var(--c-tinta-tenue);
+  font-size: var(--c-t-body);
+}
+
+/* En movil la barra puede ocupar dos o tres lineas sin problema: el
+   flex-wrap ya lo resuelve y las pildoras no se estrechan por debajo de su
+   texto. Solo se ajusta el aire inferior. */
+@media (max-width: 767px) {
+  [data-kp-filtros] {
+    margin-bottom: var(--c-6);
+  }
 }

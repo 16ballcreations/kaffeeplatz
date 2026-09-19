@@ -5,6 +5,7 @@ fecha: 2025-04-14
 autor: "Andreina Morales"
 resumen: "En este blog exploramos el V60, uno de los métodos más queridos por los baristas. Te enseñamos cómo funciona, cómo prepararlo paso a paso y qué accesorios necesitas para sacarle todo el provecho en casa."
 imagen: "/img/diario/v60-el-metodo-para-lograr-una-taza-limpia-delicada-y-perfecta-en-casa.png"
+categoria: metodos
 ---
 Si te gusta el café con notas brillantes, aroma limpio y sabores bien definidos, el V60 es el método que necesitas conocer. Este sistema de goteo manual, originado en Japón por la marca Hario, ha conquistado el mundo del café de especialidad gracias a su capacidad de resaltar lo mejor de cada grano.
 

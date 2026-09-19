@@ -5,6 +5,7 @@ fecha: 2025-04-21
 autor: "Andreina Morales"
 resumen: "Cada método de preparación resalta diferentes notas del café. En este blog te explicamos qué tipo de café (perfil de sabor, molienda y tostión) va mejor con V60, prensa francesa, Aeropress, Chemex y más, para que disfrutes la mejor experiencia en cada taza."
 imagen: "/img/diario/que-cafe-va-mejor-con-cada-metodo-de-preparacion-guia-practica-para-sacarle-el-maximo-sabor.png"
+categoria: tecnica
 ---
 Si alguna vez preparaste una taza y sentiste que algo no cuadraba —demasiado amargo, muy débil o plano— es posible que el café elegido no fuera el adecuado para el método que usaste.
 

@@ -5,6 +5,7 @@ fecha: 2025-08-19
 autor: "Andreina Morales"
 resumen: "El café trasciende fronteras: es ritual, energía y encuentro social. Desde un espresso en Italia hasta un tinto en Colombia, su consumo diario mueve culturas y economías en todo el planeta. Este artículo explica por qué es la segunda bebida más tomada del mundo, qué lo hace tan especial y cómo su cadena productiva impacta a millones de familias."
 imagen: "/img/diario/el-cafe-la-segunda-bebida-mas-consumida-en-el-mundo.png"
+categoria: grano
 ---
 El café es mucho más que una bebida; es un ritual, una pausa en la rutina, una excusa para compartir y, al mismo tiempo, un motor que impulsa economías y culturas alrededor del planeta. Hoy, esta infusión se ha consolidado como la segunda bebida más consumida en el mundo después del agua, con miles de millones de tazas servidas a diario. ¿Qué tiene el café que lo convierte en una tradición universal?
 

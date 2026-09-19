@@ -5,6 +5,7 @@ fecha: 2025-05-05
 autor: "Andreina Morales"
 resumen: "El café es un producto delicado que pierde frescura rápidamente si no se almacena bien. En esta guía te enseñamos cómo conservar tu café de forma óptima para que cada taza mantenga su sabor y calidad original."
 imagen: "/img/diario/guia-definitiva-para-conservar-tu-cafe-siempre-fresco.png"
+categoria: tecnica
 ---
 Comprar un café de especialidad delicioso y molerlo con cuidado es solo la mitad del camino.
 

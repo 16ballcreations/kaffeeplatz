@@ -23,5 +23,6 @@
       "src": "/img/productos/server/server-1.jpg",
       "alt": "Server"
     }
-  ]
+  ],
+  "categoria": "servicio"
 }
