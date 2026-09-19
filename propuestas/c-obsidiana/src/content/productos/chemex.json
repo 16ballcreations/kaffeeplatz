@@ -37,11 +37,13 @@
   "imagenes": [
     {
       "src": "/img/productos/chemex/chemex-1.jpg",
-      "alt": "Chemex Original"
+      "alt": "Chemex Original — 6 tazas",
+      "variante": "6 tazas"
     },
     {
       "src": "/img/productos/chemex/chemex-2.png",
-      "alt": "Chemex Original — vista 2"
+      "alt": "Chemex Original — 3 tazas",
+      "variante": "3 tazas"
     }
   ],
   "destacado": true,
