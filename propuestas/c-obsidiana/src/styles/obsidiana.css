@@ -2366,12 +2366,26 @@ strong {
   background-position: center top;
 }
 
-/* La franja crema: tile claro, en multiply, con la misma opacidad baja de
-   antes (0.14). El tejido se nota, la tinta sigue mandando y ningun ratio
-   de contraste medido se mueve. */
+/* La franja crema: tile claro en multiply.
+   OPACIDAD 0.30 — el cliente pidio el tejido mas notable, sin dejar de leerse
+   como el beige de marca. A 0.16 la desviacion del grano en pantalla era de
+   ~1 nivel sobre 255: practicamente invisible.
+
+   El techo NO lo pone el tejido, lo ponia el oro. Medido sobre el tile ya
+   reducido a 232px (que es como lo pinta el navegador, promediando pixeles),
+   tomando el percentil 2 del fondo como peor caso:
+
+     opacidad   fondo peor caso   #855E20   #7A5719
+       0.16         #F2E7D6        4.77      5.39
+       0.22         #EEE2CF        4.54      5.13
+       0.30         #E9DBC6        4.24 X    4.79
+       0.34         #E6D6C2        4.10 X    4.63
+
+   Por eso el oro legible sobre crema baja a #7A5719 (ver mas abajo): con el
+   anterior, 0.30 habria dejado enlaces y kickers por debajo de AA. */
 .c-lino--claro::before {
   background-image: var(--c-lino-tile-claro);
-  opacity: 0.14;
+  opacity: 0.3;
   mix-blend-mode: multiply;
 }
 
@@ -2891,24 +2905,26 @@ strong {
         tejido a 9 niveles: el grano ya se aprecia como tejido sobre el
         crema, y el crema sigue leyendose inequivocamente como crema
         (media RGB 244,235,217 frente al 253,247,231 limpio).
-     b) El oro sobre crema texturizado se oscurece de #8F6724 a #855E20.
-        Contra el punto mas oscuro del tejido al 0.16 da 4.61:1 -> AA con
-        margen; sobre crema limpio, 5.43:1. Sin este cambio el oro original
-        se quedaba en 4.04:1, por debajo de AA.
-        El desplazamiento de tono es de 0.8 grados (37.6 -> 36.8): a ojo es
-        el mismo oro, solo un punto mas hondo.
+     b) El oro sobre crema texturizado se oscurece de #8F6724 a #7A5719.
+        El oro original se quedaba en 4.04:1, por debajo de AA; al subir la
+        textura a 0.30 (peticion del cliente) hizo falta bajarlo otro punto.
+        Ver la tabla de medidas en el bloque de .c-lino--claro.
 
    Tamano de tesela: 192px (232px en >=1024px), heredado del bloque
    anterior. El tile nativo es de 512px, asi que el navegador SIEMPRE
    reduce, nunca amplia: no hay pixelado posible a ningun ancho. */
 .c-lino--claro::before {
-  opacity: 0.16;
+  opacity: 0.3;
 }
 
-/* El oro legible, recalculado para fondo texturizado. Se aplica dentro de
-   la franja crema, que es donde el fondo lleva tejido. */
+/* El oro legible, recalculado para el fondo texturizado al 0.30.
+   Contra el percentil 2 del tejido (#E9DBC6) da 4.79:1 -> AA con margen;
+   sobre crema limpio, 5.94:1. Con el anterior #855E20 la subida de textura
+   lo habria dejado en 4.24:1, por debajo de AA.
+   Desplazamiento de tono respecto al oro de marca: 1.2 grados. A ojo es el
+   mismo oro, dos puntos mas hondo. */
 .c-franja--crema {
-  --c-oro-legible: #855e20;
+  --c-oro-legible: #7a5719;
 }
 
 /* --- AJUSTE A.2: los paneles de imagen NO llevan textura --------------
