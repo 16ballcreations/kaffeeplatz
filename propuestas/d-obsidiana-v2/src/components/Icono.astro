@@ -1,0 +1,71 @@
+---
+/**
+ * Icono — glifos de Phosphor (peso "light"), servidos en linea.
+ *
+ * Una sola familia y un solo peso en todo el sitio. Los SVG salen del paquete
+ * @phosphor-icons/core: no se dibuja ningun trazo a mano. Heredan el color
+ * con `currentColor` y son decorativos por defecto (aria-hidden); si un icono
+ * va solo, sin texto al lado, pasale `etiqueta`.
+ */
+import whatsapp from '@phosphor-icons/core/assets/light/whatsapp-logo-light.svg?raw';
+import flecha from '@phosphor-icons/core/assets/light/arrow-right-light.svg?raw';
+import flechaDiagonal from '@phosphor-icons/core/assets/light/arrow-up-right-light.svg?raw';
+import camion from '@phosphor-icons/core/assets/light/truck-light.svg?raw';
+import conversacion from '@phosphor-icons/core/assets/light/chat-circle-text-light.svg?raw';
+import libro from '@phosphor-icons/core/assets/light/book-open-text-light.svg?raw';
+import taza from '@phosphor-icons/core/assets/light/coffee-light.svg?raw';
+import check from '@phosphor-icons/core/assets/light/check-light.svg?raw';
+import ajustes from '@phosphor-icons/core/assets/light/sliders-horizontal-light.svg?raw';
+import cerrar from '@phosphor-icons/core/assets/light/x-light.svg?raw';
+import caret from '@phosphor-icons/core/assets/light/caret-down-light.svg?raw';
+import paquete from '@phosphor-icons/core/assets/light/package-light.svg?raw';
+import reloj from '@phosphor-icons/core/assets/light/clock-light.svg?raw';
+import mapa from '@phosphor-icons/core/assets/light/map-pin-light.svg?raw';
+import correo from '@phosphor-icons/core/assets/light/envelope-simple-light.svg?raw';
+import campana from '@phosphor-icons/core/assets/light/bell-simple-light.svg?raw';
+import menu from '@phosphor-icons/core/assets/light/list-light.svg?raw';
+
+const ICONOS = {
+  whatsapp,
+  flecha,
+  flechaDiagonal,
+  camion,
+  conversacion,
+  libro,
+  taza,
+  check,
+  ajustes,
+  cerrar,
+  caret,
+  paquete,
+  reloj,
+  mapa,
+  correo,
+  campana,
+  menu,
+} as const;
+
+export type NombreIcono = keyof typeof ICONOS;
+
+interface Props {
+  nombre: NombreIcono;
+  /** Tamano en px. */
+  tam?: number;
+  clase?: string;
+  /** Si el icono comunica algo por si solo. Sin etiqueta es decorativo. */
+  etiqueta?: string;
+}
+
+const { nombre, tam = 20, clase = '', etiqueta } = Astro.props as Props;
+
+/* Se inyectan tamano, clase y semantica en la etiqueta <svg> de origen. */
+const attrs = [
+  `width="${tam}"`,
+  `height="${tam}"`,
+  `class="${`v-icono ${clase}`.trim()}"`,
+  etiqueta ? `role="img" aria-label="${etiqueta}"` : 'aria-hidden="true" focusable="false"',
+].join(' ');
+const svg = ICONOS[nombre].replace('<svg ', `<svg ${attrs} `);
+---
+
+<Fragment set:html={svg} />

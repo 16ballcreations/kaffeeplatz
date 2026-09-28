@@ -1,0 +1,361 @@
+---
+/**
+ * /producto/[handle] — Ficha de producto. Propuesta D "OBSIDIANA II". 25 paginas.
+ *
+ * Lo nuevo frente a C, todo al servicio de cerrar la conversacion:
+ *   - Selector de variante real (radios): cambia el precio, la foto (si la
+ *     imagen trae `variante`) y el MENSAJE de WhatsApp, que ahora dice que
+ *     variante quiere la persona. Asi Andreina no tiene que preguntarlo.
+ *   - BotonWhatsApp no se toca: se pinta uno por variante con `mensaje` y el
+ *     script muestra el que toca. Sin JS se ve el generico del producto.
+ *   - Barra inferior fija en movil con precio y accion.
+ *   - Confianza junto al boton: envios, atencion humana, sin pago en linea.
+ *   - "Cómo prepararlo": enlace a la guia del diario que aplica.
+ */
+import type { GetStaticPaths } from 'astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import GaleriaProducto from '../../components/GaleriaProducto.astro';
+import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
+import TarjetaProducto from '../../components/TarjetaProducto.astro';
+import Imagen from '../../components/Imagen.astro';
+import Icono from '../../components/Icono.astro';
+import { SITIO, ruta } from '../../datos/sitio';
+import { categoriaPorId } from '../../datos/categorias';
+import { GUIA_DE_PRODUCTO, ENVIOS } from '../../datos/guias';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const productos = await getCollection('productos');
+  const articulos = await getCollection('diario');
+  return productos.map((p) => ({
+    params: { handle: p.data.handle },
+    props: { producto: p, todos: productos, articulos },
+  }));
+};
+
+interface Props {
+  producto: CollectionEntry<'productos'>;
+  todos: CollectionEntry<'productos'>[];
+  articulos: CollectionEntry<'diario'>[];
+}
+
+const { producto, todos, articulos } = Astro.props as Props;
+const d = producto.data;
+
+const portada = d.imagenes[0];
+const hayRango = new Set(d.variantes.map((v) => v.precio)).size > 1;
+const categoria = categoriaPorId(d.categoria);
+
+/* Solo hay selector cuando hay de verdad entre que elegir. */
+const conSelector = d.variantes.length > 1;
+const nombreOpcion = d.opciones[0]?.nombre
+  ? d.opciones[0].nombre.charAt(0).toUpperCase() + d.opciones[0].nombre.slice(1).toLowerCase()
+  : 'Opción';
+/* Por defecto se marca la primera variante disponible. */
+const inicial = d.variantes.find((v) => v.disponible) ?? d.variantes[0];
+
+const mensajeVariante = (titulo: string, precio: string) =>
+  `Hola KaffeePlatz, me interesa ${d.titulo} (${titulo}, ${precio}). ¿Está disponible?`;
+const mensajeAviso = `Hola KaffeePlatz, me interesa ${d.titulo}. ¿Me avisan cuando vuelva a estar disponible?`;
+
+/* Relacionados: misma categoria primero, luego cercania de precio. */
+const relacionados = todos
+  .filter((p) => p.data.handle !== d.handle && p.data.imagenes.length > 0)
+  .sort((a, b) => {
+    const ca = a.data.categoria === d.categoria ? 0 : 1;
+    const cb = b.data.categoria === d.categoria ? 0 : 1;
+    if (ca !== cb) return ca - cb;
+    if (a.data.disponible !== b.data.disponible) return a.data.disponible ? -1 : 1;
+    return Math.abs(a.data.precio - d.precio) - Math.abs(b.data.precio - d.precio);
+  })
+  .slice(0, 4);
+
+const guia = articulos.find((a) => a.data.handle === GUIA_DE_PRODUCTO[d.handle]);
+
+const url = new URL(ruta(`/producto/${d.handle}`), Astro.site).toString();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: d.titulo,
+  description: d.descripcionTexto,
+  sku: d.handle,
+  brand: { '@type': 'Brand', name: d.vendor },
+  image: d.imagenes.map((i) => new URL(ruta(i.src), Astro.site).toString()),
+  url,
+  offers:
+    d.variantes.length > 1
+      ? {
+          '@type': 'AggregateOffer',
+          priceCurrency: 'COP',
+          lowPrice: Math.min(...d.variantes.map((v) => v.precio)),
+          highPrice: Math.max(...d.variantes.map((v) => v.precio)),
+          offerCount: d.variantes.length,
+          availability: d.disponible
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          url,
+          seller: { '@type': 'Organization', name: SITIO.nombre },
+        }
+      : {
+          '@type': 'Offer',
+          priceCurrency: 'COP',
+          price: d.precio,
+          availability: d.disponible
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/OutOfStock',
+          url,
+          seller: { '@type': 'Organization', name: SITIO.nombre },
+        },
+};
+---
+
+<Base
+  titulo={d.titulo}
+  descripcion={d.descripcionTexto.slice(0, 160)}
+  camino={`/producto/${d.handle}`}
+  imagen={portada?.src}
+  migas={[
+    { nombre: 'Catálogo', href: '/catalogo' },
+    { nombre: d.titulo, href: `/producto/${d.handle}` },
+  ]}
+  jsonLd={jsonLd}
+  sinFlotante
+  claseCuerpo="v-con-barra"
+>
+  <nav aria-label="Migas de pan" class="v-migas v-limite">
+    <ol>
+      <li><a href={ruta('/catalogo')}>Catálogo</a></li>
+      <li><a href={`${ruta('/catalogo')}?categoria=${categoria.id}`}>{categoria.nombre}</a></li>
+      <li aria-current="page">{d.titulo}</li>
+    </ol>
+  </nav>
+
+  <article data-kp-ficha class="v-ficha v-limite" data-v-ficha>
+    <div data-kp-ficha-galeria class="v-ficha__galeria">
+      <GaleriaProducto
+        imagenes={d.imagenes}
+        titulosVariante={d.variantes.map((v) => v.titulo)}
+        titulo={d.titulo}
+      />
+    </div>
+
+    <div data-kp-ficha-info class="v-ficha__info">
+      <p class="v-ficha__categoria">{categoria.nombre}</p>
+      <h1>{d.titulo}</h1>
+
+      <div class="v-ficha__precio-fila">
+        <p data-kp-ficha-precio class="v-ficha__precio">
+          <span data-v-precio class="v-num">{conSelector ? inicial.precioFormateado : d.precioFormateado}</span>
+          {!conSelector && <meta itemprop="price" content={String(d.precio)} />}
+          <span class="sr-only"> pesos colombianos</span>
+        </p>
+        <p
+          data-kp-ficha-estado
+          data-kp-disponible={String(d.disponible)}
+          class="v-estado"
+          data-v-estado-variante
+        >
+          {d.disponible ? 'Disponible' : 'Agotado por ahora'}
+        </p>
+      </div>
+
+      {
+        conSelector && (
+          <fieldset class="v-variantes" data-kp-ficha-opciones>
+            <legend>{nombreOpcion}</legend>
+            <div class="v-variantes__lista">
+              {d.variantes.map((v) => (
+                <label class="v-variante" data-disponible={String(v.disponible)}>
+                  <input
+                    type="radio"
+                    name="variante"
+                    value={v.titulo}
+                    checked={v === inicial}
+                    data-precio={v.precioFormateado}
+                    data-disponible={String(v.disponible)}
+                  />
+                  <span class="v-variante__nombre">{v.titulo}</span>
+                  {hayRango && <span class="v-variante__precio v-num">{v.precioFormateado}</span>}
+                  {!v.disponible && <span class="v-variante__agotado">Agotado</span>}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )
+      }
+
+      <div data-kp-ficha-accion class="v-ficha__accion">
+        {/* El boton generico: el unico que se ve sin JavaScript. */}
+        <BotonWhatsApp
+          producto={d}
+          mensaje={d.disponible ? undefined : mensajeAviso}
+          clase="v-boton v-boton--oro v-boton--ancho"
+          data-v-wa="generico"
+        >
+          <Icono nombre={d.disponible ? 'whatsapp' : 'campana'} tam={20} />
+          <span>{d.disponible ? 'Pedir por WhatsApp' : 'Avísame cuando vuelva'}</span>
+        </BotonWhatsApp>
+        {
+          conSelector &&
+            d.variantes.map((v) => (
+              <BotonWhatsApp
+                mensaje={
+                  v.disponible
+                    ? mensajeVariante(v.titulo, v.precioFormateado)
+                    : `Hola KaffeePlatz, me interesa ${d.titulo} (${v.titulo}). ¿Me avisan cuando vuelva a estar disponible?`
+                }
+                clase="v-boton v-boton--oro v-boton--ancho"
+                data-v-wa={v.titulo}
+                hidden
+              >
+                <Icono nombre={v.disponible ? 'whatsapp' : 'campana'} tam={20} />
+                <span>{v.disponible ? 'Pedir por WhatsApp' : 'Avísame cuando vuelva'}</span>
+              </BotonWhatsApp>
+            ))
+        }
+        <p class="v-ficha__nota">
+          Te responde {SITIO.dueña}. Confirmamos disponibilidad y envío antes de que pagues nada.
+        </p>
+      </div>
+
+      <ul class="v-garantias">
+        <li>
+          <Icono nombre="camion" tam={22} />
+          <div>
+            <strong>Envío a todo Colombia</strong>
+            <span>
+              {ENVIOS[0].zona}: {ENVIOS[0].plazo}. {ENVIOS[1].zona}: {ENVIOS[1].plazo}.
+            </span>
+          </div>
+        </li>
+        <li>
+          <Icono nombre="conversacion" tam={22} />
+          <div>
+            <strong>Sin carrito ni pago en línea</strong>
+            <span>Cada pedido se acuerda por WhatsApp, a tu medida.</span>
+          </div>
+        </li>
+      </ul>
+
+      <div class="v-ficha__descripcion">
+        <h2>Sobre este producto</h2>
+        <div data-kp-ficha-descripcion set:html={d.descripcionHtml} />
+      </div>
+
+      {
+        guia && (
+          <a href={ruta(`/diario/${guia.data.handle}`)} class="v-guia">
+            <div class="v-guia__foto">
+              {guia.data.imagen && <Imagen src={guia.data.imagen} alt="" />}
+            </div>
+            <div>
+              <span class="v-guia__etiqueta">
+                <Icono nombre="libro" tam={16} /> Cómo sacarle partido
+              </span>
+              <span class="v-guia__titulo">{guia.data.titulo}</span>
+            </div>
+            <Icono nombre="flechaDiagonal" tam={20} />
+          </a>
+        )
+      }
+    </div>
+  </article>
+
+  {
+    relacionados.length > 0 && (
+      <section data-kp-seccion="relacionados" aria-labelledby="t-relacionados" class="v-seccion">
+        <div class="v-limite v-cabeza-fila">
+          <h2 id="t-relacionados" class="v-titulo">También te puede <em>servir</em></h2>
+          <a href={`${ruta('/catalogo')}?categoria=${categoria.id}`} class="v-enlace">
+            Más de {categoria.nombre.toLowerCase()} <Icono nombre="flecha" tam={16} />
+          </a>
+        </div>
+        <ul data-kp-rejilla="productos" class="v-carril">
+          {relacionados.map((p) => (
+            <li>
+              <TarjetaProducto producto={p.data} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  {/* Barra fija inferior, solo movil. Repite la accion principal. */}
+  <div class="v-barra-compra" aria-label="Pedir este producto" role="region">
+    <div class="v-barra-compra__info">
+      <span class="v-barra-compra__nombre">{d.titulo}</span>
+      <span class="v-num" data-v-precio>{conSelector ? inicial.precioFormateado : d.precioFormateado}</span>
+    </div>
+    <BotonWhatsApp
+      producto={d}
+      mensaje={d.disponible ? undefined : mensajeAviso}
+      clase="v-boton v-boton--oro v-boton--sm"
+      data-v-wa="generico"
+    >
+      <Icono nombre={d.disponible ? 'whatsapp' : 'campana'} tam={18} />
+      <span>{d.disponible ? 'Pedir' : 'Avísame'}</span>
+    </BotonWhatsApp>
+    {
+      conSelector &&
+        d.variantes.map((v) => (
+          <BotonWhatsApp
+            mensaje={
+              v.disponible
+                ? mensajeVariante(v.titulo, v.precioFormateado)
+                : `Hola KaffeePlatz, me interesa ${d.titulo} (${v.titulo}). ¿Me avisan cuando vuelva a estar disponible?`
+            }
+            clase="v-boton v-boton--oro v-boton--sm"
+            data-v-wa={v.titulo}
+            hidden
+          >
+            <Icono nombre={v.disponible ? 'whatsapp' : 'campana'} tam={18} />
+            <span>{v.disponible ? 'Pedir' : 'Avísame'}</span>
+          </BotonWhatsApp>
+        ))
+    }
+  </div>
+</Base>
+
+<script>
+  /* Selector de variante. Sin JS: los radios se ven, el boton generico
+     funciona y el mensaje no incluye la variante. Con JS: todo se sincroniza. */
+  const ficha = document.querySelector<HTMLElement>('[data-v-ficha]');
+  const radios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="variante"]'));
+
+  if (ficha && radios.length) {
+    const precios = document.querySelectorAll<HTMLElement>('[data-v-precio]');
+    const estado = document.querySelector<HTMLElement>('[data-v-estado-variante]');
+    const botones = Array.from(document.querySelectorAll<HTMLElement>('[data-v-wa]'));
+    const minis = Array.from(document.querySelectorAll<HTMLElement>('[data-kp-galeria-mini][data-variante]'));
+
+    const elegir = (r: HTMLInputElement, desdeGaleria: boolean) => {
+      r.checked = true;
+      for (const p of precios) p.textContent = r.dataset.precio ?? '';
+      const disp = r.dataset.disponible === 'true';
+      if (estado) {
+        estado.textContent = disp ? 'Disponible' : 'Agotado por ahora';
+        estado.dataset.kpDisponible = String(disp);
+      }
+      for (const b of botones) b.hidden = b.dataset.vWa !== r.value;
+      /* Foto de la variante, si la galeria tiene el vinculo. */
+      if (!desdeGaleria) {
+        minis.find((m) => m.dataset.variante === r.value)?.click();
+      }
+    };
+
+    for (const r of radios) r.addEventListener('change', () => elegir(r, false));
+
+    /* Sentido inverso: pulsar la miniatura de una variante la selecciona. */
+    for (const m of minis) {
+      m.addEventListener('click', () => {
+        const r = radios.find((x) => x.value === m.dataset.variante);
+        if (r && !r.checked) elegir(r, true);
+      });
+    }
+
+    const marcado = radios.find((r) => r.checked) ?? radios[0];
+    elegir(marcado, marcado === radios[0]);
+  }
+</script>

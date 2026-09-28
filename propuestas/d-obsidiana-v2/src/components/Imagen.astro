@@ -1,0 +1,70 @@
+---
+/**
+ * Imagen — envoltorio de <Image> de astro:assets.
+ *
+ * `alt` es OBLIGATORIO (lo exige el tipo). Por defecto carga en lazy.
+ *
+ * Las imagenes del catalogo viven en public/img/ y se referencian por ruta
+ * absoluta ("/img/..."). astro:assets no optimiza ficheros de public/, asi que
+ * para esas se emite un <img> nativo con el `base` ya aplicado. Si un diseno
+ * importa una imagen desde src/assets/ y pasa el ImageMetadata, se optimiza
+ * con sharp automaticamente.
+ */
+import { Image } from 'astro:assets';
+import { recurso } from '../datos/sitio';
+
+interface Props {
+  /** Ruta "/img/..." de public/, o un ImageMetadata importado de src/assets/. */
+  src: string | ImageMetadata;
+  /** Texto alternativo. Obligatorio: si es decorativa, pasa alt="". */
+  alt: string;
+  ancho?: number;
+  alto?: number;
+  /** "lazy" por defecto; usa "eager" solo para la imagen principal del hero. */
+  cargando?: 'lazy' | 'eager';
+  clase?: string;
+  /** Para la imagen LCP. */
+  prioridad?: boolean;
+  [key: string]: unknown;
+}
+
+const {
+  src,
+  alt,
+  ancho,
+  alto,
+  cargando = 'lazy',
+  clase = '',
+  prioridad = false,
+  ...resto
+} = Astro.props as Props;
+
+const esRutaPublica = typeof src === 'string';
+---
+
+{
+  esRutaPublica ? (
+    <img
+      src={recurso(src as string)}
+      alt={alt}
+      width={ancho}
+      height={alto}
+      loading={prioridad ? 'eager' : cargando}
+      decoding={prioridad ? 'sync' : 'async'}
+      fetchpriority={prioridad ? 'high' : undefined}
+      class={clase}
+      {...resto}
+    />
+  ) : (
+    <Image
+      src={src as ImageMetadata}
+      alt={alt}
+      width={ancho}
+      height={alto}
+      loading={prioridad ? 'eager' : cargando}
+      decoding={prioridad ? 'sync' : 'async'}
+      class={clase}
+      {...resto}
+    />
+  )
+}

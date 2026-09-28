@@ -1,0 +1,57 @@
+---
+/**
+ * TarjetaArticulo — estructura semantica de una entrada del diario.
+ *
+ * NEUTRA: sin decisiones visuales. Ganchos data-kp-articulo-*.
+ * Slots: "media", "despues-resumen".
+ */
+import type { CollectionEntry } from 'astro:content';
+import Imagen from './Imagen.astro';
+import { ruta } from '../datos/sitio';
+
+interface Props {
+  articulo: CollectionEntry<'diario'>['data'];
+  clase?: string;
+  prioridad?: boolean;
+  mostrarResumen?: boolean;
+}
+
+const { articulo, clase = '', prioridad = false, mostrarResumen = true } = Astro.props as Props;
+
+const enlace = ruta(`/diario/${articulo.handle}`);
+const iso = articulo.fecha.toISOString().slice(0, 10);
+const fechaLegible = articulo.fecha.toLocaleDateString('es-CO', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<article class={clase} data-kp-articulo>
+  <a href={enlace} data-kp-articulo-enlace>
+    <div data-kp-articulo-media>
+      <slot name="media">
+        {
+          articulo.imagen ? (
+            <Imagen
+              src={articulo.imagen}
+              alt={`Portada de: ${articulo.titulo}`}
+              prioridad={prioridad}
+              clase="w-full h-auto"
+            />
+          ) : (
+            <span data-kp-sin-imagen>Sin imagen</span>
+          )
+        }
+      </slot>
+    </div>
+
+    <div data-kp-articulo-cuerpo>
+      <time datetime={iso} data-kp-articulo-fecha>{fechaLegible}</time>
+      <h3 data-kp-articulo-titulo>{articulo.titulo}</h3>
+      {mostrarResumen && articulo.resumen && <p data-kp-articulo-resumen>{articulo.resumen}</p>}
+      <slot name="despues-resumen" />
+    </div>
+  </a>
+</article>

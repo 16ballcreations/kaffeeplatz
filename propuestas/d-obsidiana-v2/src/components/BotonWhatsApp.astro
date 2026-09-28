@@ -1,0 +1,59 @@
+---
+/**
+ * BotonWhatsApp — el unico canal de venta del sitio.
+ *
+ * NO LO TOQUEN los agentes de diseno salvo para pasarle `clase` y contenido
+ * al slot. La construccion del enlace y el encoding del mensaje son criticos.
+ *
+ * Uso:
+ *   <BotonWhatsApp producto={producto.data} />
+ *   <BotonWhatsApp mensaje="Hola KaffeePlatz, ¿hacen envios a Cali?" />
+ *   <BotonWhatsApp clase="mi-boton">Escríbenos</BotonWhatsApp>
+ */
+import { SITIO } from '../datos/sitio';
+
+interface ProductoMinimo {
+  titulo: string;
+  precioFormateado: string;
+}
+
+interface Props {
+  /** Si se pasa, genera el mensaje precargado de ese producto. */
+  producto?: ProductoMinimo;
+  /** Mensaje explicito. Tiene prioridad sobre `producto`. */
+  mensaje?: string;
+  /** Clases del contenedor <a>. Aqui es donde cada diseno pone su estilo. */
+  clase?: string;
+  /** Atributos extra (aria-label, data-*, etc.). */
+  [key: string]: unknown;
+}
+
+const { producto, mensaje, clase = '', ...resto } = Astro.props as Props;
+
+/** Mensaje generico cuando no hay producto ni mensaje explicito. */
+const MENSAJE_GENERICO = 'Hola KaffeePlatz, quiero más información.';
+
+function mensajeDeProducto(p: ProductoMinimo): string {
+  return `Hola KaffeePlatz, me interesa ${p.titulo} (${p.precioFormateado}). ¿Está disponible?`;
+}
+
+const texto = mensaje ?? (producto ? mensajeDeProducto(producto) : MENSAJE_GENERICO);
+
+/**
+ * encodeURIComponent cubre correctamente tildes, ñ, ¿ y ¡ (UTF-8 percent-encoding).
+ * Ej: "¿Está disponible?" -> "%C2%BFEst%C3%A1%20disponible%3F"
+ */
+const href = `https://wa.me/${SITIO.whatsappNumero}?text=${encodeURIComponent(texto)}`;
+---
+
+<a
+  href={href}
+  class={clase}
+  target="_blank"
+  rel="noopener noreferrer"
+  data-kp-whatsapp
+  aria-label={`Escribir por WhatsApp a ${SITIO.nombre}`}
+  {...resto}
+>
+  <slot>Escríbenos por WhatsApp</slot>
+</a>

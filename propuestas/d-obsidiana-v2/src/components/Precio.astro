@@ -1,0 +1,28 @@
+---
+/**
+ * Precio — muestra un precio ya formateado en COP.
+ *
+ * El formateo se hace en la normalizacion (precioFormateado), no aqui:
+ * asi el HTML del build y el mensaje de WhatsApp siempre coinciden.
+ */
+
+interface Props {
+  /** Ya formateado, p.ej. "$120.000". */
+  precioFormateado: string;
+  /** Valor numerico, para el microdato de schema.org. */
+  precio?: number;
+  /** true cuando hay varias variantes con precios distintos: antepone "Desde". */
+  desde?: boolean;
+  clase?: string;
+  [key: string]: unknown;
+}
+
+const { precioFormateado, precio, desde = false, clase = '', ...resto } = Astro.props as Props;
+---
+
+<span class={clase} data-kp-precio {...resto}>
+  {desde && <span data-kp-precio-prefijo>Desde </span>}
+  <span data-kp-precio-valor>{precioFormateado}</span>
+  {precio !== undefined && <meta itemprop="price" content={String(precio)} />}
+  <span class="sr-only"> pesos colombianos</span>
+</span>

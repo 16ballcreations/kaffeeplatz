@@ -1,0 +1,84 @@
+---
+/**
+ * FormularioContacto — maqueta FUNCIONAL pero SIN BACKEND.
+ *
+ * ESTADO: el `action` no apunta a ningun servicio de envio todavia.
+ * Para conectarlo, pasa `action` con el endpoint (Formspree, Basin, Web3Forms,
+ * una Function...) y quita `avisoPendiente`.
+ *
+ * Mientras no haya backend, el canal real de contacto es WhatsApp.
+ */
+import { SITIO } from '../datos/sitio';
+
+interface Props {
+  /** Endpoint del servicio de envio. Vacio = sin conectar. */
+  action?: string;
+  method?: 'POST' | 'GET';
+  clase?: string;
+  /** Muestra el aviso de "falta conectar el backend". Ponlo a false al conectarlo. */
+  avisoPendiente?: boolean;
+}
+
+const {
+  action = '',
+  method = 'POST',
+  clase = '',
+  avisoPendiente = action === '',
+} = Astro.props as Props;
+---
+
+<div class={clase} data-kp-formulario-contacto>
+  {
+    avisoPendiente && (
+      <p data-kp-aviso role="status">
+        <strong>Pendiente de conexión.</strong> Este formulario está maquetado pero todavía no envía
+        nada: falta conectar el servicio de envío. Mientras tanto, escríbenos por WhatsApp al{' '}
+        {SITIO.whatsappVisible} o a {SITIO.email}.
+      </p>
+    )
+  }
+
+  <form
+    action={action}
+    method={method}
+    data-kp-form
+    novalidate={avisoPendiente}
+    aria-describedby={avisoPendiente ? 'kp-aviso-pendiente' : undefined}
+  >
+    <div data-kp-campo>
+      <label for="kp-nombre">Nombre</label>
+      <input type="text" id="kp-nombre" name="nombre" autocomplete="name" required />
+    </div>
+
+    <div data-kp-campo>
+      <label for="kp-email">Correo electrónico <span aria-hidden="true">*</span></label>
+      <input type="email" id="kp-email" name="email" autocomplete="email" required />
+    </div>
+
+    <div data-kp-campo>
+      <label for="kp-telefono">Número de teléfono</label>
+      <input type="tel" id="kp-telefono" name="telefono" autocomplete="tel" />
+    </div>
+
+    <div data-kp-campo>
+      <label for="kp-comentario">Comentario</label>
+      <textarea id="kp-comentario" name="comentario" rows="5" required></textarea>
+    </div>
+
+    {/* Trampa anti-spam: si se rellena, es un bot. */}
+    <div data-kp-trampa aria-hidden="true" style="position:absolute;left:-9999px;">
+      <label for="kp-website">No rellenes este campo</label>
+      <input type="text" id="kp-website" name="_gotcha" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <button type="submit" data-kp-enviar disabled={avisoPendiente}>Enviar</button>
+
+    {
+      avisoPendiente && (
+        <p id="kp-aviso-pendiente" data-kp-nota>
+          El botón está deshabilitado a propósito hasta conectar el backend.
+        </p>
+      )
+    }
+  </form>
+</div>

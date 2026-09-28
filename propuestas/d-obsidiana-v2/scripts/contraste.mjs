@@ -1,0 +1,100 @@
+/**
+ * contraste.mjs — verifica el ratio WCAG 2.1 de todos los pares texto/fondo
+ * de "Obsidiana II" (propuesta D).
+ *
+ * Los fondos translucidos (cabecera, barra de filtros) se componen contra lo
+ * que tienen detras antes de medir: el ojo ve el color compuesto.
+ * Para el crema con lino se mide contra el crema oscurecido por el tejido al
+ * 30% en multiply, usando el extremo oscuro del tile (medido, no supuesto).
+ *
+ * Uso: node scripts/contraste.mjs   (sale con codigo 1 si algun par falla)
+ */
+
+const hex = (h) => {
+  const v = h.replace('#', '');
+  return [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16));
+};
+
+const sobre = (rgb, a, fondo) => {
+  const f = hex(fondo);
+  return '#' + [0, 1, 2].map((i) => Math.round(rgb[i] * a + f[i] * (1 - a)).toString(16).padStart(2, '0')).join('');
+};
+
+/** multiply de `capa` sobre `base` con opacidad `a`. */
+const multiply = (base, capa, a) => {
+  const b = hex(base);
+  const c = hex(capa);
+  return '#' + [0, 1, 2].map((i) => {
+    const m = (b[i] * c[i]) / 255;
+    return Math.round(m * a + b[i] * (1 - a)).toString(16).padStart(2, '0');
+  }).join('');
+};
+
+const canal = (c) => {
+  const s = c / 255;
+  return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+};
+const lum = (h) => {
+  const [r, g, b] = hex(h);
+  return 0.2126 * canal(r) + 0.7152 * canal(g) + 0.0722 * canal(b);
+};
+const ratio = (a, b) => {
+  const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+// --- Fondos -----------------------------------------------------------------
+const ABISMO = '#0f0e0d';
+const CANVAS = '#151413';
+const SUPERFICIE = '#1c1b19';
+const ELEVADO = '#24221f';
+const ELEVADO_2 = '#2c2926';
+const CREMA = '#fdf7e7';
+// Tile claro medido con sharp: media #c5a793, extremo oscuro (media-2sd) #ab8e7b.
+const CREMA_LINO = multiply(CREMA, '#ab8e7b', 0.3); // peor caso del tejido al 30%
+const ORO = '#dec185';
+// Sobre la franja crema la cabecera siempre esta en estado compacto (hay
+// scroll): abismo al 90%. Arriba del todo (72%) solo tiene detras el hero oscuro.
+const CABECERA = sobre(hex('#0f0e0d'), 0.9, '#fdf7e7');
+const FILTROS = sobre(hex('#151413'), 0.94, '#fdf7e7');
+
+// --- Tintas -----------------------------------------------------------------
+const TINTA = '#fdf7e7';
+const TINTA_2 = '#b9b1a2';
+const TINTA_3 = '#9a9384';
+const TINTA_OSCURA = '#1a1a1a';
+const TINTA_OSCURA_2 = '#5c4c3e';
+const ORO_LEGIBLE = '#8f6724';
+
+const oscuros = { ABISMO, CANVAS, SUPERFICIE, ELEVADO, ELEVADO_2 };
+const pares = [];
+for (const [n, f] of Object.entries(oscuros)) {
+  pares.push([`tinta / ${n}`, TINTA, f, 4.5]);
+  pares.push([`tinta-2 / ${n}`, TINTA_2, f, 4.5]);
+  pares.push([`tinta-3 / ${n}`, TINTA_3, f, 4.5]);
+  pares.push([`oro (texto) / ${n}`, ORO, f, 4.5]);
+}
+pares.push(
+  ['tinta-oscura / oro (boton relleno)', TINTA_OSCURA, ORO, 4.5],
+  ['crema / tinta-oscura (boton sobre crema)', TINTA, TINTA_OSCURA, 4.5],
+  ['tinta-oscura / crema', TINTA_OSCURA, CREMA, 4.5],
+  ['tinta-oscura-2 / crema', TINTA_OSCURA_2, CREMA, 4.5],
+  ['oro-legible / crema', ORO_LEGIBLE, CREMA, 4.5],
+  ['tinta-oscura / crema+lino', TINTA_OSCURA, CREMA_LINO, 4.5],
+  ['tinta-oscura-2 / crema+lino', TINTA_OSCURA_2, CREMA_LINO, 4.5],
+  ['oro-legible / crema+lino (titulos >=24px)', ORO_LEGIBLE, CREMA_LINO, 3],
+  ['crema / tinta-oscura (cinta Agotado)', CREMA, TINTA_OSCURA, 4.5],
+  ['tinta-2 / cabecera compacta sobre crema', TINTA_2, CABECERA, 4.5],
+  ['tinta-2 / barra de filtros (peor caso)', TINTA_2, FILTROS, 4.5],
+);
+
+let fallos = 0;
+console.log(`crema+lino compuesto: ${CREMA_LINO}\n`);
+for (const [nombre, t, f, min] of pares) {
+  const r = ratio(t, f);
+  const ok = r >= min;
+  if (!ok) fallos++;
+  console.log(`${ok ? 'OK  ' : 'FALLA'} ${r.toFixed(2).padStart(6)}:1  (min ${min})  ${nombre}`);
+}
+console.log(`\n${pares.length - fallos}/${pares.length} pares pasan AA.`);
+process.exit(fallos ? 1 : 0);

@@ -28,11 +28,11 @@ jobs:
       - name: Instalar dependencias
         run: npm ci
 
-      - name: Construir las tres propuestas
+      - name: Construir las propuestas
         run: |
           set -e
           mkdir -p publico
-          for p in a-imprenta b-galeria c-obsidiana; do
+          for p in a-imprenta b-galeria c-obsidiana d-obsidiana-v2; do
             echo "::group::$p"
             (cd "propuestas/$p" && ln -sfn ../../node_modules node_modules && npm run build)
             cp -rL "propuestas/$p/dist" "publico/$p"

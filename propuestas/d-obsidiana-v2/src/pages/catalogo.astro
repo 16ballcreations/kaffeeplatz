@@ -1,0 +1,255 @@
+---
+/**
+ * /catalogo — Catalogo completo. Propuesta D "OBSIDIANA II".
+ *
+ * Frente a C:
+ *   - Barra de herramientas fija: categoria + orden + "solo disponibles".
+ *   - La categoria se refleja en la URL (?categoria=metodos), asi que se puede
+ *     enlazar desde la portada y compartir por WhatsApp una vista filtrada.
+ *   - Rejilla de 3 columnas con fotos mas grandes; 2 en movil.
+ *   - Una ficha de asesoria intercalada en la rejilla: convierte la duda
+ *     ("¿cual me llevo?") en conversacion.
+ *
+ * Todo el filtrado y ordenado es en cliente y sin framework: se reordenan y
+ * ocultan los <li> existentes, no se reconstruye nada. Sin JS la barra no
+ * aparece y la rejilla muestra los 25 productos en el orden recomendado.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import TarjetaProducto from '../components/TarjetaProducto.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import Icono from '../components/Icono.astro';
+import { ruta, SITIO } from '../datos/sitio';
+import { CATEGORIAS } from '../datos/categorias';
+
+/* Orden recomendado: disponibles primero, luego destacados, luego alfabetico. */
+const productos = (await getCollection('productos')).sort((a, b) => {
+  if (a.data.disponible !== b.data.disponible) return a.data.disponible ? -1 : 1;
+  if (!!a.data.destacado !== !!b.data.destacado) return a.data.destacado ? -1 : 1;
+  return a.data.titulo.localeCompare(b.data.titulo, 'es');
+});
+
+const conteo = new Map<string, number>();
+for (const p of productos) conteo.set(p.data.categoria, (conteo.get(p.data.categoria) ?? 0) + 1);
+
+const categorias = CATEGORIAS.filter((c) => (conteo.get(c.id) ?? 0) > 0).sort(
+  (a, b) => a.orden - b.orden,
+);
+const disponibles = productos.filter((p) => p.data.disponible).length;
+
+/* Posicion de la ficha de asesoria dentro de la rejilla. */
+const POS_ASESORIA = 5;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Catálogo KaffeePlatz',
+  numberOfItems: productos.length,
+  itemListElement: productos.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: p.data.titulo,
+    url: new URL(ruta(`/producto/${p.data.handle}`), Astro.site).toString(),
+  })),
+};
+---
+
+<Base
+  titulo="Catálogo"
+  descripcion="Todos los accesorios de café de especialidad de KaffeePlatz: métodos, filtros, hervidores, grameras y utensilios."
+  camino="/catalogo"
+  migas={[{ nombre: 'Catálogo', href: '/catalogo' }]}
+  jsonLd={jsonLd}
+>
+  <header data-kp-seccion="encabezado" class="v-encabezado v-limite">
+    <h1 class="v-entra">Catálogo</h1>
+    <p class="v-encabezado__texto v-entra" style="--d:1">
+      <span class="v-num">{productos.length}</span> accesorios para preparar café en casa,
+      <span class="v-num">{disponibles}</span> disponibles hoy. Si buscas algo que no está aquí,
+      escríbenos y lo conseguimos.
+    </p>
+  </header>
+
+  <section aria-label="Productos" class="v-limite v-catalogo">
+    <div class="v-herramientas" data-v-herramientas hidden>
+      <h2 class="sr-only" id="t-filtros">Filtrar y ordenar productos</h2>
+      <div class="v-herramientas__fila" role="group" aria-labelledby="t-filtros">
+        <div class="v-pildoras" data-v-cats>
+          <button type="button" data-cat="todos" aria-pressed="true">
+            Todo <span class="v-num">{productos.length}</span>
+          </button>
+          {
+            categorias.map((c) => (
+              <button type="button" data-cat={c.id} aria-pressed="false">
+                {c.nombre} <span class="v-num">{conteo.get(c.id)}</span>
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="v-herramientas__ajustes">
+          <label class="v-interruptor">
+            <input type="checkbox" data-v-disponibles />
+            <span class="v-interruptor__pista" aria-hidden="true"></span>
+            <span>Solo disponibles</span>
+          </label>
+
+          <label class="v-selector">
+            <span class="sr-only">Ordenar por</span>
+            <select data-v-orden>
+              <option value="recomendado">Recomendados</option>
+              <option value="precio-asc">Precio: menor a mayor</option>
+              <option value="precio-desc">Precio: mayor a menor</option>
+            </select>
+            <Icono nombre="caret" tam={16} />
+          </label>
+        </div>
+      </div>
+      <p class="v-herramientas__estado" data-v-estado aria-live="polite"></p>
+    </div>
+
+    <ul data-kp-rejilla="productos" class="v-rejilla" data-v-rejilla>
+      {
+        productos.map((p, i) => (
+          <>
+            {i === POS_ASESORIA && (
+              <li class="v-asesoria" data-v-asesoria>
+                <div class="v-asesoria__interior">
+                  <Icono nombre="conversacion" tam={32} />
+                  <h2>¿Dudas entre dos?</h2>
+                  <p>
+                    Cuéntanos qué taza buscas y te decimos cuál llevarte. Te responde {SITIO.dueña}.
+                  </p>
+                  <BotonWhatsApp
+                    clase="v-boton v-boton--oro v-boton--sm"
+                    mensaje="Hola KaffeePlatz, estoy mirando el catálogo y tengo dudas entre dos productos. ¿Me ayudan?"
+                  >
+                    <Icono nombre="whatsapp" tam={18} />
+                    <span>Pedir consejo</span>
+                  </BotonWhatsApp>
+                </div>
+              </li>
+            )}
+            <li
+              data-categoria={p.data.categoria}
+              data-precio={p.data.precio}
+              data-disponible={String(p.data.disponible)}
+              data-orden={i}
+            >
+              <TarjetaProducto producto={p.data} prioridad={i < 3} />
+            </li>
+          </>
+        ))
+      }
+    </ul>
+
+    <div class="v-vacio" data-v-vacio hidden>
+      <h2>No hay productos con esos filtros</h2>
+      <p>Prueba con otra categoría o quita "Solo disponibles". Y si buscas algo concreto, pregúntanos.</p>
+      <button type="button" class="v-boton v-boton--linea v-boton--sm" data-v-limpiar>
+        Quitar filtros
+      </button>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const barra = document.querySelector<HTMLElement>('[data-v-herramientas]');
+  const rejilla = document.querySelector<HTMLElement>('[data-v-rejilla]');
+
+  if (barra && rejilla) {
+    barra.hidden = false;
+
+    const cats = Array.from(barra.querySelectorAll<HTMLButtonElement>('[data-cat]'));
+    const soloDisp = barra.querySelector<HTMLInputElement>('[data-v-disponibles]')!;
+    const orden = barra.querySelector<HTMLSelectElement>('[data-v-orden]')!;
+    const estado = barra.querySelector<HTMLElement>('[data-v-estado]')!;
+    const vacio = document.querySelector<HTMLElement>('[data-v-vacio]');
+    const asesoria = rejilla.querySelector<HTMLElement>('[data-v-asesoria]');
+    const items = Array.from(rejilla.querySelectorAll<HTMLElement>('li[data-categoria]'));
+    const POS = 5;
+
+    const validas = new Set(cats.map((b) => b.dataset.cat));
+    const leerURL = () => {
+      const c = new URLSearchParams(location.search).get('categoria');
+      return c && validas.has(c) ? c : 'todos';
+    };
+
+    let cat = leerURL();
+
+    const aplicar = (escribirURL: boolean) => {
+      /* 1. Orden. Se reinsertan los <li> en el nuevo orden: mover nodos no
+         vuelve a descargar las imagenes. */
+      const criterio = orden.value;
+      const ordenados = [...items].sort((a, b) => {
+        if (criterio === 'recomendado') return Number(a.dataset.orden) - Number(b.dataset.orden);
+        const pa = Number(a.dataset.precio);
+        const pb = Number(b.dataset.precio);
+        return criterio === 'precio-asc' ? pa - pb : pb - pa;
+      });
+
+      /* 2. Filtro. */
+      let visibles = 0;
+      for (const li of ordenados) {
+        const ok =
+          (cat === 'todos' || li.dataset.categoria === cat) &&
+          (!soloDisp.checked || li.dataset.disponible === 'true');
+        li.hidden = !ok;
+        if (ok) visibles++;
+      }
+
+      /* 3. La asesoria va tras el quinto producto VISIBLE; si hay pocos,
+         al final. Nunca sola en una rejilla vacia. */
+      const frag = document.createDocumentFragment();
+      let vistos = 0;
+      for (const li of ordenados) {
+        frag.append(li);
+        if (!li.hidden && ++vistos === POS && asesoria) frag.append(asesoria);
+      }
+      if (asesoria && vistos < POS) frag.append(asesoria);
+      rejilla.append(frag);
+      if (asesoria) asesoria.hidden = visibles === 0;
+
+      for (const b of cats) b.setAttribute('aria-pressed', String(b.dataset.cat === cat));
+      if (vacio) vacio.hidden = visibles > 0;
+      estado.textContent = `${visibles} ${visibles === 1 ? 'producto' : 'productos'}`;
+
+      if (escribirURL) {
+        const url = new URL(location.href);
+        if (cat === 'todos') url.searchParams.delete('categoria');
+        else url.searchParams.set('categoria', cat);
+        history.replaceState(null, '', url);
+      }
+    };
+
+    /* Centra la pildora activa en su carril horizontal (movil) sin mover
+       la pagina en vertical, cosa que scrollIntoView si haria. */
+    const pildoras = barra.querySelector<HTMLElement>('[data-v-cats]')!;
+    const centrar = (b: HTMLElement | null, suave: boolean) => {
+      if (!b) return;
+      pildoras.scrollTo({
+        left: b.offsetLeft - (pildoras.clientWidth - b.offsetWidth) / 2,
+        behavior: suave ? 'smooth' : 'auto',
+      });
+    };
+
+    pildoras.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-cat]');
+      if (!b?.dataset.cat) return;
+      cat = b.dataset.cat;
+      aplicar(true);
+      centrar(b, true);
+    });
+    soloDisp.addEventListener('change', () => aplicar(false));
+    orden.addEventListener('change', () => aplicar(false));
+    document.querySelector('[data-v-limpiar]')?.addEventListener('click', () => {
+      cat = 'todos';
+      soloDisp.checked = false;
+      aplicar(true);
+    });
+
+    aplicar(false);
+    /* Si se llego con ?categoria=, la pildora activa debe verse en movil. */
+    centrar(pildoras.querySelector<HTMLElement>('[aria-pressed="true"]'), false);
+  }
+</script>

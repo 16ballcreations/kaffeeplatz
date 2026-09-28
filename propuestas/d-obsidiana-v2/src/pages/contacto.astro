@@ -1,0 +1,111 @@
+---
+/**
+ * /contacto — Propuesta D "OBSIDIANA II".
+ *
+ * WhatsApp es el canal real y manda visualmente: tarjeta protagonista con la
+ * accion rellena. Correo, horario y ubicacion quedan como canales de apoyo.
+ * El formulario sigue siendo maqueta sin backend (ver FormularioContacto).
+ * Tiempos de envio: contenido-original/datos/politicas/.
+ */
+import Base from '../layouts/Base.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import FormularioContacto from '../components/FormularioContacto.astro';
+import Icono from '../components/Icono.astro';
+import { SITIO } from '../datos/sitio';
+import { ENVIOS } from '../datos/guias';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ContactPage',
+  name: 'Contacto KaffeePlatz',
+  description: 'Cómo contactar con KaffeePlatz: WhatsApp, correo y horario de atención.',
+};
+---
+
+<Base
+  titulo="Contacto"
+  descripcion="Escríbenos por WhatsApp al +57 301 380 9886 o a kaffeeplatz28@gmail.com. Atendemos de lunes a viernes, 9:00 a.m. a 6:00 p.m."
+  camino="/contacto"
+  migas={[{ nombre: 'Contacto', href: '/contacto' }]}
+  jsonLd={jsonLd}
+  sinFlotante
+>
+  <header data-kp-seccion="encabezado" class="v-encabezado v-limite">
+    <h1 class="v-entra">Hablemos</h1>
+    <p class="v-encabezado__texto v-entra" style="--d:1">
+      Aquí no hay carrito ni pasarela de pago: cada pedido se cierra hablando con nosotros. Cuéntanos
+      qué buscas y te ayudamos a elegir.
+    </p>
+  </header>
+
+  <section data-kp-seccion="canales" aria-labelledby="t-canales" class="v-limite v-contacto">
+    <h2 id="t-canales" class="sr-only">Canales directos</h2>
+    <div class="v-contacto__wa" data-v-revelar>
+      <Icono nombre="whatsapp" tam={40} />
+      <h3>WhatsApp</h3>
+      <p>La vía más rápida. Te responde {SITIO.dueña}.</p>
+      <p class="v-contacto__numero v-num">{SITIO.whatsappVisible}</p>
+      <BotonWhatsApp clase="v-boton v-boton--oro">
+        <span>Abrir WhatsApp</span>
+        <span class="v-boton__icono"><Icono nombre="flechaDiagonal" tam={18} /></span>
+      </BotonWhatsApp>
+    </div>
+
+    <ul class="v-contacto__apoyo">
+      <li data-v-revelar style="--d:1">
+        <Icono nombre="correo" tam={24} />
+        <div>
+          <h3>Correo</h3>
+          <p>Para pedidos especiales, facturación o incidencias con un envío.</p>
+          <p><a href={`mailto:${SITIO.email}`}>{SITIO.email}</a></p>
+        </div>
+      </li>
+      <li data-v-revelar style="--d:2">
+        <Icono nombre="reloj" tam={24} />
+        <div>
+          <h3>Horario de atención</h3>
+          <p>Lunes a viernes, de 9:00 a.m. a 6:00 p.m. (hora de Colombia).</p>
+        </div>
+      </li>
+      <li data-v-revelar style="--d:3">
+        <Icono nombre="mapa" tam={24} />
+        <div>
+          <h3>Dónde estamos</h3>
+          <p>{SITIO.ciudad}. Atendemos 100% en línea, sin punto físico de venta.</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section data-kp-seccion="envios" aria-labelledby="t-envios" class="v-franja-crema v-lino-claro">
+    <div class="v-limite v-envios" data-v-revelar>
+      <div>
+        <h2 id="t-envios" class="v-titulo">Envíos a todo <em>Colombia</em></h2>
+        <p>Enviamos a todo el territorio colombiano con transportadoras certificadas.</p>
+        <p>
+          El costo del envío depende del destino y del peso del pedido; te lo confirmamos al cerrar
+          la compra. Si tu pedido llega con el empaque dañado, escríbenos de inmediato a {SITIO.email}
+          con fotos de lo que recibiste.
+        </p>
+      </div>
+      <dl class="v-envios__tabla">
+        {
+          ENVIOS.map((e) => (
+            <div>
+              <dt>{e.zona}</dt>
+              <dd class="v-num">{e.plazo}</dd>
+            </div>
+          ))
+        }
+      </dl>
+    </div>
+  </section>
+
+  <section data-kp-seccion="formulario" aria-labelledby="t-formulario" class="v-seccion v-limite">
+    <div class="v-prosa">
+      <h2 id="t-formulario" class="v-titulo">Escríbenos por <em>formulario</em></h2>
+      <p>¿Prefieres dejarnos el mensaje por escrito? Rellena esto y te respondemos.</p>
+      <FormularioContacto clase="v-formulario" />
+    </div>
+  </section>
+</Base>
