@@ -1,0 +1,464 @@
+{
+  "/img/diario/7-errores-comunes-al-preparar-cafe-en-casa-y-como-evitarlos.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/aeropress-el-metodo-perfecto-para-preparar-cafe-de-especialidad-en-casa.png": {
+    "ancho": 1024,
+    "alto": 1536,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/cafe-de-especialidad-en-casa-como-un-buen-equipo-eleva-tu-experiencia-cafetera.jpg": {
+    "ancho": 1445,
+    "alto": 962,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/cold-brew-la-revolucion-del-cafe-frio-que-todos-quieren-probar-en-2025.jpg": {
+    "ancho": 1022,
+    "alto": 1023,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/el-cafe-la-segunda-bebida-mas-consumida-en-el-mundo.png": {
+    "ancho": 1536,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/el-metodo-de-preparacion-que-conquisto-al-mundo-del-cafe.png": {
+    "ancho": 1024,
+    "alto": 1536,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/guia-definitiva-para-conservar-tu-cafe-siempre-fresco.png": {
+    "ancho": 1536,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/guia-practica-que-tipo-de-molienda-usar-para-cada-metodo-de-cafe.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/los-mejores-accesorios-para-mejorar-tu-experiencia-de-cafe-en-casa.png": {
+    "ancho": 1536,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/por-que-el-origen-del-grano-importa-en-el-sabor-del-cafe-2.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/prensa-francesa-cafe-con-cuerpo-sabor-intenso-y-preparacion-sin-complicaciones.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/que-cafe-va-mejor-con-cada-metodo-de-preparacion-guia-practica-para-sacarle-el-maximo-sabor.png": {
+    "ancho": 1536,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/que-es-el-cafe-de-especialidad-y-por-que-deberias-probarlo.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/que-molienda-usar-para-cada-metodo-de-cafe-la-clave-para-una-taza-perfecta.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/diario/v60-el-metodo-para-lograr-una-taza-limpia-delicada-y-perfecta-en-casa.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/marca/emblema-sm.png": {
+    "ancho": 320,
+    "alto": 320,
+    "anchos": []
+  },
+  "/img/marca/emblema.png": {
+    "ancho": 1200,
+    "alto": 1200,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/marca/icono.png": {
+    "ancho": 180,
+    "alto": 180,
+    "anchos": []
+  },
+  "/img/marca/lino-tile-claro.png": {
+    "ancho": 512,
+    "alto": 512,
+    "anchos": [
+      320
+    ]
+  },
+  "/img/marca/lino-tile.png": {
+    "ancho": 512,
+    "alto": 512,
+    "anchos": [
+      320
+    ]
+  },
+  "/img/marca/planta-crema.png": {
+    "ancho": 900,
+    "alto": 938,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/marca/planta-marron.png": {
+    "ancho": 900,
+    "alto": 939,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/marca/planta-oro.png": {
+    "ancho": 900,
+    "alto": 1245,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/marca/tagline-planta.png": {
+    "ancho": 1290,
+    "alto": 1600,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/marca/textura-lino.png": {
+    "ancho": 635,
+    "alto": 450,
+    "anchos": [
+      320
+    ]
+  },
+  "/img/marca/wordmark.png": {
+    "ancho": 640,
+    "alto": 130,
+    "anchos": [
+      320
+    ]
+  },
+  "/img/productos/aeropress-clear/aeropress-clear-1.jpg": {
+    "ancho": 958,
+    "alto": 957,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/aeropress-clear/aeropress-clear-2.jpg": {
+    "ancho": 1600,
+    "alto": 1600,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/aeropress-clear/aeropress-clear-3.jpg": {
+    "ancho": 1600,
+    "alto": 1600,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/aeropress/aeropress-1.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/chemex/chemex-1.jpg": {
+    "ancho": 643,
+    "alto": 643,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/chemex/chemex-2.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/dripper-de-vidrio/dripper-de-vidrio-1.png": {
+    "ancho": 999,
+    "alto": 1000,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/dripper-de-vidrio/dripper-de-vidrio-2.jpg": {
+    "ancho": 1000,
+    "alto": 1364,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/dripper-flor-de-loto/dripper-flor-de-loto-1.jpg": {
+    "ancho": 768,
+    "alto": 768,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/filtro-acero-para-aeropress/filtro-acero-para-aeropress-1.jpg": {
+    "ancho": 1110,
+    "alto": 1110,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/filtro-de-acero-chemex-3-tazas/filtro-de-acero-chemex-3-tazas-1.jpg": {
+    "ancho": 1079,
+    "alto": 1080,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/filtro-de-acero-v60/filtro-de-acero-v60-1.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/filtros-chemex/filtros-chemex-1.jpg": {
+    "ancho": 679,
+    "alto": 656,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/filtros-v60/filtros-v60-1.jpg": {
+    "ancho": 1026,
+    "alto": 1027,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/grameras-digital/grameras-digital-1.jpg": {
+    "ancho": 522,
+    "alto": 522,
+    "anchos": [
+      320
+    ]
+  },
+  "/img/productos/hario-switch/hario-switch-1.jpg": {
+    "ancho": 768,
+    "alto": 767,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/hario-v60-mugen/hario-v60-mugen-1.jpg": {
+    "ancho": 768,
+    "alto": 767,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/hervidor-brewista/hervidor-brewista-1.png": {
+    "ancho": 1063,
+    "alto": 987,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/hervidor-mango-de-madera/hervidor-mango-de-madera-1.png": {
+    "ancho": 755,
+    "alto": 755,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/mate-de-acero-inoxidable/mate-de-acero-inoxidable-1.png": {
+    "ancho": 767,
+    "alto": 767,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/micro-filters-aeroprees/micro-filters-aeroprees-1.png": {
+    "ancho": 1024,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/molino-manual-timemore-c3-esp-pro/molino-manual-timemore-c3-esp-pro-1.jpg": {
+    "ancho": 765,
+    "alto": 764,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/prensa-francesa-acero-inoxidable/prensa-francesa-acero-inoxidable-1.png": {
+    "ancho": 1031,
+    "alto": 1017,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/prensa-francesa/prensa-francesa-1.jpg": {
+    "ancho": 768,
+    "alto": 767,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/server/server-1.jpg": {
+    "ancho": 894,
+    "alto": 941,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/set-hario-v60/set-hario-v60-1.jpg": {
+    "ancho": 768,
+    "alto": 767,
+    "anchos": [
+      320,
+      640
+    ]
+  },
+  "/img/productos/termometro/termometro-1.png": {
+    "ancho": 1080,
+    "alto": 942,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/termometro/termometro-2.png": {
+    "ancho": 1075,
+    "alto": 961,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  },
+  "/img/productos/v60-de-vidrio/v60-de-vidrio-1.jpg": {
+    "ancho": 1023,
+    "alto": 1024,
+    "anchos": [
+      320,
+      640,
+      960
+    ]
+  }
+}

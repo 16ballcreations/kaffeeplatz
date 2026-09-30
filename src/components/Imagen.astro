@@ -1,17 +1,23 @@
 ---
 /**
- * Imagen — envoltorio de <Image> de astro:assets.
+ * Imagen — <img> optimizado para las imagenes de public/img.
  *
  * `alt` es OBLIGATORIO (lo exige el tipo). Por defecto carga en lazy.
  *
- * Las imagenes del catalogo viven en public/img/ y se referencian por ruta
- * absoluta ("/img/..."). astro:assets no optimiza ficheros de public/, asi que
- * para esas se emite un <img> nativo con el `base` ya aplicado. Si un diseno
- * importa una imagen desde src/assets/ y pasa el ImageMetadata, se optimiza
- * con sharp automaticamente.
+ * Para rutas de public/ ("/img/...") pinta la version WebP con `srcset`
+ * (320/640/960/completa, ver src/datos/imagenes.ts) y el navegador descarga
+ * solo el ancho que necesita segun `tamanos`. Tambien emite width/height
+ * reales para reservar el hueco antes de que llegue la foto.
+ *
+ * `tamanos` es el atributo `sizes`: cuanto ocupa la imagen en pantalla. Pasalo
+ * siempre que la imagen no ocupe todo el ancho, o el navegador bajara la
+ * version grande.
+ *
+ * Si se pasa un ImageMetadata importado de src/assets/, lo optimiza
+ * astro:assets.
  */
 import { Image } from 'astro:assets';
-import { recurso, optimizada } from '../datos/sitio';
+import { fuentes } from '../datos/imagenes';
 
 interface Props {
   /** Ruta "/img/..." de public/, o un ImageMetadata importado de src/assets/. */
@@ -20,6 +26,8 @@ interface Props {
   alt: string;
   ancho?: number;
   alto?: number;
+  /** Atributo `sizes`. Por defecto, todo el ancho de la ventana. */
+  tamanos?: string;
   /** "lazy" por defecto; usa "eager" solo para la imagen principal del hero. */
   cargando?: 'lazy' | 'eager';
   clase?: string;
@@ -33,6 +41,7 @@ const {
   alt,
   ancho,
   alto,
+  tamanos = '100vw',
   cargando = 'lazy',
   clase = '',
   prioridad = false,
@@ -40,15 +49,18 @@ const {
 } = Astro.props as Props;
 
 const esRutaPublica = typeof src === 'string';
+const f = esRutaPublica ? fuentes(src as string) : undefined;
 ---
 
 {
-  esRutaPublica ? (
+  f ? (
     <img
-      src={recurso(optimizada(src as string))}
+      src={f.src}
+      srcset={f.srcset}
+      sizes={f.srcset ? tamanos : undefined}
       alt={alt}
-      width={ancho}
-      height={alto}
+      width={ancho ?? f.ancho}
+      height={alto ?? f.alto}
       loading={prioridad ? 'eager' : cargando}
       decoding={prioridad ? 'sync' : 'async'}
       fetchpriority={prioridad ? 'high' : undefined}

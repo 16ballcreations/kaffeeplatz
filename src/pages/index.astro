@@ -23,7 +23,8 @@ import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import Imagen from '../components/Imagen.astro';
 import Precio from '../components/Precio.astro';
 import Icono from '../components/Icono.astro';
-import { SITIO, ruta, recurso, optimizada } from '../datos/sitio';
+import { SITIO, ruta, recurso } from '../datos/sitio';
+import { fuentes } from '../datos/imagenes';
 import { CATEGORIAS } from '../datos/categorias';
 import { METODOS } from '../datos/guias';
 
@@ -63,6 +64,7 @@ const fecha = (d: Date) =>
   d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 const heroProducto = porHandle.get(HERO);
+const heroFoto = heroProducto?.imagenes[0] ? fuentes(heroProducto.imagenes[0].src) : undefined;
 ---
 
 <Base
@@ -98,10 +100,12 @@ const heroProducto = porHandle.get(HERO);
           {
             heroProducto?.imagenes[0] && (
               <img
-                src={recurso(optimizada(heroProducto.imagenes[0].src))}
+                src={heroFoto!.src}
+                srcset={heroFoto!.srcset}
+                sizes="(max-width: 520px) 76vw, (max-width: 860px) 340px, 460px"
                 alt={heroProducto.imagenes[0].alt}
-                width="900"
-                height="900"
+                width={heroFoto!.ancho}
+                height={heroFoto!.alto}
                 loading="eager"
                 decoding="sync"
                 fetchpriority="high"
@@ -207,7 +211,11 @@ const heroProducto = porHandle.get(HERO);
               >
                 <div class="v-marco v-metodo__foto">
                   {estrella?.imagenes[0] && (
-                    <Imagen src={estrella.imagenes[0].src} alt={estrella.imagenes[0].alt} />
+                    <Imagen
+                      src={estrella.imagenes[0].src}
+                      alt={estrella.imagenes[0].alt}
+                      tamanos="(max-width: 640px) 90vw, (max-width: 960px) 45vw, 360px"
+                    />
                   )}
                 </div>
                 <div class="v-metodo__info">
@@ -257,7 +265,17 @@ const heroProducto = porHandle.get(HERO);
           <li class={`v-mosaico__celda v-mosaico__celda--${i + 1}`} data-v-revelar style={`--d:${i % 3}`}>
             <a href={`${ruta('/catalogo')}?categoria=${c.id}`}>
               <div class="v-mosaico__foto">
-                {c.imagen && <Imagen src={c.imagen.src} alt="" />}
+                {c.imagen && (
+                  <Imagen
+                    src={c.imagen.src}
+                    alt=""
+                    tamanos={
+                      i === 0
+                        ? "(max-width: 560px) 90vw, (max-width: 1024px) 90vw, 600px"
+                        : "(max-width: 560px) 45vw, 300px"
+                    }
+                  />
+                )}
               </div>
               <div class="v-mosaico__texto">
                 <h3>{c.nombre}</h3>
@@ -341,7 +359,9 @@ const heroProducto = porHandle.get(HERO);
         principal && (
           <a href={ruta(`/diario/${principal.data.handle}`)} class="v-editorial__principal" data-v-revelar>
             <div class="v-editorial__foto">
-              {principal.data.imagen && <Imagen src={principal.data.imagen} alt="" />}
+              {principal.data.imagen && (
+                <Imagen src={principal.data.imagen} alt="" tamanos="(max-width: 860px) 94vw, 740px" />
+              )}
             </div>
             <time datetime={principal.data.fecha.toISOString().slice(0, 10)}>
               {fecha(principal.data.fecha)}
@@ -357,7 +377,7 @@ const heroProducto = porHandle.get(HERO);
             <li data-v-revelar style={`--d:${i}`}>
               <a href={ruta(`/diario/${a.data.handle}`)}>
                 <div class="v-editorial__mini">
-                  {a.data.imagen && <Imagen src={a.data.imagen} alt="" />}
+                  {a.data.imagen && <Imagen src={a.data.imagen} alt="" tamanos="96px" />}
                 </div>
                 <div>
                   <time datetime={a.data.fecha.toISOString().slice(0, 10)}>{fecha(a.data.fecha)}</time>

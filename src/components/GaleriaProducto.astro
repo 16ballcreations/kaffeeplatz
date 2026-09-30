@@ -59,7 +59,7 @@
  * Los vinculos que apunten a una variante inexistente se ignoran aqui mismo,
  * en el servidor: mas vale una galeria sin vinculo que un vinculo roto.
  */
-import { recurso, optimizada } from '../datos/sitio';
+import { fuentes, miniatura } from '../datos/imagenes';
 
 interface ImagenProducto {
   src: string;
@@ -90,6 +90,11 @@ const principal = imgs[0];
 /* Un producto de una sola foto no necesita indice de fotos: 21 de los 25
    estan en este caso y una fila de una miniatura solo seria ruido. */
 const hayMiniaturas = imgs.length > 1;
+
+/* Ancho del visor en pantalla: media columna en escritorio, todo el ancho
+   en movil. Con esto el navegador elige del srcset (320/640/960/1600). */
+const TAMANOS = '(max-width: 860px) 94vw, 640px';
+const f0 = fuentes(principal?.src ?? '');
 ---
 
 {
@@ -102,7 +107,11 @@ const hayMiniaturas = imgs.length > 1;
       <div data-kp-galeria-principal>
         <img
           data-kp-galeria-img
-          src={recurso(optimizada(principal.src))}
+          src={f0.src}
+          srcset={f0.srcset}
+          sizes={f0.srcset ? TAMANOS : undefined}
+          width={f0.ancho}
+          height={f0.alto}
           alt={principal.alt}
           loading="eager"
           decoding="sync"
@@ -125,11 +134,12 @@ const hayMiniaturas = imgs.length > 1;
               <a
                 data-kp-galeria-mini
                 data-indice={String(i)}
-                data-src={recurso(optimizada(img.src))}
+                data-src={fuentes(img.src).src}
+                data-srcset={fuentes(img.src).srcset}
                 data-alt={img.alt}
                 data-variante={img.variante}
-                href={recurso(optimizada(img.src))}
-                style={`background-image: url("${recurso(optimizada(img.src))}")`}
+                href={fuentes(img.src).src}
+                style={`background-image: url("${miniatura(img.src)}")`}
               >
                 {/* LA FOTO DE LA MINIATURA SE PINTA COMO `background-image`
                     (arriba, en el style del <a>), no con este <img>.
@@ -152,7 +162,7 @@ const hayMiniaturas = imgs.length > 1;
                     oculta con `opacity: 0` en la hoja de estilos y NO con
                     `display:none` ni `visibility:hidden`, que lo sacarian del
                     arbol de accesibilidad. */}
-                <img src={recurso(optimizada(img.src))} alt={img.alt} loading="eager" decoding="async" />
+                <img src={miniatura(img.src)} alt={img.alt} loading="eager" decoding="async" />
               </a>
             </li>
           ))}
@@ -218,6 +228,10 @@ const hayMiniaturas = imgs.length > 1;
       const alt = mini.dataset.alt;
       if (!src) return;
 
+      /* srcset primero: si se cambiara solo src, el navegador seguiria
+         eligiendo del srcset de la foto anterior. */
+      if (mini.dataset.srcset) grande.srcset = mini.dataset.srcset;
+      else grande.removeAttribute('srcset');
       grande.src = src;
       /* El alt viaja con la foto: si la imagen grande cambia y el alt no, un
          lector de pantalla describiria la foto anterior. */

@@ -98,7 +98,13 @@ const jsonLd = {
     {
       d.imagen && (
         <figure data-kp-articulo-portada>
-          <Imagen src={d.imagen} alt={`Portada de: ${d.titulo}`} prioridad clase="w-full h-auto" />
+          <Imagen
+            src={d.imagen}
+            alt={`Portada de: ${d.titulo}`}
+            prioridad
+            clase="w-full h-auto"
+            tamanos="(max-width: 1100px) 94vw, 1024px"
+          />
         </figure>
       )
     }

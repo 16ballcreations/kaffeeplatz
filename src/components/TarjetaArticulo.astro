@@ -38,6 +38,7 @@ const fechaLegible = articulo.fecha.toLocaleDateString('es-CO', {
               src={articulo.imagen}
               alt={`Portada de: ${articulo.titulo}`}
               prioridad={prioridad}
+              tamanos="(max-width: 600px) 92vw, (max-width: 1024px) 46vw, 420px"
               clase="w-full h-auto"
             />
           ) : (

@@ -47,6 +47,9 @@ const hayRango = new Set(producto.variantes.map((v) => v.precio)).size > 1;
 const categoria = categoriaPorId(producto.categoria).nombre;
 const opciones = resumenOpciones(producto.opciones);
 /** Foto con fondo propio (JPG en origen) frente a recorte sobre blanco. */
+/** Ancho en pantalla de la foto de la tarjeta: 3 columnas de ~400 px en
+    escritorio, 2 en tableta, carril de 78vw o rejilla de 2 en movil. */
+const TAMANOS = "(max-width: 640px) 78vw, (max-width: 1024px) 45vw, 400px";
 const esFoto = (src: string) => (/\.jpe?g$/i.test(src) ? 'true' : undefined);
 ---
 
@@ -64,6 +67,7 @@ const esFoto = (src: string) => (/\.jpe?g$/i.test(src) ? 'true' : undefined);
             alt={portada.alt}
             prioridad={prioridad}
             clase="v-tarjeta__img"
+            tamanos={TAMANOS}
             data-foto={esFoto(portada.src)}
           />
         ) : (
@@ -76,6 +80,7 @@ const esFoto = (src: string) => (/\.jpe?g$/i.test(src) ? 'true' : undefined);
             src={segunda.src}
             alt=""
             clase="v-tarjeta__img v-tarjeta__img--2"
+            tamanos={TAMANOS}
             data-foto={esFoto(segunda.src)}
           />
         )
