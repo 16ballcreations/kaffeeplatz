@@ -5,6 +5,7 @@ fecha: 2025-04-07
 autor: "Andreina Morales"
 resumen: "El café de especialidad está ganando cada vez más espacio en los hogares colombianos y latinoamericanos. En este artículo exploramos por qué esta tendencia está creciendo, qué lo diferencia del café tradicional, y cómo puedes vivir la experiencia completa desde casa. También te contamos qué accesorios no pueden faltar en tu estación cafetera y cómo elegirlos según tu estilo."
 imagen: "/img/diario/cafe-de-especialidad-en-casa-como-un-buen-equipo-eleva-tu-experiencia-cafetera.jpg"
+categoria: equipo
 ---
 En los últimos años, el café de especialidad ha dejado de ser un lujo exclusivo de las cafeterías para convertirse en una experiencia que muchas personas quieren replicar en casa. Ya no se trata solo de preparar una bebida que te despierte en las mañanas, sino de conectar con el proceso, apreciar los aromas, las notas y entender de dónde viene ese café que estás tomando.
 

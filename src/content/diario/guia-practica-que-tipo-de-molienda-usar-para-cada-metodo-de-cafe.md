@@ -5,6 +5,7 @@ fecha: 2025-04-28
 autor: "Andreina Morales"
 resumen: "La molienda del café es un factor decisivo en el sabor final de tu bebida. Aprende en esta guía práctica cuál es la molienda adecuada para métodos como prensa francesa, V60, Aeropress y más. ¡Prepara un café delicioso ajustando solo tu molienda!"
 imagen: "/img/diario/guia-practica-que-tipo-de-molienda-usar-para-cada-metodo-de-cafe.png"
+categoria: tecnica
 ---
 La molienda del café es tan importante como el grano que eliges o el método de preparación que usas.
 

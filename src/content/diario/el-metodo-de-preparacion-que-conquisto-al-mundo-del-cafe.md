@@ -5,6 +5,7 @@ fecha: 2025-09-02
 autor: "Andreina Morales"
 resumen: "El mundo del café está lleno de métodos de preparación que buscan resaltar lo mejor de cada grano. Entre todos ellos, la Chemex se ha convertido en un ícono no solo por su diseñ..."
 imagen: "/img/diario/el-metodo-de-preparacion-que-conquisto-al-mundo-del-cafe.png"
+categoria: metodos
 ---
 El mundo del café está lleno de métodos de preparación que buscan resaltar lo mejor de cada grano. Entre todos ellos, la Chemex se ha convertido en un ícono no solo por su diseño elegante, sino también por la pureza y claridad que aporta a la taza. Si eres amante del café filtrado y quieres una experiencia más allá de lo cotidiano, la Chemex es una elección que no puede faltar en tu cocina.
 

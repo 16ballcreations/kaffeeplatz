@@ -29,13 +29,15 @@ import { SITIO, ruta } from '../datos/sitio';
   camino="/cafe"
   migas={[{ nombre: 'Café', href: '/cafe' }]}
 >
-  <header data-kp-seccion="encabezado">
-    <p data-kp-kicker>Próximamente</p>
-    <h1>Café en grano</h1>
-    <p data-kp-entradilla>
-      Llevamos tiempo ayudándote a preparar mejor café. El siguiente paso natural es el grano, y
-      estamos trabajando en ello.
-    </p>
+  <header data-kp-seccion="encabezado" class="v-encabezado v-limite">
+    <div class="v-encabezado__interior">
+      <p data-kp-kicker>Próximamente</p>
+      <h1>Café en grano</h1>
+      <p data-kp-entradilla>
+        Llevamos tiempo ayudándote a preparar mejor café. El siguiente paso natural es el grano, y
+        estamos trabajando en ello.
+      </p>
+    </div>
   </header>
 
   <!-- PROVISIONAL -->
@@ -44,7 +46,7 @@ import { SITIO, ruta } from '../datos/sitio';
     No afirmar si somos curadores de tostadores terceros o marca propia.
     No anadir origenes, fincas, perfiles de tueste, precios ni fechas.
   -->
-  <div data-kp-provisional role="note" aria-label="Contenido provisional">
+  <div class="v-limite v-provisional" data-kp-provisional role="note" aria-label="Contenido provisional">
     <p data-kp-provisional-aviso>
       <strong>Texto provisional.</strong> Esta sección es una maqueta: la línea de café en grano
       todavía se está definiendo. Nada de lo que hay aquí abajo es un compromiso comercial.
@@ -104,14 +106,17 @@ import { SITIO, ruta } from '../datos/sitio';
   </div>
   <!-- /PROVISIONAL -->
 
-  <section data-kp-seccion="grano-aviso" aria-labelledby="t-aviso">
+  <section data-kp-seccion="grano-aviso" aria-labelledby="t-aviso" class="v-seccion v-limite v-prosa">
     <h2 id="t-aviso">Avísame cuando salga</h2>
     <p>
       Si quieres ser de los primeros en probarlo, escríbenos por WhatsApp y te apuntamos. Te
       avisaremos cuando la línea esté lista, sin llenarte el teléfono mientras tanto.
     </p>
     <p data-kp-acciones>
-      <BotonWhatsApp mensaje="Hola KaffeePlatz, quiero que me avisen cuando salga la línea de café en grano.">
+      <BotonWhatsApp
+        clase="v-boton v-boton--oro"
+        mensaje="Hola KaffeePlatz, quiero que me avisen cuando salga la línea de café en grano."
+      >
         Quiero que me avisen
       </BotonWhatsApp>
     </p>

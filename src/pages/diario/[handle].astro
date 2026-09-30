@@ -8,22 +8,33 @@ import Base from '../../layouts/Base.astro';
 import Imagen from '../../components/Imagen.astro';
 import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
 import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
+import TarjetaProducto from '../../components/TarjetaProducto.astro';
 import { SITIO, ruta } from '../../datos/sitio';
+import { GUIA_DE_PRODUCTO } from '../../datos/guias';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const articulos = await getCollection('diario');
+  const productos = await getCollection('productos');
   return articulos.map((a) => ({
     params: { handle: a.data.handle },
-    props: { articulo: a, todos: articulos },
+    props: { articulo: a, todos: articulos, productos },
   }));
 };
 
 interface Props {
   articulo: CollectionEntry<'diario'>;
   todos: CollectionEntry<'diario'>[];
+  productos: CollectionEntry<'productos'>[];
 }
 
-const { articulo, todos } = Astro.props as Props;
+const { articulo, todos, productos } = Astro.props as Props;
+
+/* "Para este método": los productos cuya guia es este articulo (el mismo
+   mapa que usa la ficha, leido al reves). Disponibles primero. */
+const delMetodo = productos
+  .filter((p) => GUIA_DE_PRODUCTO[p.data.handle] === articulo.data.handle)
+  .sort((a, b) => Number(b.data.disponible) - Number(a.data.disponible))
+  .slice(0, 4);
 const d = articulo.data;
 const { Content } = await render(articulo);
 
@@ -74,7 +85,7 @@ const jsonLd = {
   ]}
   jsonLd={jsonLd}
 >
-  <article data-kp-articulo-completo>
+  <article data-kp-articulo-completo class="v-articulo v-limite">
     <header data-kp-articulo-encabezado>
       <p data-kp-kicker>Diario</p>
       <h1>{d.titulo}</h1>
@@ -99,6 +110,7 @@ const jsonLd = {
     <aside data-kp-articulo-cierre>
       <p>¿Te quedó alguna duda sobre el método o el equipo? Escríbenos y lo vemos contigo.</p>
       <BotonWhatsApp
+        clase="v-boton v-boton--oro"
         mensaje={`Hola KaffeePlatz, leí "${d.titulo}" y tengo una duda.`}
       >
         Preguntar por WhatsApp
@@ -108,9 +120,28 @@ const jsonLd = {
   </article>
 
   {
+    delMetodo.length > 0 && (
+      <section aria-labelledby="t-metodo" class="v-seccion">
+        <div class="v-limite v-cabeza-fila">
+          <h2 id="t-metodo" class="v-titulo">Para prepararlo en <em>casa</em></h2>
+        </div>
+        <ul data-kp-rejilla="productos" class="v-carril">
+          {delMetodo.map((p) => (
+            <li>
+              <TarjetaProducto producto={p.data} />
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  {
     otros.length > 0 && (
-      <section data-kp-seccion="mas-diario" aria-labelledby="t-mas">
-        <h2 id="t-mas">Sigue leyendo</h2>
+      <section data-kp-seccion="mas-diario" aria-labelledby="t-mas" class="v-seccion v-limite">
+        <div class="v-cabeza-fila">
+          <h2 id="t-mas" class="v-titulo">Sigue <em>leyendo</em></h2>
+        </div>
         <ul data-kp-rejilla="articulos">
           {otros.map((a) => (
             <li>

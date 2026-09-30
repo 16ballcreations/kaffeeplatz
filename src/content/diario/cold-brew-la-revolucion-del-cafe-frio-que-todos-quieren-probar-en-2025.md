@@ -5,6 +5,7 @@ fecha: 2025-04-07
 autor: "Andreina Morales"
 resumen: "En este blog te contamos todo sobre el auge del cold brew en 2025: por qué se ha vuelto tan popular, cómo hacerlo en casa, qué beneficios tiene y qué accesorios necesitas para llevar tu experiencia cafetera al siguiente nivel."
 imagen: "/img/diario/cold-brew-la-revolucion-del-cafe-frio-que-todos-quieren-probar-en-2025.jpg"
+categoria: metodos
 ---
 En el mundo del café, cada año trae nuevas formas de disfrutar esta bebida milenaria. En 2025, la tendencia más fuerte es clara: el cold brew se ha convertido en el favorito de baristas, cafeterías de especialidad y, sobre todo, de los amantes del café que buscan sabor, frescura y suavidad. Pero ¿qué tiene de especial este método de preparación? ¿Cómo puedes hacerlo en casa? ¿Y qué accesorios necesitas para que quede perfecto? Aquí te lo contamos todo.
 

@@ -1,4 +1,4 @@
-name: Publicar propuestas
+name: Publicar sitio
 
 on:
   push:
@@ -25,26 +25,20 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Instalar dependencias
-        run: npm ci
+      - run: npm ci
 
-      - name: Construir las propuestas
-        run: |
-          set -e
-          mkdir -p publico
-          for p in a-imprenta b-galeria c-obsidiana d-obsidiana-v2; do
-            echo "::group::$p"
-            (cd "propuestas/$p" && ln -sfn ../../node_modules node_modules && npm run build)
-            cp -rL "propuestas/$p/dist" "publico/$p"
-            echo "::endgroup::"
-          done
-
-      - name: Portada comparativa
-        run: cp indice.html publico/index.html
+      # GitHub Pages sirve el repo bajo /kaffeeplatz, no en la raiz del dominio.
+      # Cloudflare si lo sirve en la raiz, que es el valor por defecto de la
+      # config: por eso aqui hay que pasar BASE_PATH explicitamente.
+      - name: Construir
+        env:
+          SITE_URL: https://16ballcreations.github.io
+          BASE_PATH: /kaffeeplatz
+        run: npm run build
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: publico
+          path: dist
 
   publicar:
     needs: construir

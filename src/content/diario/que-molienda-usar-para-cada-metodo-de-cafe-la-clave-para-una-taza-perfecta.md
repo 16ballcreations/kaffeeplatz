@@ -5,6 +5,7 @@ fecha: 2025-04-21
 autor: "Andreina Morales"
 resumen: "La molienda del café es tan importante como la calidad del grano. En esta guía te explicamos qué tipo de molienda debes usar para cada método: prensa francesa, V60, moka, Chemex, Aeropress y otros. Aprende a ajustar tu molienda para lograr la taza perfecta."
 imagen: "/img/diario/que-molienda-usar-para-cada-metodo-de-cafe-la-clave-para-una-taza-perfecta.png"
+categoria: tecnica
 ---
 ### ¿Tu café sabe muy amargo, débil o desequilibrado? Es probable que el problema no esté en el grano, sino en la molienda.
 

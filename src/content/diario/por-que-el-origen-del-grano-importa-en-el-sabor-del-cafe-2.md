@@ -5,6 +5,7 @@ fecha: 2025-04-28
 autor: "Andreina Morales"
 resumen: "El origen del café no es solo una etiqueta bonita: es la clave de su sabor, aroma y personalidad. En esta guía te explicamos por qué la altitud, el clima y el suelo de cada región impactan directamente en lo que pruebas en tu taza."
 imagen: "/img/diario/por-que-el-origen-del-grano-importa-en-el-sabor-del-cafe-2.png"
+categoria: grano
 ---
 Cuando compras café, seguramente ves etiquetas que mencionan países como Colombia, Etiopía o Brasil.
 Pero, ¿sabías que el lugar donde se cultiva el grano afecta profundamente su sabor?

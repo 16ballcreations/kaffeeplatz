@@ -5,6 +5,7 @@ fecha: 2025-04-07
 autor: "Andreina Morales"
 resumen: "En este blog te explicamos todo lo que necesitas saber sobre la Aeropress: qué la hace única, cómo se usa, tips para mejorar tu preparación y los accesorios recomendados para llevar tu experiencia cafetera al siguiente nivel."
 imagen: "/img/diario/aeropress-el-metodo-perfecto-para-preparar-cafe-de-especialidad-en-casa.png"
+categoria: metodos
 ---
 En el mundo del café de especialidad, hay métodos que se ganan el respeto de baristas y aficionados por igual. La Aeropress es uno de ellos. Sencilla, portátil y versátil, se ha convertido en una de las herramientas favoritas para quienes buscan una taza con mucho cuerpo, sabores definidos y una preparación rápida.
 

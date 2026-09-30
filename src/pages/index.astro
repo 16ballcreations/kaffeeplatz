@@ -1,23 +1,68 @@
 ---
 /**
- * / — Portada.
- * Estructura y contenido, sin decisiones visuales. Los disenos recomponen.
+ * / — Portada. Propuesta D "OBSIDIANA II".
+ *
+ * Recorrido pensado para convertir, de arriba abajo:
+ *   1. Hero partido: promesa + accion, con un producto real como imagen.
+ *   2. Franja de confianza: envio, atencion humana, asesoria, guias.
+ *   3. "¿Cómo te gusta el café?": buscador de metodo que termina en una
+ *      recomendacion concreta y un WhatsApp precargado.
+ *   4. Categorias en mosaico, con recuento real y foto real.
+ *   5. Seleccion destacada en carril horizontal.
+ *   6. Como compras (franja crema con lino, aprobada por el cliente en C).
+ *   7. Diario en composicion editorial: uno grande y una lista.
+ *   8. Cierre con llamada a conversar.
+ *
+ * Nada de contenido de negocio inventado: los textos salen de la base, del
+ * diario (ver datos/guias.ts) o de las politicas de envio.
  */
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
-import TarjetaArticulo from '../components/TarjetaArticulo.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
-import { SITIO, ruta } from '../datos/sitio';
+import Imagen from '../components/Imagen.astro';
+import Precio from '../components/Precio.astro';
+import Icono from '../components/Icono.astro';
+import { SITIO, ruta, recurso } from '../datos/sitio';
+import { CATEGORIAS } from '../datos/categorias';
+import { METODOS } from '../datos/guias';
 
 const productos = await getCollection('productos');
+const porHandle = new Map(productos.map((p) => [p.data.handle, p.data]));
+
 const destacados = productos
   .filter((p) => p.data.destacado)
   .sort((a, b) => b.data.precio - a.data.precio);
 
-const articulos = (await getCollection('diario'))
-  .sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime())
-  .slice(0, 3);
+const articulos = (await getCollection('diario')).sort(
+  (a, b) => b.data.fecha.getTime() - a.data.fecha.getTime(),
+);
+const [principal, ...resto] = articulos.filter((a) => a.data.imagen);
+const lista = resto.slice(0, 4);
+
+const HERO = 'aeropress-clear';
+
+/* Mosaico de categorias: recuento real y, como foto, el primer producto
+   disponible de la categoria que tenga imagen. El del hero se salta para no
+   repetir la misma foto dos pantallas seguidas. */
+const categorias = CATEGORIAS.filter((c) => c.id !== 'otros')
+  .map((c) => {
+    const suyos = productos
+      .filter((p) => p.data.categoria === c.id && p.data.handle !== HERO)
+      .sort((a, b) => Number(!!b.data.destacado) - Number(!!a.data.destacado));
+    const muestra =
+      suyos.find((p) => p.data.disponible && p.data.imagenes.length) ??
+      suyos.find((p) => p.data.imagenes.length);
+    const total = productos.filter((p) => p.data.categoria === c.id).length;
+    return { ...c, total, imagen: muestra?.data.imagenes[0] };
+  })
+  .filter((c) => c.total > 0)
+  .sort((a, b) => b.total - a.total);
+
+const fecha = (d: Date) =>
+  d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+const heroProducto = porHandle.get(HERO);
 ---
 
 <Base
@@ -26,78 +71,374 @@ const articulos = (await getCollection('diario'))
   camino="/"
   imagen={destacados[0]?.data.imagenes[0]?.src}
 >
-  <section data-kp-seccion="hero">
-    <p data-kp-kicker>Café de especialidad · {SITIO.ciudad}</p>
-    <h1>{SITIO.lema}</h1>
-    <p data-kp-entradilla>
-      Seleccionamos métodos, filtros y utensilios para que preparar café en casa deje de ser un
-      trámite y se convierta en un ritual. Cada pieza está elegida por cómo se comporta en la taza,
-      no por cómo se ve en la foto.
-    </p>
-    <p data-kp-acciones>
-      <a href={ruta('/catalogo')} data-kp-cta="primaria">Ver el catálogo</a>
-      <BotonWhatsApp data-kp-cta="secundaria">Pregúntanos por WhatsApp</BotonWhatsApp>
-    </p>
+  {/* 1. HERO ------------------------------------------------------------ */}
+  <section data-kp-seccion="hero" class="v-hero v-lino-oscuro">
+    <div class="v-limite v-hero__rejilla">
+      <div class="v-hero__texto">
+        <p class="v-eyebrow v-entra" style="--d:0">Accesorios de café · {SITIO.ciudad}</p>
+        <h1 class="v-entra" style="--d:1">Eleva tu experiencia <em>cafetera</em></h1>
+        <p class="v-hero__entradilla v-entra" style="--d:2">
+          Métodos, filtros y utensilios de café de especialidad, elegidos por cómo se comportan en
+          la taza.
+        </p>
+        <div class="v-acciones v-entra" style="--d:3">
+          <a href={ruta('/catalogo')} class="v-boton v-boton--oro">
+            <span>Ver el catálogo</span>
+            <span class="v-boton__icono"><Icono nombre="flecha" tam={18} /></span>
+          </a>
+          <BotonWhatsApp clase="v-boton v-boton--linea">
+            <Icono nombre="whatsapp" tam={20} />
+            <span>Escríbenos por WhatsApp</span>
+          </BotonWhatsApp>
+        </div>
+      </div>
+
+      <div class="v-hero__visual v-entra" style="--d:2">
+        <div class="v-hero__arco">
+          {
+            heroProducto?.imagenes[0] && (
+              <img
+                src={recurso(heroProducto.imagenes[0].src)}
+                alt={heroProducto.imagenes[0].alt}
+                width="900"
+                height="900"
+                loading="eager"
+                decoding="sync"
+                fetchpriority="high"
+              />
+            )
+          }
+        </div>
+        <img
+          src={recurso('/img/marca/emblema-sm.png')}
+          alt=""
+          class="v-hero__sello"
+          width="320"
+          height="320"
+          loading="eager"
+        />
+        {
+          heroProducto && (
+            <a href={ruta(`/producto/${heroProducto.handle}`)} class="v-hero__pie">
+              <span class="v-hero__pie-nombre">{heroProducto.titulo}</span>
+              <Precio precioFormateado={heroProducto.precioFormateado} precio={heroProducto.precio} clase="v-num" />
+              <Icono nombre="flechaDiagonal" tam={18} />
+            </a>
+          )
+        }
+      </div>
+    </div>
   </section>
 
-  <section data-kp-seccion="destacados" aria-labelledby="t-destacados">
-    <h2 id="t-destacados">Selección destacada</h2>
-    <ul data-kp-rejilla="productos">
+  {/* 2. CONFIANZA ------------------------------------------------------- */}
+  <section aria-label="Por qué comprar aquí" class="v-confianza">
+    <ul class="v-limite v-confianza__lista">
+      <li data-v-revelar>
+        <Icono nombre="camion" tam={28} />
+        <div>
+          <h2>Envíos a todo Colombia</h2>
+          <p>De 2 a 5 días hábiles en ciudades principales.</p>
+        </div>
+      </li>
+      <li data-v-revelar style="--d:1">
+        <Icono nombre="conversacion" tam={28} />
+        <div>
+          <h2>Te atiende una persona</h2>
+          <p>Por WhatsApp te responde {SITIO.dueña}, no un bot.</p>
+        </div>
+      </li>
+      <li data-v-revelar style="--d:2">
+        <Icono nombre="taza" tam={28} />
+        <div>
+          <h2>Asesoría antes de comprar</h2>
+          <p>Te ayudamos a elegir método según tu taza.</p>
+        </div>
+      </li>
+      <li data-v-revelar style="--d:3">
+        <Icono nombre="libro" tam={28} />
+        <div>
+          <h2>Guías de preparación</h2>
+          <p>{articulos.length} artículos en el diario.</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  {/* 3. BUSCADOR DE METODO ----------------------------------------------- */}
+  <section data-kp-seccion="metodo" aria-labelledby="t-metodo" class="v-seccion v-limite">
+    <div class="v-metodo" data-v-metodo>
+      <div class="v-metodo__cabeza" data-v-revelar>
+        <p class="v-eyebrow">Encuentra tu método</p>
+        <h2 id="t-metodo" class="v-titulo">¿Cómo te gusta el <em>café</em>?</h2>
+        <p class="v-sub">Elige una taza y te decimos con qué prepararla.</p>
+
+        <div class="v-metodo__opciones" role="tablist" aria-label="Cómo te gusta el café" data-v-metodo-tabs hidden>
+          {
+            METODOS.map((m, i) => (
+              <button
+                type="button"
+                role="tab"
+                id={`tab-${m.id}`}
+                aria-controls={`panel-${m.id}`}
+                aria-selected={i === 0 ? 'true' : 'false'}
+                tabindex={i === 0 ? 0 : -1}
+              >
+                <span class="v-metodo__gusto">{m.gusto}</span>
+                <span class="v-metodo__nombre">{m.nombre}</span>
+              </button>
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="v-metodo__paneles">
+        {
+          METODOS.map((m, i) => {
+            const items = m.productos.map((h) => porHandle.get(h)).filter((p) => p !== undefined);
+            const [estrella, ...acompanan] = items;
+            return (
+              <div
+                class="v-metodo__panel"
+                role="tabpanel"
+                id={`panel-${m.id}`}
+                aria-labelledby={`tab-${m.id}`}
+                data-v-metodo-panel
+                data-activo={i === 0 ? 'true' : 'false'}
+              >
+                <div class="v-marco v-metodo__foto">
+                  {estrella?.imagenes[0] && (
+                    <Imagen src={estrella.imagenes[0].src} alt={estrella.imagenes[0].alt} />
+                  )}
+                </div>
+                <div class="v-metodo__info">
+                  <h3>
+                    <span class="v-metodo__para">{m.gusto}</span>
+                    {m.nombre}
+                  </h3>
+                  <p>{m.descripcion}</p>
+                  <ul class="v-metodo__productos">
+                    {[estrella, ...acompanan].map(
+                      (p) =>
+                        p && (
+                          <li>
+                            <a href={ruta(`/producto/${p.handle}`)}>
+                              <span>{p.titulo}</span>
+                              <Precio precioFormateado={p.precioFormateado} precio={p.precio} clase="v-num" />
+                            </a>
+                          </li>
+                        ),
+                    )}
+                  </ul>
+                  <div class="v-acciones">
+                    <BotonWhatsApp mensaje={m.mensaje} clase="v-boton v-boton--oro v-boton--sm">
+                      <Icono nombre="whatsapp" tam={18} />
+                      <span>Pedir recomendación</span>
+                    </BotonWhatsApp>
+                    <a href={ruta(`/diario/${m.guia}`)} class="v-enlace">
+                      Leer la guía de {m.nombre}
+                      <Icono nombre="flecha" tam={16} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        }
+      </div>
+    </div>
+  </section>
+
+  {/* 4. CATEGORIAS ------------------------------------------------------- */}
+  <section data-kp-seccion="categorias" aria-labelledby="t-categorias" class="v-seccion v-limite">
+    <h2 id="t-categorias" class="v-titulo" data-v-revelar>Explora el catálogo</h2>
+    <ul class="v-mosaico">
+      {
+        categorias.map((c, i) => (
+          <li class={`v-mosaico__celda v-mosaico__celda--${i + 1}`} data-v-revelar style={`--d:${i % 3}`}>
+            <a href={`${ruta('/catalogo')}?categoria=${c.id}`}>
+              <div class="v-mosaico__foto">
+                {c.imagen && <Imagen src={c.imagen.src} alt="" />}
+              </div>
+              <div class="v-mosaico__texto">
+                <h3>{c.nombre}</h3>
+                {c.descripcion && i === 0 && <p>{c.descripcion}</p>}
+                <span class="v-mosaico__n v-num">
+                  {c.total} {c.total === 1 ? 'producto' : 'productos'}
+                  <Icono nombre="flechaDiagonal" tam={16} />
+                </span>
+              </div>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  {/* 5. DESTACADOS ------------------------------------------------------- */}
+  <section data-kp-seccion="destacados" aria-labelledby="t-destacados" class="v-seccion">
+    <div class="v-limite v-cabeza-fila" data-v-revelar>
+      <h2 id="t-destacados" class="v-titulo">Selección <em>destacada</em></h2>
+      <a href={ruta('/catalogo')} class="v-enlace">
+        Ver los {productos.length} productos <Icono nombre="flecha" tam={16} />
+      </a>
+    </div>
+    <ul class="v-carril" data-kp-rejilla="productos">
       {
         destacados.map((p, i) => (
-          <li>
-            <TarjetaProducto producto={p.data} prioridad={i === 0} />
+          <li data-v-revelar style={`--d:${i}`}>
+            <TarjetaProducto producto={p.data} />
           </li>
         ))
       }
     </ul>
-    <p><a href={ruta('/catalogo')}>Ver los {productos.length} productos</a></p>
   </section>
 
-  <section data-kp-seccion="promesa" aria-labelledby="t-promesa">
-    <h2 id="t-promesa">Cómo compras</h2>
-    <ol data-kp-pasos>
-      <li>
-        <h3>Eliges</h3>
-        <p>Miras el catálogo y ves qué método encaja con la taza que buscas.</p>
-      </li>
-      <li>
-        <h3>Nos escribes</h3>
-        <p>
-          Nos hablas por WhatsApp. Te confirmamos disponibilidad, resolvemos dudas y acordamos el
-          envío contigo.
-        </p>
-      </li>
-      <li>
-        <h3>Preparas</h3>
-        <p>Te llega a casa y empiezas. En el diario tienes las guías de cada método.</p>
-      </li>
-    </ol>
-    <p data-kp-nota>
-      No hay carrito ni pasarela de pago: aquí se compra hablando con nosotros.
-    </p>
+  {/* 6. COMO COMPRAS ----------------------------------------------------- */}
+  <section
+    data-kp-seccion="promesa"
+    aria-labelledby="t-promesa"
+    class="v-franja-crema v-lino-claro"
+  >
+    <div class="v-limite v-compra">
+      <div class="v-compra__cabeza" data-v-revelar>
+        <h2 id="t-promesa" class="v-titulo">Así compras en <em>{SITIO.nombre}</em></h2>
+        <p>Sin carrito ni pasarela de pago: cada pedido se cierra hablando con nosotros.</p>
+        <BotonWhatsApp clase="v-boton v-boton--tinta">
+          <Icono nombre="whatsapp" tam={20} />
+          <span>Escríbenos por WhatsApp</span>
+        </BotonWhatsApp>
+      </div>
+      <ol class="v-pasos" data-kp-pasos>
+        <li data-v-revelar>
+          <span class="v-pasos__n" aria-hidden="true">1</span>
+          <h3>Eliges</h3>
+          <p>Miras el catálogo y ves qué método encaja con la taza que buscas.</p>
+        </li>
+        <li data-v-revelar style="--d:1">
+          <span class="v-pasos__n" aria-hidden="true">2</span>
+          <h3>Nos escribes</h3>
+          <p>Te confirmamos disponibilidad, resolvemos dudas y acordamos el envío contigo.</p>
+        </li>
+        <li data-v-revelar style="--d:2">
+          <span class="v-pasos__n" aria-hidden="true">3</span>
+          <h3>Preparas</h3>
+          <p>Te llega a casa y empiezas. En el diario tienes las guías de cada método.</p>
+        </li>
+      </ol>
+    </div>
   </section>
 
-  <section data-kp-seccion="diario" aria-labelledby="t-diario">
-    <h2 id="t-diario">Del diario</h2>
-    <ul data-kp-rejilla="articulos">
+  {/* 7. DIARIO ----------------------------------------------------------- */}
+  <section data-kp-seccion="diario" aria-labelledby="t-diario" class="v-seccion v-limite">
+    <div class="v-cabeza-fila" data-v-revelar>
+      <h2 id="t-diario" class="v-titulo">Del <em>diario</em></h2>
+      <a href={ruta('/diario')} class="v-enlace">
+        Todos los artículos <Icono nombre="flecha" tam={16} />
+      </a>
+    </div>
+    <div class="v-editorial">
       {
-        articulos.map((a) => (
-          <li>
-            <TarjetaArticulo articulo={a.data} />
-          </li>
-        ))
+        principal && (
+          <a href={ruta(`/diario/${principal.data.handle}`)} class="v-editorial__principal" data-v-revelar>
+            <div class="v-editorial__foto">
+              {principal.data.imagen && <Imagen src={principal.data.imagen} alt="" />}
+            </div>
+            <time datetime={principal.data.fecha.toISOString().slice(0, 10)}>
+              {fecha(principal.data.fecha)}
+            </time>
+            <h3>{principal.data.titulo}</h3>
+            <p>{principal.data.resumen}</p>
+          </a>
+        )
       }
-    </ul>
-    <p><a href={ruta('/diario')}>Todos los artículos</a></p>
+      <ul class="v-editorial__lista">
+        {
+          lista.map((a, i) => (
+            <li data-v-revelar style={`--d:${i}`}>
+              <a href={ruta(`/diario/${a.data.handle}`)}>
+                <div class="v-editorial__mini">
+                  {a.data.imagen && <Imagen src={a.data.imagen} alt="" />}
+                </div>
+                <div>
+                  <time datetime={a.data.fecha.toISOString().slice(0, 10)}>{fecha(a.data.fecha)}</time>
+                  <h3>{a.data.titulo}</h3>
+                </div>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
   </section>
 
-  <section data-kp-seccion="sobre" aria-labelledby="t-sobre">
-    <h2 id="t-sobre">Sobre nosotros</h2>
-    <p>
-      Somos una marca colombiana de accesorios de café de especialidad. Trabajamos 100% en línea y
-      atendemos cada pedido de forma directa.
-    </p>
-    <p><a href={ruta('/nosotros')}>Conócenos</a></p>
+  {/* 8. CIERRE ----------------------------------------------------------- */}
+  <section data-kp-seccion="sobre" aria-labelledby="t-cierre" class="v-limite v-seccion">
+    <div class="v-cierre" data-v-revelar>
+      <div class="v-cierre__texto">
+        <h2 id="t-cierre" class="v-titulo">¿No sabes por dónde <em>empezar</em>?</h2>
+        <p>
+          Cuéntanos cómo tomas el café, cuánto tiempo le quieres dedicar por la mañana y qué
+          presupuesto manejas. Con eso te decimos qué método te conviene.
+        </p>
+        <div class="v-acciones">
+          <BotonWhatsApp
+            clase="v-boton v-boton--oro"
+            mensaje="Hola KaffeePlatz, estoy empezando con el café de especialidad. ¿Me ayudan a elegir un método?"
+          >
+            <Icono nombre="whatsapp" tam={20} />
+            <span>Cuéntanos qué buscas</span>
+          </BotonWhatsApp>
+          <a href={ruta('/nosotros')} class="v-enlace">
+            Conócenos <Icono nombre="flecha" tam={16} />
+          </a>
+        </div>
+      </div>
+      <div class="v-cierre__planta" aria-hidden="true"></div>
+    </div>
   </section>
 </Base>
+
+<script>
+  /* Buscador de metodo: patron de pestanas ARIA (flechas + Home/End).
+     Sin JS la lista de pestanas no aparece y los cuatro paneles se ven
+     apilados, que sigue siendo util. */
+  for (const caja of document.querySelectorAll<HTMLElement>('[data-v-metodo]')) {
+    const lista = caja.querySelector<HTMLElement>('[data-v-metodo-tabs]');
+    const pestanas = Array.from(caja.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const paneles = Array.from(caja.querySelectorAll<HTMLElement>('[data-v-metodo-panel]'));
+    if (!lista || !pestanas.length) continue;
+    lista.hidden = false;
+    caja.classList.add('v-metodo--js');
+
+    const activar = (i: number, foco: boolean) => {
+      pestanas.forEach((p, n) => {
+        const si = n === i;
+        p.setAttribute('aria-selected', String(si));
+        p.tabIndex = si ? 0 : -1;
+        paneles[n].dataset.activo = String(si);
+        paneles[n].hidden = !si;
+      });
+      if (foco) pestanas[i].focus();
+    };
+    activar(0, false);
+
+    lista.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
+      if (b) activar(pestanas.indexOf(b), false);
+    });
+    lista.addEventListener('keydown', (e) => {
+      const i = pestanas.indexOf(document.activeElement as HTMLButtonElement);
+      if (i < 0) return;
+      const n = pestanas.length;
+      const destino =
+        e.key === 'ArrowDown' || e.key === 'ArrowRight' ? (i + 1) % n
+        : e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? (i - 1 + n) % n
+        : e.key === 'Home' ? 0
+        : e.key === 'End' ? n - 1
+        : -1;
+      if (destino < 0) return;
+      e.preventDefault();
+      activar(destino, true);
+    });
+  }
+</script>

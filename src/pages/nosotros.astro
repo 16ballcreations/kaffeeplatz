@@ -1,22 +1,16 @@
 ---
 /**
- * /nosotros — Pagina NUEVA.
+ * /nosotros — Propuesta D "OBSIDIANA II".
  *
- * El sitio viejo promete "Sobre nosotros" en la home pero la pagina no existia.
- * Redactada con la voz de marca a partir de material REAL: el diario y las
- * politicas de envio y contacto.
- *
- * NO HAY datos inventados de negocio: ni ano de fundacion, ni tamano del
- * equipo, ni cifras de venta. Se habla del producto, del criterio de seleccion
- * y del ritual. Lo unico que se afirma es lo verificado:
- *   - Marca colombiana con base en Medellin
- *   - 100% online, sin punto fisico
- *   - Envios a todo el territorio colombiano
- *   - Atencion directa por WhatsApp con Andreina Morales
+ * Mismo texto que C (redactado a partir de material real, sin datos de
+ * negocio inventados). Cambia la composicion: criterio en mosaico de tres
+ * piezas de peso distinto, el ritual en la franja crema con lino y los hechos
+ * como lista de dos columnas con iconos.
  */
 import Base from '../layouts/Base.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
-import { SITIO, ruta } from '../datos/sitio';
+import Icono from '../components/Icono.astro';
+import { SITIO, ruta, recurso } from '../datos/sitio';
 ---
 
 <Base
@@ -25,91 +19,105 @@ import { SITIO, ruta } from '../datos/sitio';
   camino="/nosotros"
   migas={[{ nombre: 'Nosotros', href: '/nosotros' }]}
 >
-  <header data-kp-seccion="encabezado">
-    <p data-kp-kicker>Nosotros</p>
-    <h1>Café bien hecho, en tu propia cocina</h1>
-    <p data-kp-entradilla>
-      {SITIO.nombre} nace de una idea sencilla: el café que tomas en casa puede ser tan bueno como
-      el de tu cafetería favorita. No hace falta una barra profesional. Hace falta el equipo
-      adecuado y saber qué estás haciendo.
-    </p>
+  <header data-kp-seccion="encabezado" class="v-encabezado v-encabezado--partido v-limite">
+    <div>
+      <p class="v-eyebrow v-entra">Nosotros</p>
+      <h1 class="v-entra" style="--d:1">Café bien hecho, en tu propia <em>cocina</em></h1>
+      <p class="v-encabezado__texto v-entra" style="--d:2">
+        {SITIO.nombre} nace de una idea sencilla: el café que tomas en casa puede ser tan bueno como
+        el de tu cafetería favorita. No hace falta una barra profesional. Hace falta el equipo
+        adecuado y saber qué estás haciendo.
+      </p>
+    </div>
+    <img
+      src={recurso('/img/marca/emblema.png')}
+      alt={`Emblema de ${SITIO.nombre}`}
+      class="v-encabezado__emblema v-entra"
+      style="--d:2"
+      width="1200"
+      height="1200"
+      loading="eager"
+    />
   </header>
 
-  <section data-kp-seccion="criterio" aria-labelledby="t-criterio">
-    <h2 id="t-criterio">Cómo elegimos lo que vendemos</h2>
-    <p>
-      No traemos catálogo por traer catálogo. Cada método, cada filtro y cada utensilio que ves aquí
-      entra por una razón concreta: hace algo mejor que la alternativa, y se nota en la taza.
+  <section data-kp-seccion="criterio" aria-labelledby="t-criterio" class="v-seccion v-limite">
+    <h2 id="t-criterio" class="v-titulo" data-v-revelar>Cómo elegimos lo que <em>vendemos</em></h2>
+    <p class="v-sub" data-v-revelar>
+      No traemos catálogo por traer catálogo. Cada método, cada filtro y cada utensilio entra por
+      una razón concreta: hace algo mejor que la alternativa, y se nota en la taza.
     </p>
-    <ul data-kp-lista="criterio">
-      <li>
+    <ul class="v-criterio">
+      <li class="v-criterio__grande" data-v-revelar>
         <h3>Que cambie la taza, no la foto</h3>
         <p>
-          Una V60 y una prensa francesa no compiten: dan bebidas distintas. Una te da una taza
-          limpia y delicada; la otra, cuerpo y potencia. Te contamos cuál es cuál para que elijas
-          por sabor, no por moda.
+          Una V60 y una prensa francesa no compiten: dan bebidas distintas. Una te da una taza limpia
+          y delicada; la otra, cuerpo y potencia. Te contamos cuál es cuál para que elijas por
+          sabor, no por moda.
         </p>
       </li>
-      <li>
+      <li data-v-revelar style="--d:1">
         <h3>Que aguante el uso diario</h3>
         <p>
           Vidrio borosilicato, acero inoxidable, piezas que se lavan fácil y no se rinden al tercer
           mes. Un buen accesorio de café se compra una vez.
         </p>
       </li>
-      <li>
+      <li data-v-revelar style="--d:2">
         <h3>Que puedas empezar hoy</h3>
         <p>
           De nada sirve el mejor equipo si nadie te explica la molienda, la temperatura o el ratio.
-          Por eso el diario existe: cada método tiene su guía.
+          Por eso el <a href={ruta('/diario')}>diario</a> existe: cada método tiene su guía.
         </p>
       </li>
     </ul>
   </section>
 
-  <section data-kp-seccion="ritual" aria-labelledby="t-ritual">
-    <h2 id="t-ritual">El café como ritual, no como trámite</h2>
-    <p>
-      Preparar café a mano te obliga a parar diez minutos. Pesas, mueles, calientas el agua, viertes
-      despacio. Ese rato es medio punto de la experiencia; el otro medio está en el grano y en el
-      equipo.
-    </p>
-    <p>
-      Por eso insistimos tanto en los detalles que parecen pequeños: el molido correcto para cada
-      método, el agua a la temperatura adecuada, el café conservado como toca. Son la diferencia
-      entre una taza plana y una taza que te hace levantar la cabeza.
-    </p>
-    <p>
-      Nuestra frase es <strong>{SITIO.lema.toLowerCase()}</strong>, y va bastante en serio: no
-      vendemos objetos, acompañamos un hábito.
-    </p>
+  <section data-kp-seccion="ritual" aria-labelledby="t-ritual" class="v-franja-crema v-lino-claro">
+    <div class="v-limite v-prosa v-prosa--centro" data-v-revelar>
+      <h2 id="t-ritual" class="v-titulo">El café como ritual, no como <em>trámite</em></h2>
+      <p>
+        Preparar café a mano te obliga a parar diez minutos. Pesas, mueles, calientas el agua,
+        viertes despacio. Ese rato es medio punto de la experiencia; el otro medio está en el grano y
+        en el equipo.
+      </p>
+      <p>
+        Por eso insistimos tanto en los detalles que parecen pequeños: el molido correcto para cada
+        método, el agua a la temperatura adecuada, el café conservado como toca. Son la diferencia
+        entre una taza plana y una taza que te hace levantar la cabeza.
+      </p>
+      <p>
+        Nuestra frase es <strong>{SITIO.lema.toLowerCase()}</strong>, y va bastante en serio: no
+        vendemos objetos, acompañamos un hábito.
+      </p>
+    </div>
   </section>
 
-  <section data-kp-seccion="como-funciona" aria-labelledby="t-como">
-    <h2 id="t-como">Cómo trabajamos</h2>
-    <ul data-kp-lista="hechos">
-      <li>
+  <section data-kp-seccion="como-funciona" aria-labelledby="t-como" class="v-seccion v-limite">
+    <h2 id="t-como" class="v-titulo" data-v-revelar>Cómo <em>trabajamos</em></h2>
+    <ul class="v-hechos">
+      <li data-v-revelar>
+        <Icono nombre="mapa" tam={28} />
         <h3>100% en línea</h3>
-        <p>
-          Estamos en {SITIO.ciudad} y atendemos solo por internet: no tenemos punto físico de
-          venta.
-        </p>
+        <p>Estamos en {SITIO.ciudad} y atendemos solo por internet: no tenemos punto físico de venta.</p>
       </li>
-      <li>
+      <li data-v-revelar style="--d:1">
+        <Icono nombre="conversacion" tam={28} />
         <h3>Atención directa</h3>
         <p>
           Cuando escribes por WhatsApp te responde {SITIO.dueña}, no un bot. Resolvemos dudas,
           confirmamos disponibilidad y acordamos el envío contigo.
         </p>
       </li>
-      <li>
+      <li data-v-revelar style="--d:2">
+        <Icono nombre="camion" tam={28} />
         <h3>Envíos a todo Colombia</h3>
         <p>
           Trabajamos con transportadoras certificadas y cubrimos todo el territorio colombiano. Los
           tiempos y costos los ves en la <a href={ruta('/contacto')}>página de contacto</a>.
         </p>
       </li>
-      <li>
+      <li data-v-revelar style="--d:3">
+        <Icono nombre="paquete" tam={28} />
         <h3>Sin carrito ni pasarela</h3>
         <p>
           Cada pedido se cierra hablando. Nos parece más honesto: así sabemos qué necesitas antes de
@@ -119,18 +127,29 @@ import { SITIO, ruta } from '../datos/sitio';
     </ul>
   </section>
 
-  <section data-kp-seccion="cierre" aria-labelledby="t-cierre">
-    <h2 id="t-cierre">¿Empezamos?</h2>
-    <p>
-      Si no sabes por dónde entrar, escríbenos y te preguntamos tres cosas: cómo tomas el café, cuánto
-      tiempo le quieres dedicar por la mañana y qué presupuesto manejas. Con eso te decimos qué
-      método te conviene.
-    </p>
-    <p data-kp-acciones>
-      <BotonWhatsApp mensaje="Hola KaffeePlatz, estoy empezando con el café de especialidad. ¿Me ayudan a elegir un método?">
-        Cuéntanos qué buscas
-      </BotonWhatsApp>
-      <a href={ruta('/catalogo')}>Ver el catálogo</a>
-    </p>
+  <section data-kp-seccion="cierre" aria-labelledby="t-cierre" class="v-limite v-seccion">
+    <div class="v-cierre" data-v-revelar>
+      <div class="v-cierre__texto">
+        <h2 id="t-cierre" class="v-titulo">¿<em>Empezamos</em>?</h2>
+        <p>
+          Si no sabes por dónde entrar, escríbenos y te preguntamos tres cosas: cómo tomas el café,
+          cuánto tiempo le quieres dedicar por la mañana y qué presupuesto manejas. Con eso te
+          decimos qué método te conviene.
+        </p>
+        <div class="v-acciones">
+          <BotonWhatsApp
+            clase="v-boton v-boton--oro"
+            mensaje="Hola KaffeePlatz, estoy empezando con el café de especialidad. ¿Me ayudan a elegir un método?"
+          >
+            <Icono nombre="whatsapp" tam={20} />
+            <span>Cuéntanos qué buscas</span>
+          </BotonWhatsApp>
+          <a href={ruta('/catalogo')} class="v-enlace">
+            Ver el catálogo <Icono nombre="flecha" tam={16} />
+          </a>
+        </div>
+      </div>
+      <div class="v-cierre__planta" aria-hidden="true"></div>
+    </div>
   </section>
 </Base>

@@ -4,8 +4,11 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://16ballcreations.github.io',
-  base: '/kaffeeplatz',
+  // El sitio vive en la RAIZ de su dominio. Ambos valores son parametrizables
+  // por entorno para poder publicarlo tambien bajo un subdirectorio (GitHub
+  // Pages) sin mantener dos configs divergentes.
+  site: process.env.SITE_URL ?? 'https://kaffeeplatz.pages.dev',
+  base: process.env.BASE_PATH ?? '/',
   output: 'static',
   trailingSlash: 'ignore',
   image: {

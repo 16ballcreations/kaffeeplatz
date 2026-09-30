@@ -5,6 +5,7 @@ fecha: 2025-04-14
 autor: "Andreina Morales"
 resumen: "La prensa francesa es uno de los métodos más clásicos y accesibles para preparar café. En este blog te contamos cómo usarla correctamente, qué tipo de café funciona mejor, los errores que debes evitar y los accesorios que potencian tu experiencia."
 imagen: "/img/diario/prensa-francesa-cafe-con-cuerpo-sabor-intenso-y-preparacion-sin-complicaciones.png"
+categoria: metodos
 ---
 La prensa francesa (o French Press) es uno de los métodos más antiguos y amados para preparar café. Su funcionamiento es simple, pero el resultado es potente: una bebida con cuerpo, aceites naturales y sabores profundos.
 

@@ -5,6 +5,7 @@ fecha: 2025-05-05
 autor: "Andreina Morales"
 resumen: "¿Quieres llevar tu café casero al siguiente nivel? Este blog te muestra los accesorios indispensables que todo amante del café debería tener en casa para lograr una preparación perfecta, cómoda y deliciosa."
 imagen: "/img/diario/los-mejores-accesorios-para-mejorar-tu-experiencia-de-cafe-en-casa.png"
+categoria: equipo
 ---
 Si eres de los que ama preparar café en casa y disfrutarlo como si estuvieras en una cafetería, los accesorios adecuados pueden marcar la diferencia.
 

@@ -4,6 +4,7 @@ handle: "que-es-el-cafe-de-especialidad-y-por-que-esta-conquistando-al-mundo"
 fecha: 2025-04-28
 autor: "Andreina Morales"
 resumen: "El café de especialidad no es solo una moda: es una revolución de calidad, trazabilidad y sabor en la industria cafetera. Aprende qué lo hace único, cómo se diferencia del café comercial y por qué deberías probarlo si aún no lo has hecho."
+categoria: grano
 ---
 Si en los últimos años has oído hablar de “café de especialidad” y no sabes exactamente qué significa, no estás solo. Este término se ha vuelto sinónimo de calidad, pasión y una nueva forma de disfrutar el café. Pero, ¿qué lo hace diferente del café que encontramos en cualquier supermercado?
 
