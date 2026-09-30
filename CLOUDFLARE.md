@@ -1,54 +1,70 @@
-# Desplegar Obsidiana II en Cloudflare Pages
+# Publicar KaffeePlatz en Cloudflare
 
-**Obsidiana II** es el sitio, y vive en la raíz del repo. Estos son los
-parámetros para conectarlo a Cloudflare Pages desde GitHub, de modo que cada
-push a `main` despliegue solo.
+**Obsidiana II** es el sitio, y vive en la raíz del repo. En Cloudflare se
+publica como **Worker con assets estáticos** llamado `kaffeeplatz`, igual que
+los demás proyectos de la cuenta (psicoformando, lex-pretor). Cloudflare
+recomienda Workers en lugar de Pages para proyectos nuevos: Pages sigue
+funcionando, pero las novedades llegan a Workers.
 
-## Crear el proyecto
-
-En el panel de Cloudflare: **Workers & Pages → Create → Pages → Connect to Git**,
-y elige `16ballcreations/kaffeeplatz`.
-
-## Configuración de build
-
-| Campo | Valor |
+| | |
 |---|---|
-| Production branch | `main` |
-| Framework preset | `Astro` (o *None*, da igual: los comandos mandan) |
-| Build command | `npm ci && npm run build` |
-| Build output directory | `dist` |
-| Root directory | *(vacío: la raíz del repo)* |
+| Cuenta | 16ballcreations@gmail.com |
+| Worker | `kaffeeplatz` |
+| URL de pruebas | https://kaffeeplatz.16ballcreations.workers.dev |
+| Configuración | `wrangler.jsonc` (sirve `dist/`) |
 
-## Variables de entorno
+## Publicar
 
-Estas dos son **imprescindibles**: sin ellas el sitio se construye esperando
-vivir bajo `/kaffeeplatz/d-obsidiana-v2/` y en Cloudflare va en la raíz, con lo
-que todos los enlaces y las imágenes darían 404.
+```bash
+npm run deploy
+```
 
-| Variable | Valor |
-|---|---|
-| `SITE_URL` | La URL final del proyecto, p. ej. `https://kaffeeplatz.pages.dev` — o el dominio propio cuando se conecte |
-| `NODE_VERSION` | `20` |
+Construye con `astro build` y sube `dist/` con `wrangler deploy`. Hace falta
+haber iniciado sesión una vez con `npx wrangler login` en la cuenta de
+16ballcreations.
 
-`BASE_PATH` ya no hace falta: el sitio vive en la raíz del repo y ese es su
-valor por defecto. Solo se pasa si algún día hay que publicarlo bajo un
-subdirectorio.
+`SITE_URL` no hace falta mientras se publique en la dirección `.workers.dev`,
+que es el valor por defecto de `astro.config.mjs`. `BASE_PATH` tampoco: en
+Cloudflare el sitio va en la raíz.
 
-`astro.config.mjs` lee ambas con un valor por defecto, así que el build de
-GitHub Pages sigue funcionando sin tocar nada.
+GitHub Pages sigue publicándose solo con cada push a `main`, bajo
+`/kaffeeplatz/` (el workflow le pasa `BASE_PATH` y `SITE_URL`).
 
-## Dominio propio
+## Mientras sea una evaluación
 
-Cuando la propuesta se apruebe y haya que migrar `kaffeeplatz.co`:
+`public/_headers` añade `X-Robots-Tag: noindex, nofollow` a todo el sitio en
+Cloudflare, para que no compita en buscadores con el Shopify que sigue en
+producción. Se quita el día que el sitio pase a ser el oficial.
 
-1. **Custom domains → Set up a domain** en el proyecto de Pages.
-2. Cloudflare pedirá que el dominio esté en la cuenta (si el DNS está en otro
-   proveedor, hay que moverlo o apuntar un CNAME).
-3. Actualizar `SITE_URL` a `https://kaffeeplatz.co` y volver a desplegar, para
-   que el sitemap y las URLs canónicas apunten al dominio real.
+## Dominio propio: kaffeeplatz.co
 
 > Ojo con el orden: no conviene apuntar el dominio hasta que el contenido esté
 > aprobado, porque el Shopify actual sigue en producción ahí.
+
+1. **Mover los DNS a Cloudflare.** Un Worker solo admite dominios cuyos
+   nameservers estén en Cloudflare. Añadir `kaffeeplatz.co` a la cuenta,
+   revisar que se importen todos los registros (el correo, sobre todo) y
+   cambiar los nameservers en el registrador. Hasta este punto el sitio de
+   Shopify sigue igual: solo cambia quién sirve el DNS.
+2. **Redirecciones desde Shopify.** Las URL viejas (`/products/...`,
+   `/blogs/...`, `/pages/...`, `/collections/...`) tienen que llevar con 301
+   a las nuevas, o se pierde el posicionamiento. Van en `public/_redirects`.
+3. **Conectar el dominio.** Descomentar las `routes` de `wrangler.jsonc`,
+   quitar el bloque de `public/_headers` y publicar con el dominio:
+
+   ```bash
+   SITE_URL=https://kaffeeplatz.co npm run deploy
+   ```
+
+   Así las URL canónicas, Open Graph y los datos estructurados apuntan al
+   dominio real.
+
+## Despliegue automático (opcional)
+
+Si se quiere que cada push a `main` publique también en Cloudflare, se puede
+conectar el repo desde el panel: **Workers & Pages → kaffeeplatz → Settings →
+Builds → Connect**, con `npm run build` como comando de build y
+`npx wrangler deploy` como comando de despliegue.
 
 ## Las propuestas anteriores
 

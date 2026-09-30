@@ -7,7 +7,7 @@ export default defineConfig({
   // El sitio vive en la RAIZ de su dominio. Ambos valores son parametrizables
   // por entorno para poder publicarlo tambien bajo un subdirectorio (GitHub
   // Pages) sin mantener dos configs divergentes.
-  site: process.env.SITE_URL ?? 'https://kaffeeplatz.pages.dev',
+  site: process.env.SITE_URL ?? 'https://kaffeeplatz.16ballcreations.workers.dev',
   base: process.env.BASE_PATH ?? '/',
   output: 'static',
   trailingSlash: 'ignore',

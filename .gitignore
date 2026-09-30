@@ -21,3 +21,6 @@ marca/logo-completo.png
 # Copias del contenido original dentro de cada propuesta (se duplican x3)
 propuestas/*/contenido-original/
 propuestas/*/marca/
+
+# Estado local de wrangler
+.wrangler/

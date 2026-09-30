@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "kaffeeplatz",
+  "compatibility_date": "2026-09-30",
+  // Sitio estático: solo se sirve lo que genera `npm run build` (dist/).
+  "assets": {
+    "directory": "./dist"
+  },
+  // Dirección de pruebas: https://kaffeeplatz.16ballcreations.workers.dev
+  // Se mantiene aunque llegue el dominio, para revisar sin tocarlo.
+  "workers_dev": true,
+  // DOMINIO PROPIO, pendiente: kaffeeplatz.co sigue en Shopify.
+  // Ver CLOUDFLARE.md para el orden. Resumen: nameservers en Cloudflare,
+  // descomentar estas rutas y publicar con SITE_URL=https://kaffeeplatz.co.
+  // "routes": [
+  //   { "pattern": "kaffeeplatz.co", "custom_domain": true },
+  //   { "pattern": "www.kaffeeplatz.co", "custom_domain": true }
+  // ],
+  "observability": {
+    "enabled": true
+  }
+}
