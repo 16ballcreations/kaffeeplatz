@@ -11,7 +11,7 @@
  * con sharp automaticamente.
  */
 import { Image } from 'astro:assets';
-import { recurso } from '../datos/sitio';
+import { recurso, optimizada } from '../datos/sitio';
 
 interface Props {
   /** Ruta "/img/..." de public/, o un ImageMetadata importado de src/assets/. */
@@ -45,7 +45,7 @@ const esRutaPublica = typeof src === 'string';
 {
   esRutaPublica ? (
     <img
-      src={recurso(src as string)}
+      src={recurso(optimizada(src as string))}
       alt={alt}
       width={ancho}
       height={alto}

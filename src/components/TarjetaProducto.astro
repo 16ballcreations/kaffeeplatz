@@ -46,6 +46,8 @@ const enlace = ruta(`/producto/${producto.handle}`);
 const hayRango = new Set(producto.variantes.map((v) => v.precio)).size > 1;
 const categoria = categoriaPorId(producto.categoria).nombre;
 const opciones = resumenOpciones(producto.opciones);
+/** Foto con fondo propio (JPG en origen) frente a recorte sobre blanco. */
+const esFoto = (src: string) => (/\.jpe?g$/i.test(src) ? 'true' : undefined);
 ---
 
 <article
@@ -57,14 +59,25 @@ const opciones = resumenOpciones(producto.opciones);
     <div data-kp-tarjeta-media class="v-tarjeta__media" data-doble={segunda ? 'true' : undefined}>
       {
         portada ? (
-          <Imagen src={portada.src} alt={portada.alt} prioridad={prioridad} clase="v-tarjeta__img" />
+          <Imagen
+            src={portada.src}
+            alt={portada.alt}
+            prioridad={prioridad}
+            clase="v-tarjeta__img"
+            data-foto={esFoto(portada.src)}
+          />
         ) : (
           <span data-kp-sin-imagen>Sin imagen</span>
         )
       }
       {
         segunda && (
-          <Imagen src={segunda.src} alt="" clase="v-tarjeta__img v-tarjeta__img--2" />
+          <Imagen
+            src={segunda.src}
+            alt=""
+            clase="v-tarjeta__img v-tarjeta__img--2"
+            data-foto={esFoto(segunda.src)}
+          />
         )
       }
       {

@@ -64,7 +64,7 @@
 
   /* Textura de lino: elemento de identidad, no decoracion. El medallon de marca
      va sobre lino oscuro y la papeleria sobre lino claro. */
-  --kp-lino: url('/img/marca/textura-lino.png');
+  --kp-lino: url('/img/marca/textura-lino.webp');
 }
 
 /* Filete dorado metalico — el gesto grafico de la marca. */

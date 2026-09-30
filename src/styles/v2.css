@@ -720,7 +720,7 @@ body:has(.v-menu[open]) {
   background-image:
     radial-gradient(ellipse 80% 70% at 75% 40%, rgb(222 193 133 / 0.08), transparent 70%),
     linear-gradient(rgb(15 14 13 / 0.82), rgb(15 14 13 / 0.82)),
-    url('/img/marca/lino-tile.png');
+    url('/img/marca/lino-tile.webp');
   background-size: auto, auto, 320px;
 }
 
@@ -744,7 +744,7 @@ body:has(.v-menu[open]) {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: url('/img/marca/lino-tile-claro.png') center top / 232px repeat;
+  background: url('/img/marca/lino-tile-claro.webp') center top / 232px repeat;
   opacity: 0.3;
   mix-blend-mode: multiply;
 }
@@ -1480,8 +1480,10 @@ body:has(.v-menu[open]) {
     transform 0.9s var(--v-curva);
 }
 
-/* Fotos que ya traen fondo propio (capturas): llenan el marco con aire. */
-.v-tarjeta__img[src$='.jpg'] {
+/* Fotos que ya traen fondo propio (capturas, JPG en origen): llenan el
+   marco con aire. La marca la pone TarjetaProducto: tras pasar a WebP la
+   extension ya no distingue foto de recorte. */
+.v-tarjeta__img[data-foto] {
   width: 90%;
   height: 90%;
   border-radius: var(--v-r-mini);
@@ -1841,7 +1843,7 @@ body:has(.v-menu[open]) {
 .v-cierre__planta {
   background:
     radial-gradient(ellipse at 30% 60%, rgb(222 193 133 / 0.12), transparent 65%),
-    url('/img/marca/planta-oro.png') center 60% / contain no-repeat;
+    url('/img/marca/planta-oro.webp') center 60% / contain no-repeat;
   opacity: 0.85;
   margin: 2rem;
   /* El PNG trae fondo oscuro propio: se funde por los bordes. */
@@ -3163,7 +3165,7 @@ body:has(.v-menu[open]) {
 [data-kp-articulo-media]:has([data-kp-sin-imagen]) {
   background:
     radial-gradient(ellipse at 50% 60%, rgb(222 193 133 / 0.1), transparent 70%),
-    url('/img/marca/planta-oro.png') center / 40% no-repeat,
+    url('/img/marca/planta-oro.webp') center / 40% no-repeat,
     var(--v-superficie);
 }
 

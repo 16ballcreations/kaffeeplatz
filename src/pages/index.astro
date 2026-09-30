@@ -23,7 +23,7 @@ import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import Imagen from '../components/Imagen.astro';
 import Precio from '../components/Precio.astro';
 import Icono from '../components/Icono.astro';
-import { SITIO, ruta, recurso } from '../datos/sitio';
+import { SITIO, ruta, recurso, optimizada } from '../datos/sitio';
 import { CATEGORIAS } from '../datos/categorias';
 import { METODOS } from '../datos/guias';
 
@@ -98,7 +98,7 @@ const heroProducto = porHandle.get(HERO);
           {
             heroProducto?.imagenes[0] && (
               <img
-                src={recurso(heroProducto.imagenes[0].src)}
+                src={recurso(optimizada(heroProducto.imagenes[0].src))}
                 alt={heroProducto.imagenes[0].alt}
                 width="900"
                 height="900"
@@ -110,7 +110,7 @@ const heroProducto = porHandle.get(HERO);
           }
         </div>
         <img
-          src={recurso('/img/marca/emblema-sm.png')}
+          src={recurso('/img/marca/emblema-sm.webp')}
           alt=""
           class="v-hero__sello"
           width="320"

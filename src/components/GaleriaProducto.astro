@@ -59,7 +59,7 @@
  * Los vinculos que apunten a una variante inexistente se ignoran aqui mismo,
  * en el servidor: mas vale una galeria sin vinculo que un vinculo roto.
  */
-import { recurso } from '../datos/sitio';
+import { recurso, optimizada } from '../datos/sitio';
 
 interface ImagenProducto {
   src: string;
@@ -102,7 +102,7 @@ const hayMiniaturas = imgs.length > 1;
       <div data-kp-galeria-principal>
         <img
           data-kp-galeria-img
-          src={recurso(principal.src)}
+          src={recurso(optimizada(principal.src))}
           alt={principal.alt}
           loading="eager"
           decoding="sync"
@@ -125,11 +125,11 @@ const hayMiniaturas = imgs.length > 1;
               <a
                 data-kp-galeria-mini
                 data-indice={String(i)}
-                data-src={recurso(img.src)}
+                data-src={recurso(optimizada(img.src))}
                 data-alt={img.alt}
                 data-variante={img.variante}
-                href={recurso(img.src)}
-                style={`background-image: url("${recurso(img.src)}")`}
+                href={recurso(optimizada(img.src))}
+                style={`background-image: url("${recurso(optimizada(img.src))}")`}
               >
                 {/* LA FOTO DE LA MINIATURA SE PINTA COMO `background-image`
                     (arriba, en el style del <a>), no con este <img>.
@@ -152,7 +152,7 @@ const hayMiniaturas = imgs.length > 1;
                     oculta con `opacity: 0` en la hoja de estilos y NO con
                     `display:none` ni `visibility:hidden`, que lo sacarian del
                     arbol de accesibilidad. */}
-                <img src={recurso(img.src)} alt={img.alt} loading="eager" decoding="async" />
+                <img src={recurso(optimizada(img.src))} alt={img.alt} loading="eager" decoding="async" />
               </a>
             </li>
           ))}

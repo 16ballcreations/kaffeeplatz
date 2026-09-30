@@ -47,3 +47,15 @@ export function ruta(camino: string): string {
 
 /** Igual que `ruta`, para recursos de public/ (imágenes, iconos). */
 export const recurso = ruta;
+
+/**
+ * Ruta de la versión WebP de una imagen de public/img, la que se PINTA.
+ * La genera `npm run imagenes` junto al original (ver
+ * scripts/optimizar-imagenes.mjs): ~10 veces menos peso.
+ *
+ * El original se sigue usando para Open Graph (props `imagen` de Base): las
+ * vistas previas de WhatsApp no muestran WebP de forma fiable.
+ */
+export function optimizada(src: string): string {
+  return src.replace(/\.(png|jpe?g)$/i, '.webp');
+}

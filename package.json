@@ -10,7 +10,8 @@
     "astro": "astro",
     "normalizar": "node scripts/normalizar.mjs",
     "contraste": "node scripts/contraste.mjs",
-    "deploy": "astro build && wrangler deploy"
+    "deploy": "astro build && wrangler deploy",
+    "imagenes": "node scripts/optimizar-imagenes.mjs"
   },
   "dependencies": {
     "@phosphor-icons/core": "^2.1.1",
