@@ -1,0 +1,82 @@
+# Generado por npm run redirecciones (scripts/redirecciones.mjs). No editar a mano.
+
+# Productos: /products/<handle> -> /producto/<handle>/
+/products/mate-de-acero-inoxidable /producto/mate-de-acero-inoxidable/ 301
+/products/prensa-francesa /producto/prensa-francesa/ 301
+/products/set-hario-v60 /producto/set-hario-v60/ 301
+/products/hario-switch /producto/hario-switch/ 301
+/products/fitro-de-acero-chemex-3-tazas /producto/filtro-de-acero-chemex-3-tazas/ 301
+/products/sin-nombre-2jul_23-46 /producto/hario-v60-mugen/ 301
+/products/molino-manual-timemore-c3-esp-pro /producto/molino-manual-timemore-c3-esp-pro/ 301
+/products/hervidor-brewista /producto/hervidor-brewista/ 301
+/products/servex-hario /producto/servex-hario/ 301
+/products/v60-de-vidrio /producto/v60-de-vidrio/ 301
+/products/filtro-de-acero-v60 /producto/filtro-de-acero-v60/ 301
+/products/prensa-francesa-acero-inoxidable /producto/prensa-francesa-acero-inoxidable/ 301
+/products/aeropress-clear /producto/aeropress-clear/ 301
+/products/filtros-v60 /producto/filtros-v60/ 301
+/products/filtros-chemex /producto/filtros-chemex/ 301
+/products/micro-filters-aeroprees /producto/micro-filters-aeroprees/ 301
+/products/filtro-acero-para-aeropress /producto/filtro-acero-para-aeropress/ 301
+/products/server /producto/server/ 301
+/products/dripper-de-vidrio /producto/dripper-de-vidrio/ 301
+/products/dripper-flor-de-loto /producto/dripper-flor-de-loto/ 301
+/products/termometro /producto/termometro/ 301
+/products/grameras-digital /producto/grameras-digital/ 301
+/products/hervidor-mango-de-madera /producto/hervidor-mango-de-madera/ 301
+/products/aeropress /producto/aeropress/ 301
+/products/chemex /producto/chemex/ 301
+
+# Diario: /blogs/noticias/<handle> -> /diario/<handle>/
+/blogs/noticias/7-errores-comunes-al-preparar-cafe-en-casa-y-como-evitarlos /diario/7-errores-comunes-al-preparar-cafe-en-casa-y-como-evitarlos/ 301
+/blogs/noticias/aeropress-el-metodo-perfecto-para-preparar-cafe-de-especialidad-en-casa /diario/aeropress-el-metodo-perfecto-para-preparar-cafe-de-especialidad-en-casa/ 301
+/blogs/noticias/cafe-de-especialidad-en-casa-como-un-buen-equipo-eleva-tu-experiencia-cafetera /diario/cafe-de-especialidad-en-casa-como-un-buen-equipo-eleva-tu-experiencia-cafetera/ 301
+/blogs/noticias/cold-brew-la-revolucion-del-cafe-frio-que-todos-quieren-probar-en-2025 /diario/cold-brew-la-revolucion-del-cafe-frio-que-todos-quieren-probar-en-2025/ 301
+/blogs/noticias/el-cafe-la-segunda-bebida-mas-consumida-en-el-mundo /diario/el-cafe-la-segunda-bebida-mas-consumida-en-el-mundo/ 301
+/blogs/noticias/el-metodo-de-preparacion-que-conquisto-al-mundo-del-cafe /diario/el-metodo-de-preparacion-que-conquisto-al-mundo-del-cafe/ 301
+/blogs/noticias/guia-definitiva-para-conservar-tu-cafe-siempre-fresco /diario/guia-definitiva-para-conservar-tu-cafe-siempre-fresco/ 301
+/blogs/noticias/guia-practica-que-tipo-de-molienda-usar-para-cada-metodo-de-cafe /diario/guia-practica-que-tipo-de-molienda-usar-para-cada-metodo-de-cafe/ 301
+/blogs/noticias/los-mejores-accesorios-para-mejorar-tu-experiencia-de-cafe-en-casa /diario/los-mejores-accesorios-para-mejorar-tu-experiencia-de-cafe-en-casa/ 301
+/blogs/noticias/por-que-el-origen-del-grano-importa-en-el-sabor-del-cafe-2 /diario/por-que-el-origen-del-grano-importa-en-el-sabor-del-cafe-2/ 301
+/blogs/noticias/prensa-francesa-cafe-con-cuerpo-sabor-intenso-y-preparacion-sin-complicaciones /diario/prensa-francesa-cafe-con-cuerpo-sabor-intenso-y-preparacion-sin-complicaciones/ 301
+/blogs/noticias/que-cafe-va-mejor-con-cada-metodo-de-preparacion-guia-practica-para-sacarle-el-maximo-sabor /diario/que-cafe-va-mejor-con-cada-metodo-de-preparacion-guia-practica-para-sacarle-el-maximo-sabor/ 301
+/blogs/noticias/que-es-el-cafe-de-especialidad-y-por-que-deberias-probarlo /diario/que-es-el-cafe-de-especialidad-y-por-que-deberias-probarlo/ 301
+/blogs/noticias/que-es-el-cafe-de-especialidad-y-por-que-esta-conquistando-al-mundo /diario/que-es-el-cafe-de-especialidad-y-por-que-esta-conquistando-al-mundo/ 301
+/blogs/noticias/que-molienda-usar-para-cada-metodo-de-cafe-la-clave-para-una-taza-perfecta /diario/que-molienda-usar-para-cada-metodo-de-cafe-la-clave-para-una-taza-perfecta/ 301
+/blogs/noticias/v60-el-metodo-para-lograr-una-taza-limpia-delicada-y-perfecta-en-casa /diario/v60-el-metodo-para-lograr-una-taza-limpia-delicada-y-perfecta-en-casa/ 301
+/blogs/noticias /diario/ 301
+/blogs /diario/ 301
+
+# Colecciones -> catalogo (con filtro cuando hay categoria equivalente)
+/collections/metodos /catalogo/?categoria=metodos 301
+/collections/grameras /catalogo/?categoria=medicion 301
+/collections/accesorios /catalogo/ 301
+/collections/frontpage /catalogo/ 301
+/collections/todos-los-productos /catalogo/ 301
+/collections/ultimos-lanzamientos /catalogo/ 301
+/collections/all /catalogo/ 301
+/collections /catalogo/ 301
+
+# Paginas fijas de Shopify
+/pages/contact /contacto/ 301
+/pages/contacto /contacto/ 301
+/pages/about /nosotros/ 301
+/pages/sobre-nosotros /nosotros/ 301
+/cart /catalogo/ 301
+/search /catalogo/ 301
+/account / 301
+/policies/shipping-policy /contacto/ 301
+/policies/contact-information /contacto/ 301
+/policies/refund-policy /contacto/ 301
+/policies/privacy-policy /contacto/ 301
+/policies/terms-of-service /contacto/ 301
+
+# Dinamicas (al final: las estaticas tienen prioridad)
+/collections/*/products/fitro-de-acero-chemex-3-tazas /producto/filtro-de-acero-chemex-3-tazas/ 301
+/collections/*/products/sin-nombre-2jul_23-46 /producto/hario-v60-mugen/ 301
+/collections/:coleccion/products/:handle /producto/:handle/ 301
+/blogs/noticias/tagged/* /diario/ 301
+/blogs/:blog/:handle /diario/:handle/ 301
+/pages/* / 301
+/policies/* /contacto/ 301
+/account/* / 301

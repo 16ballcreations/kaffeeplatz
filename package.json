@@ -11,7 +11,8 @@
     "normalizar": "node scripts/normalizar.mjs",
     "contraste": "node scripts/contraste.mjs",
     "deploy": "astro build && wrangler deploy",
-    "imagenes": "node scripts/optimizar-imagenes.mjs"
+    "imagenes": "node scripts/optimizar-imagenes.mjs",
+    "redirecciones": "node scripts/redirecciones.mjs"
   },
   "dependencies": {
     "@phosphor-icons/core": "^2.1.1",
