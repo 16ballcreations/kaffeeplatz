@@ -10,7 +10,9 @@ funcionando, pero las novedades llegan a Workers.
 |---|---|
 | Cuenta | 16ballcreations@gmail.com |
 | Worker | `kaffeeplatz` |
+| Sitio | **https://kaffeeplatz.co** (y `www.`), en producción desde 2026-09-30 |
 | URL de pruebas | https://kaffeeplatz.16ballcreations.workers.dev |
+| DNS | Cloudflare (nameservers `gail` y `houston.ns.cloudflare.com`; registrador GoDaddy) |
 | Configuración | `wrangler.jsonc` (sirve `dist/`) |
 
 ## Publicar
@@ -19,45 +21,35 @@ funcionando, pero las novedades llegan a Workers.
 npm run deploy
 ```
 
-Construye con `astro build` y sube `dist/` con `wrangler deploy`. Hace falta
-haber iniciado sesión una vez con `npx wrangler login` en la cuenta de
-16ballcreations.
+Construye con `astro build` y sube `dist/` con `wrangler deploy` al dominio.
+Hace falta haber iniciado sesión una vez con `npx wrangler login` en la
+cuenta de 16ballcreations.
 
-`SITE_URL` no hace falta mientras se publique en la dirección `.workers.dev`,
-que es el valor por defecto de `astro.config.mjs`. `BASE_PATH` tampoco: en
-Cloudflare el sitio va en la raíz.
+`SITE_URL` vale `https://kaffeeplatz.co` por defecto (`astro.config.mjs`):
+canonical, Open Graph, datos estructurados y sitemap apuntan al dominio sin
+www. `BASE_PATH` no hace falta: en Cloudflare el sitio va en la raíz.
 
 GitHub Pages sigue publicándose solo con cada push a `main`, bajo
-`/kaffeeplatz/` (el workflow le pasa `BASE_PATH` y `SITE_URL`).
+`/kaffeeplatz/` (el workflow le pasa su propio `BASE_PATH` y `SITE_URL`).
 
-## Mientras sea una evaluación
+Antes de publicar: si cambiaron fotos, `npm run imagenes`; si cambiaron
+productos o artículos del respaldo de Shopify, `npm run redirecciones`.
 
-`public/_headers` añade `X-Robots-Tag: noindex, nofollow` a todo el sitio en
-Cloudflare, para que no compita en buscadores con el Shopify que sigue en
-producción. Se quita el día que el sitio pase a ser el oficial.
+## Dominio: cómo quedó
 
-## Dominio propio: kaffeeplatz.co
+- **Las rutas** de `wrangler.jsonc` conectan `kaffeeplatz.co` y
+  `www.kaffeeplatz.co` al Worker. Cloudflare gestiona sus registros DNS y el
+  certificado: no hay que crear registros a mano para el sitio.
+- **Redirecciones 301** desde las URL de Shopify en `public/_redirects`
+  (lo genera `npm run redirecciones`): productos, diario, colecciones,
+  páginas fijas, carrito, cuenta y políticas.
+- **Buscadores:** `/sitemap.xml` y `/robots.txt`. Se quitó el `noindex` de la
+  etapa de evaluación.
+- **Shopify** se retira: sus registros (`A @`, `www`, `pagos`, verificación)
+  ya no existen.
 
-> Ojo con el orden: no conviene apuntar el dominio hasta que el contenido esté
-> aprobado, porque el Shopify actual sigue en producción ahí.
-
-1. **Mover los DNS a Cloudflare.** Un Worker solo admite dominios cuyos
-   nameservers estén en Cloudflare. Añadir `kaffeeplatz.co` a la cuenta,
-   revisar que se importen todos los registros (el correo, sobre todo) y
-   cambiar los nameservers en el registrador. Hasta este punto el sitio de
-   Shopify sigue igual: solo cambia quién sirve el DNS.
-2. **Redirecciones desde Shopify.** Las URL viejas (`/products/...`,
-   `/blogs/...`, `/pages/...`, `/collections/...`) tienen que llevar con 301
-   a las nuevas, o se pierde el posicionamiento. Van en `public/_redirects`.
-3. **Conectar el dominio.** Descomentar las `routes` de `wrangler.jsonc`,
-   quitar el bloque de `public/_headers` y publicar con el dominio:
-
-   ```bash
-   SITE_URL=https://kaffeeplatz.co npm run deploy
-   ```
-
-   Así las URL canónicas, Open Graph y los datos estructurados apuntan al
-   dominio real.
+Pendiente en el panel de Cloudflare: **SSL/TLS → Edge Certificates → Always
+Use HTTPS**, para que `http://` redirija a `https://`.
 
 ## Despliegue automático (opcional)
 

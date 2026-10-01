@@ -9,13 +9,13 @@
   // Dirección de pruebas: https://kaffeeplatz.16ballcreations.workers.dev
   // Se mantiene aunque llegue el dominio, para revisar sin tocarlo.
   "workers_dev": true,
-  // DOMINIO PROPIO, pendiente: kaffeeplatz.co sigue en Shopify.
-  // Ver CLOUDFLARE.md para el orden. Resumen: nameservers en Cloudflare,
-  // descomentar estas rutas y publicar con SITE_URL=https://kaffeeplatz.co.
-  // "routes": [
-  //   { "pattern": "kaffeeplatz.co", "custom_domain": true },
-  //   { "pattern": "www.kaffeeplatz.co", "custom_domain": true }
-  // ],
+  // Dominio propio. Cloudflare crea solo los registros DNS de estas rutas;
+  // el canonical de cada pagina apunta al dominio sin www (SITE_URL), asi que
+  // en buscadores no compiten.
+  "routes": [
+    { "pattern": "kaffeeplatz.co", "custom_domain": true },
+    { "pattern": "www.kaffeeplatz.co", "custom_domain": true }
+  ],
   "observability": {
     "enabled": true
   }

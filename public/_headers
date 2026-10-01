@@ -1,6 +1,0 @@
-# Cabeceras de Cloudflare (GitHub Pages ignora este archivo).
-# El Shopify de kaffeeplatz.co sigue en produccion: mientras este sitio sea
-# una version en evaluacion, que ningun buscador lo indexe. QUITAR este bloque
-# el dia que el sitio pase a ser el oficial en kaffeeplatz.co.
-/*
-  X-Robots-Tag: noindex, nofollow
