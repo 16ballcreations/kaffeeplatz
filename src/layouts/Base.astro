@@ -22,6 +22,7 @@ import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import Icono from '../components/Icono.astro';
 import { SITIO, NAVEGACION, ruta, recurso } from '../datos/sitio';
 import { ENVIOS } from '../datos/guias';
+import { paraCompartir } from '../datos/imagenes';
 import '../styles/v2.css';
 
 interface Props {
@@ -50,7 +51,9 @@ const {
 } = Astro.props as Props;
 
 const anio = new Date().getFullYear();
-const imagenSocial = imagen ?? '/img/marca/emblema.png';
+/* Imagen al compartir: la de la pagina si trae una (producto, articulo) y,
+   si no, la tarjeta de marca de 1200x630 (npm run imagen-social). */
+const imagenSocial = imagen ? paraCompartir(imagen) : '/img/marca/compartir.jpg';
 
 /* La seccion activa tambien cuenta en subrutas: /producto/x marca Catalogo,
    /diario/x marca Diario. */

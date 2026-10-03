@@ -57,6 +57,9 @@ let hechas = 0;
 
 for (const f of recorrer(DIR).sort()) {
   if (!/\.(png|jpe?g)$/i.test(f)) continue;
+  /* Derivados que no son originales: copias para compartir (.og.jpg, ver
+     abajo) y la tarjeta de marca (npm run imagen-social). */
+  if (/\.og\.jpg$/i.test(f) || f.endsWith(`${sep}compartir.jpg`)) continue;
   const base = f.slice(0, -extname(f).length);
   const completa = `${base}.webp`;
 
@@ -89,6 +92,22 @@ for (const f of recorrer(DIR).sort()) {
       .webp(opciones)
       .toFile(salida);
     regeneradas++;
+  }
+
+  /* Copia para COMPARTIR (Open Graph) de los PNG: JPG de 1200 px. Las
+     vistas previas de WhatsApp no muestran WebP y descartan imagenes de
+     varios MB, que es lo que pesan estos PNG. Los recortes transparentes se
+     asientan sobre blanco, que es el fondo del producto en su foto. */
+  if (/\.png$/i.test(f) && /[\\/](productos|diario)[\\/]/.test(f)) {
+    const og = `${base}.og.jpg`;
+    if (!alDia(og, f)) {
+      await sharp(f)
+        .resize({ width: 1200, height: 1200, fit: 'inside', withoutEnlargement: true })
+        .flatten({ background: '#ffffff' })
+        .jpeg({ quality: 82, mozjpeg: true })
+        .toFile(og);
+      regeneradas++;
+    }
   }
 
   const pesoOriginal = statSync(f).size;

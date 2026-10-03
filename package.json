@@ -12,7 +12,8 @@
     "contraste": "node scripts/contraste.mjs",
     "deploy": "astro build && wrangler deploy",
     "imagenes": "node scripts/optimizar-imagenes.mjs",
-    "redirecciones": "node scripts/redirecciones.mjs"
+    "redirecciones": "node scripts/redirecciones.mjs",
+    "imagen-social": "node scripts/imagen-social.mjs"
   },
   "dependencies": {
     "@phosphor-icons/core": "^2.1.1",

@@ -41,6 +41,17 @@ export function fuentes(src: string): Fuentes {
   return { src: completa, srcset, ancho: e.ancho, alto: e.alto };
 }
 
+/**
+ * Imagen para Open Graph (vista previa al compartir). Los PNG de productos y
+ * del diario pesan hasta 2 MB y WhatsApp descarta imagenes asi: se usa su
+ * copia JPG de 1200 px (<nombre>.og.jpg, la genera `npm run imagenes`). Los
+ * JPG originales ya son livianos y se usan tal cual. Devuelve la ruta sin
+ * `base`: SEO.astro la convierte en absoluta.
+ */
+export function paraCompartir(src: string): string {
+  return /^\/img\/(productos|diario)\/.+\.png$/i.test(src) ? src.replace(/\.png$/i, '.og.jpg') : src;
+}
+
 /** La version mas pequena disponible: para miniaturas de pocos px. */
 export function miniatura(src: string): string {
   const e = M[src];
