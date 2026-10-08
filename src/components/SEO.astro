@@ -12,6 +12,7 @@
  * el titulo o la descripcion, se los pasan por props desde la pagina.
  */
 import { SITIO, ruta } from '../datos/sitio';
+import { esProduccion } from '../datos/entorno';
 
 export interface Miga {
   nombre: string;
@@ -97,7 +98,15 @@ const bloques = [organizacion, migasJsonLd, ...(jsonLd ? (Array.isArray(jsonLd) 
 <title>{tituloCompleto}</title>
 <meta name="description" content={descripcion} />
 <link rel="canonical" href={canonical} />
-{noIndex && <meta name="robots" content="noindex,nofollow" />}
+{
+  /* Fuera de kaffeeplatz.co (es decir, en el entorno de desarrollo de GitHub
+     Pages) NINGUNA pagina se indexa, aunque no se pida: un entorno de pruebas
+     en Google compite con el sitio real. El `noIndex` por pagina sigue
+     valiendo para ocultar algo tambien en produccion. */
+  (noIndex || !esProduccion(Astro.site)) && (
+    <meta name="robots" content="noindex,nofollow" />
+  )
+}
 
 <meta property="og:site_name" content={SITIO.nombre} />
 <meta property="og:type" content={tipoOg} />
