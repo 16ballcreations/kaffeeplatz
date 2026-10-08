@@ -240,7 +240,19 @@ em {
   padding-top: 0;
 }
 
+/* Aire entre el contenido y el pie.
+   OJO con `:last-child` a secas: en /carrito los ultimos hijos del main son
+   un <template> y dos <script> de datos — invisibles — asi que el margen caia
+   en algo que no ocupa espacio y la pagina quedaba pegada al pie.
+   `:last-of-type` sobre los contenedores reales resuelve el caso sin
+   depender de que ninguna pagina termine en un elemento visible. */
 main > :last-child {
+  margin-bottom: var(--v-seccion);
+}
+
+main > section:last-of-type,
+main > div:last-of-type,
+main > article:last-of-type {
   margin-bottom: var(--v-seccion);
 }
 
