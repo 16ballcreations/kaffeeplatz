@@ -21,7 +21,17 @@ Pregúntaselas al usuario. No las inventes.
 1. **Cuenta Bold.** La abre la dueña de KaffeePlatz a su nombre (cédula o NIT y cuenta bancaria). Se necesitan sus llaves de integración: llave de identidad y llave secreta, primero las de **pruebas** y después las de producción.
 2. **Envíos.** Costo por ciudad o zona, si hay envío gratis desde cierto monto y los tiempos de entrega. Revisa primero la política de envíos que ya existe en `contenido-original/` y en el sitio, y propón la regla a partir de ella.
 3. **Infraestructura.** Recomendación: pasar de Pages a un **Worker con assets estáticos**, igual que el sitio de 16bc (`16ballcreations/16ballcreations.github.io`: `wrangler.jsonc`, `worker/index.js`, D1 y `npm run deploy`). Así hay un solo patrón para los dos proyectos y se reutiliza el panel `/admin`. La alternativa es mantener Pages y agregar Pages Functions con D1. Cualquiera de las dos sirve; lo que el usuario elija define la fase 0.
-4. **Inventario.** `disponible` es estático y sale del respaldo. Hay que decidir si el pedido pagado se confirma a mano con la dueña (recomendado para empezar) o si se lleva stock en la base de datos.
+4. **Inventario. DECIDIDO el 8 oct 2026: se lleva stock.** Esta pregunta ya no
+   está abierta. La recomendación original —confirmar a mano, sin stock— valía
+   bajo su supuesto: una sola vía de venta. Lo que cambió es que hay **dos**
+   compitiendo por las mismas unidades: Bold y WhatsApp. Vender el último
+   hervidor hablando y que el sitio lo cobre diez minutos después no es un dato
+   viejo, es dinero recibido por algo que no existe.
+   El diseño vive en `kaffeeplatz-panel-admin.md`, sección G (fase 9). Lo que
+   toca a este plan: `POST /api/pedidos` reserva, el webhook confirma y libera,
+   y "marcar como enviado" pasa a la lista de despachos.
+   Regla hermana de la de precios, igual de innegociable: **la disponibilidad
+   tampoco se toma del navegador.**
 5. **Facturación electrónica (DIAN).** Bold cobra, pero no factura. Pregunta cómo factura hoy la dueña; esto queda fuera del alcance salvo que lo pidan.
 
 ## Arquitectura
@@ -98,7 +108,8 @@ Prepara borradores a partir de lo que ya tenga KaffeePlatz y márcalos para revi
 
 ## Fuera de alcance
 
-- Inventario en tiempo real y sincronización con el Shopify.
+- Sincronización con el Shopify. (El **inventario** salió de esta lista el 8
+  oct 2026: ver la decisión 4.)
 - Facturación electrónica.
 - Cuentas de cliente e historial de compras.
 - Cupones y descuentos.

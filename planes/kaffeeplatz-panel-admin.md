@@ -6,12 +6,14 @@ Preparado desde 16 Ball Creations el 8 oct 2026. Es para que otro agente lo ejec
 
 El cliente pidió un panel donde la dueña edite el catálogo y el diario, con **D1 como fuente de verdad y el sitio leyendo en vivo**. Esa decisión está tomada y este plan la respeta.
 
-Cuatro cosas que hay que decir antes de empezar, con números:
+Cinco cosas que hay que decir antes de empezar, con números (la quinta se añadió el 8 oct 2026, con el inventario):
 
-1. **Es más trabajo del que suele imaginarse.** No es "agregar un `/admin`": es cambiar el modo de renderizado de un sitio que ya está en producción. El total estimado es **64–90 horas**. El panel en sí (fases 4–7) son 34–48; el resto es la infraestructura para que el sitio pueda leer de D1 sin perder lo que ya tiene (imágenes responsivas, SEO, velocidad).
+1. **Es más trabajo del que suele imaginarse.** No es "agregar un `/admin`": es cambiar el modo de renderizado de un sitio que ya está en producción. El total estimado es **78–109 horas** (eran 64–90 antes de que entrara el inventario el 8 oct 2026: ver el punto 5 y la sección G). El panel en sí (fases 4–7 y 9) son 48–67; el resto es la infraestructura para que el sitio pueda leer de D1 sin perder lo que ya tiene (imágenes responsivas, SEO, velocidad).
 2. **Recomendación firme: adaptador de Cloudflare para Astro, con prerenderizado selectivo.** No duplicar el HTML en plantillas del Worker. El diseño Obsidiana II son **3.464 líneas de CSS** y ~2.600 de `.astro` entre páginas y componentes; reescribir eso en strings dentro del Worker costaría 25–35 horas adicionales y dejaría dos copias del diseño divergiendo para siempre. El detalle está en la sección C.
 3. **El modelo de imágenes por variante NO es una extensión menor, y conviene saberlo antes de empezar.** El cliente lo describe como "una extensión de lo que ya existe, sin demasiado drama". La parte de datos sí lo es (ya existe el campo `variante` y la galería ya lo lee). Pero **obliga a replantear dos cosas que hoy no existen**: la noción de *portada* (hoy es implícitamente "la primera foto del array", y con 9 fotos de 3 colores eso deja de significar nada) y el comportamiento de la galería al cambiar de color (hoy cambia **una** foto grande; con el modelo nuevo tiene que **recomponer la fila de miniaturas**, que es un cambio de lógica, no de dato). Son **12–17 horas** de las que ~5–7 son de la ficha pública, no del panel. Detalle en B.7.
-4. **Hay una alternativa más barata que conviene poner sobre la mesa antes de la fase 0.** Si lo que la dueña necesita de verdad es "editar sin pedirle nada a nadie", un panel que escribe en D1 y **dispara un build** (3–5 minutos de retraso, sitio 100% estático) cuesta **28–38 horas** en vez de 64–90, y no añade ningún riesgo de caída. No es lo que se pidió, pero es honesto ponerle precio: la diferencia son unas 40 horas y un modo de fallo nuevo. Ver "Opción D" en la sección C. Si el cliente confirma que quiere ver el cambio al instante, se sigue con la recomendación 2 y ya está.
+4. **Hay una alternativa más barata que conviene poner sobre la mesa antes de la fase 0.** Si lo que la dueña necesita de verdad es "editar sin pedirle nada a nadie", un panel que escribe en D1 y **dispara un build** (3–5 minutos de retraso, sitio 100% estático) cuesta **42–57 horas** en vez de 78–109 (eran 28–38 contra 64–90 antes de que entrara el inventario; esa fase 9 cuesta lo mismo en las dos opciones, porque el stock vive en D1 de todas formas), y no añade ningún riesgo de caída. No es lo que se pidió, pero es honesto ponerle precio: la diferencia son unas 40 horas y un modo de fallo nuevo. Ver "Opción D" en la sección C. Si el cliente confirma que quiere ver el cambio al instante, se sigue con la recomendación 2 y ya está.
+
+5. **AÑADIDO EL 8 OCT 2026: el inventario entra en el alcance, y supera una decisión anterior.** El cliente pidió poder cargar y descontar cantidades desde el panel para las ventas que se cierran por WhatsApp, y que lo vendido quede bloqueado en una lista de «productos a despachar». Eso significa **llevar stock**, lo que **deja sin vigencia** la decisión previa de «confirmación manual de la dueña, sin llevar stock» (plan del carrito, decisión 4) que este documento tenía en «Fuera de alcance». El diseño completo es la **sección G** y es la **fase 9: 14–19 horas**, con lo que el total pasa de 64–90 a **78–109**. La razón del cambio, para quien lea esto dentro de un año, está en **G.0**: hay dos vías de venta compitiendo por las mismas unidades, y un sí/no manual no puede con eso sin cobrar alguna vez por algo que ya se vendió.
 
 **Nota sobre dos cifras de este documento que corrigen lo que se asumió al encargarlo.** El encargo hablaba de 56 imágenes; el recuento real es **30 referencias de producto sobre 29 ficheros** (21 de los 25 productos tienen una sola foto) más **16 portadas del diario**. Las 270 entradas de `public/img` son casi todas derivados generados. La cifra importa porque cambia la escala del trabajo de imágenes: hoy el catálogo está **casi vacío de fotos**, y lo que el cliente describe (9 fotos para la Aeropress Clear) significa que **la dueña va a multiplicar el material fotográfico por tres o cuatro**. El panel hay que diseñarlo para ese volumen futuro, no para las 30 de hoy.
 
@@ -470,7 +472,7 @@ Hoy el build genera **47 páginas**. Si D1 manda, `/catalogo`, `/producto/[handl
 
 No es lo que se pidió, pero es la alternativa honesta y hay que ponerla con precio. El panel escribe en D1 igual; al guardar, dispara un despliegue (Workers Builds o un webhook) que lee D1 y genera las 47 páginas.
 
-- A favor: el sitio público **no cambia nada** — sigue estático, igual de rápido, igual de indexable, **y si D1 se cae, el sitio sigue en pie** porque no lo consulta. Desaparecen los riesgos R1, R2 y R4 de la sección B.6. Coste total del proyecto: **28–38 horas** en vez de 64–90.
+- A favor: el sitio público **no cambia nada** — sigue estático, igual de rápido, igual de indexable, **y si D1 se cae, el sitio sigue en pie** porque no lo consulta. Desaparecen los riesgos R1, R2 y R4 de la sección B.6. Coste total del proyecto: **42–57 horas** en vez de 78–109 (eran 28–38 contra 64–90 antes del inventario).
 - En contra: el cambio tarda **3–5 minutos** en verse, no es instantáneo. Y hay que manejar el caso de dos ediciones seguidas (encolar builds).
 - **Cuándo tiene sentido:** si "al instante" en realidad significaba "sin pedirle nada al desarrollador". Para un catálogo de 25 productos que cambia unas pocas veces por semana, esperar 4 minutos no suele ser el problema que parecía.
 - Si el cliente confirma que quiere ver el cambio al instante, se descarta y se sigue con B. **Pero preguntarlo antes de gastar 35 horas es parte del trabajo.** Ver la decisión 1 de la sección E.
@@ -657,9 +659,14 @@ Formato y estilo del plan de `planes/kaffeeplatz-carrito-bold.md`.
 | **6 · Imágenes por variante y rol** (B.7) | **Panel (7–10 h):** carga múltiple con progreso y guardado por foto, rejilla de asignación variante+rol, "aplicar a las siguientes N", deducción desde el nombre del fichero, reordenar por grupo con respaldo accesible, `alt` prerrellenado, marcar portadas, avisar de variantes sin foto. **Ficha pública (5–7 h):** miniaturas filtradas por variante conservando los índices y el `aria-pressed`, respaldo cuando la variante no tiene fotos, portadas en `TarjetaProducto` y catálogo. Servir desde el Worker con caché | 12–17 |
 | **7 · Panel: diario y categorías** | Alta y edición de artículos (título, fecha, autor, resumen, cuerpo en Markdown, portada, categoría, publicado/borrador), vista previa, archivar. Editar categorías (nombre, orden, descripción) y los roles de imagen | 5–7 |
 | **8 · Pruebas y publicación** | Lista de pruebas de abajo. Comparar Lighthouse contra la referencia de la fase 0. Simular caída de D1. Cambiar el dominio. **Vigilar Search Console a los 3 y 14 días** | 3–4 |
-| **Total** | | **64–90** |
+| **9 · Inventario** (sección G, añadida el 8 oct 2026) | `0004_inventario.sql` (+ tabla `ajustes`). Fórmula de `vendible` con interruptor de activación. Reservas en el checkout y cierre en el webhook de Bold, con idempotencia triple. Cron Trigger de caducidad. Pantalla de inventario a 375 px (cargar/descontar con motivo). Lista de «productos a despachar» con los dos orígenes. Venta por WhatsApp en un toque. Historial por variante. Cuadre diario. **Conteo inicial con Andreina** | 14–19 |
+| **Total** | | **78–109** |
 
-De esas, **34–48 son el panel** (fases 4–7, incluidas las 7–10 del panel de imágenes) y **30–42 son el cambio de arquitectura y la ficha pública** (fases 0–3, 6-público, 8). Si el cliente eligiera la opción D (B.3), las fases 1 y 3 se reemplazan por un disparador de build de 2–3 horas y el total baja a **28–38**.
+**La suma, comprobada** (el encargo lo pide porque una versión anterior de este documento declaró un total que no cuadraba con su propia tabla; la tabla vigente sí cuadraba y sigue cuadrando con la fase 9 añadida): mínimos `3+6+8+10+7+10+12+5+3+14 = 78`; máximos `4+9+11+14+10+14+17+7+4+19 = 109`.
+
+De esas, **48–67 son el panel** (fases 4–7 y 9, incluidas las 7–10 del panel de imágenes) y **30–42 son el cambio de arquitectura y la ficha pública** (fases 0–3, 6-público, 8). Si el cliente eligiera la opción D (B.3), las fases 1 y 3 se reemplazan por un disparador de build de 2–3 horas y el total baja a **42–57** (antes de la fase 9 eran 28–38).
+
+**Y el plan del carrito sube también:** el checkout y el webhook de Bold pasan a tocar inventario (+2–3 h en su fase 2, +2–3 h en su fase 3, −1 h en su fase 4, porque «marcar como enviado» se hace una sola vez aquí). Su total pasa de **26–36** a **29–41**. Detalle en G.5; ese documento no se editó.
 
 **Las fases 5 y 6 se pueden invertir si hace falta enseñar algo pronto**, pero la 6 depende de que las variantes ya se editen (fase 5). Lo que **no** conviene es adelantar la parte pública de la 6 antes de que el panel permita cargar las fotos: se estaría construyendo una galería para datos que nadie puede introducir todavía.
 
@@ -746,6 +753,14 @@ Trabajo en curso en esa rama: `src/scripts/carrito.ts`, `src/components/Contador
 2. **`carrito.ts` guarda `handle` + `varianteId` y relee precio y título del catálogo en cada pintado** — decisión ya documentada en ese fichero ("un carrito que recuerda precios es un carrito que miente"). **Esa decisión encaja perfectamente con D1 y hay que conservarla.** Pero `varianteId` hoy es el id de Shopify. Por eso el esquema de B.1 guarda **`variantes.id_externo`** y lo indexa: los carritos que la gente ya tenga en `localStorage` siguen resolviendo. Si se perdiera ese campo, todo carrito guardado se vaciaría en silencio el día del despliegue.
 3. **`resolver()` del carrito tendrá que leer de D1**, no del catálogo compilado. Con la capa de datos de la fase 3 devolviendo la misma forma, es un cambio de origen, no de lógica. Y cuando llegue el checkout, el recálculo de precio en el servidor (regla no negociable del plan de Bold) pasa a hacerse **contra D1**, que es más fuerte que contra los JSON: el precio de cobro será el que la dueña tenga puesto en ese momento.
 4. **`disponible` deja de ser estático.** El plan de Bold da por hecho que sale del respaldo y lo marca como decisión pendiente (su punto 4). Con el panel, la dueña lo cambia cuando quiere: el carrito debe descartar una variante que se agotó **mientras estaba en el carrito**, no solo al añadirla.
+   **Actualizado el 8 oct 2026 (ver G.0):** la mecánica de este punto sigue
+   valiendo entera, pero **cambia la causa**. Una variante ya no se agota solo
+   porque la dueña mueva una bandera, sino porque su **stock llegó a cero** — y
+   eso puede pasar por una venta de Bold, por una venta de WhatsApp o por una
+   reserva de otro cliente, es decir **mientras el carrito está quieto**. El
+   requisito «releer la disponibilidad en cada pintado» pasa de conveniente a
+   necesario. La buena noticia es que `carrito.ts` ya lo hace y **no hay que
+   tocarlo** (G.5).
 5. **`src/datos/envio.ts`** tiene `TARIFA_PLANA_ENVIO` marcado como pendiente de confirmar. No lo toca este plan, pero si se quiere que la dueña lo edite desde el panel, es una tabla `ajustes` (clave/valor, como la `settings` de 16bc, migración 0003 de allá). **Fuera de alcance aquí**; anotado porque el cliente lo va a pedir.
 
 **Orden recomendado:** terminar y mezclar el carrito (fases 1–2 del plan de Bold), después las fases 0–3 de este plan, y el checkout de Bold ya sobre D1. Hacer este plan en paralelo al carrito garantiza conflictos en `producto/[handle].astro` y en la capa de datos.
@@ -758,7 +773,7 @@ KaffeePlatz es del cliente y su pareja: **las decisiones se toman de su lado y n
 
 Pregúntaselas al usuario. No las inventes.
 
-1. **¿"Al instante" es instantáneo, o es "sin pedírselo a nadie"?** Es la pregunta que más dinero mueve: la opción D (B.3) cuesta **28–38 horas** contra **64–90**, el sitio sigue estático, y el cambio tarda 3–5 minutos. Si la respuesta es "con 4 minutos me vale", sobran unas 40 horas y desaparecen los riesgos R1, R2 y R4. Preguntarlo es parte del trabajo.
+1. **¿"Al instante" es instantáneo, o es "sin pedírselo a nadie"?** Es la pregunta que más dinero mueve: la opción D (B.3) cuesta **42–57 horas** contra **78–109**, el sitio sigue estático, y el cambio tarda 3–5 minutos. Si la respuesta es "con 4 minutos me vale", sobran unas 40 horas y desaparecen los riesgos R1, R2 y R4. Preguntarlo es parte del trabajo.
 2. **¿Workers Paid?** Recomendado y casi obligatorio (R4): 5 USD al mes para que la tienda no se apague por cuota. Si el cliente se niega, hay que decirle que el riesgo queda abierto.
 3. **Imágenes: ¿transformaciones de Cloudflare Images, o derivados con `sharp` al subir?** Recomendado Images (gratis hasta 5.000 transformaciones únicas al mes, de sobra para 56 fotos). `sharp` no corre en un Worker y obligaría a subir desde una herramienta local.
 4. **¿Dominio propio para las imágenes (`img.kaffeeplatz.co`) o servirlas por el Worker?** Recomendado el Worker: ya está ahí y no hay zona nueva que configurar.
@@ -790,10 +805,1370 @@ El cliente pidió explícitamente que esto quede bien estructurado "para evitar 
 4. **Los JSON y los MD no se borran.** Son el respaldo, la referencia para `comparar-d1.mjs` y la prueba de qué había antes. 51 MB y unos cuantos ficheros de texto no son un problema de espacio; perder el estado original sí lo es.
 5. **Escribir las decisiones donde se van a leer**, que en este repositorio significa en la cabecera del fichero, en prosa, explicando el *por qué* y no el *qué*. Es la costumbre que ya tiene el proyecto (`content.config.ts`, `carrito.ts`, `GaleriaProducto.astro` y `categorias.ts` son ejemplos buenos de verdad) y es la razón de que se pueda retomar meses después. **Mantenerla no es opcional: es la mitad del valor de este código.** En particular, hay que dejar escrito por qué el rol es una tabla (B.7), por qué la portada es una FK y no un flag (B.1), por qué resembrar ya no es seguro (R8) y por qué el vínculo imagen↔variante es por `id` y no por título.
 
+---
+
+# G. Inventario: un solo stock, dos vías de venta
+
+Añadido el **8 oct 2026**, a petición del cliente, textualmente:
+
+> «Necesito que tengamos en cuenta que en el panel administrativo tenemos que
+> poder hacer cargas y descuentos de cantidades de producto si se venden por
+> WhatsApp y no se hacen por medio de la confirmación de Bold. En ese último
+> caso, ese producto vendido quedaría bloqueado y en una lista de "productos a
+> despachar". Se entiende el flujo de manejo de inventario en este caso?»
+
+Sí se entiende, y la frase clave es **«un solo inventario»**. KaffeePlatz no
+tiene dos tiendas: tiene una estantería. Que la venta se cierre por Bold o
+hablando por WhatsApp cambia **quién** descuenta, no **de dónde** se descuenta.
+Todo el diseño de esta sección sale de ahí: una sola tabla de existencias, dos
+puertas de entrada a los mismos movimientos, y un único sitio donde mirar lo que
+hay que empacar.
+
+## G.0 DECISIÓN SUPERADA — «confirmación manual, sin llevar stock»
+
+**Qué decía.** El plan del carrito (`planes/kaffeeplatz-carrito-bold.md`,
+«Decisiones que hay que tomar antes de programar», punto 4) planteaba:
+
+> «**Inventario.** `disponible` es estático y sale del respaldo. Hay que decidir
+> si el pedido pagado se confirma a mano con la dueña (recomendado para empezar)
+> o si se lleva stock en la base de datos.»
+
+Y este documento lo daba por resuelto en dos sitios: en «Fuera de alcance»
+(«Inventario con stock numérico (hoy `disponible` es un sí/no)») y en el punto 4
+de la sección D, que describe `disponible` como un interruptor que la dueña
+cambia a mano.
+
+**Estado: SUPERADA el 8 oct 2026.** El cliente elige **llevar stock**. La
+recomendación anterior («confirmación manual para empezar») **ya no está
+vigente** y no debe tomarse como criterio alternativo.
+
+**Por qué cambió, para quien lea esto dentro de un año.** La recomendación de
+«sin stock» era correcta *bajo su supuesto*: que la única vía de venta fuera
+Bold y que la dueña revisara cada pedido antes de confirmarlo. Con una sola vía,
+un sí/no manual es más barato y no se desincroniza, porque solo una persona lo
+toca. Lo que cambió el supuesto es que **hay dos vías que compiten por las
+mismas unidades**. Con venta simultánea por Bold y por WhatsApp, un sí/no manual
+tiene un modo de fallo que no tenía antes: la dueña vende el último hervidor
+blanco por WhatsApp, no le da tiempo a cambiar la bandera, y el sitio acepta y
+**cobra** ese mismo hervidor diez minutos después. Eso ya no es un dato
+desactualizado: es dinero recibido por algo que no existe, y un reembolso con
+una disculpa. Un contador por variante es la única forma de que las dos vías
+resten del mismo sitio.
+
+**Consecuencias de la supersesión, aplicadas en este documento:**
+
+1. «Inventario con stock numérico» **sale** de «Fuera de alcance» (ya corregido
+   más abajo, con la nota de fecha).
+2. El punto 4 de la sección D se mantiene válido en su mecánica (`disponible`
+   deja de ser estático; el carrito debe descartar lo que se agotó estando
+   dentro) pero **cambia de causa**: ya no se agota porque la dueña mueva una
+   bandera, sino porque el stock llegó a cero. La bandera sigue existiendo, con
+   otro significado: ver G.1.
+3. **El plan del carrito queda desactualizado en su punto 4 y en su «Fuera de
+   alcance»** («Inventario en tiempo real»). No se edita aquí porque el encargo
+   de hoy limita la escritura a este fichero; queda anotado como pendiente: hay
+   que marcar ese punto 4 como resuelto a favor de llevar stock y remitir a esta
+   sección G. **Si alguien lee los dos planes en orden, el del carrito dice lo
+   contrario que este: este es el vigente, por fecha y por decisión explícita
+   del cliente.**
+
+## G.1 Modelo de datos
+
+### Dónde vive el stock: en la variante, y solo ahí
+
+El stock vive en `variantes`, no en `productos`. No es una preferencia de
+modelado, es lo que se vende: hay **30 variantes** sobre 25 productos, y un
+«Aeropress Clear» no se despacha — se despacha un **morado**. Un contador en
+`productos` sería la suma de cosas que no son intercambiables, y la pregunta que
+el cliente necesita responder («¿me queda hervidor blanco?») no se podría
+contestar.
+
+Los 21 productos de una sola variante no son una excepción: ya llevan su
+variante única `Default Title` en el esquema actual (B.1), así que tienen su
+contador igual que los demás, sin ninguna rama de código especial. Esa decisión
+del esquema de 0001 —no tratar «producto sin variantes» como un caso aparte— es
+la que hace que el inventario se pueda añadir sin tocar nada.
+
+### Las tres cantidades: dos guardadas y una calculada
+
+Hacen falta tres números distinguibles, y la decisión de cuál se guarda no es de
+estilo:
+
+| Cantidad | ¿Se guarda? | Dónde | Por qué |
+|---|---|---|---|
+| **Físico** | **Sí**, columna `variantes.stock_fisico` | Una columna | Es un hecho del mundo: lo que hay en la estantería. No se deriva de nada; se cuenta mirando. Si se calculara sumando movimientos, un movimiento mal registrado haría imposible decir «aquí hay cuatro» |
+| **Reservado** | **Sí**, columna `variantes.stock_reservado` | Una columna | Es derivable (`SELECT SUM(cantidad) FROM reservas WHERE ... activa`), y aun así se guarda. Razón en el párrafo siguiente |
+| **Disponible para vender** | **No**: se calcula | `stock_fisico - stock_reservado` | Es una resta de dos columnas de la misma fila. Guardarlo sería un tercer número que puede contradecir a los otros dos, y entonces habría que decidir cuál manda. No hay beneficio: la resta es gratis y siempre es verdad |
+
+**Por qué `stock_reservado` se guarda en vez de calcularse.** Es la única
+duplicación deliberada del modelo, y la razón es la misma que ya justifica
+`productos.precio` en 0001 (columna derivada de las variantes, mantenida al
+guardar): **el catálogo público consulta la disponibilidad en cada visita**. Con
+`stock_reservado` como columna, saber si una variante se puede vender es leer
+dos enteros de una fila que ya se está leyendo; con un `SUM()` sobre `reservas`,
+es una subconsulta agregada por cada una de las 30 variantes en cada pintado de
+`/catalogo`, y los *row reads* se pagan (R4). Pero —y esto es lo que lo hace
+seguro— **nunca se escribe suelto**: todo cambio de `stock_reservado` ocurre en
+el mismo `batch()` transaccional que crea o cierra la reserva que lo causa. El
+invariante (`stock_reservado` = suma de reservas activas) se puede comprobar con
+una consulta, y el panel lo comprueba (G.4, «cuadre»). No es un número que
+alguien mantiene a mano: es una caché transaccional de una suma.
+
+**Lo que NO se guarda, a propósito:** ningún «stock vendido histórico» ni
+«stock comprometido total». Son sumas sobre `movimientos`, y preguntas que se
+hacen una vez al mes, no una vez por visita.
+
+### Qué pasa con `productos.disponible` y `variantes.disponible`
+
+Hoy son banderas estáticas venidas del respaldo de Shopify. La pregunta del
+encargo es si se derivan del stock o se conservan como interruptor manual. **La
+respuesta es: las dos cosas, y separadas.** Son dos conceptos distintos que hoy
+están colapsados en una sola columna porque hasta ahora no hacía falta
+distinguirlos:
+
+- **«No hay»** es un hecho de inventario. Se deriva: `stock_fisico - stock_reservado <= 0`.
+- **«No se vende»** es una decisión de la dueña. No se deriva de nada: es
+  voluntad. *«Tengo seis filtros V60 #02 pero están reservados para el curso del
+  sábado»*, *«esta Chemex está en el escaparate y no la vendo»*, *«este color lo
+  voy a descatalogar: que se acabe lo que queda y no entre más»*.
+
+Si se colapsan, se pierde información que el cliente va a necesitar. Derivar
+`disponible` del stock y borrar la bandera deja a la dueña sin forma de retirar
+algo que sí tiene. Y conservar solo la bandera manual es exactamente el problema
+que esta sección viene a resolver.
+
+**Decisión:**
+
+- **`variantes.disponible` se CONSERVA, con su significado estrechado a
+  interruptor manual** — y se renombra su *significado*, no su nombre: «**se
+  pone a la venta**». Lo que pinta la interfaz es «A la venta / Retirado», nunca
+  «disponible». La columna no se renombra porque `src/datos/consultas/productos.ts`
+  y `formas.ts` la leen y el carrito la consume: renombrarla sería tocar la capa
+  de datos, el tipo `Variante` y `carrito.ts` para ganar una palabra.
+- **`productos.disponible` se CONSERVA y pasa a ser derivada de sus variantes**,
+  como ya lo son `productos.precio` y como ya dice el comentario de 0001
+  («Precio y disponibilidad DERIVADOS de las variantes, mantenidos al
+  guardar»). Su regla pasa a ser: **1 si alguna variante es vendible**. Un
+  producto cuyas tres variantes están agotadas se muestra «Agotado» entero, que
+  es lo que debe pasar.
+- **Se añade el concepto derivado `vendible`**, que es el que usa todo lo
+  público y **el que no se guarda**:
+
+  ```
+  vendible = disponible = 1  AND  (stock_fisico - stock_reservado) > 0
+  ```
+
+  Una sola fórmula, en un solo sitio (`src/datos/consultas/productos.ts`). Los
+  componentes no la calculan: reciben `disponible: boolean` como hoy, ya
+  resuelto. **La forma de datos de `formas.ts` no cambia** — es el requisito que
+  hizo baratas las fases 1–3 y se respeta aquí: `Variante.disponible` sigue
+  siendo un booleano, solo cambia cómo se computa. Esto es lo que hace que el
+  catálogo, la ficha, `TarjetaProducto` y `carrito.ts` **no se toquen** (ver
+  G.5).
+
+Esto resuelve además, sin código extra, la **decisión 2 del cliente** («stock a
+cero ⇒ agotado automático»): no hace falta un proceso que cambie banderas
+cuando el stock llega a cero. El stock llega a cero y `vendible` ya es falso en
+la siguiente lectura. Cuando Andreina carga unidades, `vendible` vuelve a ser
+verdadero en la siguiente lectura. **Nadie tiene que acordarse de nada**, que es
+la única forma de que esto no se desincronice. (El único trabajo real es purgar
+la caché de borde al cargar stock: R9 y G.5.)
+
+**Lo que se le muestra a la dueña, para que esta distinción no sea jerga:** en
+la pantalla de inventario cada variante tiene **un número** (lo que hay) y **un
+interruptor** (a la venta sí/no). Si el número es 0, debajo dice «Agotado — se
+pondrá a la venta sola cuando cargues unidades». Si el interruptor está apagado
+con stock, dice «Retirado por ti — hay 4 en bodega». Nunca aparecen las palabras
+«derivado», «flag» ni «disponible».
+
+### Movimientos: el libro de lo que pasó
+
+```
+Todo cambio de stock_fisico o stock_reservado escribe una fila en movimientos.
+Sin excepciones, ni para los ajustes de la dueña, ni para la carga inicial.
+```
+
+Esto es lo que el encargo pide y tiene razón en por qué: cuando el stock no
+cuadre —y va a pasar— la pregunta no es «¿cuántos hay?» sino «¿dónde se fue el
+que falta?». Un contador sin libro responde la primera y es inútil para la
+segunda, que es la que importa. El patrón ya existe en el repositorio: la tabla
+`auditoria` de 0003 es exactamente esta idea para el catálogo, incluida la
+decisión de **no poner FK a la entidad** para que el historial sobreviva a lo
+que describe. `movimientos` sí lleva FK a `variantes` (una variante no se borra,
+se archiva su producto), pero hereda lo demás.
+
+Motivos (`movimientos.motivo`), con `CHECK` cerrado porque **esta lista sí está
+cerrada** —al contrario que `roles_imagen`, que es un catálogo editable
+(B.7)—: añadir un motivo nuevo cambia el comportamiento del código que lo trata,
+así que es código, no dato. Es la regla 3 de F aplicada en la dirección
+contraria, y conviene que se vea que se aplicó a conciencia:
+
+| Motivo | Signo | Quién lo escribe |
+|---|---|---|
+| `entrada` | +físico | La dueña, al recibir mercancía |
+| `venta_bold` | −físico, −reservado | El webhook, al despachar |
+| `venta_whatsapp` | −físico | El panel, cuando la dueña cierra una venta hablando |
+| `reserva` | +reservado | El checkout |
+| `reserva_confirmada` | — (cambia de pedido, no de cantidad) | El webhook al cobrar: la reserva pasa a comprometida |
+| `reserva_caducada` | −reservado | El barrido (G.2) |
+| `reserva_liberada` | −reservado | Cancelación explícita, o carrito abandonado |
+| `devolucion` | +físico | La dueña |
+| `ajuste` | ±físico | La dueña, con nota obligatoria |
+| `despacho` | −físico, −reservado | Al marcar «despachado» |
+
+Cada fila lleva **fecha, variante, cantidad (con signo), motivo, quién lo hizo y
+una referencia opcional** al pedido o reserva que lo causó. «Quién» es texto, no
+una FK a usuarios: el panel tiene **una clave compartida y no tiene identidad**
+(A.2, hallazgo «el usuario se ignora»), así que los valores reales van a ser
+`'panel'`, `'webhook'` y `'cron'`. Escribirlo igualmente cuesta una columna y el
+día que haya dos personas con acceso (decisión E.5) el libro ya lo distingue sin
+migración.
+
+### Reservas
+
+Tabla propia, con vencimiento. Una fila por línea de un checkout iniciado.
+Estados: `activa`, `confirmada` (se pagó), `caducada`, `liberada`. No se borran:
+una reserva caducada es justo lo que explica un stock que «bajó y volvió a
+subir», y borrarla deja el libro con un agujero.
+
+**Duración elegida: 30 minutos.** La justificación está en G.2, porque es
+inseparable de las 24 horas de Bold.
+
+### «Productos a despachar»: una vista, no una tabla
+
+El encargo pregunta si es tabla propia o vista. **Es una vista** (`SELECT`), y
+la razón es la que hace que la pregunta importe: una tabla propia sería un
+**cuarto** sitio donde vive la misma verdad (están `pedidos`, `reservas` y
+`movimientos`), y el día que se desincronice —porque el webhook escribió en una
+y falló al escribir en la otra— habría que decidir cuál manda. Una vista no
+puede desincronizarse de sus fuentes.
+
+Pero una vista sola no cubre el caso de WhatsApp, y aquí está la decisión real:
+las ventas de WhatsApp **no generan un pedido del sitio**, así que no hay nada
+sobre lo que hacer `SELECT`. La solución es que **sí generen algo**, pero
+mínimo: una tabla `despachos`, con una fila por «paquete que hay que armar»,
+venga de un pedido de Bold o de una venta hablada.
+
+```
+despachos: UNA fila por cosa que hay que empacar y sacar.
+  origen = 'bold'      → pedido_id apunta al pedido; los artículos salen de pedido_items
+  origen = 'whatsapp'  → pedido_id es NULL; los artículos salen de despacho_items
+```
+
+Así «productos a despachar» es **una consulta sobre `despachos`** (pendientes,
+más antiguo primero) que une con los artículos de cada origen. La tabla no
+duplica el pedido de Bold —no copia ni líneas ni precios, solo apunta— y da
+cuerpo a la venta de WhatsApp, que no tiene dónde vivir. Es la mínima tabla que
+hace que la lista sea una y no dos.
+
+**Por qué no reutilizar `pedidos.estado` con un `estado = 'pagado'` y filtrar.**
+Porque entonces la venta de WhatsApp tendría que crear un `pedido` completo, con
+cliente, documento, dirección, subtotal, envío y total — y eso es exactamente lo
+que G.3 argumenta que no se debe exigir a alguien que está contestando mensajes
+con el móvil en la mano.
+
+### `migrations/0004_inventario.sql`
+
+Mismas convenciones que 0001–0003: `IF NOT EXISTS` en todo, `CHECK` como último
+filtro en la base, comentarios que explican el *por qué* (F.5), e idempotente
+para poder recargarse.
+
+**Un aviso de método, aprendido de 0001.** Las columnas nuevas en `variantes`
+se añaden con `ALTER TABLE ... ADD COLUMN`, y **`ADD COLUMN` no admite `IF NOT
+EXISTS`**: al correr la migración dos veces falla con *duplicate column name* y
+aborta el fichero entero. Es el mismo problema que 0001 corrigió moviendo las
+portadas al `CREATE TABLE` (corrección 1 de su cabecera), pero aquí no se puede
+aplicar la misma solución, porque `variantes` ya existe y no se va a recrear.
+Las dos salidas honestas, y la elegida:
+
+- **Elegida: `0004` es idempotente en todo menos en los dos `ALTER TABLE`, y lo
+  dice en su cabecera.** Las migraciones las aplica `wrangler d1 migrations
+  apply`, que **lleva su propia tabla de migraciones aplicadas y no reaplica un
+  fichero ya corrido**. La idempotencia de 0001 era un seguro extra, no el
+  mecanismo; exigirla aquí obligaría a lo de abajo.
+- Descartada: recrear `variantes` (tabla nueva, copiar, borrar, renombrar) para
+  declarar las columnas en el `CREATE`. Es la operación más peligrosa de SQLite,
+  hay FK apuntando a `variantes` desde `imagenes`, y se haría solo por un
+  seguro que el runner ya da.
+
+```sql
+-- INVENTARIO: un solo stock, dos vías de venta (venta por Bold y venta por
+-- WhatsApp). Diseño completo y justificaciones en la sección G del plan
+-- planes/kaffeeplatz-panel-admin.md.
+--
+-- SUPERA UNA DECISIÓN ANTERIOR (8 oct 2026). El plan del carrito
+-- (kaffeeplatz-carrito-bold.md, decisión 4) recomendaba "confirmación manual
+-- de la dueña, sin llevar stock", y este plan lo tenía en "Fuera de alcance".
+-- El cliente eligió llevar stock porque hay DOS vías de venta compitiendo por
+-- las mismas unidades: sin un contador, vender el último hervidor por WhatsApp
+-- y que el sitio lo cobre diez minutos después no es un dato viejo, es un
+-- reembolso. Ver G.0 del plan.
+--
+-- SOBRE LA IDEMPOTENCIA DE ESTE FICHERO
+-- ===========================================================================
+-- Todo es `IF NOT EXISTS` menos los dos ALTER TABLE del final: `ADD COLUMN` no
+-- admite `IF NOT EXISTS` en SQLite y reaplicar el fichero fallaría con
+-- "duplicate column name". No se corrige recreando `variantes` (hay FK
+-- apuntando a ella desde `imagenes`, y recrear tablas es la operación más
+-- peligrosa de SQLite) porque `wrangler d1 migrations apply` lleva su propio
+-- registro de migraciones aplicadas y no reaplica un fichero ya corrido. Si
+-- alguien ejecuta esto a mano dos veces, fallará en el primer ALTER y no habrá
+-- hecho daño: los CREATE son idempotentes y los ALTER son lo último.
+
+-- ---------------------------------------------------------------------------
+-- 1. LAS DOS CANTIDADES QUE SE GUARDAN, EN LA VARIANTE
+-- ---------------------------------------------------------------------------
+-- El stock vive en la VARIANTE y solo ahí: hay 30 variantes y es lo que se
+-- vende. Nadie despacha "un Aeropress Clear"; despacha un morado. Los 21
+-- productos de una sola variante no son un caso especial: ya llevan su
+-- variante única 'Default Title' desde 0001, así que tienen su contador como
+-- los demás y no hay ninguna rama de código distinta para ellos.
+--
+-- `stock_disponible` NO existe como columna: es `stock_fisico -
+-- stock_reservado`, y guardarlo sería un tercer número capaz de contradecir a
+-- los otros dos.
+
+ALTER TABLE variantes ADD COLUMN stock_fisico INTEGER NOT NULL DEFAULT 0;
+-- Caché transaccional de SUM(reservas activas). Se duplica a propósito —igual
+-- que `productos.precio` en 0001— porque el catálogo público pregunta por la
+-- disponibilidad en CADA visita y una resta de dos enteros de la fila que ya se
+-- está leyendo no cuesta nada, mientras que un SUM() agregado por cada una de
+-- las 30 variantes en cada pintado de /catalogo sí (R4, row reads).
+-- NUNCA se escribe fuera del batch() que crea o cierra la reserva que lo causa.
+ALTER TABLE variantes ADD COLUMN stock_reservado INTEGER NOT NULL DEFAULT 0;
+
+-- Nota sobre los CHECK que NO están en estas dos columnas:
+-- `ADD COLUMN` admitiría `CHECK (stock_fisico >= 0)`, y a propósito no se pone.
+-- El stock negativo es un estado al que se llega por error humano y que hay que
+-- poder REPRESENTAR para poder avisar de él y corregirlo (caso límite G.4 /
+-- C.4): un CHECK convertiría "la dueña se equivocó contando" en "el guardado
+-- falla con un error de base de datos" y el panel no podría explicar nada. Lo
+-- que sí tiene CHECK es `stock_reservado`, abajo, por una razón distinta: un
+-- reservado negativo no es un error de conteo humano, es un BUG del código de
+-- reservas, y ahí sí se quiere que falle ruidosamente.
+--
+-- Se declara como índice parcial en vez de CHECK porque CHECK no se puede
+-- añadir a una tabla existente sin recrearla. El invariante se comprueba en el
+-- WHERE de cada UPDATE (ver G.4) y en el cuadre del panel.
+
+-- ---------------------------------------------------------------------------
+-- 2. MOVIMIENTOS: el libro de por qué el stock es el que es
+-- ---------------------------------------------------------------------------
+-- Toda variación de stock_fisico o stock_reservado escribe aquí. Sin
+-- excepciones, ni para los ajustes de la dueña ni para la carga inicial. Sin
+-- esto, cuando el stock no cuadre —y va a pasar— no habrá forma de saber por
+-- qué. Es la misma idea que `auditoria` (0003) aplicada a cantidades.
+--
+-- `motivo` SÍ es un CHECK cerrado, al contrario que `roles_imagen` (B.7), que
+-- es un catálogo editable. La diferencia es la regla 3 de F: si la dueña puede
+-- querer añadir un valor, es una fila; si añadirlo cambia el comportamiento del
+-- código, es código. Un motivo nuevo de movimiento cambia cómo se calcula el
+-- stock, así que es código.
+CREATE TABLE IF NOT EXISTS movimientos (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+  variante_id  INTEGER NOT NULL REFERENCES variantes (id) ON DELETE CASCADE,
+  -- Con signo: +3 es una entrada, -1 una venta. Se guarda con signo y no un
+  -- "tipo + cantidad positiva" porque así SUM(cantidad) por variante es
+  -- directamente el stock esperado, y eso es el cuadre de G.4 en una línea.
+  -- NUNCA 0: un movimiento que no mueve nada es un error de quien lo escribe.
+  cantidad     INTEGER NOT NULL CHECK (cantidad <> 0),
+  -- Sobre QUÉ cantidad actúa. Un mismo motivo puede tocar las dos (un despacho
+  -- baja físico Y reservado), y entonces escribe DOS filas: así cada fila dice
+  -- una sola cosa y el cuadre de cada columna es independiente.
+  afecta       TEXT    NOT NULL CHECK (afecta IN ('fisico', 'reservado')),
+  motivo       TEXT    NOT NULL CHECK (motivo IN (
+                 'entrada',            -- + físico: llegó mercancía
+                 'venta_bold',         -- - físico: pago confirmado por webhook
+                 'venta_whatsapp',     -- - físico: la dueña cerró la venta hablando
+                 'reserva',            -- + reservado: empezó un checkout
+                 'reserva_confirmada', -- la reserva pasa a comprometida (no cambia cantidades)
+                 'reserva_caducada',   -- - reservado: venció sin pagar
+                 'reserva_liberada',   -- - reservado: cancelación explícita
+                 'devolucion',         -- + físico
+                 'ajuste',             -- ± físico: conteo, rotura, pérdida. Nota obligatoria
+                 'despacho'            -- - físico y - reservado: salió el paquete
+               )),
+  -- Quién. TEXT y no FK a usuarios porque el panel tiene UNA CLAVE COMPARTIDA y
+  -- no tiene identidad (A.2: "el usuario se ignora"). Hoy los valores reales
+  -- son 'panel', 'webhook' y 'cron'. Se escribe igualmente: cuesta una columna
+  -- y el día que entren dos personas (decisión E.5) el libro ya lo distingue
+  -- sin migración.
+  quien        TEXT    NOT NULL DEFAULT 'panel',
+  -- Qué lo causó, para poder volver atrás desde el movimiento. Sueltos y sin
+  -- FK, por la misma razón que `auditoria.entidad_id` (0003, nota 3): el
+  -- historial tiene que sobrevivir a lo que describe.
+  pedido_id    TEXT,
+  reserva_id   INTEGER,
+  despacho_id  INTEGER,
+  -- Obligatoria para 'ajuste' (lo exige el panel, no la base: un CHECK
+  -- condicional aquí daría un error de base de datos en vez de un mensaje
+  -- que diga "escribe por qué lo estás ajustando").
+  nota         TEXT
+);
+-- La consulta que de verdad se hace: "¿qué le pasó a ESTA variante?".
+CREATE INDEX IF NOT EXISTS movimientos_por_variante
+  ON movimientos (variante_id, created_at DESC);
+-- Para el cuadre y para el historial general del panel.
+CREATE INDEX IF NOT EXISTS movimientos_por_fecha ON movimientos (created_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- 3. RESERVAS: lo apartado mientras alguien paga
+-- ---------------------------------------------------------------------------
+-- Una fila por LÍNEA de un checkout iniciado. 30 minutos de vida (G.2 explica
+-- por qué 30 y no 15 ni las 24 h que da Bold).
+--
+-- No se borran nunca: una reserva caducada es exactamente lo que explica un
+-- stock que bajó y volvió a subir, y borrarla deja el libro con un agujero.
+CREATE TABLE IF NOT EXISTS reservas (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+  -- El pedido de Bold al que pertenece. TEXT porque el order-id de Bold es
+  -- 'kp-<timestamp>-<aleatorio>' (plan del carrito). Sin FK: `pedidos` la crea
+  -- la migración del carrito y el orden de aplicación no debe acoplarlas.
+  pedido_id    TEXT    NOT NULL,
+  variante_id  INTEGER NOT NULL REFERENCES variantes (id) ON DELETE CASCADE,
+  cantidad     INTEGER NOT NULL CHECK (cantidad > 0),
+  -- Cuándo deja de valer. Se guarda la fecha ABSOLUTA y no una duración: así
+  -- cambiar los 30 minutos mañana no reinterpreta las reservas de hoy.
+  vence_en     TEXT    NOT NULL,
+  estado       TEXT    NOT NULL DEFAULT 'activa'
+               CHECK (estado IN ('activa', 'confirmada', 'caducada', 'liberada')),
+  cerrada_en   TEXT                              -- cuándo dejó de estar activa
+);
+-- El barrido del cron: "las activas que ya vencieron". Índice parcial, que es
+-- lo que lo hace barato: solo indexa las filas que el barrido mira.
+CREATE INDEX IF NOT EXISTS reservas_a_caducar
+  ON reservas (vence_en) WHERE estado = 'activa';
+-- Para el webhook, que llega con un pedido_id y tiene que cerrar sus reservas.
+CREATE INDEX IF NOT EXISTS reservas_por_pedido ON reservas (pedido_id);
+-- Para el cuadre: SUM de lo activo de una variante contra stock_reservado.
+CREATE INDEX IF NOT EXISTS reservas_por_variante
+  ON reservas (variante_id) WHERE estado = 'activa';
+
+-- ---------------------------------------------------------------------------
+-- 4. DESPACHOS: la lista de "productos a despachar"
+-- ---------------------------------------------------------------------------
+-- UNA fila por paquete que hay que armar y sacar, venga de donde venga. Es la
+-- tabla que hace que la lista sea UNA y no dos.
+--
+-- Por qué una tabla y no solo una vista sobre `pedidos`: porque la venta por
+-- WhatsApp NO genera un pedido del sitio, así que no habría nada sobre lo que
+-- hacer SELECT. Y por qué no obligar a la venta de WhatsApp a crear un pedido
+-- completo: porque eso significaría pedirle cliente, documento, dirección,
+-- subtotal y envío a alguien que está contestando mensajes con el móvil en la
+-- mano (G.3).
+--
+-- No duplica el pedido de Bold: no copia líneas ni precios, solo apunta.
+CREATE TABLE IF NOT EXISTS despachos (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at   TEXT    NOT NULL DEFAULT (datetime('now')),
+  origen       TEXT    NOT NULL CHECK (origen IN ('bold', 'whatsapp')),
+  -- Para 'bold': el pedido. Para 'whatsapp': NULL, y los artículos están en
+  -- despacho_items. El CHECK de abajo lo hace cumplir de verdad.
+  pedido_id    TEXT,
+  -- Lo mínimo para saber a quién es. Para 'bold' se deja NULL y se lee del
+  -- pedido (no se copia: una copia se desactualiza). Para 'whatsapp' es lo
+  -- único que hay, y es OPCIONAL: la dueña sabe de quién es cada paquete y
+  -- exigirle que lo escriba para poder descontar una unidad es el tipo de
+  -- requisito que hace que un panel se abandone.
+  cliente      TEXT,
+  nota         TEXT,
+  estado       TEXT    NOT NULL DEFAULT 'pendiente'
+               CHECK (estado IN ('pendiente', 'despachado', 'anulado')),
+  despachado_en TEXT,
+  -- Un pedido de Bold tiene exactamente un despacho; una venta de WhatsApp no
+  -- tiene pedido. Las dos reglas en una restricción:
+  CHECK ((origen = 'bold'     AND pedido_id IS NOT NULL)
+      OR (origen = 'whatsapp' AND pedido_id IS NULL))
+);
+-- La lista del panel: lo pendiente, lo más viejo primero. Índice parcial: solo
+-- indexa lo que la pantalla mira.
+CREATE INDEX IF NOT EXISTS despachos_pendientes
+  ON despachos (created_at) WHERE estado = 'pendiente';
+-- Idempotencia del webhook: un pedido de Bold no puede generar dos despachos
+-- aunque el evento llegue dos veces. Es la segunda red del webhook, después de
+-- `pedidos.estado`, y es la que no depende de que nadie se acuerde.
+CREATE UNIQUE INDEX IF NOT EXISTS despachos_un_pedido
+  ON despachos (pedido_id) WHERE pedido_id IS NOT NULL;
+
+-- Artículos de un despacho de WhatsApp. Los de Bold salen de `pedido_items`.
+CREATE TABLE IF NOT EXISTS despacho_items (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  despacho_id  INTEGER NOT NULL REFERENCES despachos (id) ON DELETE CASCADE,
+  variante_id  INTEGER NOT NULL REFERENCES variantes (id),
+  cantidad     INTEGER NOT NULL CHECK (cantidad > 0),
+  -- Copia del título en el momento de la venta, igual que `pedido_items` del
+  -- plan del carrito. Para que la lista de hace tres meses siga diciendo lo
+  -- que se vendió aunque la dueña haya renombrado la variante desde entonces.
+  titulo       TEXT    NOT NULL,
+  -- OPCIONAL, y esta es la decisión. En una venta por WhatsApp el precio se
+  -- negocia hablando y puede no ser el del catálogo. Exigirlo convertiría
+  -- "descontar una unidad" en "registrar una venta", que es justo lo que G.3
+  -- dice que no se puede pedir. Si se rellena, la pantalla de ventas del mes
+  -- suma; si no, cuenta unidades y no pesos. Media verdad vale más que pedir
+  -- un dato que nadie va a escribir con el móvil en la mano.
+  precio_unitario INTEGER CHECK (precio_unitario IS NULL OR precio_unitario >= 0)
+);
+CREATE INDEX IF NOT EXISTS despacho_items_por_despacho ON despacho_items (despacho_id);
+
+-- ---------------------------------------------------------------------------
+-- 5. CARGA INICIAL DEL STOCK
+-- ---------------------------------------------------------------------------
+-- NO se inventa. Las 30 variantes quedan en stock_fisico = 0 y, por tanto, en
+-- "Agotado" según la regla de G.1 — lo cual sería APAGAR LA TIENDA el día que
+-- esto se aplique. Por eso la fase 9 no termina con la migración: termina con
+-- Andreina contando su bodega en la pantalla de inventario, antes de que el
+-- cálculo de `vendible` empiece a mirar el stock.
+--
+-- La secuencia obligatoria está en G.6 ("el día del cambio") y es: aplicar
+-- 0004 → cargar el conteo real → y SOLO ENTONCES activar el stock en el
+-- cálculo de `vendible`. Mientras el interruptor está apagado, `vendible` es
+-- solo `disponible`, exactamente como hoy.
+INSERT OR IGNORE INTO ajustes (clave, valor) VALUES ('inventario_activo', '0');
+```
+
+**Sobre la última línea, y una dependencia que hay que declarar.** Ese
+interruptor necesita una tabla `ajustes` (clave/valor) que **hoy no existe**: la
+sección D, punto 5, la menciona como «fuera de alcance» para la tarifa de envío.
+El inventario la necesita de verdad, así que **`0004` la crea** (es una tabla de
+cuatro líneas) y la tarifa de envío podrá usarla después sin otra migración:
+
+```sql
+-- Ajustes del sitio, clave/valor. La menciona la sección D.5 del plan como la
+-- forma correcta de que la dueña edite TARIFA_PLANA_ENVIO, y el inventario la
+-- necesita para el interruptor de activación (ver 5, arriba), así que se crea
+-- aquí. Es el patrón `settings` de 16bc.
+CREATE TABLE IF NOT EXISTS ajustes (
+  clave       TEXT PRIMARY KEY,
+  valor       TEXT NOT NULL,
+  updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
+
+(En el fichero real va **antes** del `INSERT OR IGNORE`, obviamente. Se presenta
+aparte aquí para que se vea que es una dependencia nueva y no un detalle.)
+
+## G.2 Reserva temporal: por qué 30 minutos y no 24 horas
+
+La decisión 1 del cliente ya está tomada: **se reserva al iniciar el pago**. Lo
+que el encargo pide resolver es la tensión real, y es una tensión de verdad:
+
+- **Bold da 24 horas para pagar.** Está en el plan del carrito (fase 3: «manejo
+  de rechazado y abandonado (Bold da 24 horas para pagar)»). Un cliente puede
+  abrir el checkout a las 10 de la noche, generar el enlace, y pagar por PSE a
+  la mañana siguiente. Si el pago llega y la unidad ya se vendió, hay que
+  devolver el dinero.
+- **Reservar 24 horas apaga la tienda.** Con 1 o 2 unidades por variante —que es
+  el stock realista de una tienda de café que vende objetos de 300.000 pesos—
+  **un solo abandono deja el producto agotado durante un día entero**. Tres
+  curiosos que abren el checkout y se van, y el catálogo queda en blanco. Es
+  peor que el problema que resuelve: perder una venta por «agotado» cuando sí
+  había es un daño silencioso y diario; un reembolso ocasional es ruidoso y
+  raro.
+
+No se pueden tener las dos cosas: o se garantiza que todo pago dentro de las 24 h
+tiene unidad, o se mantiene el catálogo vivo. **Hay que elegir, y hay que decir
+qué se pierde.**
+
+**Elegido: 30 minutos.** Y, sobre todo, **la reserva no es la garantía**: la
+garantía la da el `UPDATE` condicional del webhook (G.4, caso 1). La reserva
+solo reduce la probabilidad de que dos personas lleguen a la vez al último
+hervidor; no es una promesa.
+
+**Por qué 30 y no 15:**
+
+- 15 minutos es lo habitual en comercio de gran volumen, donde se paga con
+  tarjeta en dos clics. Aquí los medios reales son **PSE y Nequi**, y PSE
+  significa salir a la web del banco, iniciar sesión, pedir una clave que llega
+  por SMS, confirmar. Desde un celular, con una red regular, **15 minutos se
+  agotan de verdad**, y el peor fallo posible de este sistema es que a alguien
+  le caduque la reserva **mientras estaba pagando bien** (caso límite 5).
+- 30 minutos cubre con holgura un PSE lento sin dejar el catálogo apagado un
+  tiempo perceptible. Si en media hora no se pagó, no se estaba pagando: se
+  cerró la pestaña.
+
+**Qué se pierde, dicho claro:** un pago que llega entre los 30 minutos y las 24
+horas **puede encontrar la unidad vendida**. El caso límite 5 de G.4 lo resuelve
+(no se rechaza el pago en silencio: se cobra, se marca para atención y se decide
+con el cliente), pero **va a pasar alguna vez** y Andreina tiene que saberlo. El
+mensaje del checkout lo dice sin jerga: *«Te apartamos tu pedido 30 minutos
+mientras pagas. Si tardas más, lo seguimos teniendo casi siempre, pero te
+escribimos para confirmar.»*
+
+**Dónde se guarda el número:** en `ajustes` (`reserva_minutos`), no en una
+constante del código. Es un número que se va a querer ajustar viendo cómo se
+comporta la tienda real, y pedir un despliegue para pasar de 30 a 45 es la clase
+de cosa que no se hace y se queda mal para siempre. La reserva guarda su
+`vence_en` **absoluto**, así que cambiarlo mañana no reinterpreta las reservas de
+hoy.
+
+### Cómo caducan: Cron Trigger, y además al leer
+
+El encargo pide evaluar las dos opciones. **Se hacen las dos, y no es
+redundancia: resuelven cosas distintas.**
+
+**1. Barrido periódico con Cron Trigger — el que libera el stock.**
+
+Cloudflare Workers tiene Cron Triggers y son la herramienta correcta aquí: se
+declaran en `wrangler.jsonc` y el runtime invoca `scheduled()` sin que haya que
+montar nada.
+
+```jsonc
+// wrangler.jsonc
+"triggers": { "crons": ["*/5 * * * *"] }
+```
+
+Cada 5 minutos, en un `batch()`:
+
+```sql
+-- Las que vencieron. El índice parcial reservas_a_caducar las encuentra sin
+-- escanear la tabla.
+SELECT id, variante_id, cantidad FROM reservas
+ WHERE estado = 'activa' AND vence_en <= datetime('now');
+-- Por cada una, y en la misma transacción:
+UPDATE reservas SET estado = 'caducada', cerrada_en = datetime('now')
+ WHERE id = ?1 AND estado = 'activa';          -- la condición en el WHERE
+UPDATE variantes SET stock_reservado = stock_reservado - ?2
+ WHERE id = ?3 AND stock_reservado >= ?2;      -- nunca por debajo de cero
+INSERT INTO movimientos (variante_id, cantidad, afecta, motivo, quien, reserva_id)
+VALUES (?3, -?2, 'reservado', 'reserva_caducada', 'cron', ?1);
+```
+
+`AND estado = 'activa'` en el `WHERE` es lo que hace que dos ejecuciones
+solapadas del cron —o el cron y una lectura a la vez— no resten el reservado dos
+veces. Es el patrón de 16bc (A.4) y es la única protección que no depende de
+nadie. **Cada 5 minutos y no cada minuto** porque una reserva de 30 minutos que
+se libera a los 33 no molesta a nadie, y el cron escribe filas que se pagan (R4).
+
+**2. Al leer — el que impide vender humo.**
+
+El barrido deja una ventana de hasta 5 minutos en la que una reserva ya vencida
+sigue contando como reservada. Si eso fuera la única red, el catálogo diría
+«agotado» hasta 5 minutos después de que la unidad volviera a estar libre. Así
+que **el cálculo de disponibilidad descuenta solo las reservas realmente
+vigentes**, y no `stock_reservado` a secas, cuando la variante está al límite:
+
+```sql
+-- Para la ficha de producto y el checkout, donde la precisión importa.
+-- Esta consulta es por variante y solo se hace cuando el stock está al límite:
+-- /catalogo sigue usando las dos columnas, que es lo que lo hace barato.
+SELECT v.stock_fisico - COALESCE((
+         SELECT SUM(r.cantidad) FROM reservas r
+          WHERE r.variante_id = v.id AND r.estado = 'activa'
+            AND r.vence_en > datetime('now')
+       ), 0) AS vendible
+  FROM variantes v WHERE v.id = ?1;
+```
+
+**Lo que NO se hace al leer: escribir.** Caducar reservas durante una lectura
+significa que una visita al catálogo haga `UPDATE`, y eso rompe tres cosas de
+golpe: las páginas públicas quedan cacheadas (B.3) y una respuesta de caché no
+ejecuta nada, un `GET` que escribe impide cachear, y una ráfaga de visitas se
+convierte en una ráfaga de escrituras que se pagan. **El cron escribe, la
+lectura solo lee.** La lectura es exacta sin escribir porque mira `vence_en`, no
+`stock_reservado`.
+
+**Y una tercera red, barata:** el checkout caduca las reservas vencidas **de las
+variantes que va a reservar**, justo antes de reservarlas, en su mismo `batch()`.
+Son dos o tres variantes, no la tabla; es una escritura que ya estaba ocurriendo;
+y cierra el caso que más duele: el cliente que no puede comprar porque alguien
+abandonó un checkout hace 31 minutos y el cron pasa dentro de cuatro.
+
+## G.3 Los dos flujos, paso a paso
+
+### Flujo 1 — Venta por Bold
+
+El punto que el encargo pide exacto es **en qué momento baja cada cantidad**, y
+la respuesta corta es: **el reservado baja y sube tres veces; el físico baja una
+sola vez, al final.**
+
+| Paso | `stock_fisico` | `stock_reservado` | Qué más pasa |
+|---|---|---|---|
+| **1. Carrito** (`localStorage`) | — | — | Nada. El carrito no reserva: eso dejaría el catálogo apagado por gente que mira. `carrito.ts` solo guarda `handle` + `varianteId` + cantidad, y ya relee disponibilidad en cada pintado |
+| **2. Abre `/checkout`** | — | — | Tampoco. Se reserva al **enviar** el formulario, no al abrirlo |
+| **3. `POST /api/pedidos`** | — | **+n** | **Aquí se reserva.** Mismo `batch()`: crea el pedido `pendiente`, crea una `reserva` por línea con `vence_en = ahora + 30 min`, sube `stock_reservado`, escribe un `movimiento` `reserva` por línea. Si alguna línea no alcanza, **todo el batch se deshace** y el cliente ve qué falta (G.4, caso 1) |
+| **4. Paga en Bold** | — | — | Fuera de nuestro sistema |
+| **5. Webhook: pago aprobado** | **−n** | **−n** | Mismo `batch()`: pedido a `pagado`, reservas a `confirmada`, **baja el físico**, baja el reservado, crea el `despacho` (`origen='bold'`), escribe dos `movimientos` por línea (`venta_bold` sobre físico, `despacho`… no: ver nota) |
+| **6. Andreina marca «despachado»** | — | — | Solo cambia `despachos.estado`. **El stock ya bajó en el paso 5** |
+
+**Nota sobre el paso 5 y 6, que es la decisión no obvia.** Hay dos sitios
+posibles para bajar el físico: al cobrar (paso 5) o al despachar (paso 6). **Se
+baja al cobrar**, y la razón es la pregunta que el stock tiene que responder:
+*«¿puedo vender esto?»*. Una unidad cobrada y aún en la estantería **no se puede
+vender a nadie más**, así que contarla como existencias haría que el sitio la
+ofreciera. La estantería tendrá una unidad que el sistema no ve, durante las
+horas que tarde en salir el paquete; eso es un desajuste de inventario físico
+que no cuesta nada (está en la lista de despachos, visible), mientras que lo
+contrario es vender dos veces lo mismo. Por eso `despacho` como motivo de
+movimiento existe en el `CHECK` pero **solo lo usan las ventas de WhatsApp
+registradas con despacho diferido**; el camino de Bold usa `venta_bold`. Está
+dicho aquí porque leyendo solo la tabla de motivos parece una inconsistencia.
+
+**Qué pasa si el pago se rechaza.** El webhook de rechazo libera: reservas a
+`liberada`, baja `stock_reservado`, movimiento `reserva_liberada`, pedido a
+`rechazado`. **No se espera a que caduque**: liberar en cuanto se sabe devuelve
+la unidad al catálogo en segundos en vez de en media hora. Y el cliente puede
+reintentar: un reintento es un **checkout nuevo**, con reserva nueva, porque la
+anterior ya se liberó. (Si al reintentar ya no hay unidad, lo trata G.4 caso 1
+como cualquier otro: se le dice antes de cobrar, no después.)
+
+**Qué pasa si el cliente abandona.** No llega ningún webhook. La reserva vence a
+los 30 minutos y el cron la caduca (G.2). El pedido se queda `pendiente` y lo
+recoge el estado `expirado` que el plan del carrito ya tiene previsto. **Nadie
+tiene que hacer nada**, que es el requisito.
+
+**Qué pasa si el webhook llega DOS VECES.** El plan del carrito ya exige
+idempotencia; el inventario añade su propia capa porque aquí un doble proceso no
+duplica un correo, **descuenta dos unidades**. Tres redes, en orden:
+
+1. **El cambio de estado del pedido es la puerta, y la condición va en el
+   `WHERE`** —el patrón de 16bc (A.4, línea 637) que el encargo pide usar:
+
+   ```sql
+   UPDATE pedidos SET estado = 'pagado', pagado_en = datetime('now'), bold_tx_id = ?2
+    WHERE id = ?1 AND estado = 'pendiente';
+   ```
+
+   Se comprueba `meta.changes`. **Si es 0, el evento ya se procesó y el webhook
+   devuelve 200 sin tocar inventario.** No hay ventana entre comprobar y
+   actualizar, porque no se comprueba: se actualiza condicionalmente.
+2. **Las reservas también se cierran condicionalmente** (`AND estado =
+   'activa'`), así que incluso si la puerta 1 se abriera por un bug, el
+   reservado no baja dos veces.
+3. **El despacho no se puede duplicar**, por el índice único parcial
+   `despachos_un_pedido` sobre `pedido_id`. Esta es la red que no depende de que
+   nadie escriba bien el código: la base la impone.
+
+Y todo el paso 5 va **en un solo `batch()`**, que en D1 es una transacción
+implícita (A.4). O baja el stock y se crea el despacho, o no pasa nada. Nunca un
+pedido pagado sin stock descontado.
+
+**Y `eventos_pago`**, que el plan del carrito ya define como «registro crudo de
+cada webhook recibido, para auditar», sigue escribiéndose **siempre**, incluso
+cuando el evento se descarta por repetido. Es lo que permite responder «¿Bold nos
+avisó dos veces o fuimos nosotros?».
+
+### Flujo 2 — Venta por WhatsApp
+
+El requisito de diseño es explícito y manda sobre todo lo demás: **Andreina está
+contestando mensajes, con el móvil en la mano, y acaba de cerrar una venta
+hablando.** Lo que necesita es descontar una unidad **en pocos toques**, sin
+rellenar un pedido.
+
+**¿Crea un «pedido» del mismo tipo que los de Bold? No.** Crea un **despacho**,
+que es deliberadamente más ligero. La justificación:
+
+- Un `pedido` de Bold existe para **cobrar**: necesita subtotal, envío, total,
+  tipo y número de documento, email, celular, dirección, ciudad, departamento,
+  `bold_tx_id`, `metodo_pago`. Casi todo eso es obligatorio porque la pasarela
+  lo exige y porque es una transacción electrónica.
+- En una venta por WhatsApp **ya se cobró** (transferencia, Nequi, en mano) y la
+  dirección está en la conversación. Pedirle a Andreina que rellene catorce
+  campos para descontar un filtro garantiza una de dos cosas: que no lo haga y
+  el stock quede mal, o que escriba basura para pasar la pantalla. **Las dos son
+  peores que no pedirlo.**
+- Un despacho de WhatsApp tiene **un campo obligatorio: qué y cuánto.** Cliente,
+  nota y precio son opcionales (ver el SQL de `despacho_items`).
+
+**Lo que esto cuesta, dicho claro:** las ventas de WhatsApp **no entran en la
+contabilidad de ingresos del panel** salvo que Andreina rellene el precio. Es un
+compromiso consciente: el objetivo de esta pantalla es que el **stock** cuadre,
+no llevar la caja. Si más adelante se quiere el ingreso, se le pone el precio del
+catálogo como valor por defecto editable en un toque —pero **no se hace
+obligatorio nunca**, porque el precio hablado no siempre es el del catálogo.
+
+**La pantalla, en toques reales.** Desde `/admin/inventario`, donde ya está la
+lista de las 30 variantes con su número:
+
+1. **Un toque** en el botón `−` de la variante. Descuenta **uno** y ya está:
+   crea el despacho, el item, baja el físico, escribe el movimiento. Un toque,
+   cero pantallas.
+2. Aparece una franja abajo: **«−1 Hervidor blanco · vendido por WhatsApp ·
+   [Deshacer] [Añadir más]»**, que se queda unos segundos.
+   - **[Deshacer]** revierte (movimiento `devolucion` con nota automática
+     «deshecho», no un `DELETE`: el libro no se borra).
+   - **[Añadir más]** abre el mismo despacho para sumarle otra variante, para la
+     venta de tres cosas a la vez.
+3. La franja también lleva **[Poner nombre]**, opcional, que es lo único que
+   hace falta para que el paquete de la lista de despacho diga «Para Marcela» en
+   vez de «Venta por WhatsApp». Un campo, un toque.
+
+**Toques para el caso más común (una unidad, una variante): uno.** Para tres
+unidades de lo mismo: tres toques en `−`, que el panel agrupa en el mismo
+despacho si son del mismo minuto (y si no, son dos despachos, que tampoco está
+mal).
+
+**Y el `−` tiene una guarda, con la condición en el `WHERE`:**
+
+```sql
+UPDATE variantes SET stock_fisico = stock_fisico - 1
+ WHERE id = ?1 AND stock_fisico - stock_reservado >= 1;
+```
+
+Si `meta.changes` es 0, no había vendible: el panel **no falla**, pregunta. Es el
+caso límite 2 de G.4, y es el más probable de todos.
+
+**El despacho de WhatsApp nace `pendiente`**, no `despachado`. Porque muchas
+veces se cierra la venta y el paquete sale al día siguiente, y esa es justo la
+lista que el cliente pidió. Si Andreina lo entrega en mano en ese momento, un
+toque en «Ya salió» lo cierra. **Lo que no se hace es presuponerlo**: un
+despacho que nace cerrado nunca aparece en la lista, y una venta que no aparece
+en la lista es un paquete que se olvida.
+
+## G.4 Casos límite
+
+### 1. Dos clientes pagan a la vez la última unidad
+
+**Se resuelve en el `WHERE` de un `UPDATE`, no en JavaScript.** El patrón ya
+está documentado en este plan (A.4, A.6 punto 3) y es exactamente para esto.
+
+**Lo que NO se hace** (y es el error natural):
+
+```js
+const v = await db.prepare('SELECT stock_fisico, stock_reservado FROM variantes WHERE id=?').first();
+if (v.stock_fisico - v.stock_reservado >= n) {            // ← la ventana
+  await db.prepare('UPDATE variantes SET stock_reservado = stock_reservado + ?').run();
+}
+```
+
+Entre el `SELECT` y el `UPDATE` cabe el otro cliente. Los dos leen 1, los dos
+deciden que sí, los dos reservan, y `stock_reservado` queda en 2 con una unidad.
+
+**Lo que sí:**
+
+```sql
+UPDATE variantes
+   SET stock_reservado = stock_reservado + ?2
+ WHERE id = ?1
+   AND stock_fisico - stock_reservado >= ?2;   -- la condición, en el WHERE
+```
+
+Y después `meta.changes`: **1 reservó, 0 no alcanzó**. No hay ventana porque no
+hay dos operaciones. El primero en llegar a la base gana; el segundo recibe
+`changes = 0`, **todo su `batch()` se deshace** (pedido incluido) y ve: *«Nos
+quedamos sin Hervidor blanco mientras armabas el pedido. Lo quitamos para que
+puedas seguir con el resto.»* — antes de pagar, que es lo único que importa.
+
+**Y la misma condición protege el paso del webhook**, porque el otro camino de
+esta carrera es que los dos consigan reservar (había 2) y uno pague tarde:
+
+```sql
+UPDATE variantes SET stock_fisico = stock_fisico - ?2
+ WHERE id = ?1 AND stock_fisico >= ?2;
+```
+
+Si ese `changes` es 0 con un pago aprobado, es el caso 5 y se trata como tal:
+**el dinero ya entró, así que no se rechaza nada en silencio.**
+
+### 2. Andreina vende por WhatsApp algo que alguien tiene reservado
+
+El caso más probable de toda la lista, porque pasa a diario: hay 1 hervidor, un
+cliente abrió el checkout hace cinco minutos, y por WhatsApp alguien lo quiere
+ahora.
+
+**La decisión: el `−` respeta las reservas.** No descuenta. El `WHERE` de arriba
+(`stock_fisico - stock_reservado >= 1`) devuelve `changes = 0`, y el panel
+**pregunta en vez de fallar**:
+
+> **No puedo descontarlo todavía**
+> Tienes **1 Hervidor blanco**, pero **alguien lo está pagando ahora mismo** en
+> la tienda (le quedan 23 minutos).
+> · **Esperar** — si no paga, vuelve solo y te aviso.
+> · **Venderlo igual** — si el otro paga, tendrás que devolverle el dinero.
+>   *(deja el stock en −1 y lo marca para revisar)*
+
+**Por qué respetar la reserva y no dar prioridad a quien está delante.** Porque
+el cliente del checkout **puede estar a punto de pagar con su banco abierto**:
+quitarle la unidad produce un cobro aprobado sin mercancía, que es el peor
+resultado posible. La venta de WhatsApp, en cambio, está **en una conversación**:
+«dame 20 minutos y te confirmo» es una frase normal que no cuesta nada. Se
+protege al que ya tiene dinero en juego.
+
+**Pero no se le prohíbe.** «Venderlo igual» existe porque Andreina conoce su
+negocio y puede tener razones (el cliente de WhatsApp está en la puerta, el del
+checkout es un carrito abandonado que ella reconoce). Deja el stock negativo a
+propósito, escribe el movimiento con nota automática, y lo marca para revisar
+(caso 4). **Nunca se toma esa decisión sola**, pero tampoco se le impide tomarla.
+
+### 3. Un pedido pagado se cancela o se devuelve
+
+Son dos cosas distintas y se tratan distinto, porque la diferencia es **si la
+mercancía salió**:
+
+- **Cancelación antes de despachar** (el despacho está `pendiente`): el paquete
+  nunca se armó. Un toque en «Anular» sobre el despacho: pasa a `anulado`,
+  **devuelve el físico** (movimiento `devolucion`, nota «pedido cancelado»), y el
+  pedido pasa a `cancelado`. La unidad vuelve al catálogo en el siguiente
+  pintado. El reservado **no se toca**: ya se había cerrado en el paso 5.
+- **Devolución después de despachar** (el despacho ya está `despachado`): el
+  objeto se fue y vuelve. **Se registra como un movimiento nuevo**, no como un
+  deshacer: `devolucion`, +físico, con nota obligatoria. Y aquí sí se pide algo
+  más, porque es el único caso donde hace falta: **¿vuelve a la venta o no?**
+  Una Chemex que vuelve con el cristal picado no es stock. Dos botones: «Vuelve a
+  la venta» (+1 físico) y «No se puede vender» (movimiento `ajuste` con nota, no
+  suma al vendible). Sin esa pregunta, el inventario dice que hay una Chemex que
+  nadie puede comprar, y eso es exactamente cómo se pierde la confianza en un
+  contador.
+- **El reembolso del dinero NO lo hace el panel.** Está fuera de alcance: lo hace
+  la dueña desde Bold. El panel registra qué pasó con la mercancía y deja la
+  nota; el dinero es otro sistema y mezclarlos aquí sería inventar un módulo que
+  nadie pidió.
+
+### 4. El stock queda negativo por un error humano
+
+**¿Se permite? Sí. ¿Se avisa? Mucho.** Es la decisión que más fácil se hace mal
+en la dirección «más estricta es más seguro», y aquí no lo es.
+
+**Por qué se permite.** El stock negativo no es un estado inventado por el
+sistema: es **lo que ya pasó en el mundo real**. Andreina contó cuatro y había
+tres; vendió por WhatsApp algo que estaba reservado; se rompió una unidad y nadie
+lo registró. Si la base lo prohibiera con un `CHECK (stock_fisico >= 0)`, el
+guardado **fallaría con un error de base de datos** y el panel tendría que
+decirle «no puedo guardar eso», dejándola con dos opciones: mentirle al sistema
+(poner 0 cuando debe −1) o no registrar nada. Las dos destruyen el libro, que es
+precisamente la cosa que hace recuperable un desajuste. **Un contador que no
+puede representar el error no puede ayudar a encontrarlo.** Por eso el SQL de
+G.1 documenta explícitamente la ausencia de ese `CHECK`.
+
+**Qué sí se prohíbe, con dureza:** que el **reservado** quede negativo. Un
+`stock_reservado` negativo no es un error de conteo humano: es un **bug del
+código de reservas** (se liberó dos veces lo mismo). Ahí sí se quiere que falle:
+todo `UPDATE` que baja reservado lleva `AND stock_reservado >= ?`, y un
+`changes = 0` en ese sitio se registra como error, no como «no alcanzó».
+
+**Cómo se avisa, en tres sitios:**
+
+1. **En la fila**, en rojo: «**−1** · hay menos de lo que dice el sistema ·
+   [Corregir]». Nunca «valor inválido».
+2. **En `/admin`**, en el mosaico de lo que necesita atención, junto a las
+   insignias que ya existen en el patrón de 16bc (A.3). Con `try/catch` alrededor
+   del recuento, por la misma razón que allí: un panel que no se pinta porque no
+   pudo contar es un panel inútil.
+3. **El negativo nunca se vende.** `vendible` es `stock_fisico -
+   stock_reservado > 0`, y −1 no es > 0, así que el producto sale como «Agotado»
+   en el sitio sin ninguna rama extra. El error se ve en el panel y **no llega al
+   cliente**, que es el reparto correcto.
+
+**Y el cuadre, que es el seguro de todo esto.** Una consulta que compara, por
+variante, `stock_fisico` contra `SUM(cantidad)` de los movimientos de tipo
+`fisico`, y `stock_reservado` contra la suma de reservas activas:
+
+```sql
+SELECT v.id, v.titulo, v.stock_fisico,
+       COALESCE((SELECT SUM(m.cantidad) FROM movimientos m
+                  WHERE m.variante_id = v.id AND m.afecta = 'fisico'), 0) AS segun_libro,
+       v.stock_reservado,
+       COALESCE((SELECT SUM(r.cantidad) FROM reservas r
+                  WHERE r.variante_id = v.id AND r.estado = 'activa'), 0) AS reservas_activas
+  FROM variantes v
+ WHERE v.stock_fisico <> segun_libro OR v.stock_reservado <> reservas_activas;
+```
+
+**Si esta consulta devuelve una sola fila, hay un bug** —no un error de
+Andreina—, porque todo movimiento se escribe en el mismo `batch()` que el cambio
+de columna. Se corre en el cron diario y, si devuelve algo, sale en `/admin`. Es
+la diferencia entre «el stock no cuadra» y «sé exactamente dónde no cuadra».
+
+### 5. Reserva caducada mientras el cliente seguía pagando
+
+El peor caso, y el que justifica los 30 minutos de G.2. Secuencia: reserva a las
+10:00, vence a las 10:30, el cliente estaba en PSE y el pago se aprueba a las
+10:34. El webhook llega con un pago **real, cobrado**, y la reserva ya no existe.
+
+**Regla primera, no negociable: el dinero ya entró. El pago no se rechaza ni se
+ignora.** Lo que se decide es solo qué pasa con la mercancía. Dos ramas:
+
+- **Si todavía hay unidad** (el caso normal: caducó pero nadie compró en esos 4
+  minutos): **se procesa como un pago normal**. El `UPDATE` condicional
+  `WHERE stock_fisico >= n` da `changes = 1`, baja el físico, se crea el
+  despacho. La reserva se queda en `caducada` —no se resucita, porque el libro
+  cuenta lo que pasó— y el movimiento `venta_bold` lleva la nota «reserva
+  caducada, había stock». **El cliente no se enteró de nada**, que es el
+  resultado correcto.
+- **Si NO hay unidad** (alguien compró en esos 4 minutos, o Andreina la vendió
+  por WhatsApp): `changes = 0`. Entonces:
+  1. **El pedido pasa a `pagado`** igualmente. Negar el pago porque no hay stock
+     dejaría a un cliente con el dinero cobrado y un pedido en estado raro.
+  2. **Se crea el despacho igual, marcado `sin_stock`** y **primero** en la
+     lista de despachos, en rojo: «Pagado y no hay unidad — hay que hablar con
+     el cliente». Visible al minuto, no al final del día.
+  3. **El stock NO se deja negativo aquí.** Es la asimetría con el caso 4 y es
+     deliberada: ahí el negativo refleja algo que pasó en el mundo (una unidad
+     que salió); aquí no ha salido nada, y poner −1 diría que hay una unidad
+     menos de la que hay. Se registra el compromiso en el despacho, que es donde
+     vive.
+  4. **Resolución humana**, porque no hay otra: Andreina escribe al cliente y se
+     acuerda esperar reposición o devolver. El panel ofrece los dos caminos
+     («Llegó mercancía y se despachó» / «Se devolvió el dinero», que anula el
+     despacho) y **no decide solo**.
+
+**Y una red más, barata y que evita casi todos estos casos:** la redirección de
+Bold a `/pedido/resultado` llega **antes** que el webhook en la práctica. Esa
+página ya existe en el plan del carrito; se le añade que, si el pedido está
+`pendiente` y la reserva está `activa`, **le extienda el `vence_en` 10 minutos**.
+Señal de que alguien está ahí volviendo del banco. No sustituye nada de lo
+anterior, pero recorta mucho la ventana real.
+
+### 6. Un producto se archiva teniendo unidades reservadas
+
+El plan ya decide que archivar es reversible (`archivado_en`) y que la URL da 301
+a su categoría (R3, E.7). El inventario añade una pregunta que antes no existía:
+**¿y lo que alguien está pagando ahora mismo?**
+
+- **Las reservas activas SOBREVIVEN al archivado.** Archivar es «quítalo del
+  catálogo», no «cancela las ventas en curso». Quien esté pagando puede
+  terminar, el webhook procesa y se crea el despacho. **La FK no se rompe**: las
+  reservas apuntan a `variantes.id`, y archivar no borra nada (es un campo de
+  fecha en `productos`). Esto no es un accidente afortunado: es lo que hace que
+  el borrado reversible funcione.
+- **El panel avisa antes de archivar**, porque Andreina no puede saberlo: «Este
+  producto tiene **1 unidad que alguien está pagando** y **2 paquetes sin
+  despachar**. Si lo archivas, dejará de verse en la tienda pero esas ventas
+  siguen. ¿Archivar?» Con los dos números. Sin ese aviso, archivar se siente
+  como cancelar y no lo es.
+- **Los despachos pendientes siguen en la lista**, con el producto marcado como
+  archivado. Un paquete pagado hay que mandarlo aunque el producto ya no se
+  venda. **Desaparecer de la lista de despacho sería perder un pedido pagado**,
+  que es lo más grave que puede hacer este sistema.
+- **El borrado definitivo** (la operación aparte que B.1 ya contempla) **se
+  bloquea** mientras haya reservas activas o despachos pendientes. Aquí sí se
+  bloquea y no se pregunta: `movimientos.variante_id` tiene
+  `ON DELETE CASCADE`, así que borrar de verdad **se llevaría el libro por
+  delante**. Mensaje: «No se puede eliminar del todo: hay 2 paquetes sin
+  despachar. Despáchalos o anúlalos primero.»
+- **El stock se conserva al archivar.** Archivar y desarchivar un producto no
+  puede perder el conteo: son cuatro hervidores que siguen en la estantería.
+
+## G.5 Impacto en lo ya hecho
+
+### El catálogo, la ficha y el carrito: **no se tocan**
+
+Es el mejor resultado posible de este diseño y conviene decir por qué se
+consiguió, porque fue una decisión y no suerte: **`formas.ts` no cambia**.
+
+Hoy `Variante.disponible` y `Producto.disponible` son booleanos que los
+componentes consumen sin saber de dónde salen. El inventario **cambia cómo se
+calculan, no qué son**. En consecuencia:
+
+| Fichero | Cambia |
+|---|---|
+| `src/datos/formas.ts` | **No.** Ni un tipo |
+| `src/components/TarjetaProducto.astro` | **No.** (Y conviene: hay otro trabajo en curso ahí) |
+| `src/components/GaleriaProducto.astro`, `Precio.astro`, `SEO.astro` | **No** |
+| `src/pages/catalogo.astro`, `producto/[handle].astro` | **No** por el inventario. Solo el aviso de «últimas unidades», que es opcional |
+| `src/scripts/carrito.ts` | **No.** Sigue releyendo disponibilidad en cada pintado, que es justo lo que hace falta. Su decisión documentada («un carrito que recuerda precios es un carrito que miente») vale igual para la disponibilidad |
+| `src/datos/consultas/productos.ts` | **Sí**, y es casi todo el cambio público: la fórmula de `vendible` |
+| `src/datos/catalogo.ts` | **Sí**, mínimo: una función para el stock exacto de una variante (checkout y ficha) |
+
+**El cambio en `consultas/productos.ts`,** en la práctica, es que `CAMPOS` pase a
+calcular la columna en el `SELECT` en vez de leerla:
+
+```sql
+-- Antes:  precio, disponible, ...
+-- Ahora:  precio, ... y la disponibilidad calculada:
+--   v.disponible = 1 AND (v.stock_fisico - v.stock_reservado) > 0
+-- y el producto es vendible si alguna de sus variantes lo es.
+```
+
+El mapeo `disponible: v.disponible === 1` de la línea 233 pasa a leer la columna
+calculada. **La forma que sale de la capa es idéntica**, y por eso las fases 1–3
+no se rehacen.
+
+**Un añadido opcional que sí vale la pena** (y es el único cambio visible en el
+sitio): **«Queda 1»** en la ficha cuando el vendible es 1 o 2. Vende, y es
+honesto. **Lo que no se muestra nunca es el número exacto de stock**: a un
+competidor le dice cuánto se vende, y a un cliente que ve «quedan 14» le dice
+que no corra. Dos umbrales y nada más.
+
+### Qué cambia en las fases del plan del carrito
+
+Esto es lo que el encargo pide señalar, y **toca las fases 2 y 3 de ese plan**:
+
+- **Fase 2 (Checkout).** `POST /api/pedidos` pasa de «crear el pedido y firmar» a
+  «crear el pedido, **reservar**, y firmar — todo en un `batch()`, y fallar con un
+  mensaje útil si alguna línea no alcanza». Es el cambio de más peso:
+  **+2–3 horas** sobre su estimación.
+- **Fase 3 (Confirmación).** El webhook pasa de «cambiar el estado y avisar» a
+  «cambiar el estado, **bajar el stock, cerrar las reservas y crear el
+  despacho**», con las tres redes de idempotencia de G.3. **+2–3 horas.**
+- **Fase 3, además:** el estado `expirado` ya previsto se conecta con la
+  caducidad de reservas (el cron de G.2 ya libera; el pedido se marca con el
+  mismo barrido).
+- **Fase 4 (Avisos y panel).** `/admin/pedidos` ya estaba previsto; «marcar como
+  enviado» pasa a ser la acción sobre `despachos` de G.4. **Se solapa con la fase
+  9 de este plan**: conviene hacerlo una sola vez, aquí. **−1 hora allá.**
+- **Su «Fuera de alcance» queda desactualizado** («Inventario en tiempo real»),
+  igual que su decisión 4. Ver G.0, punto 3.
+- **Y una regla nueva para ese plan, que encaja con la que ya tiene:** su regla
+  no negociable dice «el precio nunca se toma del navegador». La hermana es **«la
+  disponibilidad tampoco»**. El servidor comprueba el stock al reservar, con la
+  condición en el `WHERE`, y lo que el navegador creyera que había es
+  irrelevante. Su prueba obligatoria 5 («variante agotada: no se puede agregar ni
+  pagar») pasa a cubrir también «agotada **entre** agregar y pagar», que es el
+  caso que de verdad ocurre.
+
+### Fases de este plan
+
+El inventario es **una fase nueva, la 9**, y no se reparte entre las existentes.
+Razón: depende de que el panel exista (fase 4) y de que las variantes se editen
+(fase 5), y meterlo dentro de la 5 convertiría una fase ya grande en una
+inauditable. Va **después de la 8** porque el sitio dinámico tiene que estar en
+pie y medido antes de añadirle un contador que apaga productos.
+
+**Y un aviso de secuencia que importa más que las horas:** la fase 9 **no se
+puede entregar a medias**. Aplicar `0004` y activar el cálculo de `vendible` con
+las 30 variantes a 0 **apaga la tienda entera**. Por eso el interruptor
+`inventario_activo` de `ajustes` existe y por eso la fase incluye el conteo
+inicial de Andreina como paso obligatorio (ver G.6).
+
+| Fase | Qué incluye | Horas |
+|---|---|---|
+| **9 · Inventario** (G) | `0004_inventario.sql` (+ `ajustes`). Fórmula de `vendible` en `consultas/productos.ts` con el interruptor de activación. Reservas en `POST /api/pedidos` y cierre en el webhook, con las tres redes de idempotencia. Cron Trigger de caducidad + caducidad en el checkout. Pantalla de inventario (30 variantes, cargar/descontar con motivo, a 375 px). Lista de «productos a despachar» con los dos orígenes y «ya salió». Venta por WhatsApp en un toque, con deshacer. Historial por variante. Cuadre diario y avisos en `/admin`. Conteo inicial con Andreina | 14–19 |
+
+**Tabla de fases actualizada y con la suma comprobada.** El encargo advierte que
+una versión anterior de este documento declaraba un total que no cuadraba con su
+propia tabla; **se verificó la tabla de las 9 fases anteriores y sí cuadraba**
+(`3+6+8+10+7+10+12+5+3 = 64` y `4+9+11+14+10+14+17+7+4 = 90`, con sus dos
+subtotales correctos: 34–48 de panel y 30–42 de arquitectura). La fase 9 se suma
+sin tocar nada de lo anterior:
+
+| Fase | Horas |
+|---|---|
+| 0 · Decisiones y red de seguridad | 3–4 |
+| 1 · Modo servidor | 6–9 |
+| 2 · Datos a D1 | 8–11 |
+| 3 · El sitio lee de D1 | 10–14 |
+| 4 · Panel: autenticación y armazón | 7–10 |
+| 5 · Panel: productos | 10–14 |
+| 6 · Imágenes por variante y rol | 12–17 |
+| 7 · Panel: diario y categorías | 5–7 |
+| 8 · Pruebas y publicación | 3–4 |
+| **9 · Inventario** (nueva) | **14–19** |
+| **Total** | **78–109** |
+
+Comprobación, porque el encargo lo pide explícitamente:
+mínimos `3+6+8+10+7+10+12+5+3+14 = 78`; máximos `4+9+11+14+10+14+17+7+4+19 = 109`.
+**Cuadra.**
+
+Y los subtotales, también recomputados:
+- **Panel (fases 4–7 y 9): 48–67** (`7+10+12+5+14` / `10+14+17+7+19`).
+- **Arquitectura y sitio público (0–3, 8): 30–42**, sin cambios.
+
+Al plan del carrito hay que sumarle, por su parte, **+3 a +5 horas netas**
+(+2–3 en su fase 2, +2–3 en su fase 3, −1 en su fase 4), con lo que su total pasa
+de **26–36** a **29–41**. Ese documento no se edita aquí; queda anotado.
+
+### Riesgos nuevos (formato de B.6)
+
+| # | Riesgo | Gravedad | Mitigación concreta |
+|---|---|---|---|
+| **R11** | **El inventario se desincroniza de la realidad y nadie lo nota.** Es el modo de fallo característico de todo sistema de stock: no se cae, **miente**. Una rotura sin registrar, un conteo mal hecho, una venta por WhatsApp que no se descontó, y a los dos meses el panel dice 4 donde hay 2. Entonces el sitio vende lo que no existe, y la confianza en el contador se pierde de golpe — después de lo cual Andreina deja de usarlo y el proyecto se queda con lo peor de los dos mundos | **Alta** | Cuatro capas. (1) **Todo cambio escribe en `movimientos`**, sin excepción: un desajuste siempre es *localizable* en el tiempo. (2) **Cuadre automático diario** (consulta de G.4 caso 4) en el cron; una sola fila devuelta es un bug y sale en `/admin`. (3) **Descontar tiene que costar un toque** (G.3): el diseño de interfaz *es* la mitigación, porque un registro que cuesta trabajo no se hace. (4) **Recuento guiado**: una pantalla «contar bodega» que pide los 30 números y escribe los `ajuste` necesarios, para hacerlo una vez al mes sin pelear con la interfaz |
+| **R12** | **Las reservas apagan el catálogo.** Con 1–2 unidades por variante, unos pocos checkouts abandonados dejan productos en «Agotado» sin que falte nada. El daño es invisible: no hay error, solo ventas que no ocurren | **Media** | Reserva de **30 minutos**, no 24 h (G.2, con su compromiso explícito). Caducidad por cron cada 5 min **y** cálculo exacto al leer que descuenta solo lo vigente, así que el peor retraso visible es cero, no 5 minutos. Liberación inmediata al rechazo, sin esperar el vencimiento. El panel muestra «reservado ahora: 2» en la fila, para que un «agotado» raro sea explicable en un vistazo en vez de un misterio |
+| **R13** | **El día de la activación se apaga la tienda.** `0004` deja las 30 variantes en 0, y 0 significa «Agotado» por la decisión 2 del cliente. Activado sin conteo previo, el catálogo entero queda vacío — con 200, que es lo que R3 señala como lo peor para Google | **Alta** | **Interruptor `inventario_activo` en `ajustes`, apagado en la migración.** Con él apagado `vendible` es exactamente `disponible`, o sea el comportamiento de hoy, con el stock ya cargándose en segundo plano. La secuencia obligatoria de G.6 (migrar → contar → activar) **no es una recomendación**: es el contenido de la fase 9. Y la activación se hace con Andreina delante, a primera hora, no un viernes por la tarde |
+| **R14** | **Un pago cobrado sin mercancía.** Puede ocurrir por la ventana de los 30 min (caso 5) o porque Andreina vendió por WhatsApp algo reservado (caso 2). Es poco frecuente y es el que más daña la reputación de una tienda pequeña, donde cada cliente se conoce | **Media** | El `UPDATE` condicional hace que **se detecte siempre**, nunca pase inadvertido. El despacho nace marcado `sin_stock` y **primero** en la lista, en rojo, visible al minuto. **El pago nunca se rechaza por falta de stock**: se cobra, se avisa y lo resuelve una persona hablando, que es como se resuelve de verdad. La extensión de reserva al volver de Bold (G.4 caso 5) recorta la ventana. Y el aviso previo de «Venderlo igual» deja la decisión en quien puede valorarla |
+| **R15** | **Caché y stock: el sitio dice «hay» y no hay.** Las páginas públicas se sirven de caché de borde (B.3) y el stock cambia cada vez que Andreina descuenta. Una página cacheada puede ofrecer durante minutos algo que se acabó. Es R9 con dinero encima | **Media** | La verdad **no está en la página, está en el `WHERE` del `UPDATE`**: una página cacheada puede invitar a comprar, pero la reserva se comprueba contra la base y falla limpiamente con un mensaje (caso 1). Además: purgar por etiqueta (`producto:<handle>`) en todo movimiento que cruce el umbral de 0 —no en cada movimiento, que sería purgar la caché todo el día—, y **nunca cachear `/checkout` ni las respuestas de la API**. Los avisos de «Queda 1» llevan `s-maxage` corto |
+
+### Pruebas obligatorias que se añaden
+
+Se suman a la lista existente, con su numeración:
+
+18. **Dos pagos simultáneos de la última unidad**: uno cobra y despacha, el otro
+    recibe un mensaje claro **antes de pagar**. El stock queda en 0, nunca en −1,
+    y el libro tiene exactamente una venta.
+19. **Webhook por duplicado**: el stock baja **una** vez, hay **un** despacho (lo
+    impide el índice único), y `eventos_pago` registra los dos eventos.
+20. **Abandono**: a los 30 min el cron libera, el producto vuelve a venderse y el
+    movimiento `reserva_caducada` lo explica.
+21. **Caducada mientras pagaba, con stock y sin stock**: con stock, el cliente no
+    se entera; sin stock, el pedido queda `pagado` y el despacho sale **primero y
+    en rojo**.
+22. **WhatsApp en un toque**: descontar una unidad desde `/admin/inventario` a
+    375 px en **un** toque, con deshacer que escribe un movimiento (no un
+    `DELETE`).
+23. **WhatsApp contra una unidad reservada**: el panel **pregunta**, no falla.
+    «Esperar» no cambia nada; «Venderlo igual» deja −1, lo marca y lo avisa.
+24. **Negativo**: una variante en −1 sale «Agotado» en el sitio, en rojo en el
+    panel y en el mosaico de `/admin`. **Nunca un error de base de datos en
+    pantalla.**
+25. **Cuadre**: la consulta de G.4 devuelve **cero filas** tras ejecutar los
+    casos 18–24 seguidos. Si devuelve algo, es un bug y hay que encontrarlo.
+26. **Archivar con reservas**: avisa con los dos números, las reservas sobreviven,
+    el despacho pendiente sigue en la lista, y el borrado definitivo se bloquea.
+27. **Cargar diez unidades en tres toques**, a 375 px, cronometrado. Si cuesta
+    más, la pantalla está mal y hay que rehacerla (R11 capa 3).
+28. **Activación**: con `inventario_activo = 0` el catálogo se comporta
+    **exactamente** como antes de la migración, con el stock ya cargado. Se
+    comprueba antes de activar, no después.
+
+## G.6 La pantalla de inventario: para alguien que no es técnica
+
+Las tres reglas de «Nota sobre quién va a usar esto a diario» se aplican sin
+excepción: nada de jerga, ningún paso que exija entender el modelo, nada
+irreversible. Y a 375 px, porque ahí se va a usar.
+
+**Vocabulario. Esta tabla es normativa, no una sugerencia de estilo:**
+
+| Nunca aparece | Se dice |
+|---|---|
+| stock, inventario (como número) | **«Cuántos tengo»** |
+| variante | **el color**, **el tamaño**, o su nombre: «Morado» |
+| reservado | **«Lo está pagando alguien»** |
+| disponible / vendible | **«A la venta»** |
+| movimiento | **«Qué pasó»** |
+| ajuste | **«Corregir la cuenta»** |
+| caducó / expiró | **«No llegó a pagar»** |
+| id, handle, SKU | nada: no se muestran |
+
+### `/admin/inventario` — la pantalla principal
+
+Una lista de las **30 variantes**, agrupadas por producto, buscador arriba. Cada
+fila, en una línea a 375 px:
+
+```
+┌─────────────────────────────────────────────┐
+│ Hervidor mango de madera                    │
+│                                             │
+│  Blanco          4        [ − ]  [ + ]      │
+│                                             │
+│  Negro           1        [ − ]  [ + ]      │
+│                  ⚠ 1 lo está pagando alguien│
+│                                             │
+│  ──────────────────────────────────────     │
+│ Filtros V60                                 │
+│                                             │
+│  #01             0   Agotado   [ − ]  [ + ] │
+│                  Se pondrá a la venta sola   │
+│                  cuando cargues unidades     │
+└─────────────────────────────────────────────┘
+```
+
+- **El número grande es lo que puede vender** (físico − reservado). Es el que
+  importa y por eso es el que se ve. El físico y el reservado aparecen debajo
+  **solo cuando se diferencian**: mostrar siempre tres números es pedirle que
+  aprenda un modelo de datos.
+- **`+` y `−` son el 90 % del uso.** Un toque = una unidad.
+  - **`−`** pregunta **una sola cosa**, con los botones del tamaño del pulgar:
+    **[Vendí por WhatsApp]** · **[Se rompió o se perdió]** · **[Corregir la
+    cuenta]**. Eso es el «motivo» del encargo, dicho en español. Nada de
+    desplegables.
+  - **`+`** pregunta lo mismo: **[Llegó mercancía]** · **[Me devolvieron una]** ·
+    **[Corregir la cuenta]**.
+  - **«Corregir la cuenta» pide una nota** y es el único caso donde se exige
+    escribir, porque es el único donde el motivo no lo explica ya.
+- **Cargar diez filtros en tres toques**, que es el requisito literal: toque en
+  el número → se abre un teclado numérico con el valor actual → teclea `14` →
+  **[Guardar]**. Son tres interacciones y **no** diez toques en `+`. Los `+`/`−`
+  son para de uno en uno; el teclado para cantidades. Las dos vías existen porque
+  los dos casos existen.
+- **Deshacer siempre.** Una franja de unos segundos tras cada cambio: «Cargaste
+  10 filtros #01 · **Deshacer**». Deshacer escribe un movimiento contrario, nunca
+  borra: el libro cuenta lo que pasó, incluidos los errores.
+
+### `/admin/despachos` — «Productos a despachar»
+
+La lista que pidió el cliente. Lo pendiente, lo más antiguo primero, los dos
+orígenes **mezclados en una sola lista** porque para Andreina son lo mismo:
+paquetes que hay que armar.
+
+```
+┌─────────────────────────────────────────────┐
+│  Para despachar  (4)                        │
+│                                             │
+│  ⚠ PAGADO Y NO HAY UNIDAD                   │
+│  Marcela Ruiz · hoy 10:34                   │
+│  1 × Hervidor blanco                        │
+│  Hay que hablar con ella        [Ver]       │
+│  ─────────────────────────────────────      │
+│  Pagado en la tienda · hoy 9:12             │
+│  1 × Chemex 6 tazas                         │
+│  2 × Filtros V60 #01                        │
+│  Bogotá · Calle 85 #11-22                   │
+│  [ Ya salió ]        [WhatsApp]  [Ver]      │
+│  ─────────────────────────────────────      │
+│  Vendido por WhatsApp · ayer 18:40          │
+│  1 × Aeropress morado                       │
+│  Para Juan                                  │
+│  [ Ya salió ]                    [Ver]      │
+└─────────────────────────────────────────────┘
+```
+
+- **Lo roto va primero y en rojo**, siempre. Es la regla de orden de la pantalla.
+- **«Ya salió» es un toque** y el objetivo es que se pueda hacer con una mano
+  mientras se pega la guía al paquete. Deshacer disponible unos segundos.
+- **El origen se dice, no se codifica**: «Pagado en la tienda» / «Vendido por
+  WhatsApp». Nunca `origen='bold'`.
+- **[WhatsApp]** abre la conversación con el cliente, con el pedido en el
+  mensaje, reutilizando `enlaceWhatsApp()` de `carrito.ts` y
+  `mensajePedido()`. La fase 4 del plan del carrito ya lo pedía; aquí se cumple
+  en el mismo sitio.
+- **La dirección se muestra en la lista**, no detrás de un «Ver». Es el dato que
+  se necesita para armar el paquete y esconderlo añade un toque a cada envío.
+
+### `/admin/inventario/<variante>` — «Qué pasó»
+
+El historial que pide el encargo, en lenguaje de persona:
+
+```
+Hervidor mango de madera — Negro
+Tienes 1
+
+  hoy 11:02    −1   Vendido por WhatsApp         (Para Juan)
+  hoy  9:40    +4   Llegó mercancía
+  ayer 16:20   −1   Se vendió en la tienda       (pedido del 7 oct)
+  ayer 15:50   −1   Apartado para un pago
+  ayer 16:20   +1   No llegó a pagar · volvió al stock
+  3 oct        −2   Corregir la cuenta  «se rompieron en el envío»
+```
+
+Fechas relativas, cantidades con signo, motivo en español, nota si la hay. **Es
+la pantalla que convierte «el stock no cuadra» en «ah, el 3 de octubre se
+rompieron dos»**, y es la razón de que `movimientos` exista.
+
+### El día del cambio (parte de la fase 9, no un apéndice)
+
+1. Aplicar `0004`. **Nada cambia en el sitio**: `inventario_activo = 0`, y
+   `vendible` sigue siendo solo `disponible`.
+2. Andreina cuenta su bodega y carga los 30 números desde la pantalla de
+   inventario, con calma, sin prisa y sin que nada dependa de ello. Cada número
+   deja su movimiento `entrada`.
+3. **Revisar juntos** que los 30 números coinciden con lo que ella ve. Es el paso
+   que no se puede saltar y el que no es técnico.
+4. **Activar** (`inventario_activo = 1`) y purgar la caché. A primera hora de un
+   día laborable, con ella delante. **Nunca un viernes por la tarde.**
+5. Si algo sale mal: **apagar el interruptor** devuelve el sitio al
+   comportamiento de hoy en un toque, con el stock intacto. Es la vuelta atrás
+   de R6 aplicada a esta fase, y es la razón de que el interruptor exista.
+
+## G.7 Lo que queda fuera, a propósito
+
+Para que no se interprete como olvido:
+
+- **Reposición automática, alertas de mínimos, pedidos a proveedor.** La dueña
+  conoce su catálogo al dedillo (nota de E): un sistema que le avise de que le
+  quedan dos Chemex le está contando algo que ya sabe.
+- **Stock por ubicación** (bodega / casa / escaparate). Hay una estantería. El
+  día que haya dos sitios, `movimientos` ya permite reconstruirlo.
+- **Costo, margen, valoración de inventario.** Es contabilidad, no stock. Haría
+  falta el costo de compra, que nadie ha pedido.
+- **Reservas manuales desde el panel** («aparta esto para el curso del sábado»).
+  Hoy se resuelve con el interruptor «A la venta» apagado, que es lo mismo con
+  cero código.
+- **Sincronización con el Shopify.** Ya estaba fuera de alcance y lo sigue
+  estando: el respaldo es histórico, no una fuente viva.
+- **El dinero de las devoluciones.** Lo hace la dueña desde Bold. El panel
+  registra la mercancía y la nota.
+
 # Fuera de alcance
 
-- Inventario con stock numérico (hoy `disponible` es un sí/no).
-- Pedidos y checkout: son del plan de Bold.
+- ~~Inventario con stock numérico (hoy `disponible` es un sí/no).~~ **SUPERADO el
+  8 oct 2026: el cliente eligió llevar stock.** Está diseñado en la sección G y
+  es la fase 9. La razón del cambio está en G.0; en corto, hay **dos vías de
+  venta** (Bold y WhatsApp) compitiendo por las mismas unidades, y un sí/no
+  manual no puede con eso. `disponible` **no desaparece**: se conserva como
+  interruptor manual («no vender esto aunque haya»), separado del stock (G.1).
+- Pedidos y checkout: son del plan de Bold. El inventario **sí** toca su checkout
+  y su webhook (G.3, G.5), que pasan a reservar y a descontar.
 - Cuentas de cliente.
 - Edición de las páginas fijas (`/cafe`, `/nosotros`, `/contacto`) desde el panel.
 - Cambiar el diseño Obsidiana II. El panel **lo reutiliza**, no lo reinventa.
