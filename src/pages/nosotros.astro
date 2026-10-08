@@ -123,10 +123,12 @@ export const prerender = true;
       </li>
       <li data-v-revelar style="--d:3">
         <Icono nombre="paquete" tam={28} />
-        <h3>Sin carrito ni pasarela</h3>
+        {/* Fase 1 del carrito: ya hay carrito. La pasarela de pago sigue sin
+            existir (fase 2), y eso es lo que se afirma. */}
+        <h3>Todavía sin pasarela</h3>
         <p>
-          Cada pedido se cierra hablando. Nos parece más honesto: así sabemos qué necesitas antes de
-          que pagues nada.
+          Puedes armar tu pedido en el carrito, pero cada compra se cierra hablando. Nos parece más
+          honesto: así sabemos qué necesitas antes de que pagues nada.
         </p>
       </li>
     </ul>

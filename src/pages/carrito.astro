@@ -1,0 +1,591 @@
+---
+/**
+ * /carrito — el pedido que la persona esta armando. Fase 1 del plan de Bold.
+ * ===========================================================================
+ *
+ * COMO SE PINTA, Y POR QUE ASI
+ * ---------------------------------------------------------------------------
+ * El sitio es estatico (`output: 'static'`): el build NO puede saber que lleva
+ * cada visitante. Asi que esta pagina se entrega con tres estados en el HTML y
+ * el script enciende el que toca:
+ *
+ *   1. `[data-carrito-sin-js]` — lo UNICO visible sin JavaScript. Explica que
+ *                          el carrito necesita JS y ofrece el WhatsApp
+ *                          generico, que funciona siempre. NO queda rota.
+ *   2. `[data-carrito-vacio]` — carrito vacio, con enlace al catalogo.
+ *   3. `[data-carrito-lleno]` — la lista de lineas, el resumen y el WhatsApp
+ *                          del pedido completo.
+ *
+ * TODOS los atributos van prefijados con `data-carrito-`, sin excepcion. El
+ * prefijo no es decoracion: `ContadorCarrito.astro` pinta en la CABECERA de
+ * ESTA MISMA pagina un enlace con `data-vacio` (su propio estado), y un
+ * `querySelector('[data-vacio]')` a secas encontraba PRIMERO el de la
+ * cabecera, dejando el bloque de carrito vacio oculto para siempre. Si
+ * anades un estado nuevo aqui, prefijalo igual.
+ *
+ * Las lineas las clona el script de un <template>: nada de innerHTML con datos
+ * (ni siquiera propios), y el marcado del <li> se lee aqui, en el .astro, no
+ * en una cadena dentro del JavaScript.
+ *
+ * EL CATALOGO VIAJA EN LA PAGINA
+ * ---------------------------------------------------------------------------
+ * `localStorage` solo guarda handle + varianteId + cantidad (ver
+ * src/scripts/carrito.ts). Titulo, precio y foto se releen de este catalogo,
+ * que se serializa en el build: si la dueña cambia un precio y se vuelve a
+ * publicar, un carrito viejo muestra el precio NUEVO. El precio nunca sale del
+ * navegador, que es la regla de seguridad del plan y lo que necesitara la
+ * fase 2.
+ *
+ * AUN NO HAY PAGO
+ * ---------------------------------------------------------------------------
+ * La fase 2 (checkout con Bold) pondra aqui su boton. Hasta entonces, el sitio
+ * NO promete un pago que no existe: el hueco esta preparado (`v-resumen__pago`)
+ * con una nota honesta, no con un boton muerto.
+ */
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Icono from '../components/Icono.astro';
+import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import { SITIO, ruta } from '../datos/sitio';
+import { ENVIOS } from '../datos/guias';
+import { ENVIO_GRATIS_DESDE, TARIFA_PLANA_ENVIO, formatearPesos } from '../datos/envio';
+import type { Catalogo } from '../scripts/carrito';
+
+const productos = await getCollection('productos');
+
+/* El catalogo reducido a lo que el carrito necesita pintar. Nada mas: esto
+   viaja en el HTML de la pagina. */
+const catalogo: Catalogo = Object.fromEntries(
+  productos.map((p) => {
+    const d = p.data;
+    const img = d.imagenes[0];
+    return [
+      d.handle,
+      {
+        handle: d.handle,
+        titulo: d.titulo,
+        disponible: d.disponible,
+        conVariantes: d.variantes.length > 1,
+        variantes: d.variantes.map((v) => ({
+          id: v.id,
+          titulo: v.titulo,
+          precio: v.precio,
+          precioFormateado: v.precioFormateado,
+          disponible: v.disponible,
+        })),
+        ...(img ? { imagen: { src: img.src, alt: img.alt } } : {}),
+      },
+    ];
+  }),
+);
+
+/* Reglas de envio que el script necesita en el navegador. */
+const reglasEnvio = {
+  tarifaPlana: TARIFA_PLANA_ENVIO,
+  gratisDesde: ENVIO_GRATIS_DESDE,
+};
+
+const principales = ENVIOS[0];
+const otras = ENVIOS[1];
+---
+
+<Base
+  titulo="Tu carrito"
+  descripcion="Revisa tu pedido de accesorios de café de especialidad y cerramos la compra por WhatsApp."
+  camino="/carrito"
+  migas={[{ nombre: 'Carrito', href: '/carrito' }]}
+>
+  <section class="v-seccion v-limite v-carrito">
+    <header class="v-carrito__cabeza">
+      <h1>Tu <em>carrito</em></h1>
+      <p class="v-sub" data-carrito-resumen-corto>Revisa el pedido antes de escribirnos.</p>
+    </header>
+
+    {/*
+      SIN JAVASCRIPT. Es lo unico que se ve de serie, y el script lo retira en
+      cuanto arranca. Asi no hay parpadeo al contrario: si el JS falla, este
+      bloque se queda, que es exactamente lo que debe pasar.
+    */}
+    <div class="v-aviso" data-carrito-sin-js>
+      <h2>El carrito necesita JavaScript</h2>
+      <p>
+        Tu pedido se guarda en este navegador, y para eso hace falta JavaScript. Si lo tienes
+        desactivado, escríbenos y armamos el pedido contigo: te responde {SITIO.dueña}.
+      </p>
+      <div class="v-acciones">
+        <BotonWhatsApp clase="v-boton v-boton--oro">
+          <Icono nombre="whatsapp" tam={20} />
+          <span>Pedir por WhatsApp</span>
+        </BotonWhatsApp>
+        <a href={ruta('/catalogo')} class="v-boton v-boton--linea">Ver el catálogo</a>
+      </div>
+    </div>
+
+    {/* CARRITO VACIO */}
+    <div class="v-vacio" data-carrito-vacio hidden>
+      <h2>Todavía no has agregado nada</h2>
+      <p>
+        Métodos, filtros, hervidores y utensilios para preparar mejor café en casa. Empieza por el
+        catálogo.
+      </p>
+      <a href={ruta('/catalogo')} class="v-boton v-boton--oro">
+        <Icono nombre="bolsa" tam={20} />
+        <span>Ver el catálogo</span>
+      </a>
+    </div>
+
+    {/* CARRITO CON LINEAS */}
+    <div class="v-carrito__cuerpo" data-carrito-lleno hidden>
+      <div class="v-carrito__lista">
+        <ul data-carrito-lineas class="v-lineas"></ul>
+
+        <div class="v-carrito__pie-lista">
+          <a href={ruta('/catalogo')} class="v-enlace">
+            <Icono nombre="flecha" tam={16} /> Seguir viendo el catálogo
+          </a>
+          <button type="button" class="v-vaciar" data-carrito-vaciar>
+            <Icono nombre="papelera" tam={16} />
+            <span>Vaciar carrito</span>
+          </button>
+        </div>
+      </div>
+
+      <aside class="v-resumen" aria-labelledby="t-resumen">
+        <h2 id="t-resumen">Resumen</h2>
+
+        <dl class="v-resumen__filas">
+          <div>
+            <dt>Subtotal</dt>
+            <dd class="v-num" data-carrito-subtotal></dd>
+          </div>
+          <div>
+            <dt>Envío</dt>
+            <dd class="v-num" data-carrito-envio></dd>
+          </div>
+          <div class="v-resumen__total">
+            <dt>Total</dt>
+            <dd class="v-num" data-carrito-total></dd>
+          </div>
+        </dl>
+
+        {/* Cuanto falta para el envio gratis. Solo aparece si falta algo. */}
+        <p class="v-resumen__falta" data-carrito-falta hidden></p>
+
+        {/*
+          TEXTO DE ENVIO. Derivado de la politica real
+          (contenido-original/datos/politicas/shipping-policy.md): los plazos
+          son los suyos, literales, via ENVIOS. La tarifa plana es el valor
+          PENDIENTE DE CONFIRMAR de src/datos/envio.ts; la politica dice que
+          hoy el costo "se calcula al momento de la compra segun el destino y
+          el peso", asi que el texto no promete que sea definitivo.
+        */}
+        <div class="v-resumen__envio">
+          <p>
+            <strong>Envío gratis</strong> desde {formatearPesos(ENVIO_GRATIS_DESDE)}. Por debajo,
+            tarifa plana de {formatearPesos(TARIFA_PLANA_ENVIO)} a todo Colombia.
+          </p>
+          <ul>
+            <li>
+              <span>{principales.zona}</span>
+              <span class="v-num">{principales.plazo}</span>
+            </li>
+            <li>
+              <span>{otras.zona}</span>
+              <span class="v-num">{otras.plazo}</span>
+            </li>
+          </ul>
+          <p class="v-resumen__nota">
+            Confirmamos el valor final del envío por WhatsApp según tu ciudad antes de que pagues
+            nada.
+          </p>
+        </div>
+
+        <div class="v-resumen__accion">
+          <a
+            class="v-boton v-boton--oro v-boton--ancho"
+            data-carrito-whatsapp
+            href={`https://wa.me/${SITIO.whatsappNumero}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Icono nombre="whatsapp" tam={20} />
+            <span>Pedir por WhatsApp</span>
+          </a>
+          {/*
+            Hueco de la fase 2 (pago con Bold). Es una NOTA, no un boton: un
+            boton desactivado que nunca se activa solo frustra.
+          */}
+          <p class="v-resumen__pago">
+            El pago en línea con tarjeta, PSE y Nequi está en camino. Por ahora cerramos cada
+            pedido por WhatsApp con {SITIO.dueña}.
+          </p>
+        </div>
+      </aside>
+    </div>
+
+    {/*
+      Region viva. Fuera de los bloques que se ocultan: un aria-live dentro de
+      algo con [hidden] no anuncia nada. Aqui se cuentan los cambios de
+      cantidad, las lineas quitadas y el carrito vaciado.
+    */}
+    <p class="sr-only" role="status" aria-live="polite" data-carrito-anuncio></p>
+  </section>
+
+  {/*
+    Plantilla de una linea. El script la clona y rellena con textContent.
+    Vive en el .astro para que el marcado y sus clases esten donde se leen,
+    no en una cadena dentro del JavaScript.
+  */}
+  <template data-carrito-plantilla>
+    <li class="v-linea" data-linea>
+      <a class="v-linea__foto" data-linea-enlace-foto>
+        <img data-linea-img alt="" width="96" height="96" loading="lazy" decoding="async" />
+      </a>
+
+      <div class="v-linea__info">
+        <a class="v-linea__titulo" data-linea-enlace></a>
+        <p class="v-linea__variante" data-linea-variante hidden></p>
+        <p class="v-linea__unitario">
+          <span class="v-num" data-linea-unitario></span> <span>por unidad</span>
+        </p>
+        <p class="v-linea__agotado" data-linea-agotado hidden>
+          Agotado por ahora: lo confirmamos por WhatsApp.
+        </p>
+      </div>
+
+      <div class="v-linea__cantidad">
+        <button type="button" data-linea-menos class="v-paso">
+          <span class="sr-only" data-linea-menos-etiqueta></span>
+        </button>
+        {/*
+          La cantidad es un <input type="number"> real: se puede escribir 12
+          en vez de pulsar once veces. Los botones son <button> de verdad, con
+          su etiqueta accesible nombrando el producto.
+        */}
+        <input
+          type="number"
+          min="1"
+          max="99"
+          step="1"
+          inputmode="numeric"
+          class="v-paso__valor v-num"
+          data-linea-cantidad
+        />
+        <button type="button" data-linea-mas class="v-paso">
+          <span class="sr-only" data-linea-mas-etiqueta></span>
+        </button>
+      </div>
+
+      <div class="v-linea__derecha">
+        <p class="v-linea__subtotal v-num" data-linea-subtotal></p>
+        <button type="button" class="v-quitar" data-linea-quitar>
+          <span class="sr-only" data-linea-quitar-etiqueta></span>
+          <span aria-hidden="true">Quitar</span>
+        </button>
+      </div>
+    </li>
+  </template>
+
+  {/* Los datos del build que el script necesita, como JSON inerte. */}
+  <script type="application/json" data-carrito-catalogo set:html={JSON.stringify(catalogo)} />
+  <script type="application/json" data-carrito-envio-reglas set:html={JSON.stringify(reglasEnvio)} />
+</Base>
+
+<script>
+  import {
+    cambiarCantidad,
+    enlaceWhatsApp,
+    leerGuardado,
+    mensajePedido,
+    pesos,
+    quitar,
+    resolver,
+    suscribir,
+    vaciar,
+    type Catalogo,
+    type LineaResuelta,
+  } from '../scripts/carrito';
+
+  /* --- Datos del build ------------------------------------------------- */
+  const leerJson = <T,>(selector: string): T | null => {
+    const el = document.querySelector<HTMLScriptElement>(selector);
+    if (!el?.textContent) return null;
+    try {
+      return JSON.parse(el.textContent) as T;
+    } catch {
+      return null;
+    }
+  };
+
+  const catalogo = leerJson<Catalogo>('[data-carrito-catalogo]');
+  const reglas = leerJson<{ tarifaPlana: number; gratisDesde: number }>(
+    '[data-carrito-envio-reglas]',
+  );
+
+  const sinJs = document.querySelector<HTMLElement>('[data-carrito-sin-js]');
+  const vacio = document.querySelector<HTMLElement>('[data-carrito-vacio]');
+  const lleno = document.querySelector<HTMLElement>('[data-carrito-lleno]');
+  const lista = document.querySelector<HTMLUListElement>('[data-carrito-lineas]');
+  const plantilla = document.querySelector<HTMLTemplateElement>('[data-carrito-plantilla]');
+  const anuncio = document.querySelector<HTMLElement>('[data-carrito-anuncio]');
+
+  /* Si falta cualquier pieza se deja el bloque "sin JavaScript": es un
+     estado honesto y util, no una pagina a medias. */
+  if (catalogo && reglas && sinJs && vacio && lleno && lista && plantilla) {
+    sinJs.remove();
+
+    const elSubtotal = document.querySelector<HTMLElement>('[data-carrito-subtotal]');
+    const elEnvio = document.querySelector<HTMLElement>('[data-carrito-envio]');
+    const elTotal = document.querySelector<HTMLElement>('[data-carrito-total]');
+    const elFalta = document.querySelector<HTMLElement>('[data-carrito-falta]');
+    const elWa = document.querySelector<HTMLAnchorElement>('[data-carrito-whatsapp]');
+    const elCorto = document.querySelector<HTMLElement>('[data-carrito-resumen-corto]');
+    const btnVaciar = document.querySelector<HTMLButtonElement>('[data-carrito-vaciar]');
+
+    const decir = (texto: string) => {
+      if (anuncio) anuncio.textContent = texto;
+    };
+
+    /* La misma regla que src/datos/envio.ts, con los valores del build. */
+    const calcularEnvio = (subtotal: number) => {
+      if (subtotal <= 0) return { costo: 0, gratis: false, falta: reglas.gratisDesde };
+      const gratis = subtotal >= reglas.gratisDesde;
+      return {
+        costo: gratis ? 0 : reglas.tarifaPlana,
+        gratis,
+        falta: gratis ? 0 : reglas.gratisDesde - subtotal,
+      };
+    };
+
+    const nombreLinea = (l: LineaResuelta) =>
+      l.varianteTitulo ? `${l.titulo} (${l.varianteTitulo})` : l.titulo;
+
+    /** Rellena un <li> clonado de la plantilla con los datos de una linea. */
+    const pintarLinea = (l: LineaResuelta): DocumentFragment => {
+      const frag = plantilla.content.cloneNode(true) as DocumentFragment;
+      const q = <T extends Element>(s: string) => frag.querySelector<T>(s);
+      const nombre = nombreLinea(l);
+
+      const li = q<HTMLLIElement>('[data-linea]');
+      li?.setAttribute('data-handle', l.handle);
+      li?.setAttribute('data-variante', l.varianteId);
+
+      const foto = q<HTMLAnchorElement>('[data-linea-enlace-foto]');
+      if (foto) {
+        foto.href = l.url;
+        /* La foto y el titulo llevan al mismo sitio. En vez de dos enlaces
+           que anuncian lo mismo, la foto sale del recorrido de tabulacion y
+           queda oculta al lector de pantalla: el titulo, justo al lado, ya
+           hace de enlace con nombre. Un enlace sin nombre accesible seria un
+           fallo de WCAG (2.4.4) y ademas una parada inutil al tabular. */
+        foto.tabIndex = -1;
+        foto.setAttribute('aria-hidden', 'true');
+      }
+      const img = q<HTMLImageElement>('[data-linea-img]');
+      if (img) {
+        if (l.imagen) {
+          /* WebP, igual que el resto del sitio (ver `optimizada` en
+             src/datos/sitio.ts). El original queda de reserva por si la
+             variante WebP no existiera. */
+          img.src = l.imagen.src.replace(/\.(png|jpe?g)$/i, '.webp');
+          img.alt = '';
+        } else {
+          img.remove();
+        }
+      }
+
+      const enlace = q<HTMLAnchorElement>('[data-linea-enlace]');
+      if (enlace) {
+        enlace.href = l.url;
+        enlace.textContent = l.titulo;
+      }
+
+      const variante = q<HTMLElement>('[data-linea-variante]');
+      if (variante && l.varianteTitulo) {
+        variante.textContent = l.varianteTitulo;
+        variante.hidden = false;
+      }
+
+      const unitario = q<HTMLElement>('[data-linea-unitario]');
+      if (unitario) unitario.textContent = l.precioUnitarioFormateado;
+
+      const agotado = q<HTMLElement>('[data-linea-agotado]');
+      if (agotado && !l.disponible) agotado.hidden = false;
+
+      const cantidad = q<HTMLInputElement>('[data-linea-cantidad]');
+      if (cantidad) {
+        cantidad.value = String(l.cantidad);
+        cantidad.setAttribute('aria-label', `Cantidad de ${nombre}`);
+      }
+
+      /* Etiquetas accesibles: cada boton dice QUE producto toca, porque un
+         lector de pantalla los recorre fuera de contexto. El signo visible
+         va aparte, en aria-hidden. */
+      const menos = q<HTMLButtonElement>('[data-linea-menos]');
+      const masBtn = q<HTMLButtonElement>('[data-linea-mas]');
+      const etMenos = q<HTMLElement>('[data-linea-menos-etiqueta]');
+      const etMas = q<HTMLElement>('[data-linea-mas-etiqueta]');
+      if (etMenos) etMenos.textContent = `Quitar una unidad de ${nombre}`;
+      if (etMas) etMas.textContent = `Agregar una unidad de ${nombre}`;
+      menos?.setAttribute('data-signo', '−');
+      masBtn?.setAttribute('data-signo', '+');
+      if (menos) menos.disabled = l.cantidad <= 1;
+      if (masBtn) masBtn.disabled = l.cantidad >= 99;
+
+      const subtotal = q<HTMLElement>('[data-linea-subtotal]');
+      if (subtotal) subtotal.textContent = l.subtotalFormateado;
+
+      const etQuitar = q<HTMLElement>('[data-linea-quitar-etiqueta]');
+      if (etQuitar) etQuitar.textContent = `Quitar ${nombre} del carrito`;
+
+      return frag;
+    };
+
+    /**
+     * Devuelve el foco al control equivalente tras repintar.
+     *
+     * La lista se reconstruye entera en cada cambio, asi que el <button> que
+     * la persona acababa de pulsar deja de existir y el foco cae al <body>:
+     * quien navega con teclado se queda sin sitio desde el que seguir
+     * pulsando "+". Se anota que control tenia el foco (su linea y su papel)
+     * y se recupera el mismo despues.
+     *
+     * Si la linea entera desaparecio (cantidad a 0, o "Quitar"), no hay a
+     * donde volver: el foco va al boton de vaciar, que sigue existiendo.
+     */
+    const recordarFoco = () => {
+      const a = document.activeElement as HTMLElement | null;
+      const li = a?.closest<HTMLElement>('[data-linea]');
+      if (!li || !a) return null;
+      const papel = ['data-linea-mas', 'data-linea-menos', 'data-linea-quitar'].find((p) =>
+        a.hasAttribute(p),
+      );
+      if (!papel) return null;
+      return { handle: li.dataset.handle, variante: li.dataset.variante, papel };
+    };
+
+    const restaurarFoco = (m: ReturnType<typeof recordarFoco>) => {
+      if (!m) return;
+      const li = lista.querySelector<HTMLElement>(
+        `[data-linea][data-handle="${CSS.escape(m.handle ?? '')}"][data-variante="${CSS.escape(m.variante ?? '')}"]`,
+      );
+      const destino = li?.querySelector<HTMLButtonElement>(`[${m.papel}]`);
+      /* Un boton desactivado (p. ej. "−" al llegar a 1) no acepta el foco:
+         se cae al otro control de la misma linea antes que al body. */
+      if (destino && !destino.disabled) destino.focus();
+      else if (li) li.querySelector<HTMLButtonElement>('[data-linea-mas]')?.focus();
+      else btnVaciar?.focus();
+    };
+
+    /** Pinta todo: lista, resumen y enlace de WhatsApp. */
+    const pintar = () => {
+      const foco = recordarFoco();
+      const carrito = resolver(leerGuardado(), catalogo);
+      const hay = carrito.lineas.length > 0;
+
+      vacio.hidden = hay;
+      lleno.hidden = !hay;
+
+      if (elCorto) {
+        elCorto.textContent = hay
+          ? carrito.unidades === 1
+            ? '1 unidad en tu pedido. Revísalo antes de escribirnos.'
+            : `${carrito.unidades} unidades en tu pedido. Revísalo antes de escribirnos.`
+          : 'Revisa el pedido antes de escribirnos.';
+      }
+
+      if (!hay) {
+        lista.replaceChildren();
+        /* El carrito se quedo sin lineas: el foco no puede volver a una que
+           ya no existe, asi que se lleva al enlace del catalogo, que es la
+           unica accion que queda. */
+        if (foco) document.querySelector<HTMLAnchorElement>('[data-carrito-vacio] a')?.focus();
+        return;
+      }
+
+      const frag = document.createDocumentFragment();
+      for (const l of carrito.lineas) frag.append(pintarLinea(l));
+      lista.replaceChildren(frag);
+      restaurarFoco(foco);
+
+      const envio = calcularEnvio(carrito.subtotal);
+      if (elSubtotal) elSubtotal.textContent = pesos(carrito.subtotal);
+      if (elEnvio) elEnvio.textContent = envio.gratis ? 'Gratis' : pesos(envio.costo);
+      if (elTotal) elTotal.textContent = pesos(carrito.subtotal + envio.costo);
+
+      if (elFalta) {
+        if (envio.falta > 0) {
+          elFalta.textContent = `Te faltan ${pesos(envio.falta)} para el envío gratis.`;
+          elFalta.hidden = false;
+        } else {
+          elFalta.textContent = '';
+          elFalta.hidden = true;
+        }
+      }
+
+      if (elWa) {
+        elWa.href = enlaceWhatsApp(
+          /* El numero sale del enlace que ya trae el HTML del build. */
+          (elWa.dataset.numero ??= (elWa.href.match(/wa\.me\/(\d+)/)?.[1] ?? '')),
+          mensajePedido(carrito, envio),
+        );
+      }
+    };
+
+    /* --- Interaccion, delegada en la lista --------------------------- */
+    lista.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
+      if (!b) return;
+      const li = b.closest<HTMLElement>('[data-linea]');
+      const handle = li?.dataset.handle;
+      const varianteId = li?.dataset.variante;
+      if (!handle || !varianteId) return;
+
+      const input = li?.querySelector<HTMLInputElement>('[data-linea-cantidad]');
+      const actual = Number(input?.value ?? '1');
+
+      if (b.hasAttribute('data-linea-quitar')) {
+        const nombre = li?.querySelector('[data-linea-enlace]')?.textContent ?? 'El producto';
+        quitar(handle, varianteId);
+        decir(`${nombre} quitado del carrito.`);
+        return;
+      }
+      if (b.hasAttribute('data-linea-mas')) {
+        cambiarCantidad(handle, varianteId, actual + 1);
+        decir(`Cantidad: ${Math.min(99, actual + 1)}.`);
+        return;
+      }
+      if (b.hasAttribute('data-linea-menos')) {
+        cambiarCantidad(handle, varianteId, actual - 1);
+        decir(`Cantidad: ${Math.max(1, actual - 1)}.`);
+      }
+    });
+
+    /* Escribir la cantidad a mano. `change` y no `input`: no se repinta en
+       cada tecla, que haria perder el foco a media cifra. */
+    lista.addEventListener('change', (e) => {
+      const input = e.target as HTMLInputElement;
+      if (!input.matches('[data-linea-cantidad]')) return;
+      const li = input.closest<HTMLElement>('[data-linea]');
+      const handle = li?.dataset.handle;
+      const varianteId = li?.dataset.variante;
+      if (!handle || !varianteId) return;
+      const n = Number(input.value);
+      /* Vacio o basura: se vuelve a 1, no se borra la linea por un teclazo.
+         Para quitarla esta el boton de quitar. */
+      const limpio = Number.isFinite(n) && n >= 1 ? Math.min(99, Math.floor(n)) : 1;
+      cambiarCantidad(handle, varianteId, limpio);
+      decir(`Cantidad: ${limpio}.`);
+    });
+
+    btnVaciar?.addEventListener('click', () => {
+      vaciar();
+      decir('Carrito vacío.');
+    });
+
+    /* Un solo sitio donde se repinta: cada cambio del carrito, venga de esta
+       pagina o de otra pestana. */
+    suscribir(() => pintar());
+    pintar();
+  }
+</script>

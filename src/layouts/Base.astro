@@ -19,6 +19,7 @@
 import SEO from '../components/SEO.astro';
 import type { Miga } from '../components/SEO.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
+import ContadorCarrito from '../components/ContadorCarrito.astro';
 import Icono from '../components/Icono.astro';
 import { SITIO, NAVEGACION, ruta, recurso } from '../datos/sitio';
 import { ENVIOS } from '../datos/guias';
@@ -66,7 +67,10 @@ const activo = (href: string) =>
 ---
 
 <!doctype html>
-<html lang="es-CO">
+{/* data-kp-base lleva el `base` de Astro al navegador: el modulo del carrito
+    arma enlaces a /producto/<handle> desde JavaScript y necesita el mismo
+    prefijo que `ruta()` pone en el servidor. */}
+<html lang="es-CO" data-kp-base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -130,6 +134,10 @@ const activo = (href: string) =>
           </ul>
         </nav>
 
+        {/* El carrito va ANTES del CTA de WhatsApp y fuera de la navegacion
+            principal: es un estado de la visita, no una seccion del sitio. */}
+        <ContadorCarrito clase="v-cabecera__carrito" />
+
         <BotonWhatsApp clase="v-boton v-boton--oro v-boton--sm v-cabecera__cta">
           <Icono nombre="whatsapp" tam={18} />
           <span>Escríbenos</span>
@@ -151,6 +159,12 @@ const activo = (href: string) =>
                   </li>
                 ))
               }
+              {/* El carrito cierra la lista, separado: no es una seccion. */}
+              <li style={`--i:${NAVEGACION.length}`} class="v-menu__carrito">
+                <a href={ruta('/carrito')} aria-current={camino === '/carrito' ? 'page' : undefined}>
+                  Carrito
+                </a>
+              </li>
             </ul>
             <BotonWhatsApp clase="v-boton v-boton--oro">
               <Icono nombre="whatsapp" tam={20} />
@@ -225,7 +239,10 @@ const activo = (href: string) =>
 
         <div class="v-pie__legal">
           <p data-kp-pie-copy>© {anio} {SITIO.nombre}</p>
-          <p>Cada pedido se cierra por WhatsApp. Sin carrito ni pago en línea.</p>
+          {/* Fase 1 del carrito: ya se arma el pedido en el sitio, pero el
+              pago sigue siendo por WhatsApp. El texto dice exactamente eso:
+              prometer un pago en linea que no existe seria mentir. */}
+          <p>Arma tu pedido y lo cerramos por WhatsApp. Todavía sin pago en línea.</p>
         </div>
       </div>
     </footer>

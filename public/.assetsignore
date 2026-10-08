@@ -1,0 +1,4 @@
+# El Worker NO se sirve como asset publico: es codigo de servidor y
+# wrangler lo rechaza con razon. Se despliega por `main` en wrangler.jsonc.
+_worker.js
+_routes.json

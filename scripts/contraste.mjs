@@ -88,6 +88,31 @@ pares.push(
   ['tinta-2 / barra de filtros (peor caso)', TINTA_2, FILTROS, 4.5],
 );
 
+// --- CARRITO (fase 1 del plan de Bold) --------------------------------------
+// El carrito no introduce ningun color nuevo, pero si fondos COMPUESTOS
+// nuevos: velos de oro al 10% y de crema al 8% sobre los cuatro negros. Se
+// miden igual que los translucidos de la cabecera, porque el ojo ve el color
+// compuesto, no el token.
+const oroVelo = (f) => sobre(hex(ORO), 0.1, f);
+const cremaVelo = (f) => sobre(hex(TINTA), 0.08, f);
+
+pares.push(
+  // Pildora "Agregado al carrito" de la ficha y "te faltan X para el envio
+  // gratis" del resumen: texto oro sobre su propio velo de oro.
+  ['oro / velo de oro sobre canvas (confirmacion al agregar)', ORO, oroVelo(CANVAS), 4.5],
+  ['oro / velo de oro sobre superficie', ORO, oroVelo(SUPERFICIE), 4.5],
+  ['oro / velo de oro sobre elevado (falta para envio gratis)', ORO, oroVelo(ELEVADO), 4.5],
+  // Boton "Agregar al carrito" cuando la variante elegida esta agotada.
+  ['tinta-3 / velo de crema sobre canvas (agregar desactivado)', TINTA_3, cremaVelo(CANVAS), 4.5],
+  // Resumen del carrito, que vive en una superficie elevada.
+  ['tinta-2 / elevado (etiquetas del resumen)', TINTA_2, ELEVADO, 4.5],
+  ['tinta-3 / elevado (nota del pago de la fase 2)', TINTA_3, ELEVADO, 4.5],
+  // "Quitar" y el precio unitario de cada linea.
+  ['tinta-3 / superficie (quitar linea, precio unitario)', TINTA_3, SUPERFICIE, 4.5],
+  // Burbuja del contador de la cabecera: tinta oscura sobre oro relleno.
+  ['tinta-oscura / oro (burbuja del contador)', TINTA_OSCURA, ORO, 4.5],
+);
+
 let fallos = 0;
 console.log(`crema+lino compuesto: ${CREMA_LINO}\n`);
 for (const [nombre, t, f, min] of pares) {

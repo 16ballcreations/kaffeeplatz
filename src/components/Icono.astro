@@ -24,6 +24,12 @@ import mapa from '@phosphor-icons/core/assets/light/map-pin-light.svg?raw';
 import correo from '@phosphor-icons/core/assets/light/envelope-simple-light.svg?raw';
 import campana from '@phosphor-icons/core/assets/light/bell-simple-light.svg?raw';
 import menu from '@phosphor-icons/core/assets/light/list-light.svg?raw';
+/* Carrito (fase 1 del plan de Bold). La bolsa, no el carro de supermercado:
+   encaja mejor con una tienda de accesorios seleccionados que con un hiper. */
+import bolsa from '@phosphor-icons/core/assets/light/shopping-bag-light.svg?raw';
+import mas from '@phosphor-icons/core/assets/light/plus-light.svg?raw';
+import menos from '@phosphor-icons/core/assets/light/minus-light.svg?raw';
+import papelera from '@phosphor-icons/core/assets/light/trash-light.svg?raw';
 
 const ICONOS = {
   whatsapp,
@@ -43,6 +49,10 @@ const ICONOS = {
   correo,
   campana,
   menu,
+  bolsa,
+  mas,
+  menos,
+  papelera,
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;

@@ -1,0 +1,54 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  // ─────────────────────────────────────────────────────────────────────
+  // CANAL SECUNDARIO — entorno de pruebas
+  //
+  // Worker aparte, con nombre propio y base de datos propia. Existe porque
+  // desde la fase 3 el sitio consulta D1 en tiempo de ejecucion, y GitHub
+  // Pages (que era el entorno de desarrollo) solo sirve ficheros: no puede
+  // ejecutar un Worker ni consultar una base.
+  //
+  // Lo que este fichero NO toca, a proposito:
+  //   - el Worker `kaffeeplatz` de produccion
+  //   - las rutas a kaffeeplatz.co y www.kaffeeplatz.co
+  //   - la base de datos de produccion
+  //
+  // No declara `routes`: solo es accesible por su direccion workers.dev.
+  // Para desplegar aqui:  npm run deploy:dev
+  // ─────────────────────────────────────────────────────────────────────
+
+  "name": "kaffeeplatz-dev",
+  "compatibility_date": "2026-09-30",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "main": "./dist/_worker.js/index.js",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // El Worker del adaptador NO delega en ASSETS por su cuenta: esta pensado
+    // para Cloudflare Pages, donde el enrutado lo hace la plataforma. En
+    // Workers hay que decir explicitamente que el asset gana cuando existe,
+    // o las paginas prerenderizadas (contacto, nosotros, cafe) dan 404
+    // aunque esten subidas.
+    "not_found_handling": "none",
+    "run_worker_first": false
+  },
+
+  "workers_dev": true,
+
+  // Base de pruebas, creada el 8 oct 2026. Es OTRA base: lo que se escriba
+  // aqui no llega al catalogo real, y resembrarla no destruye nada vivo.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kaffeeplatz-dev",
+      "database_id": "ce42d1f6-9ab2-4e52-9f49-de1b2e5c1aca",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}
