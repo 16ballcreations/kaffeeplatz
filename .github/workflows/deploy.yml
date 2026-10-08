@@ -1,9 +1,21 @@
 name: Publicar sitio
 
+# GitHub Pages (16ballcreations.github.io/kaffeeplatz/) es el entorno de
+# PRUEBAS. El sitio de produccion es kaffeeplatz.co, que vive en Cloudflare
+# Workers y se publica aparte con `npm run deploy` — nunca desde aqui.
+#
+# Por eso este workflow tambien se puede lanzar a mano sobre cualquier rama:
+# Actions -> Publicar sitio -> Run workflow -> elegir la rama. Asi se prueba
+# una rama de trabajo sin mezclarla en main.
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      rama:
+        description: 'Rama a publicar en el entorno de pruebas'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -19,6 +31,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Con workflow_dispatch, la rama elegida; si no, la que disparo el push.
+          ref: ${{ github.event.inputs.rama || github.ref }}
 
       - uses: actions/setup-node@v4
         with:

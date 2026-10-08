@@ -663,6 +663,57 @@ De esas, **34–48 son el panel** (fases 4–7, incluidas las 7–10 del panel d
 
 **Las fases 5 y 6 se pueden invertir si hace falta enseñar algo pronto**, pero la 6 depende de que las variantes ya se editen (fase 5). Lo que **no** conviene es adelantar la parte pública de la 6 antes de que el panel permita cargar las fotos: se estaría construyendo una galería para datos que nadie puede introducir todavía.
 
+---
+
+## CONVENCIÓN DE NOMBRES DE FOTOS — APROBADA POR EL CLIENTE (8 oct 2026)
+
+El cliente la aprobó textualmente: «esa convención de las imágenes funciona.
+Sencillo y fácil de escalar.» Deja de ser una propuesta: es **requisito** para
+la sesión de fotos y para el panel.
+
+### El formato
+
+    <handle>-<variante>-<rol>.jpg
+
+Ejemplos reales del catálogo:
+
+    aeropress-clear-morado-desarmado.jpg
+    aeropress-clear-morado-armado.jpg
+    aeropress-clear-morado-extrayendo.jpg
+    aeropress-clear-verde-desarmado.jpg
+    chemex-6-tazas-armado.jpg
+
+Reglas:
+
+- Todo en minúsculas, sin tildes ni ñ, separado por guiones.
+- `<handle>` es el del producto, tal como está en la base.
+- `<variante>` es el color o tamaño, en el mismo texto que el título de la
+  variante pero normalizado (`6 tazas` → `6-tazas`, `Morado` → `morado`).
+- `<rol>` sale de la tabla `roles_imagen`.
+- **Sin variante**: `<handle>-<rol>.jpg` para fotos del producto en general.
+- Varias fotos del mismo rol: sufijo numérico (`...-armado-2.jpg`).
+
+### Qué hace el panel con esto
+
+Al subir, **propone** variante y rol deducidos del nombre y los deja marcados
+como sugerencia. La dueña confirma o corrige con un clic. **Nunca decide sola**:
+un nombre mal escrito no debe publicar una foto en el color equivocado.
+
+Si el nombre no encaja con el patrón, la foto se sube igual y queda sin asignar,
+para que se complete a mano. Nombrar bien es un atajo, no un requisito para
+poder trabajar.
+
+### Por qué importa fijarlo ANTES de la sesión de fotos
+
+Con 3 colores × 3 tomas son 9 fotos por producto. Asignar variante y rol a mano,
+producto por producto, es el tipo de tarea que hace que un panel se abandone.
+Nombrar los ficheros al exportarlos no cuesta nada y elimina ese trabajo.
+
+Conviene pasarle esta convención a quien haga las fotos, junto con la lista de
+handles y los títulos exactos de las variantes, que el panel puede exportar.
+
+---
+
 ## Pruebas obligatorias antes de dar por terminado
 
 1. Las 47 URLs de hoy responden 200 y con el mismo contenido. Comparar contra la lista de `dist/` de antes de migrar, no de memoria.
