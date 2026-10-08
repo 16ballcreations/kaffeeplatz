@@ -1,0 +1,53 @@
+---
+/**
+ * Acceso flotante al carrito, encima del flotante de WhatsApp.
+ *
+ * Por que existe: a mitad del catalogo, con tres cosas añadidas, llegar al
+ * carrito obligaba a subir hasta la cabecera. Este atajo lo evita.
+ *
+ * Solo aparece CUANDO HAY ALGO en el carrito. Un acceso al carrito vacio no
+ * lleva a ninguna parte y ademas tapa contenido: dos botones fijos en una
+ * esquina es lo maximo que admite una pantalla de movil sin estorbar.
+ *
+ * Sale del build oculto (`hidden`) y es el script quien lo revela al leer el
+ * carrito: sin JavaScript no hay carrito que mostrar, asi que no aparece y no
+ * deja un enlace a una pagina vacia.
+ */
+import { ruta } from '../datos/sitio';
+import Icono from './Icono.astro';
+import '../styles/flotante-carrito.css';
+---
+
+<a
+  href={ruta('/carrito')}
+  class="v-flotante-carrito"
+  data-kp-flotante-carrito
+  hidden
+  aria-label="Ver el carrito"
+>
+  <Icono nombre="bolsa" tam={24} />
+  <span class="v-flotante-carrito__cuenta v-num" data-kp-flotante-cuenta aria-hidden="true"></span>
+</a>
+
+<script>
+  import { suscribir, unidades } from '../scripts/carrito';
+
+  const boton = document.querySelector<HTMLElement>('[data-kp-flotante-carrito]');
+  const cuenta = document.querySelector<HTMLElement>('[data-kp-flotante-cuenta]');
+
+  if (boton && cuenta) {
+    const pintar = (n: number) => {
+      boton.hidden = n === 0;
+      cuenta.textContent = n > 0 ? String(n) : '';
+      /* El nombre accesible dice cuantas unidades hay: "Ver el carrito" a
+         secas obliga a entrar para saberlo. */
+      boton.setAttribute(
+        'aria-label',
+        n === 1 ? 'Ver el carrito, 1 unidad' : `Ver el carrito, ${n} unidades`,
+      );
+    };
+
+    pintar(unidades());
+    suscribir(({ unidades: n }) => pintar(n));
+  }
+</script>

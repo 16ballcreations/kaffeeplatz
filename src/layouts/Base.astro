@@ -21,6 +21,7 @@ import type { Miga } from '../components/SEO.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import ContadorCarrito from '../components/ContadorCarrito.astro';
 import Icono from '../components/Icono.astro';
+import FlotanteCarrito from '../components/FlotanteCarrito.astro';
 import { SITIO, NAVEGACION, ruta, recurso } from '../datos/sitio';
 import { ENVIOS } from '../datos/guias';
 import { paraCompartir } from '../datos/imagenes';
@@ -249,10 +250,14 @@ const activo = (href: string) =>
 
     {
       !sinFlotante && (
-        <BotonWhatsApp clase="v-flotante" data-v-flotante>
-          <Icono nombre="whatsapp" tam={26} />
-          <span class="v-flotante__texto">¿Te ayudamos a elegir?</span>
-        </BotonWhatsApp>
+        <>
+          {/* El del carrito va encima, y solo aparece si hay algo dentro. */}
+          <FlotanteCarrito />
+          <BotonWhatsApp clase="v-flotante" data-v-flotante>
+            <Icono nombre="whatsapp" tam={26} />
+            <span class="v-flotante__texto">¿Te ayudamos a elegir?</span>
+          </BotonWhatsApp>
+        </>
       )
     }
 

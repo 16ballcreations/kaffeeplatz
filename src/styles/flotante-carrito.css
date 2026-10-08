@@ -1,0 +1,92 @@
+/* ===========================================================================
+   ACCESO FLOTANTE AL CARRITO
+
+   Va APILADO ENCIMA del flotante de WhatsApp, en la misma esquina.
+
+   El de WhatsApp mide 3.5rem de alto y se ancla a 1rem del borde inferior
+   (respetando el area segura del movil). Este se coloca justo encima: misma
+   anclaje mas la altura del vecino mas una separacion. Si algun dia cambia la
+   altura de aquel, basta con tocar --v-flotante-alto en un sitio.
+
+   Es redondo y mas pequeño que el de WhatsApp a proposito: la accion
+   principal de la marca sigue siendo escribirle a Andreina. Este es un atajo.
+   =========================================================================== */
+
+:root {
+  /* Alto del flotante de WhatsApp, del que este cuelga. */
+  --v-flotante-alto: 3.5rem;
+  /* Aire entre los dos botones. */
+  --v-flotante-sep: 0.75rem;
+}
+
+.v-flotante-carrito {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: calc(
+    max(1rem, env(safe-area-inset-bottom)) + var(--v-flotante-alto) + var(--v-flotante-sep)
+  );
+  z-index: var(--z-flotante);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+
+  width: auto;
+  min-width: 3rem;
+  height: 3rem;
+  padding: 0 0.875rem;
+
+  border-radius: var(--v-r-pildora);
+  /* Superficie oscura, no oro: el oro es del boton de WhatsApp, que es la
+     accion principal. Dos piezas de oro apiladas competirian entre si. */
+  background: var(--v-elevado);
+  color: var(--v-tinta);
+  text-decoration: none;
+
+  box-shadow:
+    0 14px 30px -12px rgb(0 0 0 / 0.75),
+    0 0 0 1px var(--v-linea);
+
+  transition:
+    transform 0.4s var(--v-curva),
+    background-color 0.3s var(--v-curva);
+}
+
+.v-flotante-carrito:hover,
+.v-flotante-carrito:focus-visible {
+  transform: translateY(-2px);
+  background: var(--v-elevado-alto, var(--v-superficie));
+}
+
+.v-flotante-carrito:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 3px;
+}
+
+/* La cuenta de unidades, en cifras tabulares como el resto de numeros. */
+.v-flotante-carrito__cuenta {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--v-oro);
+}
+
+.v-flotante-carrito__cuenta:empty {
+  display: none;
+}
+
+/* [hidden] necesita ganar al display:inline-flex de arriba. */
+.v-flotante-carrito[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v-flotante-carrito {
+    transition: none;
+  }
+  .v-flotante-carrito:hover,
+  .v-flotante-carrito:focus-visible {
+    transform: none;
+  }
+}
