@@ -319,7 +319,9 @@ const heroFoto = heroProducto?.imagenes[0] ? fuentes(heroProducto.imagenes[0].sr
     <div class="v-limite v-compra">
       <div class="v-compra__cabeza" data-v-revelar>
         <h2 id="t-promesa" class="v-titulo">Así compras en <em>{SITIO.nombre}</em></h2>
-        <p>Sin carrito ni pasarela de pago: cada pedido se cierra hablando con nosotros.</p>
+        {/* Fase 1 del carrito: ya hay carrito, pero NO pasarela de pago. La
+            frase dice exactamente lo que es verdad hoy. */}
+        <p>Arma tu pedido y lo cerramos hablando: todavía sin pasarela de pago.</p>
         <BotonWhatsApp clase="v-boton v-boton--tinta">
           <Icono nombre="whatsapp" tam={20} />
           <span>Escríbenos por WhatsApp</span>

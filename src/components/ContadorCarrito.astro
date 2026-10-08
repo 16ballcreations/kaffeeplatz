@@ -1,0 +1,62 @@
+---
+/**
+ * ContadorCarrito — el acceso al carrito desde la cabecera.
+ *
+ * POR QUE NO CANTA CUANDO ESTA VACIO
+ * ---------------------------------------------------------------------------
+ * Se pinta SIEMPRE (el enlace a /carrito existe en todas las paginas, tambien
+ * sin JavaScript), pero la BURBUJA con el numero solo aparece cuando hay algo
+ * dentro. Un "0" permanente es ruido: informa de una ausencia que la persona
+ * ya conoce, y en una tienda que vende por WhatsApp un carrito vacio no es un
+ * estado que haya que subrayar. El icono queda discreto, en el color de texto
+ * secundario, y solo se vuelve oro cuando hay unidades.
+ *
+ * El HTML sale del build con el contador vacio y `data-vacio`: el estado real
+ * lo pone el script en cuanto lee `localStorage`, y despues cada evento
+ * `kp:carrito`. Asi no hay parpadeo de un numero equivocado, porque el build
+ * es estatico y no puede saber que lleva cada visitante.
+ */
+import Icono from './Icono.astro';
+import { ruta } from '../datos/sitio';
+
+interface Props {
+  /** Clases extra del enlace. */
+  clase?: string;
+}
+
+const { clase = '' } = Astro.props as Props;
+---
+
+<a
+  href={ruta('/carrito')}
+  class={`v-carrito-enlace ${clase}`.trim()}
+  data-kp-carrito-enlace
+  data-vacio="true"
+  aria-label="Carrito"
+>
+  <Icono nombre="bolsa" tam={22} />
+  {/* La burbuja: aria-hidden porque el recuento ya va en el aria-label del
+      enlace, que es lo que anuncia el lector de pantalla al enfocarlo. */}
+  <span class="v-carrito-enlace__burbuja v-num" data-kp-carrito-cuenta aria-hidden="true"></span>
+</a>
+
+<script>
+  import { suscribir, unidades } from '../scripts/carrito';
+
+  const enlace = document.querySelector<HTMLAnchorElement>('[data-kp-carrito-enlace]');
+  const burbuja = document.querySelector<HTMLElement>('[data-kp-carrito-cuenta]');
+
+  if (enlace && burbuja) {
+    const pintar = (n: number) => {
+      burbuja.textContent = n > 0 ? String(n) : '';
+      enlace.dataset.vacio = n > 0 ? 'false' : 'true';
+      enlace.setAttribute(
+        'aria-label',
+        n === 0 ? 'Carrito, vacío' : n === 1 ? 'Carrito, 1 unidad' : `Carrito, ${n} unidades`,
+      );
+    };
+
+    pintar(unidades());
+    suscribir(({ unidades: n }) => pintar(n));
+  }
+</script>
