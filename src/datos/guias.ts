@@ -122,15 +122,44 @@ export const ENVIOS = [
   { zona: 'Pedidos por encargo', plazo: '8 a 15 días hábiles' },
 ] as const;
 
+/** Nombres de opcion que se saben pluralizar. La clave va en minusculas. */
+const PLURAL_OPCION: Record<string, string> = {
+  color: 'colores',
+  'tamaño': 'tamaños',
+  capacidad: 'capacidades',
+};
+
 /** "3 colores", "2 tamaños"... a partir de las opciones reales del producto. */
 export function resumenOpciones(opciones: { nombre: string; valores: string[] }[]): string | null {
   const o = opciones.find((x) => x.valores.length > 1);
   if (!o) return null;
   const nombre = o.nombre.toLowerCase();
-  const plural: Record<string, string> = {
-    color: 'colores',
-    'tamaño': 'tamaños',
-    capacidad: 'capacidades',
-  };
-  return `${o.valores.length} ${plural[nombre] ?? 'opciones'}`;
+  return `${o.valores.length} ${PLURAL_OPCION[nombre] ?? 'opciones'}`;
+}
+
+/**
+ * El nombre de la opcion EN SINGULAR, para la accion "Elegir ___" de la
+ * tarjeta: "color", "tamaño", "capacidad".
+ *
+ * Es el mismo dato con el que `resumenOpciones` pinta "· 3 colores" bajo la
+ * categoria, en singular, para que el par se lea coherente: la tarjeta dice
+ * que hay 3 colores y el boton dice "Elegir color".
+ *
+ * Solo cuenta una opcion con MAS DE UN valor, igual que `resumenOpciones`:
+ * "Capacidad: 350ml" es un dato de ficha, no una eleccion.
+ *
+ * Reserva: 'modelo', que es la palabra que uso el cliente al pedir esto y la
+ * que vale para cualquier opcion que no sepamos nombrar. Nunca se devuelve
+ * vacio, asi que el boton nunca se queda en "Elegir".
+ */
+export function nombreDeOpcion(opciones: { nombre: string; valores: string[] }[]): string {
+  const o = opciones.find((x) => x.valores.length > 1);
+  if (!o) return 'modelo';
+  const nombre = o.nombre.toLowerCase().trim();
+  /* Solo se acepta un nombre que sea UNA palabra legible. Los JSON traen
+     opciones con nombres que en realidad son valores ("6 tazas", "350ml"):
+     si uno de esos tuviera varios valores, "Elegir 6 tazas" no se entenderia
+     y es mejor caer en "Elegir modelo". */
+  if (!/^[a-záéíóúüñ]+$/.test(nombre)) return 'modelo';
+  return nombre;
 }

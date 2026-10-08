@@ -30,6 +30,26 @@ interface Props {
 
 const { producto, mensaje, clase = '', ...resto } = Astro.props as Props;
 
+/**
+ * El `aria-label` de quien llama GANA al generico.
+ *
+ * POR QUE HACIA FALTA ARREGLARLO: este componente imprimia su `aria-label`
+ * generico ANTES de esparcir `...resto`, y `resto` trae el `aria-label` que
+ * pasa quien lo usa. En HTML, cuando un atributo se repite en una etiqueta,
+ * vale el PRIMERO y el segundo se descarta en silencio. Resultado: las
+ * tarjetas y la ficha llevaban años pidiendo "Preguntar por Chemex Original
+ * por WhatsApp" y el lector de pantalla anunciaba "Escribir por WhatsApp a
+ * KaffeePlatz" en los 25 productos, indistinguibles entre si.
+ *
+ * Se resuelve aqui, en un sitio, y no pidiendo a cada llamada que no pase
+ * `aria-label`: el generico es el valor POR DEFECTO, no una imposicion.
+ */
+const { 'aria-label': etiquetaPropia, ...restoAtributos } = resto as Record<string, unknown>;
+const etiqueta =
+  typeof etiquetaPropia === 'string' && etiquetaPropia.trim()
+    ? etiquetaPropia
+    : `Escribir por WhatsApp a ${SITIO.nombre}`;
+
 /** Mensaje generico cuando no hay producto ni mensaje explicito. */
 const MENSAJE_GENERICO = 'Hola KaffeePlatz, quiero más información.';
 
@@ -52,8 +72,8 @@ const href = `https://wa.me/${SITIO.whatsappNumero}?text=${encodeURIComponent(te
   target="_blank"
   rel="noopener noreferrer"
   data-kp-whatsapp
-  aria-label={`Escribir por WhatsApp a ${SITIO.nombre}`}
-  {...resto}
+  aria-label={etiqueta}
+  {...restoAtributos}
 >
   <slot>Escríbenos por WhatsApp</slot>
 </a>

@@ -113,6 +113,31 @@ pares.push(
   ['tinta-oscura / oro (burbuja del contador)', TINTA_OSCURA, ORO, 4.5],
 );
 
+// --- ACCIONES DE LA TARJETA DEL CATALOGO ------------------------------------
+// La fila de acciones de la tarjeta pasa de UNA accion (WhatsApp de contorno,
+// a ancho completo) a DOS: compra en oro relleno + WhatsApp de contorno.
+// Tampoco introduce colores nuevos, pero SI estados nuevos que hay que medir
+// contra el fondo REAL de la tarjeta, que es `--v-superficie` (#1c1b19) y no
+// el canvas de la pagina: la tarjeta es una superficie elevada.
+const ORO_HOVER = '#e9d3a3';
+
+pares.push(
+  // "Agregar" / "Elegir color": oro relleno. Es el primario de la marca y el
+  // texto va en tinta oscura, igual que cualquier .v-boton--oro.
+  ['tinta-oscura / oro (agregar/elegir en la tarjeta)', TINTA_OSCURA, ORO, 4.5],
+  ['tinta-oscura / oro-hover (agregar/elegir, raton encima)', TINTA_OSCURA, ORO_HOVER, 4.5],
+  // "Preguntar": contorno sobre la superficie de la tarjeta. El fondo del
+  // boton es un velo de crema al 3%, casi nada, pero se compone igual.
+  ['tinta / velo de crema 3% sobre superficie (preguntar)', TINTA, sobre(hex(TINTA), 0.03, SUPERFICIE), 4.5],
+  // Al pasar el raton, "Preguntar" cambia texto y borde a oro.
+  ['oro / velo de crema 3% sobre superficie (preguntar, raton encima)', ORO, sobre(hex(TINTA), 0.03, SUPERFICIE), 4.5],
+  // "Avísame" de un agotado: contorno discontinuo, texto en tinta-2.
+  ['tinta-2 / superficie (avísame en la tarjeta)', TINTA_2, SUPERFICIE, 4.5],
+  // Confirmacion "X agregado al carrito" al pie de la tarjeta: oro sobre su
+  // velo de oro, sobre la superficie de la tarjeta.
+  ['oro / velo de oro sobre superficie (confirmacion en la tarjeta)', ORO, oroVelo(SUPERFICIE), 4.5],
+);
+
 let fallos = 0;
 console.log(`crema+lino compuesto: ${CREMA_LINO}\n`);
 for (const [nombre, t, f, min] of pares) {

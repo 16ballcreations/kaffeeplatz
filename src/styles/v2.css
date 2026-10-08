@@ -1565,35 +1565,9 @@ body:has(.v-menu[open]) {
   font-variant-numeric: tabular-nums lining-nums;
 }
 
-.v-tarjeta__accion {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: 2.625rem;
-  margin: 0.5rem 0.25rem 0.25rem;
-  border-radius: var(--v-r-pildora);
-  border: 1px solid var(--v-linea-2);
-  color: var(--v-tinta);
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition:
-    background-color 0.3s var(--v-curva),
-    border-color 0.3s var(--v-curva),
-    color 0.3s var(--v-curva);
-}
-
-.v-tarjeta__accion:hover {
-  background: var(--v-oro);
-  border-color: var(--v-oro);
-  color: var(--v-tinta-oscura);
-}
-
-.v-tarjeta__accion--aviso {
-  color: var(--v-tinta-2);
-  border-style: dashed;
-}
+/* La fila de acciones de la tarjeta (compra + WhatsApp) tiene su propia hoja:
+   src/styles/acciones-tarjeta.css, importada por AccionesTarjeta.astro. Las
+   reglas `.v-tarjeta__accion*` que habia aqui se fueron con ella. */
 
 /* ===========================================================================
    CARRIL HORIZONTAL (destacados, relacionados)

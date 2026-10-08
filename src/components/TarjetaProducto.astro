@@ -7,12 +7,19 @@
  *   - Segunda foto al pasar el cursor, si el producto la tiene.
  *   - Categoria en texto, para orientarse sin leer el titulo entero.
  *   - Resumen de opciones reales ("3 colores", "2 tamaños").
- *   - Accion directa: preguntar por WhatsApp sin entrar a la ficha. En los
- *     agotados la accion cambia a "Avísame", que convierte un callejon sin
- *     salida en un contacto.
+ *   - Fila de acciones: ver AccionesTarjeta.astro.
  *
- * El enlace a la ficha y la accion de WhatsApp son hermanos, nunca anidados:
- * un <a> dentro de otro <a> es HTML invalido.
+ * LA FILA DE ACCIONES VIVE EN SU PROPIO COMPONENTE
+ * ---------------------------------------------------------------------------
+ * Antes era una sola accion de WhatsApp a ancho completo y cabia aqui. Ahora
+ * son DOS (compra + WhatsApp) con tres casos distintos —una variante, varias
+ * variantes, agotado—, su propio script y su propia hoja. Todo eso se fue a
+ * `AccionesTarjeta.astro` para que este fichero siga ocupandose solo de la
+ * tarjeta: foto, categoria, titulo y precio. El limite de ~300 lineas por
+ * fichero es una restriccion vigente del cliente.
+ *
+ * El enlace a la ficha y las acciones son hermanos, nunca anidados: un <a>
+ * dentro de otro <a> es HTML invalido.
  */
 /* FASE 3: el tipo viene de src/datos/formas.ts y no de astro:content.
    Es LA MISMA forma que antes devolvia `getCollection('productos').data` —a
@@ -22,8 +29,7 @@
 import type { Producto } from '../datos/formas';
 import Imagen from './Imagen.astro';
 import Precio from './Precio.astro';
-import BotonWhatsApp from './BotonWhatsApp.astro';
-import Icono from './Icono.astro';
+import AccionesTarjeta from './AccionesTarjeta.astro';
 import { ruta } from '../datos/sitio';
 import { categoriaPorId } from '../datos/categorias';
 import { resumenOpciones } from '../datos/guias';
@@ -34,7 +40,7 @@ interface Props {
   /** "eager" para las primeras tarjetas visibles. */
   prioridad?: boolean;
   mostrarPrecio?: boolean;
-  /** Muestra la accion de WhatsApp al pie de la tarjeta. */
+  /** Muestra la fila de acciones (compra + WhatsApp) al pie de la tarjeta. */
   conAccion?: boolean;
 }
 
@@ -120,26 +126,5 @@ const esFoto = (src: string) => (/\.jpe?g$/i.test(src) ? 'true' : undefined);
     </div>
   </a>
 
-  {
-    conAccion &&
-      (producto.disponible ? (
-        <BotonWhatsApp
-          producto={producto}
-          clase="v-tarjeta__accion"
-          aria-label={`Preguntar por ${producto.titulo} por WhatsApp`}
-        >
-          <Icono nombre="whatsapp" tam={18} />
-          <span>Preguntar</span>
-        </BotonWhatsApp>
-      ) : (
-        <BotonWhatsApp
-          mensaje={`Hola KaffeePlatz, me interesa ${producto.titulo}. ¿Me avisan cuando vuelva a estar disponible?`}
-          clase="v-tarjeta__accion v-tarjeta__accion--aviso"
-          aria-label={`Avísame por WhatsApp cuando vuelva ${producto.titulo}`}
-        >
-          <Icono nombre="campana" tam={18} />
-          <span>Avísame</span>
-        </BotonWhatsApp>
-      ))
-  }
+  {conAccion && <AccionesTarjeta producto={producto} />}
 </article>

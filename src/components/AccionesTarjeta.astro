@@ -1,0 +1,157 @@
+---
+/**
+ * AccionesTarjeta — la fila de acciones al pie de una tarjeta de producto.
+ *
+ * POR QUE ES UN COMPONENTE APARTE
+ * ---------------------------------------------------------------------------
+ * Hasta ahora la tarjeta tenia UNA accion (WhatsApp, a ancho completo) y
+ * cabia de sobra en TarjetaProducto.astro. Al pasar a DOS acciones con tres
+ * casos distintos (una variante / varias variantes / agotado), la fila se
+ * lleva su propio marcado, su propio script y su propia hoja de estilos. La
+ * tarjeta se queda en lo que sabe hacer: foto, categoria, titulo y precio.
+ * Asi ninguno de los dos ficheros se acerca al limite de ~300 lineas.
+ *
+ * LOS TRES CASOS, Y POR QUE EL TEXTO CAMBIA EN CADA UNO
+ * ---------------------------------------------------------------------------
+ * La peticion del cliente es que la persona sepa, ANTES de pulsar, si va a
+ * añadir algo o si va a tener que elegir:
+ *
+ *   disponible + 1 variante    -> "Agregar"        añade sin salir del catalogo
+ *   disponible + N variantes   -> "Elegir color"   va a la ficha, NO añade
+ *                                 "Elegir tamaño"  (el nombre real de la opcion)
+ *   agotado                    -> (ninguna)        solo "Avísame", a ancho completo
+ *
+ * El texto de "elegir" NO es generico: usa el nombre de la opcion real del
+ * producto, en singular, que es el mismo dato con el que la tarjeta ya pinta
+ * "· 3 colores" bajo la categoria. El par queda coherente: la tarjeta dice
+ * que hay 3 colores y el boton dice "Elegir color", no "Ver opciones".
+ *
+ * JERARQUIA: cual es el boton primario
+ * ---------------------------------------------------------------------------
+ * La accion principal de la marca es el oro RELLENO. Hasta ahora "Preguntar"
+ * ocupaba todo el ancho pero era de CONTORNO, no de relleno: nunca fue el
+ * primario del sistema, solo el unico. Al partir la fila, la accion de compra
+ * toma el oro relleno y WhatsApp se queda con el contorno que ya tenia. No
+ * pierde nada —mismo borde, mismo tamaño— y la jerarquia queda explicita.
+ *
+ * SIN JAVASCRIPT (mismo criterio que las miniaturas de GaleriaProducto)
+ * ---------------------------------------------------------------------------
+ * La accion de compra se sirve SIEMPRE como un <a> a la ficha del producto:
+ *
+ *   - con varias variantes es un enlace y se queda enlace: hay que elegir, y
+ *     elegir se hace en la ficha. El script no lo toca.
+ *   - con una sola variante tambien sale como enlace, y es el script quien lo
+ *     CONVIERTE en <button> (role + aria + sin href). Sin JS no queda un boton
+ *     muerto: queda un enlace que lleva a la ficha, donde el "Agregar al
+ *     carrito" de siempre sigue funcionando. Se pierde la comodidad, no la
+ *     compra.
+ *
+ * La conversion la hace `acciones-tarjeta.ts` y es lo PRIMERO que hace, antes
+ * de escuchar ningun evento: nunca hay un instante con semantica mixta.
+ */
+import type { Producto } from '../datos/formas';
+import BotonWhatsApp from './BotonWhatsApp.astro';
+import Icono from './Icono.astro';
+import { ruta } from '../datos/sitio';
+import { nombreDeOpcion } from '../datos/guias';
+/* Hoja PROPIA: v2.css ya pasa de 3.900 lineas y es el mayor problema de
+   mantenimiento del repo. Lo nuevo no engorda ese fichero. Astro la incluye
+   una vez por build aunque el componente se pinte 25 veces. */
+import '../styles/acciones-tarjeta.css';
+
+interface Props {
+  producto: Producto;
+}
+
+const { producto } = Astro.props as Props;
+
+const enlace = ruta(`/producto/${producto.handle}`);
+
+/* "Varias variantes" se decide por las VARIANTES, no por las opciones.
+   Hay productos con una opcion de un solo valor ("Capacidad: 350ml") que no
+   son una eleccion: tienen una variante y se agregan directo. */
+const hayQueElegir = producto.variantes.length > 1;
+
+/* La unica variante, cuando la hay. Es el id_externo de Shopify, el mismo que
+   guarda src/scripts/carrito.ts y con el que /carrito resuelve. */
+const unica = hayQueElegir ? null : producto.variantes[0];
+
+/* "Elegir color" / "Elegir tamaño" / "Elegir modelo" de reserva. */
+const textoElegir = `Elegir ${nombreDeOpcion(producto.opciones)}`;
+---
+
+{
+  producto.disponible ? (
+    <div class="v-acc" data-kp-acciones>
+      {/*
+        LA ACCION DE COMPRA. Siempre un <a> en el HTML servido.
+
+        Con una sola variante lleva `data-kp-agregar` + los dos datos que el
+        carrito necesita (handle y varianteId): esa es la señal de que el
+        script puede convertirlo en boton. Con varias variantes NO lleva ese
+        atributo, asi que el script lo deja como enlace a la ficha y aqui no
+        hay forma de agregar nada sin elegir antes.
+      */}
+      <a
+        href={enlace}
+        class="v-acc__boton v-acc__boton--compra"
+        data-kp-agregar={unica ? 'true' : undefined}
+        data-kp-handle={unica ? producto.handle : undefined}
+        data-kp-variante-id={unica ? unica.id : undefined}
+        data-kp-titulo={producto.titulo}
+        aria-label={
+          unica
+            ? `Agregar ${producto.titulo} al carrito`
+            : `${textoElegir} de ${producto.titulo}`
+        }
+      >
+        <Icono nombre={unica ? 'bolsa' : 'ajustes'} tam={17} />
+        <span data-kp-agregar-texto>{unica ? 'Agregar' : textoElegir}</span>
+      </a>
+
+      <BotonWhatsApp
+        producto={producto}
+        clase="v-acc__boton v-acc__boton--wa"
+        aria-label={`Preguntar por ${producto.titulo} por WhatsApp`}
+      >
+        <Icono nombre="whatsapp" tam={17} />
+        <span>Preguntar</span>
+      </BotonWhatsApp>
+
+      {/*
+        CONFIRMACION AL AGREGAR. Una por tarjeta, junto al boton que la
+        provoca, y SIEMPRE en el DOM (solo `hidden`): un nodo creado dentro de
+        una region viva puede no anunciarse. El script rellena el <span> y
+        desoculta el <p>, igual que hace la ficha con `[data-v-agregado]`.
+
+        Solo se pinta donde puede llegar a usarse: con varias variantes la
+        tarjeta no agrega nada, asi que no necesita region viva.
+      */}
+      {unica && (
+        <p class="v-acc__aviso" data-kp-acc-aviso role="status" aria-live="polite" hidden>
+          <Icono nombre="check" tam={15} />
+          <span data-kp-acc-aviso-texto />
+        </p>
+      )}
+    </div>
+  ) : (
+    /* AGOTADO. No hay nada que agregar ni nada que elegir: la fila vuelve a
+       tener una sola accion a ancho completo, exactamente como antes. */
+    <BotonWhatsApp
+      mensaje={`Hola KaffeePlatz, me interesa ${producto.titulo}. ¿Me avisan cuando vuelva a estar disponible?`}
+      clase="v-acc__boton v-acc__boton--aviso"
+      aria-label={`Avísame por WhatsApp cuando vuelva ${producto.titulo}`}
+    >
+      <Icono nombre="campana" tam={17} />
+      <span>Avísame</span>
+    </BotonWhatsApp>
+  )
+}
+
+<script>
+  /* La conversion enlace -> boton y el alta en el carrito. Vive en un modulo
+     aparte para que este <script> no se repita por tarjeta: Astro deduplica
+     los scripts de componente, pero el modulo deja claro que es UNA pieza
+     global que atiende a todas las tarjetas de la pagina. */
+  import '../scripts/acciones-tarjeta';
+</script>

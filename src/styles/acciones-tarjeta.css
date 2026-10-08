@@ -1,0 +1,183 @@
+/* ===========================================================================
+   ACCIONES DE LA TARJETA DE PRODUCTO
+   ===========================================================================
+   Hoja PROPIA, importada desde AccionesTarjeta.astro, y no un bloque mas en
+   v2.css. v2.css pasa de las 3.900 lineas y es el mayor problema de
+   mantenimiento del repositorio: lo nuevo no engorda ese fichero.
+
+   Usa los tokens de v2.css (--v-oro, --v-linea-2, --v-curva...). No define
+   ningun color nuevo: los dos botones reutilizan la pareja oro-relleno /
+   contorno que el sistema ya tiene verificada en contraste.
+
+   LA JERARQUIA
+   ---------------------------------------------------------------------------
+   Compra = oro RELLENO (tinta oscura sobre oro, 10.4:1), el primario de la
+   marca. WhatsApp = CONTORNO, que es exactamente lo que ya era: mismo borde
+   --v-linea-2, mismo alto, mismo tipo. No se vuelve invisible, se queda
+   secundario, que es lo que pidio el cliente.
+   =========================================================================== */
+
+.v-acc {
+  /* DOS COLUMNAS IGUALES por defecto (tableta y escritorio). `minmax(0,1fr)`
+     y no `1fr` a secas: con `1fr` el contenido mas largo ("Elegir tamaño")
+     ensancha su columna y los dos botones dejan de medir lo mismo. */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.375rem;
+  margin: 0.5rem 0.25rem 0.25rem;
+}
+
+/* La fila de acciones hereda el alto y la forma del `.v-tarjeta__accion` que
+   habia antes: 2.625rem y pildora. La tarjeta no cambia de altura por esto. */
+.v-acc__boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 2.625rem;
+  padding: 0 0.625rem;
+  border-radius: var(--v-r-pildora);
+  border: 1px solid transparent;
+  font-family: var(--v-sans);
+  font-size: var(--v-t-peq);
+  font-weight: 500;
+  line-height: 1.1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  /* El texto NO se parte: "Elegir tamaño" en dos lineas dentro de una pildora
+     de 2.625rem se sale. Si no cabe, se recorta con puntos suspensivos y el
+     `aria-label` completo sigue anunciando el producto entero. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    background-color 0.3s var(--v-curva),
+    border-color 0.3s var(--v-curva),
+    color 0.3s var(--v-curva);
+}
+
+.v-acc__boton:active {
+  transform: scale(0.98);
+}
+
+/* El icono nunca se encoge ni se estira: solo el texto cede sitio. */
+.v-acc__boton svg {
+  flex: none;
+}
+
+/* --- Accion de compra: el primario ------------------------------------- */
+
+.v-acc__boton--compra {
+  background: var(--v-oro);
+  color: var(--v-tinta-oscura);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35);
+}
+
+.v-acc__boton--compra:hover {
+  background: var(--v-oro-hover);
+}
+
+/* --- WhatsApp: secundaria, el contorno que ya tenia -------------------- */
+
+.v-acc__boton--wa {
+  color: var(--v-tinta);
+  border-color: var(--v-linea-2);
+  background: rgb(253 247 231 / 0.03);
+}
+
+.v-acc__boton--wa:hover {
+  border-color: var(--v-oro);
+  color: var(--v-oro);
+}
+
+/* --- Agotado: una sola accion, a ancho completo, como antes ------------- */
+
+.v-acc__boton--aviso {
+  display: flex;
+  margin: 0.5rem 0.25rem 0.25rem;
+  color: var(--v-tinta-2);
+  border-color: var(--v-linea-2);
+  border-style: dashed;
+}
+
+.v-acc__boton--aviso:hover {
+  background: var(--v-oro);
+  border-color: var(--v-oro);
+  border-style: solid;
+  color: var(--v-tinta-oscura);
+}
+
+/* --- Confirmacion al agregar ------------------------------------------- */
+
+/* Misma pildora de oro al 10% que la confirmacion de la ficha
+   (`.v-agregado`), en version compacta. El par oro / velo-de-oro sobre
+   superficie esta verificado en scripts/contraste.mjs. */
+.v-acc__aviso {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  margin-top: 0.125rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: var(--v-r-pildora);
+  background: rgb(222 193 133 / 0.1);
+  color: var(--v-oro);
+  font-size: var(--v-t-micro);
+  line-height: 1.25;
+  text-align: center;
+}
+
+.v-acc__aviso svg {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .v-acc__aviso:not([hidden]) {
+    animation: v-sube 0.4s var(--v-curva) both;
+  }
+}
+
+/* ===========================================================================
+   MOVIL: LOS DOS BOTONES SE APILAN
+   ===========================================================================
+   Decision tomada MIRANDOLO en el navegador a 375 px, no por intuicion.
+
+   A 375 px la rejilla del catalogo es de DOS columnas (regla de v2.css), asi
+   que la tarjeta mide ~170 px y su fila de acciones ~158 px. Repartida en dos
+   columnas con separacion quedan ~76 px por boton: dentro de cada uno hay un
+   icono de 17 px y una etiqueta, y "Preguntar" o "Elegir color" se recortan a
+   puntos suspensivos. Un boton que dice "Elegi…" no cumple lo que pidio el
+   cliente, que es que se entienda ANTES de pulsar.
+
+   Apilados, cada boton recupera los ~158 px completos: el texto entra entero
+   y el objetivo tactil gana ancho en vez de perderlo. Cuesta 3 rem de alto en
+   una tarjeta que ya mide ~330 px, y el orden vertical mantiene lo que pidio
+   el cliente: la compra PRIMERO, WhatsApp despues.
+
+   El corte va en 520 px, el mismo en el que v2.css ya aprieta la rejilla: un
+   solo punto de ruptura para el mismo cambio de contexto.
+   =========================================================================== */
+
+@media (max-width: 520px) {
+  .v-acc {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3125rem;
+    margin-inline: 0.125rem;
+  }
+
+  .v-acc__boton--aviso {
+    margin-inline: 0.125rem;
+  }
+}
+
+/* El carril horizontal (destacados de la portada, relacionados de la ficha)
+   mantiene tarjetas de 260 px MINIMO tambien en movil, asi que ahi los dos
+   botones caben en fila y no hay por que apilarlos. Se restaura la rejilla de
+   dos columnas dentro del carril. */
+@media (max-width: 520px) {
+  .v-carril .v-acc {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
