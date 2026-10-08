@@ -138,6 +138,38 @@ pares.push(
   ['oro / velo de oro sobre superficie (confirmacion en la tarjeta)', ORO, oroVelo(SUPERFICIE), 4.5],
 );
 
+// --- SELECTOR DE CANTIDAD (ficha de producto) -------------------------------
+// Tampoco trae colores nuevos, pero si un fondo compuesto nuevo: el control
+// es una pildora con un velo de crema al 3% sobre el CANVAS de la pagina (la
+// ficha no es una tarjeta: el bloque de compra va sobre el fondo de pagina),
+// que es un caso distinto al mismo velo sobre la superficie de la tarjeta.
+const CANTIDAD_FONDO = sobre(hex(TINTA), 0.03, CANVAS);
+
+pares.push(
+  // El numero y los dos signos (−/+) en reposo.
+  ['tinta / velo de crema 3% sobre canvas (numero y pasos de cantidad)', TINTA, CANTIDAD_FONDO, 4.5],
+  // Al pasar el raton, el signo se pone en oro.
+  ['oro / velo de crema 3% sobre canvas (paso de cantidad, raton encima)', ORO, CANTIDAD_FONDO, 4.5],
+  // Un paso en el extremo (no se puede bajar de 1, ni subir del tope). Es un
+  // control DESACTIVADO, asi que WCAG no le exige ratio; se mide igual porque
+  // sigue siendo informacion que hay que poder leer.
+  ['tinta-3 / velo de crema 3% sobre canvas (paso de cantidad en el extremo)', TINTA_3, CANTIDAD_FONDO, 4.5],
+  // La etiqueta "Cantidad" y el aviso "Máximo N por pedido", los dos en
+  // tinta-2 sobre el canvas de la pagina.
+  ['tinta-2 / canvas (etiqueta Cantidad y aviso del tope)', TINTA_2, CANVAS, 4.5],
+);
+
+// --- ACCESO FLOTANTE AL CARRITO ---------------------------------------------
+// El boton sube de tamaño y gana un anillo de oro que pulsa. El anillo es
+// decorativo (no lleva texto) pero debe distinguirse de lo que tiene detras,
+// que en el peor caso es el canvas de la pagina. Se mide como componente de
+// interfaz: el minimo de WCAG 1.4.11 para eso es 3:1, no 4.5.
+pares.push(
+  ['oro (anillo del pulso) / canvas (peor caso detras del boton)', ORO, CANVAS, 3],
+  // La cifra de unidades dentro del boton, que va sobre la superficie elevada.
+  ['oro / elevado (cuenta de unidades del flotante)', ORO, ELEVADO, 4.5],
+);
+
 let fallos = 0;
 console.log(`crema+lino compuesto: ${CREMA_LINO}\n`);
 for (const [nombre, t, f, min] of pares) {

@@ -17,14 +17,15 @@
   --v-flotante-alto: 3.5rem;
   /* Aire entre los dos botones. */
   --v-flotante-sep: 0.75rem;
+  /* Desde donde se mide el anclaje inferior. La ficha lo sube para no
+     taparse con su barra de compra (ver mas abajo). */
+  --v-flotante-base: max(1rem, env(safe-area-inset-bottom));
 }
 
 .v-flotante-carrito {
   position: fixed;
   right: max(1rem, env(safe-area-inset-right));
-  bottom: calc(
-    max(1rem, env(safe-area-inset-bottom)) + var(--v-flotante-alto) + var(--v-flotante-sep)
-  );
+  bottom: calc(var(--v-flotante-base) + var(--v-flotante-alto) + var(--v-flotante-sep));
   z-index: var(--z-flotante);
 
   display: inline-flex;
@@ -32,10 +33,16 @@
   justify-content: center;
   gap: 0.4rem;
 
+  /* TAMAÑO. Sube de 3rem a 3.5rem de alto: lo justo para que se note que hay
+     algo dentro. Iguala en ALTO al de WhatsApp pero NO en jerarquia, y eso se
+     sostiene con lo demas: aquel es oro relleno y en escritorio lleva texto
+     ("¿Te ayudamos a elegir?"), asi que es mas ancho y mas brillante. Este
+     sigue siendo superficie oscura y solo icono + cifra. La accion principal
+     de la marca sigue leyendose como principal. */
   width: auto;
-  min-width: 3rem;
-  height: 3rem;
-  padding: 0 0.875rem;
+  min-width: 3.5rem;
+  height: 3.5rem;
+  padding: 0 1rem;
 
   border-radius: var(--v-r-pildora);
   /* Superficie oscura, no oro: el oro es del boton de WhatsApp, que es la
@@ -64,9 +71,11 @@
   outline-offset: 3px;
 }
 
-/* La cuenta de unidades, en cifras tabulares como el resto de numeros. */
+/* La cuenta de unidades, en cifras tabulares como el resto de numeros.
+   Sube con el boton: 0.9375rem, el mismo cuerpo que el texto del flotante de
+   WhatsApp. */
 .v-flotante-carrito__cuenta {
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   line-height: 1;
   color: var(--v-oro);
@@ -81,6 +90,76 @@
   display: none;
 }
 
+/* ===========================================================================
+   PULSO EN EL BORDE — "tienes cosas aqui, pasa a pagar"
+
+   QUE HACE: un anillo de oro que crece hacia fuera y se desvanece, tres
+   veces, cuando CAMBIA el contenido del carrito. Despues se queda quieto.
+
+   POR QUE TRES VECES Y NO INFINITO
+   ---------------------------------------------------------------------------
+   Un pulso infinito en una esquina fija deja de ser informacion a los pocos
+   segundos y pasa a ser ruido: la mirada aprende a ignorarlo (ceguera de
+   banner) y encima mantiene al compositor del navegador despierto, lo que en
+   movil se paga en bateria. El pulso tiene un trabajo concreto —avisar de que
+   el carrito acaba de cambiar— y ese trabajo se acaba. Tres repeticiones
+   (~2,7 s) bastan para que se vea aunque la mirada estuviera en el boton que
+   se acaba de pulsar, y son pocas para no cansar.
+
+   Que dispare el CAMBIO y no la carga tiene una consecuencia buena: al
+   agregar algo desde la ficha o desde el catalogo el pulso ocurre justo
+   cuando la persona ha hecho la accion, que es cuando significa algo. Al
+   navegar a otra pagina con el carrito ya lleno NO pulsa: ahi el carrito es
+   un estado, no una novedad, y el boton ya se ve por si mismo.
+
+   El estado "lleno" permanente no depende de la animacion: lo lleva el propio
+   boton (es mas grande y la cifra va en oro). Si el pulso no ocurre —por
+   movimiento reducido o porque ya termino— no se pierde ninguna informacion.
+
+   SIN REFLOW
+   ---------------------------------------------------------------------------
+   El anillo es un ::after en position:absolute con su propio box-shadow, y lo
+   unico que se anima es `transform` y `opacity`. No se toca `width`,
+   `height`, `padding` ni `border-width`, asi que ni el boton ni nada a su
+   alrededor cambia de caja: el pulso no provoca reflow y no desplaza al
+   flotante de WhatsApp de debajo. `pointer-events: none` para que el anillo
+   no robe clics al boton.
+   =========================================================================== */
+
+.v-flotante-carrito::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* El anillo: un contorno de oro dibujado con sombra, no con borde, para que
+     no participe en el tamaño de la caja. */
+  box-shadow: 0 0 0 2px var(--v-oro);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* El atributo lo pone y lo quita el script al cambiar el carrito. Dura lo que
+   dura la animacion y se retira: asi un cambio seguido de otro vuelve a
+   pulsar desde el principio. */
+.v-flotante-carrito[data-kp-pulso]::after {
+  animation: v-flotante-pulso 0.9s var(--v-curva) 3;
+}
+
+@keyframes v-flotante-pulso {
+  from {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+/* OBLIGATORIO, no opcional: con movimiento reducido no hay pulso. No se
+   sustituye por un destello de opacidad —un parpadeo tambien es movimiento
+   percibido para quien pide no tenerlo—; simplemente no ocurre, y el boton
+   grande con su cifra en oro sigue diciendo que hay algo dentro. */
 @media (prefers-reduced-motion: reduce) {
   .v-flotante-carrito {
     transition: none;
@@ -88,5 +167,47 @@
   .v-flotante-carrito:hover,
   .v-flotante-carrito:focus-visible {
     transform: none;
+  }
+  .v-flotante-carrito[data-kp-pulso]::after {
+    animation: none;
+  }
+}
+
+/* ===========================================================================
+   LA FICHA DE PRODUCTO: no taparse con la barra de compra
+
+   La ficha trae una barra fija abajo (.v-barra-compra, ~4.5rem mas su area
+   segura) que en movil ocupa el ancho entero. Antes esto no se notaba porque
+   en la ficha no habia flotantes; al arreglar el bug —que es justo lo que
+   hace que el carrito aparezca aqui— los dos compiten por la misma esquina.
+   Medido en 375px sin esta regla: el boton caia DENTRO de la barra.
+
+   Se sube el ANCLAJE, no el boton: cambiando --v-flotante-base se mueven los
+   dos flotantes a la vez y mantienen su separacion, sin tocar la barra ni
+   repetir sus medidas en dos sitios.
+
+   POR QUE `:has()` Y NO LA CLASE DEL <body>
+   ---------------------------------------------------------------------------
+   Lo natural seria colgar esto de `.v-con-barra`, la clase que la ficha pasa
+   al layout en `claseCuerpo`. No se puede: esa clase NO LLEGA al navegador.
+   El <body> servido sale sin atributos (comprobado con curl y en el DOM, y
+   pasa IGUAL sin estos cambios: es anterior a ellos), asi que `.v-con-barra`
+   no casa con nada. La regla `.v-con-barra .v-pie` que ya existia en v2.css
+   para el relleno del pie tampoco esta aplicando hoy por lo mismo; queda
+   anotado abajo porque es un fallo aparte de este encargo.
+
+   `:root:has(.v-barra-compra)` se apoya en algo que SI esta en el DOM: la
+   propia barra. Es ademas mas honesto —"si hay barra, apartate"— y no depende
+   de que ninguna pagina se acuerde de pasar una clase.
+
+   El corte es 860px, el mismo en el que v2.css enciende .v-barra-compra. Por
+   encima la barra es `display:none` y el anclaje normal vale.
+   =========================================================================== */
+
+@media (max-width: 860px) {
+  :root:has(.v-barra-compra) {
+    /* 4.5rem de barra (0.75rem + ~3rem de boton + 0.75rem) + su area segura,
+       mas 0.75rem de aire para que el flotante no quede pegado a ella. */
+    --v-flotante-base: calc(5.25rem + env(safe-area-inset-bottom));
   }
 }

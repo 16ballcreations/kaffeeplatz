@@ -1,0 +1,125 @@
+/* ===========================================================================
+   SELECTOR DE CANTIDAD (ficha de producto)
+
+   Hoja PROPIA: v2.css ya pasa de 3.900 lineas y es el mayor problema de
+   mantenimiento del repo. Lo nuevo no engorda ese fichero.
+
+   Forma: una pildora de contorno con los dos pasos a los lados y el numero en
+   medio, encima de "Agregar al carrito" y con el mismo ancho de columna. No
+   usa oro: el oro de este bloque es del boton de agregar, que es la accion.
+   Esto es un ajuste previo, no la accion.
+   =========================================================================== */
+
+.v-cantidad {
+  margin-bottom: 0.875rem;
+}
+
+.v-cantidad[hidden] {
+  display: none;
+}
+
+.v-cantidad__etiqueta {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.v-cantidad__control {
+  display: inline-flex;
+  align-items: center;
+  /* El contorno lo lleva el CONTENEDOR, no cada pieza: asi los dos botones y
+     el campo se leen como un solo control. */
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-pildora);
+  background: rgb(253 247 231 / 0.03);
+}
+
+/* --- Los dos pasos ------------------------------------------------------- */
+
+.v-cantidad__paso {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 2.75rem = 44px, el minimo de area tactil. Es un boton pequeño en
+     escritorio pero en movil se pulsa con el pulgar. */
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--v-r-pildora);
+  background: none;
+  color: var(--v-tinta);
+  font-family: var(--v-sans);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.3s var(--v-curva);
+}
+
+.v-cantidad__paso:hover:not(:disabled) {
+  color: var(--v-oro);
+}
+
+.v-cantidad__paso:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: -2px;
+}
+
+/* En un extremo. Se apaga en sitio, no desaparece: el control no cambia de
+   tamaño al llegar al 1 o al tope. */
+.v-cantidad__paso:disabled {
+  color: var(--v-tinta-3);
+  cursor: not-allowed;
+}
+
+/* --- El numero ----------------------------------------------------------- */
+
+.v-cantidad__valor {
+  width: 3rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--v-tinta);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  line-height: 1;
+  text-align: center;
+  /* Las flechas nativas se quitan: ya hay dos botones visibles que hacen eso
+     mismo y con mejor area tactil. El TECLADO no pierde nada: las flechas
+     arriba/abajo de un input[type=number] siguen funcionando sin ellas. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.v-cantidad__valor::-webkit-outer-spin-button,
+.v-cantidad__valor::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.v-cantidad__valor:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* El control entero se apaga cuando la variante elegida esta agotada: no hay
+   nada que contar. Se deja visible (no `hidden`) para que el hueco no salte
+   al cambiar de variante. */
+.v-cantidad[data-agotado] .v-cantidad__control {
+  opacity: 0.5;
+}
+
+/* --- Aviso al llegar al tope --------------------------------------------- */
+
+.v-cantidad__tope {
+  margin-top: 0.5rem;
+  font-size: var(--v-t-peq);
+  /* tinta-2 sobre el canvas, no oro: es una aclaracion, no una alerta. */
+  color: var(--v-tinta-2);
+}
+
+.v-cantidad__tope[hidden] {
+  display: none;
+}

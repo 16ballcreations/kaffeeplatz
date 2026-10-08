@@ -14,6 +14,7 @@
  */
 import Base from '../../layouts/Base.astro';
 import GaleriaProducto from '../../components/GaleriaProducto.astro';
+import BloqueCompra from '../../components/BloqueCompra.astro';
 import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
 import TarjetaProducto from '../../components/TarjetaProducto.astro';
 import Imagen from '../../components/Imagen.astro';
@@ -229,77 +230,24 @@ const jsonLd = {
       }
 
       {/*
-        FASE 1 DEL CARRITO. El oro relleno pasa a ser "Agregar al carrito" y
-        WhatsApp baja a accion secundaria (contorno), como pide el plan. NO se
-        quita: la tienda vende por contacto directo y ese camino se mantiene
-        entero, con su mensaje por variante.
+        FASE 1 DEL CARRITO + SELECTOR DE CANTIDAD.
 
-        Agotado NO cambia: no hay nada que agregar, asi que el oro sigue
-        siendo "Avísame cuando vuelva" y no se pinta el boton de carrito.
+        Todo el bloque de acciones vive en BloqueCompra.astro: el selector de
+        cantidad, "Agregar al carrito" en oro relleno, los WhatsApp de
+        contorno (el generico y uno por variante) y la confirmacion viva. Se
+        saco de aqui porque esta pagina ya iba por 545 lineas y el limite del
+        repo son ~300; el porque esta en la cabecera del componente.
 
-        El boton de agregar solo aparece con JavaScript (lo desoculta el
-        script de abajo): un boton que no hace nada es peor que no tenerlo.
-        Sin JS la ficha queda exactamente como estaba, con el oro en WhatsApp.
+        Los `data-v-*` que imprime los atiende el script del final de esta
+        pagina, que es el que gobierna la maquina de estados de la variante.
       */}
-      <div data-kp-ficha-accion class="v-ficha__accion">
-        {
-          d.disponible && (
-            <button
-              type="button"
-              class="v-boton v-boton--oro v-boton--ancho v-agregar"
-              data-v-agregar
-              data-handle={d.handle}
-              data-variante-id={inicial.id}
-              hidden
-            >
-              <Icono nombre="bolsa" tam={20} />
-              <span>Agregar al carrito</span>
-            </button>
-          )
-        }
-
-        {/* El boton generico: el unico que se ve sin JavaScript. */}
-        <BotonWhatsApp
-          producto={d}
-          mensaje={d.disponible ? undefined : mensajeAviso}
-          clase={`v-boton v-boton--ancho ${d.disponible ? 'v-boton--linea' : 'v-boton--oro'}`}
-          data-v-wa="generico"
-        >
-          <Icono nombre={d.disponible ? 'whatsapp' : 'campana'} tam={20} />
-          <span>{d.disponible ? 'Pedir por WhatsApp' : 'Avísame cuando vuelva'}</span>
-        </BotonWhatsApp>
-        {
-          conSelector &&
-            d.variantes.map((v) => (
-              <BotonWhatsApp
-                mensaje={
-                  v.disponible
-                    ? mensajeVariante(v.titulo, v.precioFormateado)
-                    : `Hola KaffeePlatz, me interesa ${d.titulo} (${v.titulo}). ¿Me avisan cuando vuelva a estar disponible?`
-                }
-                clase={`v-boton v-boton--ancho ${v.disponible ? 'v-boton--linea' : 'v-boton--oro'}`}
-                data-v-wa={v.titulo}
-                hidden
-              >
-                <Icono nombre={v.disponible ? 'whatsapp' : 'campana'} tam={20} />
-                <span>{v.disponible ? 'Pedir por WhatsApp' : 'Avísame cuando vuelva'}</span>
-              </BotonWhatsApp>
-            ))
-        }
-
-        {/* Confirmacion al agregar. Vive aqui, junto al boton que la provoca,
-            y es la MISMA region viva en todas las variantes: un solo
-            aria-live que se rellena, sin crear ni destruir nodos (un nodo
-            nuevo dentro de un live region puede no anunciarse). */}
-        <p class="v-agregado" data-v-agregado role="status" aria-live="polite" hidden>
-          <Icono nombre="check" tam={16} />
-          <span data-v-agregado-texto></span>
-        </p>
-
-        <p class="v-ficha__nota">
-          Te responde {SITIO.dueña}. Confirmamos disponibilidad y envío antes de que pagues nada.
-        </p>
-      </div>
+      <BloqueCompra
+        producto={d}
+        inicial={inicial}
+        conSelector={conSelector}
+        mensajeAviso={mensajeAviso}
+        mensajeVariante={mensajeVariante}
+      />
 
       <ul class="v-garantias">
         <li>
@@ -423,123 +371,8 @@ const jsonLd = {
 </Base>
 
 <script>
-  import { agregar } from '../../scripts/carrito';
-
-  const ficha = document.querySelector<HTMLElement>('[data-v-ficha]');
-  const radios = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="variante"]'));
-  const agregarBotones = Array.from(
-    document.querySelectorAll<HTMLButtonElement>('[data-v-agregar]'),
-  );
-
-  /* ---------------------------------------------------------------------
-     AGREGAR AL CARRITO
-
-     Los botones salen del build con `hidden`: aqui es donde se encienden.
-     Si este script no corre (sin JS, o error de red), la ficha se queda con
-     WhatsApp en oro y sin un boton muerto.
-
-     Cada boton lleva su `data-variante-id`, que el selector de variante va
-     actualizando. Las variantes agotadas no se pueden agregar: el boton se
-     desactiva, igual que en la ficha de un producto agotado entero.
-     --------------------------------------------------------------------- */
-  const aviso = document.querySelector<HTMLElement>('[data-v-agregado]');
-  const avisoTexto = document.querySelector<HTMLElement>('[data-v-agregado-texto]');
-  let borrarAviso: number | undefined;
-
-  const confirmar = (texto: string) => {
-    if (!aviso || !avisoTexto) return;
-    avisoTexto.textContent = texto;
-    aviso.hidden = false;
-    window.clearTimeout(borrarAviso);
-    /* Se retira a los 6 s: ya se anuncio y deja de ser informacion nueva.
-       El carrito de la cabecera queda como la confirmacion permanente. */
-    borrarAviso = window.setTimeout(() => {
-      aviso.hidden = true;
-      avisoTexto.textContent = '';
-    }, 6000);
-  };
-
-  /* En la barra movil solo cabe una accion. Si el carrito esta disponible,
-     la accion de la barra es agregar y su WhatsApp se retira (el de la ficha,
-     mas arriba, sigue entero). La ficha de escritorio mantiene los dos. */
-  const hayAgregar = agregarBotones.length > 0;
-  if (hayAgregar) {
-    for (const w of document.querySelectorAll<HTMLElement>('[data-v-wa-barra]')) {
-      w.remove();
-    }
-  }
-
-  for (const b of agregarBotones) {
-    b.hidden = false;
-    b.addEventListener('click', () => {
-      const handle = b.dataset.handle;
-      const varianteId = b.dataset.varianteId;
-      if (!handle || !varianteId || b.disabled) return;
-      agregar(handle, varianteId, 1);
-      /* El texto nombra la variante elegida: es la unica forma de que la
-         persona compruebe que se agrego LA QUE queria. */
-      const r = radios.find((x) => x.checked);
-      const nombre = r ? ` (${r.value})` : '';
-      confirmar(`Agregado al carrito${nombre}.`);
-    });
-  }
-
-  /* ---------------------------------------------------------------------
-     SELECTOR DE VARIANTE
-     Sin JS: los radios se ven, el boton generico de WhatsApp funciona y el
-     mensaje no incluye la variante. Con JS: todo se sincroniza.
-     --------------------------------------------------------------------- */
-  if (ficha && radios.length) {
-    const precios = document.querySelectorAll<HTMLElement>('[data-v-precio]');
-    const estado = document.querySelector<HTMLElement>('[data-v-estado-variante]');
-    const botones = Array.from(document.querySelectorAll<HTMLElement>('[data-v-wa]'));
-    const minis = Array.from(document.querySelectorAll<HTMLElement>('[data-kp-galeria-mini][data-variante]'));
-
-    const elegir = (r: HTMLInputElement, desdeGaleria: boolean) => {
-      r.checked = true;
-      for (const p of precios) p.textContent = r.dataset.precio ?? '';
-      const disp = r.dataset.disponible === 'true';
-      if (estado) {
-        estado.textContent = disp ? 'Disponible' : 'Agotado por ahora';
-        estado.dataset.kpDisponible = String(disp);
-      }
-      for (const b of botones) b.hidden = b.dataset.vWa !== r.value;
-
-      /* El boton de agregar apunta a la variante marcada y se desactiva si
-         esa variante concreta esta agotada. */
-      for (const b of agregarBotones) {
-        b.dataset.varianteId = r.dataset.varianteId ?? '';
-        b.disabled = !disp;
-        const etiqueta = b.querySelector('span');
-        if (etiqueta) {
-          const corto = b.classList.contains('v-boton--sm');
-          etiqueta.textContent = disp
-            ? corto
-              ? 'Agregar'
-              : 'Agregar al carrito'
-            : corto
-              ? 'Agotado'
-              : 'Variante agotada';
-        }
-      }
-
-      /* Foto de la variante, si la galeria tiene el vinculo. */
-      if (!desdeGaleria) {
-        minis.find((m) => m.dataset.variante === r.value)?.click();
-      }
-    };
-
-    for (const r of radios) r.addEventListener('change', () => elegir(r, false));
-
-    /* Sentido inverso: pulsar la miniatura de una variante la selecciona. */
-    for (const m of minis) {
-      m.addEventListener('click', () => {
-        const r = radios.find((x) => x.value === m.dataset.variante);
-        if (r && !r.checked) elegir(r, true);
-      });
-    }
-
-    const marcado = radios.find((r) => r.checked) ?? radios[0];
-    elegir(marcado, marcado === radios[0]);
-  }
+  /* La maquina de estados de la ficha (variante, precio, foto, mensaje de
+     WhatsApp, cantidad y agregar) vive en su propio modulo: esta pagina ya
+     iba por 545 lineas. */
+  import '../../scripts/ficha-producto';
 </script>

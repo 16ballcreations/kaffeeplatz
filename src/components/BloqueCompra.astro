@@ -1,0 +1,129 @@
+---
+/**
+ * BloqueCompra — la columna de acciones de la ficha de producto.
+ *
+ * POR QUE ES UN COMPONENTE APARTE
+ * ---------------------------------------------------------------------------
+ * `src/pages/producto/[handle].astro` llevaba el bloque entero en linea y ya
+ * iba por 545 lineas antes de añadir el selector de cantidad. Con el selector
+ * se pasaba de 590, muy por encima del limite de ~300 del repo. El bloque de
+ * compra es la pieza con el limite mas claro —todo lo que hay entre el precio
+ * y las garantias— y se lleva su marcado aqui. La pagina se queda con lo que
+ * le toca: resolver el handle en D1, armar el JSON-LD y maquetar la ficha.
+ *
+ * QUE INCLUYE, EN ORDEN DE JERARQUIA
+ * ---------------------------------------------------------------------------
+ *   1. Selector de cantidad (solo si hay algo que agregar, y solo con JS).
+ *   2. "Agregar al carrito", oro relleno: la accion primaria desde la fase 1.
+ *   3. WhatsApp de contorno, uno generico + uno por variante: el canal de
+ *      siempre, que NO se quita. La tienda vende por contacto directo.
+ *   4. La confirmacion viva de "agregado" y la nota de confianza.
+ *
+ * Agotado NO cambia: no hay nada que agregar, asi que no se pinta ni el
+ * selector ni el boton de carrito, y el oro vuelve a WhatsApp con el mensaje
+ * de "Avísame cuando vuelva".
+ *
+ * EL SCRIPT NO VIVE AQUI
+ * ---------------------------------------------------------------------------
+ * Los `data-v-*` de este marcado los atiende el script de la ficha, que
+ * tambien gobierna los radios de variante, la galeria y la barra movil: son
+ * la misma maquina de estados (elegir variante cambia precio, foto, mensaje
+ * de WhatsApp, tope de cantidad y boton de agregar, todo a la vez). Partir ese
+ * script por componentes obligaria a inventar un canal entre las dos mitades
+ * para algo que ya esta resuelto en un sitio.
+ */
+import type { Producto } from '../datos/formas';
+import BotonWhatsApp from './BotonWhatsApp.astro';
+import Icono from './Icono.astro';
+import SelectorCantidad from './SelectorCantidad.astro';
+import { SITIO } from '../datos/sitio';
+
+interface Props {
+  producto: Producto;
+  /** La variante marcada al cargar (la primera disponible). */
+  inicial: Producto['variantes'][number];
+  /** true cuando hay mas de una variante: se pintan los WhatsApp por variante. */
+  conSelector: boolean;
+  /** Mensaje de "avísame" del producto entero agotado. */
+  mensajeAviso: string;
+  /** Arma el mensaje de WhatsApp de una variante concreta. */
+  mensajeVariante: (titulo: string, precio: string) => string;
+}
+
+const { producto: d, inicial, conSelector, mensajeAviso, mensajeVariante } =
+  Astro.props as Props;
+---
+
+<div data-kp-ficha-accion class="v-ficha__accion">
+  {/*
+    SELECTOR DE CANTIDAD. Va justo encima de "Agregar al carrito", que es
+    sobre lo que actua, y solo si hay algo que agregar: en un producto agotado
+    entero no hay boton de agregar y un contador sin destino no tendria
+    sentido.
+
+    Como el boton de agregar, sale `hidden` del build y lo enciende el script:
+    sin JavaScript no hay carrito al que sumar unidades.
+
+    El TOPE es provisional (el inventario esta diseñado y no implementado) y
+    el porque esta entero en el propio componente.
+  */}
+  {d.disponible && <SelectorCantidad inicial={inicial} variantes={d.variantes} />}
+
+  {
+    d.disponible && (
+      <button
+        type="button"
+        class="v-boton v-boton--oro v-boton--ancho v-agregar"
+        data-v-agregar
+        data-handle={d.handle}
+        data-variante-id={inicial.id}
+        hidden
+      >
+        <Icono nombre="bolsa" tam={20} />
+        <span>Agregar al carrito</span>
+      </button>
+    )
+  }
+
+  {/* El boton generico: el unico que se ve sin JavaScript. */}
+  <BotonWhatsApp
+    producto={d}
+    mensaje={d.disponible ? undefined : mensajeAviso}
+    clase={`v-boton v-boton--ancho ${d.disponible ? 'v-boton--linea' : 'v-boton--oro'}`}
+    data-v-wa="generico"
+  >
+    <Icono nombre={d.disponible ? 'whatsapp' : 'campana'} tam={20} />
+    <span>{d.disponible ? 'Pedir por WhatsApp' : 'Avísame cuando vuelva'}</span>
+  </BotonWhatsApp>
+  {
+    conSelector &&
+      d.variantes.map((v) => (
+        <BotonWhatsApp
+          mensaje={
+            v.disponible
+              ? mensajeVariante(v.titulo, v.precioFormateado)
+              : `Hola KaffeePlatz, me interesa ${d.titulo} (${v.titulo}). ¿Me avisan cuando vuelva a estar disponible?`
+          }
+          clase={`v-boton v-boton--ancho ${v.disponible ? 'v-boton--linea' : 'v-boton--oro'}`}
+          data-v-wa={v.titulo}
+          hidden
+        >
+          <Icono nombre={v.disponible ? 'whatsapp' : 'campana'} tam={20} />
+          <span>{v.disponible ? 'Pedir por WhatsApp' : 'Avísame cuando vuelva'}</span>
+        </BotonWhatsApp>
+      ))
+  }
+
+  {/* Confirmacion al agregar. Vive aqui, junto al boton que la provoca, y es
+      la MISMA region viva en todas las variantes: un solo aria-live que se
+      rellena, sin crear ni destruir nodos (un nodo nuevo dentro de un live
+      region puede no anunciarse). */}
+  <p class="v-agregado" data-v-agregado role="status" aria-live="polite" hidden>
+    <Icono nombre="check" tam={16} />
+    <span data-v-agregado-texto></span>
+  </p>
+
+  <p class="v-ficha__nota">
+    Te responde {SITIO.dueña}. Confirmamos disponibilidad y envío antes de que pagues nada.
+  </p>
+</div>

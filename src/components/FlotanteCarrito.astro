@@ -12,6 +12,15 @@
  * Sale del build oculto (`hidden`) y es el script quien lo revela al leer el
  * carrito: sin JavaScript no hay carrito que mostrar, asi que no aparece y no
  * deja un enlace a una pagina vacia.
+ *
+ * APARECE EN TODAS LAS PAGINAS, incluida la ficha de producto. El layout lo
+ * monta con su propia condicion (`sinFlotanteCarrito`, hoy sin usar) y no con
+ * la del flotante de WhatsApp: estuvieron unidos por error y en la ficha
+ * desaparecian los dos, justo donde mas se usa este, que es donde se agrega.
+ *
+ * Al CAMBIAR el carrito pulsa tres veces un anillo de oro y para. El porque
+ * de tres y no infinito, y el porque de que lo dispare el cambio y no la
+ * carga, estan en flotante-carrito.css, junto a la animacion.
  */
 import { ruta } from '../datos/sitio';
 import Icono from './Icono.astro';
@@ -47,7 +56,50 @@ import '../styles/flotante-carrito.css';
       );
     };
 
+    /* ---------------------------------------------------------------------
+       EL PULSO
+
+       Dura tres repeticiones y para (lo decide el CSS). Aqui solo se pone y
+       se quita el atributo que lo dispara.
+
+       Quitarlo al terminar no es cosmetica: es lo que permite que el pulso se
+       repita si se agrega algo DOS veces seguidas. Con el atributo puesto, la
+       animacion ya consumio sus tres vueltas y volver a ponerlo no reinicia
+       nada; retirandolo, la siguiente vez el navegador la arranca de cero.
+
+       El reloj es la via fiable para enterarse del fin: `animationend` se
+       emite una vez por ITERACION (tres veces aqui), y encima no se emite en
+       absoluto cuando el navegador no anima —movimiento reducido, pestaña en
+       segundo plano— lo que dejaria el atributo pegado para siempre. Un
+       setTimeout del largo total vale en los tres casos.
+
+       MOVIMIENTO REDUCIDO: la decision se toma en el CSS, en la media query,
+       no aqui. El atributo se pone igual y simplemente no anima nada. Asi la
+       preferencia se consulta en el momento de pintar y, si la persona la
+       cambia a media visita, no hace falta recargar.
+       --------------------------------------------------------------------- */
+    const PULSO_MS = 900 * 3; /* 0.9s x 3 repeticiones, igual que el CSS. */
+    let finPulso: number | undefined;
+
+    const pulsar = () => {
+      /* Sin nada dentro no hay nada a lo que invitar: el boton esta oculto. */
+      if (boton.hidden) return;
+      boton.removeAttribute('data-kp-pulso');
+      /* Un reflow forzado entre quitar y poner: sin esto el navegador agrupa
+         los dos cambios en el mismo fotograma, ve el atributo igual que
+         estaba y no reinicia la animacion. */
+      void boton.offsetWidth;
+      boton.setAttribute('data-kp-pulso', '');
+      window.clearTimeout(finPulso);
+      finPulso = window.setTimeout(() => boton.removeAttribute('data-kp-pulso'), PULSO_MS);
+    };
+
+    /* El primer pintado NO pulsa: al llegar a una pagina con el carrito ya
+       lleno, el carrito es un estado, no una novedad. Solo pulsa el cambio. */
     pintar(unidades());
-    suscribir(({ unidades: n }) => pintar(n));
+    suscribir(({ unidades: n }) => {
+      pintar(n);
+      pulsar();
+    });
   }
 </script>

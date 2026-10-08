@@ -1,0 +1,186 @@
+---
+/**
+ * SelectorCantidad — cuantas unidades agregar, en la ficha de producto.
+ *
+ * ===========================================================================
+ * EL TOPE ES PROVISIONAL, Y ES IMPORTANTE SABER POR QUE
+ * ===========================================================================
+ * El inventario de KaffeePlatz esta DISEÑADO pero NO IMPLEMENTADO. En la base
+ * de datos de hoy una variante solo tiene `disponible` (un si/no); no existen
+ * `stock_fisico` ni `stock_reservado` en ninguna migracion. El plan los cubre
+ * en su fase 9 (`planes/kaffeeplatz-panel-admin.md`, seccion G) y son 14-19 h
+ * de trabajo aparte.
+ *
+ * Asi que este selector NO SABE cuantas unidades hay. No se inventa el dato:
+ * usa un tope fijo y generoso (`TOPE_PROVISIONAL`), que no es una afirmacion
+ * sobre el stock sino un limite de sensatez para que nadie pida 400 prensas
+ * por un teclazo. Quien pida mas de lo que hay se entera igual que hoy: al
+ * confirmar el pedido por WhatsApp, que es donde se cierra la venta.
+ *
+ * ===========================================================================
+ * CUANDO LLEGUE EL INVENTARIO: UNA SOLA LINEA
+ * ===========================================================================
+ * El dia que `Variante` traiga su cantidad disponible (p. ej.
+ * `v.stockDisponible`, calculado como `stock_fisico - stock_reservado` en
+ * src/datos/catalogo.ts), hay que tocar UN SOLO SITIO:
+ *
+ *   -> la constante `TOPE_PROVISIONAL` de este fichero, y la linea marcada
+ *      con `CAMBIAR AQUI` dentro de `topeDe()`, justo debajo.
+ *
+ * `topeDe(variante)` ya existe precisamente para eso: es el unico punto del
+ * codigo que decide el tope de una variante, y hoy devuelve la constante
+ * ignorando su argumento. El resto —el marcado, el script, los limites del
+ * campo, el aviso al llegar al maximo— ya trabaja por variante y no cambia:
+ * cada radio imprime su `data-tope` y el script lo lee al cambiar de
+ * variante. Es decir, el dia que exista el dato, el selector pasa a ser por
+ * variante sin tocar nada mas.
+ *
+ * ===========================================================================
+ * ACCESIBILIDAD: CAMPO EDITABLE, NO role="status"
+ * ===========================================================================
+ * El numero es un `<input type="number">` de verdad, no un `<span
+ * role="status">`. La razon: con un tope de 10 (y mas aun cuando el tope sea
+ * el stock real) llegar a 8 a base de pulsar `+` son ocho pulsaciones, y
+ * teclear "8" es una. Un `role="status"` se anuncia pero no se puede
+ * escribir, y convertiria el teclado en la via lenta.
+ *
+ * Que sea un campo real trae ademas tres cosas gratis: el teclado numerico en
+ * movil (`inputmode`), las flechas arriba/abajo del propio navegador, y que
+ * el lector de pantalla anuncie el valor al cambiarlo sin necesidad de region
+ * viva — un `<input>` ya informa de su valor por si mismo. No se le pone
+ * `aria-live` encima: duplicaria el anuncio.
+ *
+ * Lo que un campo numerico NO da gratis es que se pueda escribir cualquier
+ * cosa (vacio, "abc", 999, "-2"). Eso se sanea en el script, y se sanea al
+ * SALIR del campo, no en cada tecla: corregir mientras alguien escribe hace
+ * imposible borrar para poner otro numero.
+ *
+ * Los dos botones son `<button type="button">` reales, con `aria-label`
+ * ("Quitar una unidad" / "Agregar una unidad") porque su contenido visible es
+ * un signo, y se desactivan en los extremos. Un boton desactivado en un
+ * extremo es informacion: dice que no se puede bajar de 1.
+ *
+ * ===========================================================================
+ * SIN JAVASCRIPT
+ * ===========================================================================
+ * El bloque entero sale del build con `hidden` y lo enciende el script, el
+ * mismo criterio que ya usa "Agregar al carrito" en esta ficha: sin JS no hay
+ * carrito, asi que un selector de cantidad no tendria nada a lo que sumar.
+ * Sin JS la ficha queda exactamente como estaba —precio, variantes y WhatsApp
+ * en oro— y no aparece ningun control muerto. Quien compra por WhatsApp dice
+ * la cantidad en la conversacion, que es como funciona hoy.
+ */
+import type { Variante } from '../datos/formas';
+import '../styles/selector-cantidad.css';
+
+interface Props {
+  /** La variante marcada al cargar: de ella sale el tope inicial. */
+  inicial: Variante;
+  /** Todas las variantes: cada una imprime su tope para el script. */
+  variantes: Variante[];
+}
+
+const { inicial, variantes } = Astro.props as Props;
+
+/**
+ * TOPE PROVISIONAL — maximo de unidades por agregada.
+ *
+ * ESTA ES LA LINEA QUE DESAPARECE CUANDO LLEGUE EL INVENTARIO (fase 9).
+ *
+ * No representa el stock: hoy el stock no existe como dato (ver la cabecera
+ * de este fichero). Es un limite de sensatez. Diez porque es mas de lo que
+ * nadie pide de una cafetera en una tienda que vende por WhatsApp, y lo
+ * bastante poco para que un teclazo no genere un pedido absurdo que haya que
+ * deshacer en la conversacion.
+ *
+ * El carrito tiene su propio techo duro de 99 por linea (MAX_CANTIDAD en
+ * src/scripts/carrito.ts) y ese NO se toca: es otra cosa, el limite del
+ * almacenamiento, y sigue valiendo pase lo que pase aqui.
+ */
+const TOPE_PROVISIONAL = 10;
+
+/**
+ * El tope de una variante. UNICO punto que lo decide.
+ *
+ * CAMBIAR AQUI cuando `Variante` traiga su cantidad disponible. La linea del
+ * `return` pasa a ser algo como:
+ *
+ *   return Math.max(0, Math.min(TOPE_PROVISIONAL, v.stockDisponible));
+ *
+ * ...o directamente `v.stockDisponible` si se decide no poner techo. Nada mas
+ * del selector cambia: el marcado ya imprime un tope por variante y el script
+ * ya lo lee al cambiar de variante.
+ */
+const topeDe = (_v: Variante): number => TOPE_PROVISIONAL;
+
+const topeInicial = topeDe(inicial);
+---
+
+<div
+  class="v-cantidad"
+  data-kp-cantidad
+  data-tope={String(topeInicial)}
+  hidden
+>
+  {/* El grupo se nombra con el <label> del campo, que es la etiqueta visible.
+      Los dos botones operan sobre ese mismo campo. */}
+  <label class="v-cantidad__etiqueta" for="kp-cantidad">Cantidad</label>
+
+  <div class="v-cantidad__control">
+    <button
+      type="button"
+      class="v-cantidad__paso"
+      data-kp-cantidad-menos
+      aria-label="Quitar una unidad"
+    >
+      <span aria-hidden="true">&minus;</span>
+    </button>
+
+    {/*
+      Campo real, no un <span>: se puede teclear. `min`/`max`/`step` dan la
+      semantica al lector de pantalla y los limites a las flechas nativas;
+      el saneado de lo escrito a mano lo hace el script.
+    */}
+    <input
+      type="number"
+      id="kp-cantidad"
+      class="v-cantidad__valor v-num"
+      data-kp-cantidad-valor
+      value="1"
+      min="1"
+      max={String(topeInicial)}
+      step="1"
+      inputmode="numeric"
+      autocomplete="off"
+    />
+
+    <button
+      type="button"
+      class="v-cantidad__paso"
+      data-kp-cantidad-mas
+      aria-label="Agregar una unidad"
+    >
+      <span aria-hidden="true">+</span>
+    </button>
+  </div>
+
+  {/*
+    AVISO AL LLEGAR AL TOPE. Region viva propia, siempre en el DOM y solo
+    `hidden` (un nodo creado dentro de una region viva puede no anunciarse),
+    igual que la confirmacion de "Agregado al carrito" de esta misma ficha.
+
+    Hace falta porque el boton `+` desactivado explica que no se puede subir
+    mas, pero no DICE por que. Mientras el tope sea provisional el texto no
+    puede hablar de stock —no lo sabemos— asi que dice lo unico que es cierto:
+    que ese es el maximo por pedido y que para mas se habla por WhatsApp.
+  */}
+  <p class="v-cantidad__tope" data-kp-cantidad-aviso role="status" aria-live="polite" hidden></p>
+
+  {/* El tope de cada variante, para que el script lo lea al cambiarla. Son
+      datos, no interfaz: no hay nada que ver aqui. */}
+  {
+    variantes.map((v) => (
+      <span hidden data-kp-cantidad-tope-variante={v.id} data-tope={String(topeDe(v))} />
+    ))
+  }
+</div>

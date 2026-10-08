@@ -10,11 +10,11 @@
  * Novedades frente a C:
  *   - Cabecera fija translucida con la accion de WhatsApp siempre a mano.
  *   - Menu movil con <details>: funciona sin JavaScript.
- *   - Boton flotante de WhatsApp (se puede apagar por pagina con
- *     `sinFlotante`, p.ej. la ficha, que trae su propia barra inferior).
- *   - Revelado suave al hacer scroll, con IntersectionObserver y respetando
- *     prefers-reduced-motion. Sin JS todo se ve: la clase que oculta la pone
- *     el propio script.
+ *   - Dos flotantes en la esquina, con un interruptor CADA UNO y por motivos
+ *     distintos: ver `sinFlotante` y `sinFlotanteCarrito` en las props.
+ *
+ * El comportamiento (revelado al hacer scroll, cabecera compacta, menu movil)
+ * vive en `src/scripts/base.ts`.
  */
 import SEO from '../components/SEO.astro';
 import type { Miga } from '../components/SEO.astro';
@@ -36,8 +36,30 @@ interface Props {
   migas?: Miga[];
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   claseCuerpo?: string;
-  /** Oculta el boton flotante de WhatsApp (paginas con su propia barra). */
+  /**
+   * Oculta el boton flotante de WHATSAPP, y SOLO ese.
+   *
+   * Se activa donde la pagina ya ofrece ese canal de forma prominente: la
+   * ficha (barra inferior con "Pedir") y contacto (la pagina ES el canal).
+   * Repetirlo flotando seria el mismo boton dos veces.
+   */
   sinFlotante?: boolean;
+  /**
+   * Oculta el acceso flotante al CARRITO. Por defecto NO se oculta.
+   *
+   * Existe aparte de `sinFlotante` porque los dos botones tienen motivos
+   * distintos para existir y, por tanto, para desaparecer. El de WhatsApp es
+   * un canal que algunas paginas ya ofrecen; el del carrito es el estado de
+   * la visita, y ese estado importa en TODAS las paginas — sobre todo en la
+   * ficha, que es donde se agrega. Estaban unidos por un error de montaje:
+   * `sinFlotante` de la ficha apagaba los dos y el carrito desaparecia justo
+   * donde mas se usa.
+   *
+   * Hoy NINGUNA pagina la activa. Es una valvula para el dia que alguna
+   * pagina necesite la esquina libre (p. ej. un visor a pantalla completa),
+   * no un ajuste que haya que recordar poner.
+   */
+  sinFlotanteCarrito?: boolean;
 }
 
 const {
@@ -50,6 +72,7 @@ const {
   jsonLd,
   claseCuerpo = '',
   sinFlotante = false,
+  sinFlotanteCarrito = false,
 } = Astro.props as Props;
 
 const anio = new Date().getFullYear();
@@ -248,64 +271,30 @@ const activo = (href: string) =>
       </div>
     </footer>
 
+    {/* DOS CONDICIONES INDEPENDIENTES, a proposito.
+
+        El carrito va primero en el marcado y encima en pantalla, y solo
+        aparece si hay algo dentro (lo decide su propio script). Se pinta
+        aunque la pagina apague el de WhatsApp: son decisiones distintas.
+
+        `claseCuerpo` llega al <body>, asi que la ficha (v-con-barra) puede
+        subir el carrito por encima de su barra inferior desde CSS, sin que
+        el layout tenga que saber nada de esa pagina. */}
+    {!sinFlotanteCarrito && <FlotanteCarrito />}
     {
       !sinFlotante && (
-        <>
-          {/* El del carrito va encima, y solo aparece si hay algo dentro. */}
-          <FlotanteCarrito />
-          <BotonWhatsApp clase="v-flotante" data-v-flotante>
-            <Icono nombre="whatsapp" tam={26} />
-            <span class="v-flotante__texto">¿Te ayudamos a elegir?</span>
-          </BotonWhatsApp>
-        </>
+        <BotonWhatsApp clase="v-flotante" data-v-flotante>
+          <Icono nombre="whatsapp" tam={26} />
+          <span class="v-flotante__texto">¿Te ayudamos a elegir?</span>
+        </BotonWhatsApp>
       )
     }
 
     <script>
-      /* Revelado al entrar en pantalla. La clase que oculta (.v-js) la pone
-         este script: sin JS, o con movimiento reducido, todo se ve desde el
-         principio. */
-      const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const piezas = document.querySelectorAll<HTMLElement>('[data-v-revelar]');
-      if (!reducir && 'IntersectionObserver' in window && piezas.length) {
-        document.documentElement.classList.add('v-js');
-        const io = new IntersectionObserver(
-          (entradas) => {
-            for (const e of entradas) {
-              if (!e.isIntersecting) continue;
-              e.target.classList.add('v-visto');
-              io.unobserve(e.target);
-            }
-          },
-          { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
-        );
-        piezas.forEach((p) => io.observe(p));
-      }
-
-      /* La cabecera se compacta al bajar. Un centinela de 1px en lo alto de
-         la pagina evita escuchar el evento scroll. */
-      const cabecera = document.querySelector<HTMLElement>('[data-kp-cabecera]');
-      if (cabecera && 'IntersectionObserver' in window) {
-        const centinela = document.createElement('div');
-        centinela.setAttribute('aria-hidden', 'true');
-        centinela.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:40px;pointer-events:none';
-        document.body.prepend(centinela);
-        new IntersectionObserver(([e]) => {
-          cabecera.toggleAttribute('data-compacta', !e.isIntersecting);
-        }).observe(centinela);
-      }
-
-      /* Cerrar el menu movil con Escape o al elegir un enlace. */
-      const menu = document.querySelector<HTMLDetailsElement>('.v-menu');
-      if (menu) {
-        menu.addEventListener('keydown', (e) => {
-          if (e.key === 'Escape' && menu.open) {
-            menu.open = false;
-            menu.querySelector('summary')?.focus();
-          }
-        });
-        menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => (menu.open = false)));
-      }
+      /* Los tres comportamientos del armazon (revelado, cabecera compacta,
+         menu movil) viven en su propio modulo: este layout paso de 300 lineas
+         al separar las condiciones de los dos flotantes. */
+      import '../scripts/base';
     </script>
   </body>
 </html>

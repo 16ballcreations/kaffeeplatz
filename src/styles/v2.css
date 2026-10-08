@@ -678,7 +678,12 @@ body:has(.v-menu[open]) {
 .v-flotante {
   position: fixed;
   right: max(1rem, env(safe-area-inset-right));
-  bottom: max(1rem, env(safe-area-inset-bottom));
+  /* Mismo anclaje que el acceso al carrito, que cuelga de este. La variable
+     la define flotante-carrito.css y la ficha la sube para no taparse con su
+     barra de compra; el valor de reserva es el de siempre. Hoy la ficha no
+     pinta este boton (sinFlotante), pero si algun dia lo pinta se movera con
+     su vecino en vez de quedarse debajo de la barra. */
+  bottom: var(--v-flotante-base, max(1rem, env(safe-area-inset-bottom)));
   z-index: var(--z-flotante);
   display: inline-flex;
   align-items: center;
