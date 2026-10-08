@@ -5,21 +5,34 @@
  * Los recuentos salen SIEMPRE del dato (articulos.length, conteo por
  * categoria): anadir o retirar articulos no desactualiza ningun texto.
  */
-import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
 import { ruta } from '../../datos/sitio';
 import { CATEGORIAS_DIARIO } from '../../datos/categorias';
 import FiltrosCategoria from '../../components/FiltrosCategoria.astro';
+import { obtenerArticulos } from '../../datos/diario';
+import { respuestaDeEmergencia, marcarEtiquetas } from '../../datos/catalogo';
 
-const articulos = (await getCollection('diario')).sort(
-  (a, b) => b.data.fecha.getTime() - a.data.fecha.getTime()
-);
+
+/* FASE 3: el indice del diario lee de D1 y deja de prerenderizarse, para que
+   un articulo nuevo aparezca sin despliegue (B.3). */
+export const prerender = false;
+
+const lectura = await obtenerArticulos(Astro.locals);
+if (lectura.estado !== 'ok' || !lectura.datos) {
+  return respuestaDeEmergencia(Astro.url, lectura);
+}
+marcarEtiquetas(Astro.locals, ['diario']);
+
+/* Ya vienen de la consulta por fecha descendente, con el `handle` como
+   desempate: hay articulos que comparten fecha y sin el segundo criterio el
+   diario podria reordenarse entre peticiones sin que cambiara ningun dato. */
+const articulos = lectura.datos;
 
 /* Solo se ofrecen los temas que tienen articulos, con su recuento real. */
 const conteo = new Map<string, number>();
 for (const a of articulos) {
-  conteo.set(a.data.categoria, (conteo.get(a.data.categoria) ?? 0) + 1);
+  conteo.set(a.categoria, (conteo.get(a.categoria) ?? 0) + 1);
 }
 
 const temasConArticulos = CATEGORIAS_DIARIO.filter((c) => (conteo.get(c.id) ?? 0) > 0).sort(
@@ -33,10 +46,10 @@ const jsonLd = {
   description: 'Guías y apuntes sobre café de especialidad y métodos de preparación.',
   blogPost: articulos.map((a) => ({
     '@type': 'BlogPosting',
-    headline: a.data.titulo,
-    datePublished: a.data.fecha.toISOString().slice(0, 10),
-    author: { '@type': 'Person', name: a.data.autor },
-    url: new URL(ruta(`/diario/${a.data.handle}`), Astro.site).toString(),
+    headline: a.titulo,
+    datePublished: a.fecha.toISOString().slice(0, 10),
+    author: { '@type': 'Person', name: a.autor },
+    url: new URL(ruta(`/diario/${a.handle}`), Astro.site).toString(),
   })),
 };
 ---
@@ -74,8 +87,8 @@ const jsonLd = {
     <ul data-kp-rejilla="articulos">
       {
         articulos.map((a, i) => (
-          <li data-categoria={a.data.categoria}>
-            <TarjetaArticulo articulo={a.data} prioridad={i < 3} />
+          <li data-categoria={a.categoria}>
+            <TarjetaArticulo articulo={a} prioridad={i < 3} />
           </li>
         ))
       }

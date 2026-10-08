@@ -155,6 +155,27 @@ export const CATEGORIAS_DIARIO: Categoria[] = [
   },
 ];
 
+/**
+ * PREFIJO DE LOS TEMAS DEL DIARIO DENTRO DE LA TABLA `categorias` DE D1.
+ * ---------------------------------------------------------------------------
+ * Las dos listas de arriba son SEPARADAS (un producto nunca es de "tecnica")
+ * pero COMPARTEN ids: 'metodos', 'equipo' y sobre todo 'otros'. En D1 las dos
+ * van a la misma tabla `categorias`, cuya clave primaria es `id`, asi que
+ * 'metodos' no puede existir dos veces con dos nombres distintos ("Métodos de
+ * preparación" y "Métodos").
+ *
+ * Solucion: en la base, los temas del diario llevan este prefijo
+ * ('diario:metodos'); las categorias de producto van tal cual. Asi los 25
+ * productos siguen guardando exactamente lo que ya tenian en su JSON y no se
+ * toca ni un dato del catalogo.
+ *
+ * El prefijo es INTERNO: no sale en ninguna URL, no lo ve la duena en el panel
+ * y la capa de datos lo quita al leer (src/datos/consultas/diario.ts). Vive
+ * aqui, y no en el script de semilla, porque lo usan los dos lados —el que
+ * escribe y el que lee— y tenerlo en dos sitios es como se desincroniza.
+ */
+export const PREFIJO_DIARIO = 'diario:';
+
 /** Los ids validos, derivados del catalogo: no se escriben dos veces. */
 export const IDS_CATEGORIA = CATEGORIAS.map((c) => c.id);
 

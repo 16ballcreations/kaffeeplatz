@@ -14,28 +14,53 @@
  * ocultan los <li> existentes, no se reconstruye nada. Sin JS la barra no
  * aparece y la rejilla muestra los 25 productos en el orden recomendado.
  */
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import Icono from '../components/Icono.astro';
 import { ruta, SITIO } from '../datos/sitio';
 import { CATEGORIAS } from '../datos/categorias';
+import { obtenerProductos, respuestaDeEmergencia, marcarEtiquetas } from '../datos/catalogo';
 
-/* Orden recomendado: disponibles primero, luego destacados, luego alfabetico. */
-const productos = (await getCollection('productos')).sort((a, b) => {
-  if (a.data.disponible !== b.data.disponible) return a.data.disponible ? -1 : 1;
-  if (!!a.data.destacado !== !!b.data.destacado) return a.data.destacado ? -1 : 1;
-  return a.data.titulo.localeCompare(b.data.titulo, 'es');
+
+/* FASE 3: esta pagina LEE DE D1 y por eso deja de prerenderizarse. Es la
+   pagina que cambia cuando la duena edita (B.3, tabla de reparto): si siguiera
+   saliendo del build, un precio nuevo no se veria hasta el siguiente despliegue,
+   que es justo lo que este proyecto venia a quitar.
+   La velocidad la da la cache de borde: `marcarEtiquetas` de abajo le dice al
+   middleware que puede cachearla, asi que la mayoria de las visitas se sirven
+   del borde sin tocar la base (R2, R4). */
+export const prerender = false;
+
+/* R1: la lectura NUNCA lanza. Si D1 no responde, `respuestaDeEmergencia` sirve
+   la copia de cache aunque este vencida, y si no hay copia, la pagina de
+   cortesia con 503. Nunca un 500 desnudo, nunca un 200 con la tienda vacia. */
+const lectura = await obtenerProductos(Astro.locals);
+if (lectura.estado !== 'ok' || !lectura.datos) {
+  return respuestaDeEmergencia(Astro.url, lectura);
+}
+
+/* Lo que esta pagina muestra, para poder purgar solo esto cuando cambie. */
+marcarEtiquetas(Astro.locals, ['catalogo']);
+
+/* Orden recomendado: disponibles primero, luego destacados, luego alfabetico.
+   El ultimo criterio es el `handle`, no el titulo: dos productos con el mismo
+   titulo (posible, p. ej. dos "Server") quedarian a merced del orden de
+   llegada, que al leer de D1 lo decide la base. El handle es unico por
+   definicion, asi que el orden queda determinado siempre. */
+const productos = lectura.datos.slice().sort((a, b) => {
+  if (a.disponible !== b.disponible) return a.disponible ? -1 : 1;
+  if (!!a.destacado !== !!b.destacado) return a.destacado ? -1 : 1;
+  return a.titulo.localeCompare(b.titulo, 'es') || a.handle.localeCompare(b.handle, 'es');
 });
 
 const conteo = new Map<string, number>();
-for (const p of productos) conteo.set(p.data.categoria, (conteo.get(p.data.categoria) ?? 0) + 1);
+for (const p of productos) conteo.set(p.categoria, (conteo.get(p.categoria) ?? 0) + 1);
 
 const categorias = CATEGORIAS.filter((c) => (conteo.get(c.id) ?? 0) > 0).sort(
   (a, b) => a.orden - b.orden,
 );
-const disponibles = productos.filter((p) => p.data.disponible).length;
+const disponibles = productos.filter((p) => p.disponible).length;
 
 /* Posicion de la ficha de asesoria dentro de la rejilla. */
 const POS_ASESORIA = 5;
@@ -48,8 +73,8 @@ const jsonLd = {
   itemListElement: productos.map((p, i) => ({
     '@type': 'ListItem',
     position: i + 1,
-    name: p.data.titulo,
-    url: new URL(ruta(`/producto/${p.data.handle}`), Astro.site).toString(),
+    name: p.titulo,
+    url: new URL(ruta(`/producto/${p.handle}`), Astro.site).toString(),
   })),
 };
 ---
@@ -131,12 +156,12 @@ const jsonLd = {
               </li>
             )}
             <li
-              data-categoria={p.data.categoria}
-              data-precio={p.data.precio}
-              data-disponible={String(p.data.disponible)}
+              data-categoria={p.categoria}
+              data-precio={p.precio}
+              data-disponible={String(p.disponible)}
               data-orden={i}
             >
-              <TarjetaProducto producto={p.data} prioridad={i < 3} />
+              <TarjetaProducto producto={p} prioridad={i < 3} />
             </li>
           </>
         ))

@@ -110,9 +110,49 @@ imágenes en el repo.
 
 ```bash
 npm install
-npm run normalizar      # regenera src/content/ desde contenido-original/
+npm run d1:migrar       # crea la base LOCAL y aplica migrations/
+npm run d1:sembrar      # carga los 25 productos y los 16 articulos en ella
+npm run d1:comparar     # comprueba campo a campo que no se perdio nada
+npm run dev             # servidor de desarrollo, con recarga
 npm run build
+npm run preview         # construye y sirve el Worker igual que en produccion
 ```
+
+**Los tres comandos `d1:` son el arranque obligatorio.** Desde la fase 2 del
+plan del panel, el catalogo y el diario viven en **D1**, no en los ficheros: un
+`npm run dev` sin base cargada sirve la pagina de cortesia en vez del catalogo
+(que es el comportamiento correcto, pero no el que se busca al desarrollar).
+Todo ocurre en local, en `.wrangler/state/`: no se toca nada de Cloudflare.
+
+### `normalizar.mjs` ya no es seguro de correr (riesgo R8 del plan)
+
+> **Antes:** "los JSON los genera el script, no se editan a mano".
+> **Desde que D1 es la fuente de verdad, esa regla queda al reves.**
+>
+> `npm run normalizar` regenera `src/content/` desde `contenido-original/`, y
+> `npm run d1:sembrar` vuelca eso en la base **pisando lo que la duena haya
+> editado en el panel**. A diferencia de los prospectos de 16bc —donde la
+> investigacion y el seguimiento son columnas distintas— aqui la semilla y la
+> edicion escriben los mismos campos.
+>
+> Los dos son ahora **herramientas de arranque y de recuperacion, no de
+> rutina**. Contra la base local, uselos sin miedo. Contra `--remote`, solo con
+> respaldo hecho y a sabiendas. El aviso completo esta en la cabecera de
+> `scripts/sembrar-d1.mjs`.
+
+**Los JSON y los MD de `src/content/` NO se borran.** Son el respaldo, la
+referencia de `npm run d1:comparar` y la prueba de que habia antes (R5).
+
+**`npm run preview` cambió.** Desde que el sitio usa el adaptador de
+Cloudflare (`output: 'server'`), `astro preview` ya no funciona: el adaptador
+no lo soporta y aborta con *"The @astrojs/cloudflare adapter does not support
+the preview command"*. El script ahora hace `astro build && wrangler dev
+--local`, que levanta el mismo Worker que se despliega, con `--local` para no
+tocar nada de la cuenta de Cloudflare.
+
+`npm run dev` **no cambia**: sigue siendo `astro dev` y sigue siendo el
+comando del día a día, más rápido y con recarga en caliente. `preview` es para
+comprobar el comportamiento real del Worker antes de publicar.
 
 Para una propuesta:
 
@@ -123,8 +163,11 @@ cd propuestas/a-imprenta && npm run build
 **Node 20.** Astro está anclado a 5.18.2, la última rama que soporta Node 20.
 Astro 6+ exige Node ≥22.
 
-> El contenido de `src/content/` es **generado**. No lo edites a mano: se pierde
-> en la siguiente normalización. Las correcciones van en `scripts/normalizar.mjs`.
+> El contenido de `src/content/` es **generado** por `scripts/normalizar.mjs`
+> desde `contenido-original/`. Desde la fase 2 del plan del panel ya **no es la
+> fuente de verdad del sitio** —lo es D1— sino el respaldo y la referencia de
+> comparación. Sigue sin editarse a mano, y además regenerarlo ya no es
+> inofensivo: ver el aviso de R8 en "Desarrollo".
 
 ---
 

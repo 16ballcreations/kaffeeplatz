@@ -6,6 +6,12 @@
 import type { APIRoute } from 'astro';
 import { ruta } from '../datos/sitio';
 
+
+/* FASE 1 (plan del panel, B.3): sigue prerenderizandose en el build.
+   Este fichero es fijo (no depende del catalogo), asi que puede quedarse
+   prerenderizado tambien despues de la fase 3. */
+export const prerender = true;
+
 export const GET: APIRoute = ({ site }) =>
   new Response(
     `User-agent: *\nAllow: /\n\nSitemap: ${new URL(ruta('/sitemap.xml'), site).toString()}\n`,

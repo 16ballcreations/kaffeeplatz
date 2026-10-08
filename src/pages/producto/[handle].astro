@@ -12,8 +12,6 @@
  *   - Confianza junto al boton: envios, atencion humana, sin pago en linea.
  *   - "Cómo prepararlo": enlace a la guia del diario que aplica.
  */
-import type { GetStaticPaths } from 'astro';
-import { getCollection, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import GaleriaProducto from '../../components/GaleriaProducto.astro';
 import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
@@ -23,24 +21,58 @@ import Icono from '../../components/Icono.astro';
 import { SITIO, ruta } from '../../datos/sitio';
 import { categoriaPorId } from '../../datos/categorias';
 import { GUIA_DE_PRODUCTO, ENVIOS } from '../../datos/guias';
+import {
+  obtenerProductos,
+  obtenerDestinoDeArchivado,
+  respuestaDeEmergencia,
+  marcarEtiquetas,
+} from '../../datos/catalogo';
+import { obtenerArticulos } from '../../datos/diario';
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  const productos = await getCollection('productos');
-  const articulos = await getCollection('diario');
-  return productos.map((p) => ({
-    params: { handle: p.data.handle },
-    props: { producto: p, todos: productos, articulos },
-  }));
-};
 
-interface Props {
-  producto: CollectionEntry<'productos'>;
-  todos: CollectionEntry<'productos'>[];
-  articulos: CollectionEntry<'diario'>[];
+/* FASE 3: las 25 fichas pasan a servirse desde D1. Ya no hay
+   `getStaticPaths`: el handle llega en la URL y se busca en la base, que es lo
+   que permite que un producto nuevo tenga ficha sin un despliegue.
+   Las URLs NO cambian (R3): sigue siendo /producto/<handle> exacto, con el
+   mismo handle que ya es la clave unica en D1. */
+export const prerender = false;
+
+const handle = Astro.params.handle!;
+
+/* Se piden TODOS los productos y no solo este, porque la ficha necesita los
+   relacionados. Son 25 productos (~85 filas con variantes e imagenes) y la
+   pagina se cachea en el borde, asi que la consulta se paga una vez por periodo
+   de cache, no por visita (R2, R4). Cuando el catalogo crezca lo bastante para
+   que esto moleste, la consulta de relacionados se acota en SQL; hoy seria
+   complicar el codigo por un problema que no existe. */
+const lectura = await obtenerProductos(Astro.locals);
+if (lectura.estado !== 'ok' || !lectura.datos) {
+  return respuestaDeEmergencia(Astro.url, lectura);
 }
 
-const { producto, todos, articulos } = Astro.props as Props;
-const d = producto.data;
+const d = lectura.datos.find((p) => p.handle === handle);
+if (!d) {
+  /* R3: un handle que no esta vivo puede ser dos cosas MUY distintas.
+     Si esta ARCHIVADO, es una URL que Google ya indexo: 301 a su categoria,
+     nunca un 404 silencioso ni un 200 vacio.
+     Si nunca existio, 404 de verdad, que es la respuesta honesta. */
+  const archivado = await obtenerDestinoDeArchivado(Astro.locals, handle);
+  if (archivado.estado === 'ok' && archivado.datos) {
+    return Astro.redirect(ruta(`/catalogo?categoria=${archivado.datos.categoria}`), 301);
+  }
+  return new Response(null, { status: 404 });
+}
+
+const todos = lectura.datos;
+
+/* El diario solo se usa para el enlace "Como prepararlo". Si falla, la ficha se
+   pinta SIN ese enlace en vez de no pintarse: es un adorno util, no el
+   producto. Es el mismo criterio del `try/catch` de las insignias del panel de
+   16bc (A.3), y la razon de que aqui no se llame a `respuestaDeEmergencia`. */
+const lecturaDiario = await obtenerArticulos(Astro.locals);
+const articulos = lecturaDiario.estado === 'ok' ? (lecturaDiario.datos ?? []) : [];
+
+marcarEtiquetas(Astro.locals, [`producto:${d.handle}`, 'catalogo']);
 
 const portada = d.imagenes[0];
 const hayRango = new Set(d.variantes.map((v) => v.precio)).size > 1;
@@ -60,17 +92,27 @@ const mensajeAviso = `Hola KaffeePlatz, me interesa ${d.titulo}. ¿Me avisan cua
 
 /* Relacionados: misma categoria primero, luego cercania de precio. */
 const relacionados = todos
-  .filter((p) => p.data.handle !== d.handle && p.data.imagenes.length > 0)
+  .filter((p) => p.handle !== d.handle && p.imagenes.length > 0)
   .sort((a, b) => {
-    const ca = a.data.categoria === d.categoria ? 0 : 1;
-    const cb = b.data.categoria === d.categoria ? 0 : 1;
+    const ca = a.categoria === d.categoria ? 0 : 1;
+    const cb = b.categoria === d.categoria ? 0 : 1;
     if (ca !== cb) return ca - cb;
-    if (a.data.disponible !== b.data.disponible) return a.data.disponible ? -1 : 1;
-    return Math.abs(a.data.precio - d.precio) - Math.abs(b.data.precio - d.precio);
+    if (a.disponible !== b.disponible) return a.disponible ? -1 : 1;
+    const da = Math.abs(a.precio - d.precio);
+    const db = Math.abs(b.precio - d.precio);
+    if (da !== db) return da - db;
+    /* DESEMPATE POR `handle`. Sin esto el orden de dos productos igual de
+       "cercanos" lo decide el orden de llegada, y como aqui hay un
+       `.slice(0, 4)` justo despues, un empate en la cuarta posicion hace que
+       un producto entre o salga de la fila segun quien llegue antes. Son 6
+       fichas con un empate exacto en ese corte. Al leer de D1 el orden de
+       llegada lo decide la base, no el disco, asi que sin desempate la pagina
+       cambiaria sin que cambiara ningun dato. */
+    return a.handle.localeCompare(b.handle, 'es');
   })
   .slice(0, 4);
 
-const guia = articulos.find((a) => a.data.handle === GUIA_DE_PRODUCTO[d.handle]);
+const guia = articulos.find((a) => a.handle === GUIA_DE_PRODUCTO[d.handle]);
 
 const url = new URL(ruta(`/producto/${d.handle}`), Astro.site).toString();
 
@@ -245,15 +287,15 @@ const jsonLd = {
 
       {
         guia && (
-          <a href={ruta(`/diario/${guia.data.handle}`)} class="v-guia">
+          <a href={ruta(`/diario/${guia.handle}`)} class="v-guia">
             <div class="v-guia__foto">
-              {guia.data.imagen && <Imagen src={guia.data.imagen} alt="" tamanos="72px" />}
+              {guia.imagen && <Imagen src={guia.imagen} alt="" tamanos="72px" />}
             </div>
             <div>
               <span class="v-guia__etiqueta">
                 <Icono nombre="libro" tam={16} /> Cómo sacarle partido
               </span>
-              <span class="v-guia__titulo">{guia.data.titulo}</span>
+              <span class="v-guia__titulo">{guia.titulo}</span>
             </div>
             <Icono nombre="flechaDiagonal" tam={20} />
           </a>
@@ -274,7 +316,7 @@ const jsonLd = {
         <ul data-kp-rejilla="productos" class="v-carril">
           {relacionados.map((p) => (
             <li>
-              <TarjetaProducto producto={p.data} />
+              <TarjetaProducto producto={p} />
             </li>
           ))}
         </ul>

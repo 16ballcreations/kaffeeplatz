@@ -57,8 +57,21 @@ const {
 } = Astro.props as Props;
 
 /* Un id unico por instancia: permite dos barras en una misma pagina sin que
-   los `aria-labelledby` colisionen. */
-const uid = `f${Math.random().toString(36).slice(2, 8)}`;
+ * los `aria-labelledby` colisionen.
+ *
+ * POR QUE SE DERIVA DEL `objetivo` Y NO DE Math.random()
+ * ---------------------------------------------------------------------------
+ * Antes era `Math.random()`. Cumplia lo de ser unico, pero hacia que el HTML
+ * generado CAMBIARA en cada build sin que cambiara el contenido: dos builds
+ * del mismo commit producian ficheros distintos. No se nota en el sitio, pero
+ * vuelve imposible comparar dos builds para comprobar que una migracion de
+ * datos no cambio nada — que es justo lo que hace falta al pasar a D1.
+ *
+ * `objetivo` es el selector CSS de la rejilla que esta barra filtra
+ * ('[data-kp-rejilla="articulos"]'), asi que YA es unico por instancia: dos
+ * barras que filtraran la misma rejilla serian un error de uso, no un caso a
+ * soportar. Derivar el id de ahi da la misma garantia y es estable. */
+const uid = `f${objetivo.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '')}`;
 ---
 
 <div data-kp-filtros data-objetivo={objetivo} data-sustantivo={sustantivo} hidden>

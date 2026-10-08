@@ -16,7 +16,6 @@
  * Nada de contenido de negocio inventado: los textos salen de la base, del
  * diario (ver datos/guias.ts) o de las politicas de envio.
  */
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
@@ -27,18 +26,52 @@ import { SITIO, ruta, recurso } from '../datos/sitio';
 import { fuentes } from '../datos/imagenes';
 import { CATEGORIAS } from '../datos/categorias';
 import { METODOS } from '../datos/guias';
+import { obtenerProductos, respuestaDeEmergencia, marcarEtiquetas } from '../datos/catalogo';
+import { obtenerArticulos } from '../datos/diario';
 
-const productos = await getCollection('productos');
-const porHandle = new Map(productos.map((p) => [p.data.handle, p.data]));
 
+/* FASE 3: la portada SI deja de prerenderizarse, y conviene justificarlo
+   porque el plan (B.3) proponia lo contrario ("no vale la pena hacer dinamica
+   la portada por un carrusel").
+ *
+ * La razon es que la portada no muestra "un carrusel": muestra los DESTACADOS,
+ * el MOSAICO DE CATEGORIAS con sus recuentos reales, y los ultimos articulos
+ * del diario. Si se quedara prerenderizada, la duena marcaria un producto como
+ * destacado en el panel, lo veria al instante en /catalogo y en su ficha... y
+ * NO en la portada, que es la primera pagina que va a mirar para comprobarlo.
+ * Un panel que actualiza unas paginas y no otras se siente roto aunque
+ * funcione, que es exactamente el sintoma que R9 describe.
+ *
+ * El coste de hacerla dinamica es el mismo que el de /catalogo —una consulta
+ * cacheada en el borde— asi que la coherencia sale practicamente gratis.
+ *
+ * Lo que SI sigue prerenderizado son /cafe, /nosotros y /contacto: no leen
+ * nada de la base, y prerenderizarlas es gratis y mas rapido. */
+export const prerender = false;
+
+const lectura = await obtenerProductos(Astro.locals);
+const lecturaArticulos = await obtenerArticulos(Astro.locals);
+if (lectura.estado !== 'ok' || !lectura.datos || lecturaArticulos.estado !== 'ok') {
+  return respuestaDeEmergencia(Astro.url, lectura);
+}
+marcarEtiquetas(Astro.locals, ['portada', 'catalogo', 'diario']);
+
+const productos = lectura.datos;
+const porHandle = new Map(productos.map((p) => [p.handle, p]));
+
+/* Los `sort()` de esta pagina llevan SIEMPRE un desempate final por `handle`.
+   Razon: al leer de D1 el orden de llegada lo decide la base (y puede cambiar
+   entre consultas), no el orden alfabetico de los ficheros en disco. Sin un
+   desempate explicito, dos productos o dos articulos con la misma clave de
+   orden podrian intercambiarse de un build a otro sin que cambiara ningun
+   dato, y eso hace imposible verificar que la migracion no cambio nada. */
 const destacados = productos
-  .filter((p) => p.data.destacado)
-  .sort((a, b) => b.data.precio - a.data.precio);
+  .filter((p) => p.destacado)
+  .sort((a, b) => b.precio - a.precio || a.handle.localeCompare(b.handle, 'es'));
 
-const articulos = (await getCollection('diario')).sort(
-  (a, b) => b.data.fecha.getTime() - a.data.fecha.getTime(),
-);
-const [principal, ...resto] = articulos.filter((a) => a.data.imagen);
+/* Ya vienen ordenados por fecha descendente con `handle` como desempate. */
+const articulos = lecturaArticulos.datos ?? [];
+const [principal, ...resto] = articulos.filter((a) => a.imagen);
 const lista = resto.slice(0, 4);
 
 const HERO = 'aeropress-clear';
@@ -49,16 +82,22 @@ const HERO = 'aeropress-clear';
 const categorias = CATEGORIAS.filter((c) => c.id !== 'otros')
   .map((c) => {
     const suyos = productos
-      .filter((p) => p.data.categoria === c.id && p.data.handle !== HERO)
-      .sort((a, b) => Number(!!b.data.destacado) - Number(!!a.data.destacado));
+      .filter((p) => p.categoria === c.id && p.handle !== HERO)
+      .sort(
+        (a, b) =>
+          Number(!!b.destacado) - Number(!!a.destacado) ||
+          a.handle.localeCompare(b.handle, 'es'),
+      );
     const muestra =
-      suyos.find((p) => p.data.disponible && p.data.imagenes.length) ??
-      suyos.find((p) => p.data.imagenes.length);
-    const total = productos.filter((p) => p.data.categoria === c.id).length;
-    return { ...c, total, imagen: muestra?.data.imagenes[0] };
+      suyos.find((p) => p.disponible && p.imagenes.length) ??
+      suyos.find((p) => p.imagenes.length);
+    const total = productos.filter((p) => p.categoria === c.id).length;
+    return { ...c, total, imagen: muestra?.imagenes[0] };
   })
   .filter((c) => c.total > 0)
-  .sort((a, b) => b.total - a.total);
+  /* `orden` del catalogo como desempate: dos categorias con el mismo numero
+     de productos quedan en el orden que ya declara src/datos/categorias.ts. */
+  .sort((a, b) => b.total - a.total || a.orden - b.orden);
 
 const fecha = (d: Date) =>
   d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -303,7 +342,7 @@ const heroFoto = heroProducto?.imagenes[0] ? fuentes(heroProducto.imagenes[0].sr
       {
         destacados.map((p, i) => (
           <li data-v-revelar style={`--d:${i}`}>
-            <TarjetaProducto producto={p.data} />
+            <TarjetaProducto producto={p} />
           </li>
         ))
       }
@@ -356,17 +395,17 @@ const heroFoto = heroProducto?.imagenes[0] ? fuentes(heroProducto.imagenes[0].sr
     <div class="v-editorial">
       {
         principal && (
-          <a href={ruta(`/diario/${principal.data.handle}`)} class="v-editorial__principal" data-v-revelar>
+          <a href={ruta(`/diario/${principal.handle}`)} class="v-editorial__principal" data-v-revelar>
             <div class="v-editorial__foto">
-              {principal.data.imagen && (
-                <Imagen src={principal.data.imagen} alt="" tamanos="(max-width: 860px) 94vw, 740px" />
+              {principal.imagen && (
+                <Imagen src={principal.imagen} alt="" tamanos="(max-width: 860px) 94vw, 740px" />
               )}
             </div>
-            <time datetime={principal.data.fecha.toISOString().slice(0, 10)}>
-              {fecha(principal.data.fecha)}
+            <time datetime={principal.fecha.toISOString().slice(0, 10)}>
+              {fecha(principal.fecha)}
             </time>
-            <h3>{principal.data.titulo}</h3>
-            <p>{principal.data.resumen}</p>
+            <h3>{principal.titulo}</h3>
+            <p>{principal.resumen}</p>
           </a>
         )
       }
@@ -374,13 +413,13 @@ const heroFoto = heroProducto?.imagenes[0] ? fuentes(heroProducto.imagenes[0].sr
         {
           lista.map((a, i) => (
             <li data-v-revelar style={`--d:${i}`}>
-              <a href={ruta(`/diario/${a.data.handle}`)}>
+              <a href={ruta(`/diario/${a.handle}`)}>
                 <div class="v-editorial__mini">
-                  {a.data.imagen && <Imagen src={a.data.imagen} alt="" tamanos="96px" />}
+                  {a.imagen && <Imagen src={a.imagen} alt="" tamanos="96px" />}
                 </div>
                 <div>
-                  <time datetime={a.data.fecha.toISOString().slice(0, 10)}>{fecha(a.data.fecha)}</time>
-                  <h3>{a.data.titulo}</h3>
+                  <time datetime={a.fecha.toISOString().slice(0, 10)}>{fecha(a.fecha)}</time>
+                  <h3>{a.titulo}</h3>
                 </div>
               </a>
             </li>

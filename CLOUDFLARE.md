@@ -13,7 +13,58 @@ funcionando, pero las novedades llegan a Workers.
 | Sitio | **https://kaffeeplatz.co** (y `www.`), en producción desde 2026-09-30 |
 | URL de pruebas | https://kaffeeplatz.16ballcreations.workers.dev |
 | DNS | Cloudflare (nameservers `gail` y `houston.ns.cloudflare.com`; registrador GoDaddy) |
-| Configuración | `wrangler.jsonc` (sirve `dist/`) |
+| Configuración | `wrangler.jsonc` (`main` + assets de `dist/`) |
+
+## Modo servidor (fase 1 del panel de administración)
+
+Desde la rama `feature/modo-servidor`, el sitio se construye en **modo
+servidor** con `@astrojs/cloudflare` en vez de como sitio estático puro. Es un
+cambio de **envoltorio**, no de contenido: el objetivo de esta fase es que el
+sitio salga idéntico.
+
+**Qué cambió y por qué:**
+
+| Fichero | Cambio | Por qué |
+|---|---|---|
+| `package.json` | `@astrojs/cloudflare@12.6.13` | Es la última rama del adaptador compatible con Astro 5 (pide `astro ^5.7.0`). La 13.x exige Astro 6 y la 14.x Astro 7: **no se puede subir sin subir Astro**, y Astro está anclado a propósito |
+| `astro.config.mjs` | `output: 'server'` + `adapter: cloudflare(...)` | Lo que pide la opción B del plan. `site` y `base` se conservan tal cual, con su parametrización por `SITE_URL` / `BASE_PATH` |
+| `astro.config.mjs` | `imageService: 'compile'` | `sharp` no corre en un Worker. Con `compile` las imágenes se optimizan en el build (en Node) y en ejecución no se intenta nada. Es lo correcto mientras todo esté prerrenderizado |
+| Las 10 páginas | `export const prerender = true` | En esta fase **nada** es dinámico: el build sigue generando las mismas 47 páginas y el Worker solo las sirve |
+| `wrangler.jsonc` | `main`, `compatibility_flags`, `assets.binding` | `main` apunta al Worker que genera el adaptador. `nodejs_compat` lo necesita el renderizador de Astro. El bloque `routes` **no se tocó** |
+
+**Lo que NO cambió:** la fuente de datos. Las páginas siguen leyendo de
+`getCollection`; D1 llega en la fase 2.
+
+### Cómo volver atrás (R6 del plan)
+
+El sitio está en producción: hay que poder revertir en minutos. Como el
+dominio apunta al Worker `kaffeeplatz`, volver atrás es **volver a desplegar
+la versión estática**.
+
+**Opción 1 — revertir el despliegue desde Cloudflare (lo más rápido, ~1 min).**
+No necesita el repositorio: en el panel, **Workers & Pages → kaffeeplatz →
+Deployments**, se elige el despliegue anterior y **Rollback**. Es el camino a
+usar si el sitio ya está caído.
+
+**Opción 2 — volver a publicar el estático desde git (~3 min).**
+
+```bash
+git checkout main          # main sigue siendo el sitio estatico
+npm ci                     # sin @astrojs/cloudflare
+npm run build              # genera dist/ sin _worker.js
+npx wrangler deploy        # vuelve a publicar como assets puros
+```
+
+Para que esto funcione, `main` **no debe** llevar los cambios de esta fase
+hasta que el modo servidor esté validado en producción. Mientras tanto viven
+en `feature/modo-servidor`.
+
+**Comprobación antes de dar por buena la vuelta atrás:** que `dist/` NO
+contenga `_worker.js`, y que `wrangler.jsonc` no tenga `main`. Si queda
+`main` apuntando a un `_worker.js` que ya no se genera, el despliegue falla.
+
+**Ensayar esto una vez antes de publicar**, no suponerlo: el plan lo pide
+explícitamente (R6).
 
 ## Publicar
 
@@ -50,6 +101,46 @@ productos o artículos del respaldo de Shopify, `npm run redirecciones`.
 
 Pendiente en el panel de Cloudflare: **SSL/TLS → Edge Certificates → Always
 Use HTTPS**, para que `http://` redirija a `https://`.
+
+## D1: la base del catálogo y el diario
+
+Desde la fase 2 del plan del panel, el catálogo y el diario viven en **D1**.
+El sitio los lee en cada petición (con caché de borde delante), no del build.
+
+**En esta rama todo es LOCAL.** No se ha creado nada en Cloudflare: el
+`database_id` de `wrangler.jsonc` es un marcador a propósito, para que un
+despliegue accidental falle en vez de escribir en una base equivocada.
+
+```bash
+npm run d1:migrar     # aplica migrations/ a la base local (.wrangler/state/)
+npm run d1:sembrar    # genera tmp/semilla.sql y lo carga
+npm run d1:comparar   # verifica campo a campo contra los JSON/MD
+```
+
+### Lo que falta para publicar (fases 0 y 8 del plan)
+
+1. `npx wrangler d1 create kaffeeplatz` y pegar el `database_id` real en
+   `wrangler.jsonc`, sustituyendo el marcador.
+2. `npx wrangler d1 migrations apply kaffeeplatz --remote`.
+3. Revisar `tmp/semilla.sql` **antes** de cargarlo, y
+   `npx wrangler d1 execute kaffeeplatz --remote --file tmp/semilla.sql`.
+4. **Workers Paid** antes de abrir al público (R4 del plan): son 5 USD al mes y
+   quitan de encima el modo de fallo "la tienda se apaga a mediodía porque se
+   acabó la cuota del plan gratuito". Desde el 1 sep 2026 las consultas
+   **fallan** al pasarse, no se degradan.
+5. Probar en `kaffeeplatz.16ballcreations.workers.dev` antes de tocar el
+   dominio.
+
+### Si D1 se cae, el sitio NO se cae (R1)
+
+Tres capas, probadas: (1) D1 responde y la página se guarda en la Cache API;
+(2) D1 falla y se sirve **la copia aunque esté vencida**, registrando el fallo;
+(3) no hay copia → página de cortesía con el WhatsApp de Andreina y **503 con
+`Retry-After`**. Nunca un 500 desnudo ni un 200 con la tienda vacía.
+
+Para distinguirlo desde fuera, las respuestas de emergencia llevan la cabecera
+`X-KP-Origen` (`cache-vencida` o `cortesia`). Si aparece en producción, algo
+pasa aunque la tienda se vea bien.
 
 ## Despliegue automático (opcional)
 

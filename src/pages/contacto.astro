@@ -14,6 +14,11 @@ import Icono from '../components/Icono.astro';
 import { SITIO } from '../datos/sitio';
 import { ENVIOS } from '../datos/guias';
 
+
+/* FASE 1 (plan del panel, B.3): en modo servidor esta pagina sigue
+   prerenderizandose en el build. Se quitara cuando lea de D1 (fase 3). */
+export const prerender = true;
+
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ContactPage',

@@ -5,12 +5,13 @@
  * NEUTRA: sin decisiones visuales. Ganchos data-kp-articulo-*.
  * Slots: "media", "despues-resumen".
  */
-import type { CollectionEntry } from 'astro:content';
+/* FASE 3: misma forma que antes, declarada en src/datos/formas.ts. */
+import type { Articulo } from '../datos/formas';
 import Imagen from './Imagen.astro';
 import { ruta } from '../datos/sitio';
 
 interface Props {
-  articulo: CollectionEntry<'diario'>['data'];
+  articulo: Articulo;
   clase?: string;
   prioridad?: boolean;
   mostrarResumen?: boolean;

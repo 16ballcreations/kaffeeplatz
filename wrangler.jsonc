@@ -2,9 +2,24 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "kaffeeplatz",
   "compatibility_date": "2026-09-30",
-  // Sitio estático: solo se sirve lo que genera `npm run build` (dist/).
+  // `nodejs_compat` lo necesita el Worker que genera @astrojs/cloudflare para
+  // el renderizador de Astro. Sin esto el Worker no arranca.
+  "compatibility_flags": ["nodejs_compat"],
+
+  // FASE 1 del plan del panel: el sitio pasa de assets puros a Worker.
+  // `main` es el punto de entrada que genera el adaptador en cada build.
+  //
+  // El reparto no cambia respecto a hoy: TODAS las paginas siguen
+  // prerenderizadas, salen a dist/ como HTML y se sirven como assets desde el
+  // borde. `run_worker_first` queda en false (el valor por defecto) para que
+  // el asset gane siempre que exista, y el Worker solo atienda lo que no esta
+  // en disco. Cuando la fase 3 haga dinamicas /catalogo y las fichas, esas
+  // rutas dejaran de existir como fichero y caeran solas en el Worker.
+  "main": "./dist/_worker.js/index.js",
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    // El Worker necesita el binding para poder delegar en el asset estatico.
+    "binding": "ASSETS"
   },
   // Dirección de pruebas: https://kaffeeplatz.16ballcreations.workers.dev
   // Se mantiene aunque llegue el dominio, para revisar sin tocarlo.
@@ -15,6 +30,23 @@
   "routes": [
     { "pattern": "kaffeeplatz.co", "custom_domain": true },
     { "pattern": "www.kaffeeplatz.co", "custom_domain": true }
+  ],
+  // FASE 2 del plan del panel: la base de datos del catalogo y el diario.
+  //
+  // `database_id` es un PLACEHOLDER a proposito. La fase 2 trabaja SOLO en
+  // local (`wrangler d1 ... --local`), que guarda la base en .wrangler/state/
+  // y NO necesita que exista nada en Cloudflare. Crear la base remota es de la
+  // fase 0/8 y lo hace una persona con la cuenta delante, no un script: ese
+  // comando (`wrangler d1 create kaffeeplatz`) imprime el id real, que se pega
+  // aqui sustituyendo esta linea. Dejarlo asi hace que un despliegue accidental
+  // falle en vez de escribir en una base equivocada.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "kaffeeplatz",
+      "database_id": "PENDIENTE-crear-con-wrangler-d1-create",
+      "migrations_dir": "migrations"
+    }
   ],
   "observability": {
     "enabled": true

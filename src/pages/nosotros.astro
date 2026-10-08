@@ -11,6 +11,11 @@ import Base from '../layouts/Base.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import Icono from '../components/Icono.astro';
 import { SITIO, ruta, recurso } from '../datos/sitio';
+
+/* FASE 1 (plan del panel, B.3): en modo servidor esta pagina sigue
+   prerenderizandose en el build. Se quitara cuando lea de D1 (fase 3). */
+export const prerender = true;
+
 ---
 
 <Base

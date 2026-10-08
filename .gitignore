@@ -24,3 +24,4 @@ propuestas/*/marca/
 
 # Estado local de wrangler
 .wrangler/
+tmp/

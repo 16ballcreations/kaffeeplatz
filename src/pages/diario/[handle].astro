@@ -2,8 +2,6 @@
 /**
  * /diario/[handle] — Articulo del diario. 16 paginas.
  */
-import type { GetStaticPaths } from 'astro';
-import { getCollection, render, type CollectionEntry } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Imagen from '../../components/Imagen.astro';
 import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
@@ -11,32 +9,66 @@ import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
 import TarjetaProducto from '../../components/TarjetaProducto.astro';
 import { SITIO, ruta } from '../../datos/sitio';
 import { GUIA_DE_PRODUCTO } from '../../datos/guias';
+import { obtenerArticulo, obtenerArticulos, articuloRetirado } from '../../datos/diario';
+import {
+  obtenerProductos,
+  respuestaDeEmergencia,
+  marcarEtiquetas,
+} from '../../datos/catalogo';
 
-export const getStaticPaths: GetStaticPaths = async () => {
-  const articulos = await getCollection('diario');
-  const productos = await getCollection('productos');
-  return articulos.map((a) => ({
-    params: { handle: a.data.handle },
-    props: { articulo: a, todos: articulos, productos },
-  }));
-};
 
-interface Props {
-  articulo: CollectionEntry<'diario'>;
-  todos: CollectionEntry<'diario'>[];
-  productos: CollectionEntry<'productos'>[];
+/* FASE 3: los 16 articulos pasan a servirse desde D1. Las URLs NO cambian
+   (R3): sigue siendo /diario/<handle> exacto. */
+export const prerender = false;
+
+const handle = Astro.params.handle!;
+
+/* El articulo con su cuerpo, y la lista para "sigue leyendo". Dos consultas:
+   la lista NO trae los cuerpos (16 artículos de varios kB cada uno) porque
+   solo necesita titulo, fecha, resumen y portada. Ver consultas/diario.ts. */
+const [lectura, lecturaTodos] = await Promise.all([
+  obtenerArticulo(Astro.locals, handle),
+  obtenerArticulos(Astro.locals),
+]);
+if (lectura.estado !== 'ok' || lecturaTodos.estado !== 'ok') {
+  return respuestaDeEmergencia(Astro.url, lectura);
 }
 
-const { articulo, todos, productos } = Astro.props as Props;
+const articulo = lectura.datos;
+if (!articulo) {
+  /* R3: igual que con los productos archivados. Un handle que existio y ya no
+     esta publicado es una URL indexada: 301 al indice del diario, que es el
+     sitio util mas cercano. Uno que nunca existio, 404. */
+  const retirado = await articuloRetirado(Astro.locals, handle);
+  if (retirado.estado === 'ok' && retirado.datos) {
+    return Astro.redirect(ruta('/diario'), 301);
+  }
+  return new Response(null, { status: 404 });
+}
+
+const todos = lecturaTodos.datos ?? [];
+
+/* Los productos del metodo son un adorno util: si fallan, el articulo se pinta
+   sin esa fila en vez de no pintarse. */
+const lecturaProductos = await obtenerProductos(Astro.locals);
+const productos = lecturaProductos.estado === 'ok' ? (lecturaProductos.datos ?? []) : [];
+
+marcarEtiquetas(Astro.locals, [`articulo:${handle}`, 'diario']);
 
 /* "Para este método": los productos cuya guia es este articulo (el mismo
    mapa que usa la ficha, leido al reves). Disponibles primero. */
 const delMetodo = productos
-  .filter((p) => GUIA_DE_PRODUCTO[p.data.handle] === articulo.data.handle)
-  .sort((a, b) => Number(b.data.disponible) - Number(a.data.disponible))
+  .filter((p) => GUIA_DE_PRODUCTO[p.handle] === articulo.handle)
+  /* Desempate por `handle`: hay metodos con varios productos igual de
+     disponibles, y el `.slice(0, 4)` de abajo hace que un empate decida quien
+     entra en la fila. Al leer de D1 el orden de llegada lo pone la base. */
+  .sort(
+    (a, b) =>
+      Number(b.disponible) - Number(a.disponible) ||
+      a.handle.localeCompare(b.handle, 'es'),
+  )
   .slice(0, 4);
-const d = articulo.data;
-const { Content } = await render(articulo);
+const d = articulo;
 
 const iso = d.fecha.toISOString().slice(0, 10);
 const fechaLegible = d.fecha.toLocaleDateString('es-CO', {
@@ -47,8 +79,12 @@ const fechaLegible = d.fecha.toLocaleDateString('es-CO', {
 });
 
 const otros = todos
-  .filter((a) => a.data.handle !== d.handle)
-  .sort((a, b) => b.data.fecha.getTime() - a.data.fecha.getTime())
+  .filter((a) => a.handle !== d.handle)
+  .sort(
+    (a, b) =>
+      b.fecha.getTime() - a.fecha.getTime() ||
+      a.handle.localeCompare(b.handle, 'es'),
+  )
   .slice(0, 3);
 
 const jsonLd = {
@@ -109,9 +145,19 @@ const jsonLd = {
       )
     }
 
-    <div data-kp-prosa>
-      <Content />
-    </div>
+    {/*
+      `set:html` en vez de `<Content />`: leyendo de D1 no hay componente que
+      renderizar, hay HTML ya hecho. `cuerpo_html` se renderiza y se sanea AL
+      GUARDAR (B.1), no al leer, por dos razones: convertir Markdown en cada
+      visita es gasto por peticion, y asi el HTML que llega al publico ya paso
+      por el filtro.
+
+      REGLA DEL PLAN (B.5), y este es uno de los dos unicos sitios donde se
+      aplica: `set:html` SOLO con `cuerpo_html` y `descripcion_html`, que ya
+      pasaron por el saneador. En ningun otro sitio. Todo lo demas (titulos,
+      alt, nombres de variante) lo escapa Astro solo con `{titulo}`.
+    */}
+    <div data-kp-prosa set:html={d.cuerpoHtml} />
 
     <aside data-kp-articulo-cierre>
       <p>¿Te quedó alguna duda sobre el método o el equipo? Escríbenos y lo vemos contigo.</p>
@@ -134,7 +180,7 @@ const jsonLd = {
         <ul data-kp-rejilla="productos" class="v-carril">
           {delMetodo.map((p) => (
             <li>
-              <TarjetaProducto producto={p.data} />
+              <TarjetaProducto producto={p} />
             </li>
           ))}
         </ul>
@@ -151,7 +197,7 @@ const jsonLd = {
         <ul data-kp-rejilla="articulos">
           {otros.map((a) => (
             <li>
-              <TarjetaArticulo articulo={a.data} />
+              <TarjetaArticulo articulo={a} />
             </li>
           ))}
         </ul>
