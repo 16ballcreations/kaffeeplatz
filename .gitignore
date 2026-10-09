@@ -31,3 +31,4 @@ tmp/
 # `wrangler secret put` en produccion. Ver src/admin/sesion.ts.
 .dev.vars
 .dev.vars.*
+.playwright-mcp/
