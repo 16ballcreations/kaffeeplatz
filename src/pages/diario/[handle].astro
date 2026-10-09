@@ -9,6 +9,7 @@ import TarjetaProducto from '../../components/TarjetaProducto.astro';
 import { SITIO, ruta } from '../../datos/sitio';
 import { GUIA_DE_PRODUCTO } from '../../datos/guias';
 import { obtenerArticulo, obtenerArticulos, articuloRetirado } from '../../datos/diario';
+import { conStock } from '../../datos/inventario';
 import {
   obtenerProductos,
   respuestaDeEmergencia,
@@ -50,7 +51,10 @@ const todos = lecturaTodos.datos ?? [];
 /* Los productos del metodo son un adorno util: si fallan, el articulo se pinta
    sin esa fila en vez de no pintarse. */
 const lecturaProductos = await obtenerProductos(Astro.locals);
-const productos = lecturaProductos.estado === 'ok' ? (lecturaProductos.datos ?? []) : [];
+/* `conStock`: con el inventario encendido, las tarjetas topan por stock como
+   en el catalogo. Apagado devuelve el mismo array. */
+const productos =
+  lecturaProductos.estado === 'ok' ? await conStock(Astro.locals, lecturaProductos.datos ?? []) : [];
 
 marcarEtiquetas(Astro.locals, [`articulo:${handle}`, 'diario']);
 

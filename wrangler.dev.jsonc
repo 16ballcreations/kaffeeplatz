@@ -61,6 +61,12 @@
     "crons": ["*/5 * * * *"]
   },
 
+  // Fotos subidas desde el panel (fase 6). Bucket de PRUEBAS, aparte del de
+  // produccion: lo que se suba aqui no aparece en kaffeeplatz.co.
+  "r2_buckets": [
+    { "binding": "MEDIOS", "bucket_name": "kaffeeplatz-medios-dev" }
+  ],
+
   "observability": {
     "enabled": true
   }

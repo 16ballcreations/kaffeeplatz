@@ -60,6 +60,7 @@ import { SITIO, ruta } from '../datos/sitio';
 import { ENVIOS } from '../datos/guias';
 import { ENVIO_GRATIS_DESDE, TARIFA_PLANA_ENVIO, formatearPesos } from '../datos/envio';
 import { obtenerProductos, respuestaDeEmergencia, marcarEtiquetas } from '../datos/catalogo';
+import { conStock } from '../datos/inventario';
 import type { Catalogo } from '../scripts/carrito';
 /* Lo que el tope necesita decir (motivo bajo la cantidad, aviso de recorte).
    Hoja propia: v2.css ya pasa de 3.900 lineas y no se engorda. */
@@ -85,8 +86,14 @@ marcarEtiquetas(Astro.locals, ['catalogo']);
 /* El catalogo reducido a lo que el carrito necesita pintar. Nada mas: esto
    viaja en el HTML de la pagina. La capa de datos ya devuelve la forma que
    devolvia `getCollection` en `.data`, asi que el mapeo es el de siempre. */
+/* Con el inventario APAGADO `conStock` devuelve el mismo array y nada cambia.
+   Encendido, cada variante lleva su `stockDisponible` y el `+` de una linea
+   no pasa de lo que hay: es la tercera via de agregar, junto a la ficha y la
+   tarjeta del catalogo, y las tres topan con el mismo numero. */
+const conTopes = await conStock(Astro.locals, lectura.datos);
+
 const catalogo: Catalogo = Object.fromEntries(
-  lectura.datos.map((d) => {
+  conTopes.map((d) => {
     const img = d.imagenes[0];
     return [
       d.handle,
@@ -101,6 +108,7 @@ const catalogo: Catalogo = Object.fromEntries(
           precio: v.precio,
           precioFormateado: v.precioFormateado,
           disponible: v.disponible,
+          ...(v.stockDisponible !== undefined ? { stockDisponible: v.stockDisponible } : {}),
         })),
         ...(img ? { imagen: { src: img.src, alt: img.alt } } : {}),
       },
@@ -412,7 +420,7 @@ const otras = ENVIOS[1];
         p.variantes.map((v) => ({
           handle: p.handle,
           varianteId: v.id,
-          tope: topeDe({ disponible: p.disponible && v.disponible }),
+          tope: topeDe({ disponible: p.disponible && v.disponible, stockDisponible: v.stockDisponible }),
         })),
       ),
     );

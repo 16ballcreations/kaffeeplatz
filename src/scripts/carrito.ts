@@ -81,6 +81,8 @@ export interface VarianteCatalogo {
   precio: number;
   precioFormateado: string;
   disponible: boolean;
+  /** Solo con el inventario encendido: unidades que se pueden vender. */
+  stockDisponible?: number;
 }
 
 /** Un producto del catalogo, reducido a lo que el carrito necesita. */
