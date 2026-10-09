@@ -1,0 +1,87 @@
+---
+/**
+ * _ArticuloCompleto — el cuerpo de un artículo del diario: encabezado,
+ * portada, texto y cierre. Sin layout, sin "sigue leyendo".
+ *
+ * POR QUE ESTA PIEZA SALIO DE `[handle].astro`
+ * ===========================================================================
+ * La vista previa del panel (`/admin/diario/vista-previa`) tiene que pintar el
+ * artículo EXACTAMENTE como la tienda. Copiar este marcado allí habría dado
+ * dos versiones que con el primer retoque de diseño dejan de coincidir, y una
+ * vista previa que miente es peor que no tenerla. Con una sola pieza que usan
+ * las dos páginas, «igual que en la tienda» es cierto por construcción.
+ *
+ * Vive en `src/pages/diario/` con `_` delante (Astro no la convierte en ruta)
+ * para que quien toque el diseño del artículo la encuentre al lado de la
+ * página que la usa.
+ */
+import Imagen from '../../components/Imagen.astro';
+import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
+import { ruta } from '../../datos/sitio';
+import type { Articulo } from '../../datos/formas';
+
+interface Props {
+  articulo: Pick<Articulo, 'titulo' | 'fecha' | 'autor' | 'resumen' | 'imagen' | 'cuerpoHtml'>;
+}
+
+const { articulo: d } = Astro.props as Props;
+
+const iso = d.fecha.toISOString().slice(0, 10);
+const fechaLegible = d.fecha.toLocaleDateString('es-CO', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<article data-kp-articulo-completo class="v-articulo v-limite">
+  <header data-kp-articulo-encabezado>
+    <p data-kp-kicker>Diario</p>
+    <h1>{d.titulo}</h1>
+    <p data-kp-articulo-meta>
+      <time datetime={iso}>{fechaLegible}</time> · {d.autor}
+    </p>
+    {d.resumen && <p data-kp-entradilla>{d.resumen}</p>}
+  </header>
+
+  {
+    d.imagen && (
+      <figure data-kp-articulo-portada>
+        <Imagen
+          src={d.imagen}
+          alt={`Portada de: ${d.titulo}`}
+          prioridad
+          clase="w-full h-auto"
+          tamanos="(max-width: 1100px) 94vw, 1024px"
+        />
+      </figure>
+    )
+  }
+
+  {/*
+    `set:html` en vez de `<Content />`: leyendo de D1 no hay componente que
+    renderizar, hay HTML ya hecho. `cuerpo_html` se renderiza y se sanea AL
+    GUARDAR (B.1), no al leer, por dos razones: convertir Markdown en cada
+    visita es gasto por peticion, y asi el HTML que llega al publico ya paso
+    por el filtro. La vista previa del panel le pasa la salida de
+    `cuerpoAHtml`, que es la misma funcion que se usa al guardar.
+
+    REGLA DEL PLAN (B.5), y este es uno de los dos unicos sitios donde se
+    aplica: `set:html` SOLO con `cuerpo_html` y `descripcion_html`, que ya
+    pasaron por el saneador. En ningun otro sitio. Todo lo demas (titulos,
+    alt, nombres de variante) lo escapa Astro solo con `{titulo}`.
+  */}
+  <div data-kp-prosa set:html={d.cuerpoHtml} />
+
+  <aside data-kp-articulo-cierre>
+    <p>¿Te quedó alguna duda sobre el método o el equipo? Escríbenos y lo vemos contigo.</p>
+    <BotonWhatsApp
+      clase="v-boton v-boton--oro"
+      mensaje={`Hola KaffeePlatz, leí "${d.titulo}" y tengo una duda.`}
+    >
+      Preguntar por WhatsApp
+    </BotonWhatsApp>
+    <p><a href={ruta('/catalogo')}>Ver el catálogo</a></p>
+  </aside>
+</article>

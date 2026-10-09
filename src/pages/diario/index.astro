@@ -10,7 +10,7 @@ import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
 import { ruta } from '../../datos/sitio';
 import { CATEGORIAS_DIARIO } from '../../datos/categorias';
 import FiltrosCategoria from '../../components/FiltrosCategoria.astro';
-import { obtenerArticulos } from '../../datos/diario';
+import { obtenerArticulos, obtenerTemas } from '../../datos/diario';
 import { respuestaDeEmergencia, marcarEtiquetas } from '../../datos/catalogo';
 
 
@@ -18,7 +18,10 @@ import { respuestaDeEmergencia, marcarEtiquetas } from '../../datos/catalogo';
    un articulo nuevo aparezca sin despliegue (B.3). */
 export const prerender = false;
 
-const lectura = await obtenerArticulos(Astro.locals);
+const [lectura, lecturaTemas] = await Promise.all([
+  obtenerArticulos(Astro.locals),
+  obtenerTemas(Astro.locals),
+]);
 if (lectura.estado !== 'ok' || !lectura.datos) {
   return respuestaDeEmergencia(Astro.url, lectura);
 }
@@ -35,7 +38,13 @@ for (const a of articulos) {
   conteo.set(a.categoria, (conteo.get(a.categoria) ?? 0) + 1);
 }
 
-const temasConArticulos = CATEGORIAS_DIARIO.filter((c) => (conteo.get(c.id) ?? 0) > 0).sort(
+/* FASE 7: los temas salen de D1 (los edita la dueña en el panel). Si esa
+   lectura falla, la lista de categorias.ts: los filtros con los nombres de
+   ayer son mejores que un diario sin pintar. */
+const temas =
+  lecturaTemas.estado === 'ok' && lecturaTemas.datos?.length ? lecturaTemas.datos : CATEGORIAS_DIARIO;
+
+const temasConArticulos = temas.filter((c) => (conteo.get(c.id) ?? 0) > 0).sort(
   (a, b) => a.orden - b.orden,
 );
 
