@@ -29,7 +29,12 @@
 import Panel from '../../layouts/Panel.astro';
 import { SITIO, ruta } from '../../datos/sitio';
 import { baseAdmin } from '../../admin/base';
-import { loQueNecesitaAtencion, resumenDeLaTienda, type Aviso } from '../../admin/atencion';
+import {
+  avisosDelInventario,
+  loQueNecesitaAtencion,
+  resumenDeLaTienda,
+  type Aviso,
+} from '../../admin/atencion';
 
 export const prerender = false;
 
@@ -48,7 +53,15 @@ let sinBase = false;
 
 try {
   const db = baseAdmin(Astro.locals);
-  [avisos, resumen] = await Promise.all([loQueNecesitaAtencion(db), resumenDeLaTienda(db)]);
+  const [generales, inventario, r] = await Promise.all([
+    loQueNecesitaAtencion(db),
+    /* No lanza: si el inventario no se puede leer, sus tarjetas lo dicen y
+       las demás siguen. */
+    avisosDelInventario(Astro.locals),
+    resumenDeLaTienda(db),
+  ]);
+  avisos = [...generales, ...inventario];
+  resumen = r;
 } catch (fallo) {
   /* Ni binding. No es un fallo de consulta, es configuración: se dice en
      pantalla con lo que hay que hacer, en vez de un 500 en blanco. */
@@ -105,10 +118,9 @@ const nombre = SITIO.dueña.split(' ')[0];
                 .filter(Boolean)
                 .join(' ');
 
-              /* Un aviso con 0 o con fallo NO es un enlace: no hay nada que ir
-                 a ver, y las pantallas de destino son de las fases 5-7 y
-                 todavía no existen. Cuando existan, basta con poner `listo` en
-                 el menú y quitar esta condición. */
+              /* Con algo pendiente, la tarjeta ES el enlace: lleva a la lista
+                 ya filtrada. Con 0 o con fallo, no: no hay nada que ir a ver,
+                 y un enlace a una lista vacía es un toque perdido. */
               const contenido = (
                 <>
                   <span class="p-aviso__cifra">{a.fallo ? '—' : a.cuenta}</span>
@@ -121,7 +133,15 @@ const nombre = SITIO.dueña.split(' ')[0];
                 </>
               );
 
-              return <li><div class={clases}>{contenido}</div></li>;
+              return (
+                <li>
+                  {!a.fallo && (a.cuenta ?? 0) > 0 ? (
+                    <a class={clases} href={ruta(a.href)}>{contenido}</a>
+                  ) : (
+                    <div class={clases}>{contenido}</div>
+                  )}
+                </li>
+              );
             })}
           </ul>
         </section>
@@ -140,15 +160,10 @@ const nombre = SITIO.dueña.split(' ')[0];
           </ul>
         </section>
 
-        <section class="p-seccion" aria-labelledby="t-pronto">
-          <h2 class="p-seccion__titulo" id="t-pronto">Todavía no está listo</h2>
-          <p class="p-entradilla">
-            Editar productos, cargar fotos y escribir en el diario llegan en las
-            siguientes entregas. Mientras tanto puedes
-            <a href={ruta('/catalogo')} target="_blank" rel="noopener"> ver la tienda</a> tal como la
-            ve un cliente.
-          </p>
-        </section>
+        <p class="p-entradilla">
+          <a href={ruta('/catalogo')} target="_blank" rel="noopener">Ver la tienda</a> tal como la ve
+          un cliente.
+        </p>
       </>
     )
   }

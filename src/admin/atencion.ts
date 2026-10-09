@@ -25,6 +25,17 @@
  * para el borrado reversible (R7): un producto archivado por error es dinero, y
  * sin verlo en alguna parte nadie lo descubre.
  *
+ * Y TRES DEL INVENTARIO (fase 9), en `avisosDelInventario`
+ * ---------------------------------------------------------------------------
+ *   Paquetes por despachar    alguien pagó y espera su caja
+ *   Cosas en negativo         se vendió más de lo que había (G.4.4)
+ *   Cuentas que no cuadran    contador y libro discrepan: es un bug (G.4)
+ *
+ * Los paquetes van SIEMPRE: una venta por WhatsApp crea su paquete con el
+ * inventario apagado igual, y olvidarse de mandarlo no depende del interruptor.
+ * Los dos de stock, solo con el inventario ENCENDIDO: apagado, nadie está
+ * llevando la cuenta y un «−2» sería ruido sobre números que no se usan.
+ *
  * CADA CONSULTA VA EN SU PROPIO `try/catch`
  * ---------------------------------------------------------------------------
  * Es el patrón 7 de A.6 llevado al extremo que el panel necesita: en 16bc, un
@@ -38,6 +49,7 @@
  */
 
 import type { BaseAdmin } from './base';
+import { inventarioDelPanel } from '../datos/inventario';
 
 export interface Aviso {
   clave: string;
@@ -46,7 +58,8 @@ export interface Aviso {
   /** Qué hacer, en una frase. */
   detalle: string;
   cuenta: number | null;
-  /** A dónde lleva. Las fases 5–7 crean estos destinos; hoy puede no existir. */
+  /** A dónde lleva, sin la base (la página le pasa `ruta()`). Debe existir y
+      llegar ya filtrado: la tarjeta es un atajo, no un «búscalo tú». */
   href: string;
   /** `true` si la consulta falló: la tarjeta lo dice en vez de mentir con un 0. */
   fallo: boolean;
@@ -138,6 +151,85 @@ export async function loQueNecesitaAtencion(db: BaseAdmin): Promise<Aviso[]> {
       fallo: archivados === null,
     },
   ];
+}
+
+/**
+ * Los avisos del inventario. Aparte de `loQueNecesitaAtencion` porque leen por
+ * la fachada `inventarioDelPanel` (la misma que usan sus pantallas: así la
+ * cifra de la portada y la lista a la que lleva salen de la MISMA consulta y
+ * no pueden contar distinto) y esa fachada recibe `locals`, no la base.
+ *
+ * Cada lectura con su propio try/catch, como `contar`: las de la fachada ya no
+ * lanzan (devuelven una `Lectura`), pero crear la fachada sí lanza si no hay
+ * binding, y eso no puede tumbar las otras tarjetas.
+ */
+export async function avisosDelInventario(locals: unknown): Promise<Aviso[]> {
+  let inv: ReturnType<typeof inventarioDelPanel>;
+  try {
+    inv = inventarioDelPanel(locals);
+  } catch (fallo) {
+    console.error('[admin] inventario sin base:', fallo instanceof Error ? fallo.message : fallo);
+    return [];
+  }
+
+  /** Una lectura de la fachada convertida en cifra; `null` si falló. */
+  async function cifra<T>(
+    lectura: () => Promise<{ estado: string; datos: T | null }>,
+    contarlo: (d: T) => number,
+  ): Promise<number | null> {
+    try {
+      const l = await lectura();
+      return l.estado === 'ok' && l.datos !== null ? contarlo(l.datos) : null;
+    } catch (fallo) {
+      console.error('[admin] no se pudo contar:', fallo instanceof Error ? fallo.message : fallo);
+      return null;
+    }
+  }
+
+  /* `activo()` ya tiene su fallo seguro (apagado), así que no hace falta otro
+     catch. Va en el mismo Promise.all que los paquetes para no sumar latencia. */
+  const [activo, paquetes] = await Promise.all([
+    inv.activo(),
+    cifra(inv.paquetes, (d) => d.pendientes.length),
+  ]);
+
+  const avisos: Aviso[] = [
+    {
+      clave: 'paquetes',
+      titulo: 'Paquetes por despachar',
+      detalle: 'Ya están vendidos y esperan salir.',
+      cuenta: paquetes,
+      href: '/admin/despachos',
+      fallo: paquetes === null,
+    },
+  ];
+  if (!activo) return avisos;
+
+  const [negativos, descuadres] = await Promise.all([
+    /* Mismo criterio que la pantalla de inventario (`fisico < 0`), que es
+       adonde lleva la tarjeta y donde se ven con nombre. */
+    cifra(inv.todo, (d) => d.filter((v) => v.fisico < 0).length),
+    cifra(inv.cuadre, (d) => d.length),
+  ]);
+  avisos.push(
+    {
+      clave: 'negativos',
+      titulo: 'Cosas con stock en negativo',
+      detalle: 'Se vendió más de lo que había. Corrige la cuenta cuando sepas cuántos hay.',
+      cuenta: negativos,
+      href: '/admin/inventario',
+      fallo: negativos === null,
+    },
+    {
+      clave: 'cuadre',
+      titulo: 'Cuentas que no cuadran',
+      detalle: 'El stock no coincide con su historial. No es un error tuyo: avisa a soporte.',
+      cuenta: descuadres,
+      href: '/admin/inventario',
+      fallo: descuadres === null,
+    },
+  );
+  return avisos;
 }
 
 /** El resumen de la tienda. Cuentas, no métricas: lo que hay, contado. */

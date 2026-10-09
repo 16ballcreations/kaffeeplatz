@@ -22,6 +22,7 @@ import {
   cuentasPorEstado,
   temasDelDiario,
   type EstadoLista,
+  type FiltroLista,
   type FilaLista,
 } from '../../../datos/consultas/diario-panel';
 import '../../../styles/panel-diario.css';
@@ -35,7 +36,13 @@ const PESTANAS: { clave: EstadoLista; etiqueta: string; vacio: string }[] = [
 ];
 
 const pedido = Astro.url.searchParams.get('estado');
-const estado: EstadoLista = PESTANAS.some((p) => p.clave === pedido) ? (pedido as EstadoLista) : 'publicados';
+/* `sin-portada` es el atajo de la portada del panel: se ve como la pestaña
+   «Publicados», recortada, con un aviso para volver a verlos todos. */
+const soloSinPortada = pedido === 'sin-portada';
+const estado: EstadoLista = PESTANAS.some((p) => p.clave === pedido)
+  ? (pedido as EstadoLista)
+  : 'publicados';
+const filtro: FiltroLista = soloSinPortada ? 'sin-portada' : estado;
 
 let filas: FilaLista[] = [];
 let cuentas: Record<EstadoLista, number> | null = null;
@@ -44,7 +51,7 @@ let fallo = false;
 
 try {
   const db = baseAdmin(Astro.locals);
-  const [f, c, t] = await Promise.all([articulosDelPanel(db, estado), cuentasPorEstado(db), temasDelDiario(db)]);
+  const [f, c, t] = await Promise.all([articulosDelPanel(db, filtro), cuentasPorEstado(db), temasDelDiario(db)]);
   filas = f;
   cuentas = c;
   nombreTema = new Map(t.map((x) => [x.id, x.nombre]));
@@ -79,13 +86,22 @@ const pestana = PESTANAS.find((p) => p.clave === estado)!;
     }
   </nav>
 
+  {soloSinPortada && (
+    <p class="p-entradilla">
+      Solo los publicados sin foto de portada.{' '}
+      <a href={ruta('/admin/diario?estado=publicados')}>Ver todos los publicados</a>
+    </p>
+  )}
+
   {
     fallo ? (
       <p class="p-error" role="alert">
         No se pudieron cargar los artículos en este momento. Vuelve a intentarlo en un minuto.
       </p>
     ) : filas.length === 0 ? (
-      <p class="p-entradilla">{pestana.vacio}</p>
+      <p class="p-entradilla">
+        {soloSinPortada ? 'Todos los artículos publicados tienen foto de portada.' : pestana.vacio}
+      </p>
     ) : (
       <ul class="pd-lista">
         {filas.map((a) => (
