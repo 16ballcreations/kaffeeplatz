@@ -15,9 +15,10 @@
  * PBKDF2 Y NO SHA-256 A SECAS
  * ---------------------------------------------------------------------------
  * Un SHA-256 de una clave humana se rompe por fuerza bruta a millones por
- * segundo. PBKDF2 con 210.000 iteraciones hace que cada intento cueste, y la
- * sal hace que no se pueda precalcular una tabla. El número sigue la
- * recomendación vigente de OWASP para PBKDF2-HMAC-SHA256.
+ * segundo. PBKDF2 con 100.000 iteraciones hace que cada intento cueste, y la
+ * sal hace que no se pueda precalcular una tabla. El número NO es el que
+ * recomienda OWASP (pide más): es el tope que admite Workers (ver
+ * `ITERACIONES` abajo), y lo compensa que la clave sea larga y al azar.
  *
  * No se usa Argon2 ni bcrypt porque no están en el runtime de Workers:
  * meterlos obligaría a un paquete WASM. PBKDF2 está en WebCrypto, que es
@@ -25,7 +26,7 @@
  *
  * EL COSTE ES DELIBERADO Y ESTA ACOTADO
  * ---------------------------------------------------------------------------
- * 210.000 iteraciones son decenas de milisegundos de CPU. Eso se paga SOLO al
+ * 100.000 iteraciones son decenas de milisegundos de CPU. Eso se paga SOLO al
  * entrar, no en cada petición: lo que se comprueba en cada visita al panel es
  * el id de sesión en la tabla `sesiones`, que es un índice. Y el límite de
  * intentos de `intentos.ts` se comprueba ANTES de derivar el hash, así que un
