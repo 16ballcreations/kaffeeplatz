@@ -54,10 +54,16 @@ import BotonWhatsApp from './BotonWhatsApp.astro';
 import Icono from './Icono.astro';
 import { ruta } from '../datos/sitio';
 import { nombreDeOpcion } from '../datos/guias';
+/* El tope de la variante, del unico sitio que lo decide. La tarjeta no define
+   ningun limite propio: solo imprime el que ya existe. */
+import { topeDe } from '../scripts/topes';
 /* Hoja PROPIA: v2.css ya pasa de 3.900 lineas y es el mayor problema de
    mantenimiento del repo. Lo nuevo no engorda ese fichero. Astro la incluye
    una vez por build aunque el componente se pinte 25 veces. */
 import '../styles/acciones-tarjeta.css';
+/* El estado "ya tienes el maximo" del boton de compra. Misma hoja que usan
+   /carrito y el selector: todo lo que el tope necesita decir, en un sitio. */
+import '../styles/topes.css';
 
 interface Props {
   producto: Producto;
@@ -91,6 +97,11 @@ const textoElegir = `Elegir ${nombreDeOpcion(producto.opciones)}`;
         script puede convertirlo en boton. Con varias variantes NO lleva ese
         atributo, asi que el script lo deja como enlace a la ficha y aqui no
         hay forma de agregar nada sin elegir antes.
+
+        `data-kp-tope` es el tope de ESA variante, para que el carrito lo
+        aplique sin conocer el catalogo. Lo decide `topeDe()` de
+        src/scripts/topes.ts, el unico sitio del codigo que lo decide: esta
+        tarjeta no define ningun limite propio.
       */}
       <a
         href={enlace}
@@ -98,6 +109,7 @@ const textoElegir = `Elegir ${nombreDeOpcion(producto.opciones)}`;
         data-kp-agregar={unica ? 'true' : undefined}
         data-kp-handle={unica ? producto.handle : undefined}
         data-kp-variante-id={unica ? unica.id : undefined}
+        data-kp-tope={unica ? String(topeDe(unica)) : undefined}
         data-kp-titulo={producto.titulo}
         aria-label={
           unica

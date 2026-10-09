@@ -3,37 +3,38 @@
  * SelectorCantidad — cuantas unidades agregar, en la ficha de producto.
  *
  * ===========================================================================
- * EL TOPE ES PROVISIONAL, Y ES IMPORTANTE SABER POR QUE
+ * EL TOPE NO VIVE AQUI, Y ESO ES EL ARREGLO
  * ===========================================================================
- * El inventario de KaffeePlatz esta DISEÑADO pero NO IMPLEMENTADO. En la base
- * de datos de hoy una variante solo tiene `disponible` (un si/no); no existen
- * `stock_fisico` ni `stock_reservado` en ninguna migracion. El plan los cubre
- * en su fase 9 (`planes/kaffeeplatz-panel-admin.md`, seccion G) y son 14-19 h
- * de trabajo aparte.
+ * Antes este componente DEFINIA el tope (`TOPE_PROVISIONAL` y su `topeDe()`).
+ * Era el agujero: este selector es UNA de las tres entradas al carrito —las
+ * otras son la tarjeta del catalogo y el `+` de /carrito—, asi que un limite
+ * definido aqui no limitaba nada en las otras dos. Y ni aqui limitaba el
+ * total: solo acotaba lo que se añade DE UNA VEZ, asi que poner 10 y pulsar
+ * «Agregar» tres veces dejaba 30 en el carrito.
  *
- * Asi que este selector NO SABE cuantas unidades hay. No se inventa el dato:
- * usa un tope fijo y generoso (`TOPE_PROVISIONAL`), que no es una afirmacion
- * sobre el stock sino un limite de sensatez para que nadie pida 400 prensas
- * por un teclazo. Quien pida mas de lo que hay se entera igual que hoy: al
- * confirmar el pedido por WhatsApp, que es donde se cierra la venta.
+ * Ahora el tope lo decide `topeDe()` de `src/scripts/topes.ts` (unico sitio) y
+ * lo APLICA `src/scripts/carrito.ts`, por donde pasan las tres vias. Este
+ * componente solo lo CONSULTA para pintar el `max` del campo y el `data-tope`
+ * de cada variante. Si este marcado se equivocara, el carrito seguiria sin
+ * dejar pasarse: el limite ya no depende de que la interfaz se acuerde.
+ *
+ * El enganche del inventario (fase 9 del plan, seccion G) esta documentado en
+ * `src/scripts/topes.ts`: es una sola linea y no esta en este fichero.
  *
  * ===========================================================================
- * CUANDO LLEGUE EL INVENTARIO: UNA SOLA LINEA
+ * EL TOPE ES DEL PEDIDO, NO DE LA PULSACION
  * ===========================================================================
- * El dia que `Variante` traiga su cantidad disponible (p. ej.
- * `v.stockDisponible`, calculado como `stock_fisico - stock_reservado` en
- * src/datos/catalogo.ts), hay que tocar UN SOLO SITIO:
+ * El campo se acota a lo que CABE TODAVIA, no al tope entero: con 8 ya en el
+ * carrito y un tope de 10, el selector ofrece como maximo 2. Lo decide el
+ * script, que es quien puede leer el carrito (este frontmatter corre en el
+ * build, cuando no existe ningun carrito).
  *
- *   -> la constante `TOPE_PROVISIONAL` de este fichero, y la linea marcada
- *      con `CAMBIAR AQUI` dentro de `topeDe()`, justo debajo.
- *
- * `topeDe(variante)` ya existe precisamente para eso: es el unico punto del
- * codigo que decide el tope de una variante, y hoy devuelve la constante
- * ignorando su argumento. El resto —el marcado, el script, los limites del
- * campo, el aviso al llegar al maximo— ya trabaja por variante y no cambia:
- * cada radio imprime su `data-tope` y el script lo lee al cambiar de
- * variante. Es decir, el dia que exista el dato, el selector pasa a ser por
- * variante sin tocar nada mas.
+ * Por que acotar el campo y no solo avisar al agregar: el numero que se ve es
+ * una promesa de lo que va a entrar. Dejar teclear 10 para luego meter 2 es
+ * enseñar un numero falso y corregirlo despues del gesto. Acotar lo dice ANTES
+ * —el `+` se apaga y el aviso explica cuanto queda— y de paso el aviso al
+ * agregar sigue existiendo para el caso en que el carrito cambie en otra
+ * pestaña entre que se teclea y se pulsa.
  *
  * ===========================================================================
  * ACCESIBILIDAD: CAMPO EDITABLE, NO role="status"
@@ -71,47 +72,24 @@
  * la cantidad en la conversacion, que es como funciona hoy.
  */
 import type { Variante } from '../datos/formas';
+/* El tope sale de un solo sitio, compartido con el carrito. Este modulo es
+   TypeScript puro (sin DOM) justo para que lo pueda importar un frontmatter. */
+import { topeDe } from '../scripts/topes';
 import '../styles/selector-cantidad.css';
+/* El estado "el carrito ya tiene el maximo". Misma hoja que /carrito y la
+   tarjeta: todo lo que el tope necesita decir, en un sitio. */
+import '../styles/topes.css';
 
 interface Props {
+  /** El handle del producto: el script lo necesita para preguntar al carrito. */
+  handle: string;
   /** La variante marcada al cargar: de ella sale el tope inicial. */
   inicial: Variante;
   /** Todas las variantes: cada una imprime su tope para el script. */
   variantes: Variante[];
 }
 
-const { inicial, variantes } = Astro.props as Props;
-
-/**
- * TOPE PROVISIONAL — maximo de unidades por agregada.
- *
- * ESTA ES LA LINEA QUE DESAPARECE CUANDO LLEGUE EL INVENTARIO (fase 9).
- *
- * No representa el stock: hoy el stock no existe como dato (ver la cabecera
- * de este fichero). Es un limite de sensatez. Diez porque es mas de lo que
- * nadie pide de una cafetera en una tienda que vende por WhatsApp, y lo
- * bastante poco para que un teclazo no genere un pedido absurdo que haya que
- * deshacer en la conversacion.
- *
- * El carrito tiene su propio techo duro de 99 por linea (MAX_CANTIDAD en
- * src/scripts/carrito.ts) y ese NO se toca: es otra cosa, el limite del
- * almacenamiento, y sigue valiendo pase lo que pase aqui.
- */
-const TOPE_PROVISIONAL = 10;
-
-/**
- * El tope de una variante. UNICO punto que lo decide.
- *
- * CAMBIAR AQUI cuando `Variante` traiga su cantidad disponible. La linea del
- * `return` pasa a ser algo como:
- *
- *   return Math.max(0, Math.min(TOPE_PROVISIONAL, v.stockDisponible));
- *
- * ...o directamente `v.stockDisponible` si se decide no poner techo. Nada mas
- * del selector cambia: el marcado ya imprime un tope por variante y el script
- * ya lo lee al cambiar de variante.
- */
-const topeDe = (_v: Variante): number => TOPE_PROVISIONAL;
+const { handle, inicial, variantes } = Astro.props as Props;
 
 const topeInicial = topeDe(inicial);
 ---
@@ -119,6 +97,8 @@ const topeInicial = topeDe(inicial);
 <div
   class="v-cantidad"
   data-kp-cantidad
+  data-handle={handle}
+  data-variante={inicial.id}
   data-tope={String(topeInicial)}
   hidden
 >
@@ -170,9 +150,14 @@ const topeInicial = topeDe(inicial);
     igual que la confirmacion de "Agregado al carrito" de esta misma ficha.
 
     Hace falta porque el boton `+` desactivado explica que no se puede subir
-    mas, pero no DICE por que. Mientras el tope sea provisional el texto no
-    puede hablar de stock —no lo sabemos— asi que dice lo unico que es cierto:
-    que ese es el maximo por pedido y que para mas se habla por WhatsApp.
+    mas, pero no DICE por que. Y ahora hay DOS motivos distintos que el script
+    distingue: o se llego al maximo por pedido, o lo que falta para el maximo
+    ya esta en el carrito. El segundo no se puede adivinar mirando el control,
+    asi que hay que escribirlo.
+
+    Mientras el tope no salga del stock el texto no habla de stock —no lo
+    sabemos— y dice lo unico cierto: cual es el maximo por pedido, cuanto hay
+    ya en el carrito y que para mas se habla por WhatsApp.
   */}
   <p class="v-cantidad__tope" data-kp-cantidad-aviso role="status" aria-live="polite" hidden></p>
 

@@ -50,6 +50,9 @@ import { SITIO, ruta } from '../datos/sitio';
 import { ENVIOS } from '../datos/guias';
 import { ENVIO_GRATIS_DESDE, TARIFA_PLANA_ENVIO, formatearPesos } from '../datos/envio';
 import type { Catalogo } from '../scripts/carrito';
+/* Lo que el tope necesita decir (motivo bajo la cantidad, aviso de recorte).
+   Hoja propia: v2.css ya pasa de 3.900 lineas y no se engorda. */
+import '../styles/topes.css';
 
 const productos = await getCollection('productos');
 
@@ -119,6 +122,28 @@ const otras = ENVIOS[1];
         </BotonWhatsApp>
         <a href={ruta('/catalogo')} class="v-boton v-boton--linea">Ver el catálogo</a>
       </div>
+    </div>
+
+    {/*
+      AVISO DE RECORTE. Para los carritos guardados ANTES de que el tope se
+      aplicara de verdad: los habia con 69 unidades de una variante, porque el
+      `+` de esta pagina no tenia techo. Al cargar se recortan y esto lo
+      explica, nombrando el producto y las dos cantidades.
+
+      Va FUERA de los bloques que se ocultan (un aria-live dentro de algo con
+      [hidden] no anuncia nada) y SIEMPRE en el DOM, solo `hidden`: un nodo
+      creado dentro de una region viva puede no anunciarse. Mismo patron que
+      `[data-carrito-anuncio]` de mas abajo y que los avisos de la ficha.
+
+      No se autorretira a los 6 s como las confirmaciones de "agregado": eso
+      es un cambio que la persona pidio y ya vio; esto es un cambio que NO
+      pidio, y tiene que poder leerlo cuando vuelva la vista a la pantalla.
+    */}
+    <div class="v-aviso v-aviso--recorte" data-carrito-recorte role="status" hidden>
+      <p data-carrito-recorte-texto></p>
+      <p class="v-aviso__nota">
+        Si necesitas más unidades, escríbenos y lo armamos contigo: te responde {SITIO.dueña}.
+      </p>
     </div>
 
     {/* CARRITO VACIO */}
@@ -253,6 +278,10 @@ const otras = ENVIOS[1];
         </p>
       </div>
 
+      {/* La pildora de cantidad y, debajo, el motivo de que el `+` se apague.
+          El motivo va FUERA de la pildora: dentro se colaria entre los
+          botones, que es un inline-flex de tres piezas. */}
+      <div class="v-linea__control">
       <div class="v-linea__cantidad">
         <button type="button" data-linea-menos class="v-paso">
           <span class="sr-only" data-linea-menos-etiqueta></span>
@@ -274,6 +303,15 @@ const otras = ENVIOS[1];
         <button type="button" data-linea-mas class="v-paso">
           <span class="sr-only" data-linea-mas-etiqueta></span>
         </button>
+      </div>
+
+      {/*
+        POR QUE no se puede subir mas. El `+` apagado dice que no se puede;
+        esto dice el motivo. No es una region viva propia: la pagina ya tiene
+        una (`[data-carrito-anuncio]`) y el script anuncia ahi al pulsar, asi
+        que un segundo aria-live por linea duplicaria el anuncio.
+      */}
+      <p class="v-linea__tope" data-linea-tope hidden></p>
       </div>
 
       <div class="v-linea__derecha">
@@ -299,12 +337,16 @@ const otras = ENVIOS[1];
     mensajePedido,
     pesos,
     quitar,
+    recortarGuardado,
+    registrarTopes,
     resolver,
     suscribir,
+    tope,
     vaciar,
     type Catalogo,
     type LineaResuelta,
   } from '../scripts/carrito';
+  import { topeDe } from '../scripts/topes';
 
   /* --- Datos del build ------------------------------------------------- */
   const leerJson = <T,>(selector: string): T | null => {
@@ -333,6 +375,20 @@ const otras = ENVIOS[1];
      estado honesto y util, no una pagina a medias. */
   if (catalogo && reglas && sinJs && vacio && lleno && lista && plantilla) {
     sinJs.remove();
+
+    /* LOS TOPES, del catalogo que ya viaja en esta pagina. `carrito.ts` no
+       conoce el catalogo, asi que se los damos: una entrada por variante,
+       porque el tope es POR VARIANTE y dos colores del mismo producto no lo
+       comparten. `topeDe()` es el unico sitio que lo decide. */
+    registrarTopes(
+      Object.values(catalogo).flatMap((p) =>
+        p.variantes.map((v) => ({
+          handle: p.handle,
+          varianteId: v.id,
+          tope: topeDe({ disponible: p.disponible && v.disponible }),
+        })),
+      ),
+    );
 
     const elSubtotal = document.querySelector<HTMLElement>('[data-carrito-subtotal]');
     const elEnvio = document.querySelector<HTMLElement>('[data-carrito-envio]');
@@ -429,8 +485,23 @@ const otras = ENVIOS[1];
       if (etMas) etMas.textContent = `Agregar una unidad de ${nombre}`;
       menos?.setAttribute('data-signo', '−');
       masBtn?.setAttribute('data-signo', '+');
+      /* EL `+` SE DETIENE EN EL TOPE. Era el segundo agujero: aqui no habia
+         tope ninguno (solo el techo de almacenamiento de 99) y el cliente
+         llego a 69 unidades pulsando. El limite lo aplica `cambiarCantidad()`
+         pase lo que pase; esto es para que se VEA antes de pulsar. */
+      const max = tope(l.handle, l.varianteId);
       if (menos) menos.disabled = l.cantidad <= 1;
-      if (masBtn) masBtn.disabled = l.cantidad >= 99;
+      if (masBtn) masBtn.disabled = l.cantidad >= max;
+      if (cantidad) cantidad.max = String(max);
+
+      /* POR QUE no se puede subir mas. Un boton apagado dice que no se puede,
+         no por que, y el motivo no se adivina mirando. El texto va junto a la
+         cantidad y se anuncia al pulsar (la region viva de la pagina). */
+      const elTope = q<HTMLElement>('[data-linea-tope]');
+      if (elTope && l.cantidad >= max) {
+        elTope.textContent = `Máximo ${max} por pedido`;
+        elTope.hidden = false;
+      }
 
       const subtotal = q<HTMLElement>('[data-linea-subtotal]');
       if (subtotal) subtotal.textContent = l.subtotalFormateado;
@@ -551,13 +622,20 @@ const otras = ENVIOS[1];
         return;
       }
       if (b.hasAttribute('data-linea-mas')) {
-        cambiarCantidad(handle, varianteId, actual + 1);
-        decir(`Cantidad: ${Math.min(99, actual + 1)}.`);
+        const res = cambiarCantidad(handle, varianteId, actual + 1);
+        /* Si el `+` ya no sube, se dice POR QUE: un "Cantidad: 10." repetido
+           cuando nada cambio es peor que el silencio, porque afirma que algo
+           paso. Es el agujero que el cliente reporto desde aqui. */
+        decir(
+          res.recortado
+            ? `Máximo ${res.tope} por pedido. Para más, escríbenos por WhatsApp.`
+            : `Cantidad: ${res.total}.`,
+        );
         return;
       }
       if (b.hasAttribute('data-linea-menos')) {
-        cambiarCantidad(handle, varianteId, actual - 1);
-        decir(`Cantidad: ${Math.max(1, actual - 1)}.`);
+        const res = cambiarCantidad(handle, varianteId, actual - 1);
+        decir(`Cantidad: ${res.total}.`);
       }
     });
 
@@ -572,10 +650,15 @@ const otras = ENVIOS[1];
       if (!handle || !varianteId) return;
       const n = Number(input.value);
       /* Vacio o basura: se vuelve a 1, no se borra la linea por un teclazo.
-         Para quitarla esta el boton de quitar. */
-      const limpio = Number.isFinite(n) && n >= 1 ? Math.min(99, Math.floor(n)) : 1;
-      cambiarCantidad(handle, varianteId, limpio);
-      decir(`Cantidad: ${limpio}.`);
+         Para quitarla esta el boton de quitar. El tope lo aplica
+         `cambiarCantidad()`, asi que teclear 69 a mano tampoco pasa. */
+      const limpio = Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+      const res = cambiarCantidad(handle, varianteId, limpio);
+      decir(
+        res.recortado
+          ? `Máximo ${res.tope} por pedido: la cantidad queda en ${res.total}.`
+          : `Cantidad: ${res.total}.`,
+      );
     });
 
     btnVaciar?.addEventListener('click', () => {
@@ -587,5 +670,45 @@ const otras = ENVIOS[1];
        pagina o de otra pestana. */
     suscribir(() => pintar());
     pintar();
+
+    /* ---------------------------------------------------------------------
+       CARRITOS GUARDADOS QUE YA SE PASABAN DEL TOPE
+
+       Existen de verdad: hasta este arreglo el `+` de esta pagina no tenia
+       tope, asi que hay navegadores (el del cliente incluido) con 69 unidades
+       guardadas. Se RECORTAN y se DICE, que es el criterio del encargo y el
+       correcto: un carrito que el sitio no puede cumplir enseña un subtotal,
+       un envio y un total de un pedido que al confirmarse por WhatsApp habria
+       que corregir a la baja. El recorte se ve una vez; el numero falso
+       viajaria hasta la conversacion.
+
+       El aviso NO es la region viva `[data-carrito-anuncio]` ni un `alert`:
+       es un bloque visible que se queda, porque es un cambio que la persona
+       NO pidio y tiene que poder leerlo con calma. Lleva `role="status"` para
+       que tambien se anuncie, y se pinta DESPUES del primer `pintar()` para
+       que la cantidad ya recortada este en pantalla cuando se lea.
+       --------------------------------------------------------------------- */
+    const recortes = recortarGuardado();
+    if (recortes.length) {
+      const elRecorte = document.querySelector<HTMLElement>('[data-carrito-recorte]');
+      const elRecorteTexto = document.querySelector<HTMLElement>('[data-carrito-recorte-texto]');
+      if (elRecorte && elRecorteTexto) {
+        const nombres = recortes.map((c) => {
+          const p = catalogo[c.handle];
+          const v = p?.variantes.find((x) => x.id === c.varianteId);
+          const nombre = p
+            ? p.conVariantes && v
+              ? `${p.titulo} (${v.titulo})`
+              : p.titulo
+            : 'Un producto';
+          return `${nombre}: de ${c.antes} a ${c.ahora}`;
+        });
+        elRecorteTexto.textContent =
+          recortes.length === 1
+            ? `Ajustamos la cantidad al máximo por pedido. ${nombres[0]}.`
+            : `Ajustamos ${recortes.length} cantidades al máximo por pedido. ${nombres.join('; ')}.`;
+        elRecorte.hidden = false;
+      }
+    }
   }
 </script>

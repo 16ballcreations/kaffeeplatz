@@ -94,17 +94,35 @@ for (const b of agregarBotones) {
        a lo que hubiera de esa misma variante (y aplica su propio techo de
        99 por linea). */
     const cuantas = leerCantidad();
-    agregar(handle, varianteId, cuantas);
+    const res = agregar(handle, varianteId, cuantas);
     /* El texto nombra la variante elegida Y cuantas unidades: es la unica
        forma de que la persona compruebe que se agrego LA QUE queria y en la
        cantidad que pidio. */
     const r = radios.find((x) => x.checked);
     const nombre = r ? ` (${r.value})` : '';
-    confirmar(
-      cuantas === 1
-        ? `Agregado al carrito${nombre}.`
-        : `Agregadas ${cuantas} unidades al carrito${nombre}.`,
-    );
+
+    /* SI HUBO RECORTE SE DICE. El selector ya acota a lo que cabe, asi que
+       llegar aqui con recorte es el caso raro —el carrito cambio en otra
+       pestaña entre que se teclo y se pulso— y es justo el que no se puede
+       adivinar mirando la pantalla. Lo que NO se hace es callarlo ni rechazar
+       la agregada entera: entra lo que cabe y se explica el resto. */
+    if (res.agregadas === 0) {
+      confirmar(
+        `Ya tienes ${res.total} en el carrito${nombre}, el máximo por pedido. ` +
+          `Para más, escríbenos por WhatsApp.`,
+      );
+    } else if (res.recortado) {
+      confirmar(
+        `Agregadas ${res.agregadas} de ${res.pedidas}${nombre}: ` +
+          `el carrito queda en ${res.total}, el máximo por pedido.`,
+      );
+    } else {
+      confirmar(
+        res.agregadas === 1
+          ? `Agregado al carrito${nombre}.`
+          : `Agregadas ${res.agregadas} unidades al carrito${nombre}.`,
+      );
+    }
     /* Vuelve a 1: la cantidad era de ESTA agregada. Dejarla en 3 haria que
        el siguiente clic agregara otras 3 sin que nadie lo pidiera. */
     reiniciarCantidad();

@@ -109,6 +109,15 @@ pares.push(
   ['tinta-3 / elevado (nota del pago de la fase 2)', TINTA_3, ELEVADO, 4.5],
   // "Quitar" y el precio unitario de cada linea.
   ['tinta-3 / superficie (quitar linea, precio unitario)', TINTA_3, SUPERFICIE, 4.5],
+  // "Máximo 10 por pedido" bajo la cantidad de una linea: el motivo de que el
+  // `+` este apagado. Va en tinta-2 sobre la superficie de la linea, no en
+  // tinta-3: explica un limite y hay que poder leerlo.
+  ['tinta-2 / superficie (motivo del tope bajo la cantidad)', TINTA_2, SUPERFICIE, 4.5],
+  // Aviso de recorte al cargar un carrito guardado que se pasaba del tope
+  // (los hay con 69 unidades). Hereda el fondo de .v-aviso, que es la
+  // superficie, con el texto principal en tinta-2 y la coletilla de ayuda en
+  // el mismo tono: es una aclaracion, no una alerta, asi que no usa rojo.
+  ['tinta-2 / superficie (aviso de recorte del carrito)', TINTA_2, SUPERFICIE, 4.5],
   // Burbuja del contador de la cabecera: tinta oscura sobre oro relleno.
   ['tinta-oscura / oro (burbuja del contador)', TINTA_OSCURA, ORO, 4.5],
 );
@@ -136,6 +145,12 @@ pares.push(
   // Confirmacion "X agregado al carrito" al pie de la tarjeta: oro sobre su
   // velo de oro, sobre la superficie de la tarjeta.
   ['oro / velo de oro sobre superficie (confirmacion en la tarjeta)', ORO, oroVelo(SUPERFICIE), 4.5],
+  // "Máximo 10": el boton de compra cuando el carrito ya tiene el tope de esa
+  // variante. Pierde el oro relleno y pasa a contorno con texto en tinta-2
+  // sobre la superficie de la tarjeta. Es tinta-2 y NO tinta-3 a proposito: un
+  // texto que explica un limite tiene que poder leerse, y el boton sigue
+  // siendo activable (no se desactiva, para no sacarlo del tabulador).
+  ['tinta-2 / superficie (máximo alcanzado en la tarjeta)', TINTA_2, SUPERFICIE, 4.5],
 );
 
 // --- SELECTOR DE CANTIDAD (ficha de producto) -------------------------------

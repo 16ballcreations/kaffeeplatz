@@ -64,10 +64,15 @@ const { producto: d, inicial, conSelector, mensajeAviso, mensajeVariante } =
     Como el boton de agregar, sale `hidden` del build y lo enciende el script:
     sin JavaScript no hay carrito al que sumar unidades.
 
-    El TOPE es provisional (el inventario esta diseñado y no implementado) y
-    el porque esta entero en el propio componente.
+    El TOPE ya no vive en el selector: lo decide `src/scripts/topes.ts` y lo
+    aplica `src/scripts/carrito.ts`, por donde pasan las tres vias de alta. El
+    selector solo lo consulta para pintar. El `handle` va como propiedad
+    porque el script del selector necesita preguntarle al carrito cuanto hay
+    ya de esta variante, y el tope es del PEDIDO, no de la pulsacion.
   */}
-  {d.disponible && <SelectorCantidad inicial={inicial} variantes={d.variantes} />}
+  {d.disponible && (
+    <SelectorCantidad handle={d.handle} inicial={inicial} variantes={d.variantes} />
+  )}
 
   {
     d.disponible && (

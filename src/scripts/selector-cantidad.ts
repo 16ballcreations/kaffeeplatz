@@ -4,19 +4,28 @@
  *
  * QUE HACE, Y QUE NO
  * ---------------------------------------------------------------------------
- * Mantiene un numero entre 1 y el tope de la variante elegida, y lo expone
- * para que quien agrega lo lea. NO agrega nada: no importa `carrito.ts` ni lo
- * conoce. Agregar sigue siendo trabajo del script de la ficha, que ya usa
- * `agregar()` del modulo del carrito y ahora le pasa esta cantidad en vez de
- * un 1 fijo. Asi no hay una segunda implementacion del carrito.
+ * Mantiene un numero entre 1 y LO QUE CABE TODAVIA de la variante elegida, y
+ * lo expone para que quien agrega lo lea. NO agrega nada: agregar sigue siendo
+ * trabajo del script de la ficha, que usa `agregar()` del modulo del carrito.
+ * Asi no hay una segunda implementacion del carrito.
  *
- * EL TOPE NO ES EL STOCK (todavia)
+ * EL TOPE ES DEL PEDIDO, NO DE LA PULSACION
  * ---------------------------------------------------------------------------
- * El tope sale del DOM: `data-tope` del contenedor, que el servidor imprime
- * desde `topeDe()` en SelectorCantidad.astro. Hoy es una constante
- * provisional porque el inventario esta diseñado y no implementado; el dia
- * que exista, cambia esa funcion y este fichero no se toca: ya lee un tope
- * por variante.
+ * Antes este selector acotaba a `data-tope` a secas, que es el tope de la
+ * variante. Pero el tope es del PEDIDO: con 8 ya en el carrito y un tope de
+ * 10, el maximo que tiene sentido ofrecer es 2, no 10. Si se ofrecen 10 y solo
+ * entran 2, el numero que se vio era falso.
+ *
+ * Asi que el techo del campo es `disponibleParaAgregar()` del modulo del
+ * carrito: el tope de la variante MENOS lo que ya hay guardado. Es la unica
+ * razon por la que este fichero importa `carrito.ts`, y solo para PREGUNTAR:
+ * no escribe nada en el carrito.
+ *
+ * El tope de la variante sigue saliendo del DOM (`data-tope`, que
+ * SelectorCantidad.astro imprime desde `topeDe()`), porque es un dato del
+ * build que depende del catalogo. Lo que ya hay en el carrito sale del propio
+ * carrito, que es quien lo sabe. El dia que el tope salga del stock, este
+ * fichero no se toca: `topes.ts` es el unico sitio que cambia.
  *
  * SANEAR LO QUE SE TECLEA, Y CUANDO
  * ---------------------------------------------------------------------------
@@ -32,6 +41,8 @@
  * esta acotado aunque el campo muestre algo raro en ese instante.
  */
 
+import { disponibleParaAgregar, enCarrito, registrarTopes, suscribir } from './carrito';
+
 /** El contenedor del selector, con el tope de la variante actual. */
 const caja = document.querySelector<HTMLElement>('[data-kp-cantidad]');
 const campo = document.querySelector<HTMLInputElement>('[data-kp-cantidad-valor]');
@@ -39,15 +50,40 @@ const menos = document.querySelector<HTMLButtonElement>('[data-kp-cantidad-menos
 const mas = document.querySelector<HTMLButtonElement>('[data-kp-cantidad-mas]');
 const aviso = document.querySelector<HTMLElement>('[data-kp-cantidad-aviso]');
 
-/** El tope vigente. 0 significa "variante agotada": no se puede agregar. */
+/** El tope de la variante vigente. 0 = agotada: no se puede agregar nada. */
 function tope(): number {
   const n = Number.parseInt(caja?.dataset.tope ?? '', 10);
   return Number.isFinite(n) && n >= 0 ? n : 1;
 }
 
-/** El valor del campo, acotado a [1, tope]. Nunca devuelve NaN ni 0. */
+/** La variante vigente, tal como el script de la ficha la va anotando. */
+function variante(): { handle: string; varianteId: string } | null {
+  const handle = caja?.dataset.handle;
+  const varianteId = caja?.dataset.variante;
+  return handle && varianteId ? { handle, varianteId } : null;
+}
+
+/** Cuantas unidades de la variante vigente hay YA en el carrito. */
+function yaHay(): number {
+  const v = variante();
+  return v ? enCarrito(v.handle, v.varianteId) : 0;
+}
+
+/**
+ * El techo del campo: lo que CABE TODAVIA, no el tope entero.
+ *
+ * Es la cuenta que faltaba. Se le pregunta al carrito (unico que sabe lo
+ * guardado) y, si por lo que sea no hay variante anotada, se cae al tope de la
+ * variante: peor caso, el limite lo aplica igualmente `agregar()`.
+ */
+function cabe(): number {
+  const v = variante();
+  return v ? disponibleParaAgregar(v.handle, v.varianteId) : tope();
+}
+
+/** El valor del campo, acotado a [1, cabe]. Nunca devuelve NaN ni 0. */
 export function leer(): number {
-  const max = Math.max(1, tope());
+  const max = Math.max(1, cabe());
   const n = Number.parseInt(campo?.value ?? '', 10);
   if (!Number.isFinite(n)) return 1;
   return Math.min(max, Math.max(1, n));
@@ -56,33 +92,58 @@ export function leer(): number {
 /** Escribe el valor ya acotado y pone al dia botones y aviso. */
 function fijar(n: number): void {
   if (!campo) return;
-  const max = Math.max(1, tope());
+  const max = Math.max(1, cabe());
   const v = Math.min(max, Math.max(1, Math.floor(n)));
   campo.value = String(v);
   campo.max = String(max);
   pintarEstado(v, max);
 }
 
-/** Botones de los extremos y aviso del tope. No toca el valor. */
+/**
+ * Botones de los extremos y aviso. No toca el valor.
+ *
+ * Hay TRES estados que explicar, y por eso el aviso no es un texto fijo:
+ *   - variante agotada        -> el control entero se apaga (ya lo hacia).
+ *   - el carrito esta lleno   -> no cabe ni una mas: se dice cuantas hay.
+ *   - se llego al techo       -> se dice el maximo por pedido, y lo que ya
+ *                                hay si es parte de la razon.
+ */
 function pintarEstado(v: number, max: number): void {
-  const agotado = tope() === 0;
-  if (menos) menos.disabled = agotado || v <= 1;
-  if (mas) mas.disabled = agotado || v >= max;
+  const t = tope();
+  const agotado = t === 0;
+  const hay = yaHay();
+  const lleno = !agotado && cabe() === 0;
 
-  if (caja) caja.toggleAttribute('data-agotado', agotado);
+  if (menos) menos.disabled = agotado || lleno || v <= 1;
+  if (mas) mas.disabled = agotado || lleno || v >= max;
+  if (campo) campo.disabled = agotado || lleno;
 
-  /* El aviso solo aparece AL LLEGAR al tope, no antes: antes no hay nada que
-     explicar y un texto permanente bajo el control seria ruido. */
+  if (caja) {
+    caja.toggleAttribute('data-agotado', agotado);
+    caja.toggleAttribute('data-lleno', lleno);
+  }
+
+  /* El aviso aparece solo cuando hay algo que explicar: al llegar al techo o
+     con el carrito ya lleno. Antes de eso un texto permanente seria ruido. */
   if (aviso) {
-    const enTope = !agotado && v >= max;
-    const texto = enTope
-      ? /* No se habla de stock: hoy no se sabe cuanto hay (el inventario
-           esta diseñado, no implementado). Se dice lo unico cierto: cual es
-           el maximo por pedido y por donde se piden mas. */
-        `Máximo ${max} por pedido. Para más, escríbenos por WhatsApp.`
-      : '';
+    let texto = '';
+    if (lleno) {
+      /* El caso que el cliente reporto al reves: ya no se puede agregar mas
+         porque lo que falta YA ESTA en el carrito. Mirando el control no se
+         puede adivinar, asi que se escribe. */
+      texto =
+        `Ya tienes ${hay} en el carrito, el máximo por pedido. ` +
+        `Para más, escríbenos por WhatsApp.`;
+    } else if (!agotado && v >= max) {
+      /* No se habla de stock: hoy no se sabe cuanto hay (el inventario esta
+         diseñado, no implementado). Se dice lo unico cierto. */
+      texto =
+        hay > 0
+          ? `Puedes agregar ${max} más: ya tienes ${hay} y el máximo por pedido es ${t}.`
+          : `Máximo ${t} por pedido. Para más, escríbenos por WhatsApp.`;
+    }
     if (texto !== aviso.textContent) aviso.textContent = texto;
-    aviso.hidden = !enTope;
+    aviso.hidden = texto === '';
   }
 }
 
@@ -102,12 +163,22 @@ export function cambiarVariante(varianteId: string, agotada: boolean): void {
   const suyo = Number.parseInt(fuente?.dataset.tope ?? '', 10);
   const nuevo = agotada ? 0 : Number.isFinite(suyo) && suyo > 0 ? suyo : 1;
   caja.dataset.tope = String(nuevo);
-  /* Si venia pidiendo 8 y la variante nueva solo admite 3, baja a 3 en vez
+  /* QUE VARIANTE es, no solo cual es su tope: `cabe()` necesita preguntarle al
+     carrito por esta variante concreta. El tope es por variante, asi que dos
+     colores del mismo producto no comparten ni tope ni cuenta. */
+  caja.dataset.variante = varianteId;
+  /* Si venia pidiendo 8 y de la variante nueva solo caben 3, baja a 3 en vez
      de dejar un numero que no se puede agregar. */
   fijar(leer());
 }
 
-/** Vuelve a 1 despues de agregar: la cantidad es de ESA agregada, no del dia. */
+/**
+ * Vuelve a 1 despues de agregar: la cantidad es de ESA agregada, no del dia.
+ *
+ * `fijar()` repinta contra el carrito ya actualizado, asi que si la agregada
+ * dejo la variante en su tope, el control queda apagado y el aviso lo dice sin
+ * que la ficha tenga que pedirlo.
+ */
 export function reiniciar(): void {
   fijar(1);
 }
@@ -116,6 +187,22 @@ export function reiniciar(): void {
 export function iniciar(): void {
   if (!caja || !campo) return;
   caja.hidden = false;
+
+  /* Los topes de TODAS las variantes de esta ficha, para que `carrito.ts` los
+     aplique sin conocer el catalogo. Es lo que cierra el agujero de la ficha:
+     el limite deja de depender de que este selector se acuerde de mirarlo. */
+  const handle = caja.dataset.handle;
+  if (handle) {
+    registrarTopes(
+      Array.from(
+        document.querySelectorAll<HTMLElement>('[data-kp-cantidad-tope-variante]'),
+      ).map((el) => ({
+        handle,
+        varianteId: el.dataset.kpCantidadTopeVariante ?? '',
+        tope: Number.parseInt(el.dataset.tope ?? '', 10),
+      })),
+    );
+  }
 
   menos?.addEventListener('click', () => fijar(leer() - 1));
   mas?.addEventListener('click', () => fijar(leer() + 1));
@@ -139,6 +226,11 @@ export function iniciar(): void {
       fijar(leer());
     }
   });
+
+  /* El carrito puede cambiar sin pasar por esta ficha: otra pestaña del mismo
+     sitio, o el propio «Agregar» de aqui. Si cambia, lo que cabe cambia, y un
+     selector que ofrece 5 cuando ya no cabe ninguna miente. */
+  suscribir(() => fijar(leer()));
 
   fijar(1);
 }

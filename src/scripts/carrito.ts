@@ -36,7 +36,31 @@
  * Cada cambio emite el evento `kp:carrito` en `window`, con el carrito ya
  * resuelto en `detail`. El contador de la cabecera y la pagina /carrito solo
  * escuchan: no se consultan entre si ni se recarga nada.
+ *
+ * EL TOPE SE APLICA AQUI, Y SOLO AQUI
+ * ---------------------------------------------------------------------------
+ * Hay TRES entradas al carrito: la ficha de producto, la tarjeta del catalogo
+ * y el `+` de /carrito. Antes el limite vivia en el selector de cantidad de la
+ * ficha, que es una de las tres: las otras dos no sabian que existia, y la
+ * propia ficha solo limitaba lo que se añadia DE UNA VEZ (poner 10 y pulsar
+ * «Agregar» tres veces dejaba 30 en el carrito).
+ *
+ * Ahora `agregar()` y `cambiarCantidad()` SUMAN lo que ya hay de esa variante
+ * y recortan al tope. Venga la llamada de donde venga, es imposible pasarse:
+ * no hace falta que las tres vias se acuerden de comprobar nada.
+ *
+ * Las dos devuelven un `Resultado` que dice QUE PASO (cuanto se pidio, cuanto
+ * entro, en cuanto quedo la linea, si se recorto), porque un limite que falla
+ * en silencio es peor que no tenerlo: la interfaz tiene que poder avisar.
+ *
+ * El tope de cada variante lo decide `topeDe()` de `./topes`, que es el unico
+ * sitio donde se decide y el unico que habra que tocar cuando exista el stock.
+ * Este modulo no conoce el catalogo, asi que las paginas le DAN los topes con
+ * `registrarTopes()`; sin registro usa el tope de sensatez, que es el valor de
+ * hoy para toda variante disponible.
  */
+
+import { MAX_POR_LINEA, margen, topeDe } from './topes';
 
 /* ===========================================================================
    TIPOS
@@ -105,8 +129,75 @@ export interface CarritoResuelto {
 
 export const CLAVE = 'kp.carrito.v1';
 
-/** Limite por linea: evita cantidades absurdas por teclazo o por URL. */
-const MAX_CANTIDAD = 99;
+/* ===========================================================================
+   LOS TOPES POR VARIANTE
+
+   Este modulo corre en el navegador y NO conoce el catalogo: no puede
+   preguntarle a nadie cuanto admite una variante. Asi que cada pagina le pasa
+   los topes de lo que ha pintado (`registrarTopes()`), y lo que no esta
+   registrado usa el tope de sensatez, que hoy es el valor de CUALQUIER
+   variante disponible.
+
+   Por que el valor de reserva es el tope y no «sin limite»: si una pagina se
+   olvidara de registrar, el agujero volveria a abrirse en silencio. Caer del
+   lado del limite deja, como peor caso, un tope correcto para el dato de hoy.
+
+   La clave es `handle\u0000varianteId`: el tope es POR VARIANTE, no por
+   producto. Dos colores del mismo producto no comparten tope.
+   =========================================================================== */
+
+/** Topes conocidos de esta pagina. Clave `handle\u0000varianteId`. */
+const topes = new Map<string, number>();
+
+/** La clave compuesta. El \0 no puede aparecer en un handle ni en un id. */
+function clave(handle: string, varianteId: string): string {
+  return `${handle}\u0000${varianteId}`;
+}
+
+/**
+ * Da a conocer los topes de las variantes que esta pagina ha pintado.
+ *
+ * Lo llaman /carrito (con su catalogo serializado) y la ficha de producto (con
+ * sus variantes). Se puede llamar varias veces: lo registrado se acumula.
+ */
+export function registrarTopes(
+  entradas: Iterable<{ handle: string; varianteId: string; tope: number }>,
+): void {
+  for (const e of entradas) {
+    const n = Math.floor(e.tope);
+    if (Number.isFinite(n) && n >= 0) topes.set(clave(e.handle, e.varianteId), n);
+  }
+}
+
+/**
+ * El tope de una variante: lo registrado, o el de sensatez si no se registro.
+ *
+ * Es la funcion que la interfaz consulta para pintar (desactivar el `+`, decir
+ * cuanto queda). El limite de verdad lo aplican `agregar()` y
+ * `cambiarCantidad()`, no quien pinta.
+ */
+export function tope(handle: string, varianteId: string): number {
+  const registrado = topes.get(clave(handle, varianteId));
+  if (registrado !== undefined) return registrado;
+  /* Sin registro no se sabe si la variante esta disponible, asi que se asume
+     que si: es el caso normal (lo agotado no se puede agregar de todas formas,
+     porque el boton que lo haria esta desactivado) y da el tope de sensatez,
+     que es el valor correcto para el dato de hoy. Pasa por `topeDe()` y no por
+     la constante para que el dia del inventario no quede un camino que
+     devuelva un numero que `topeDe()` ya no daria. */
+  return topeDe({ disponible: true });
+}
+
+/** Cuantas unidades de esa variante hay YA en el carrito guardado. */
+export function enCarrito(handle: string, varianteId: string): number {
+  const l = leerGuardado().find((x) => x.handle === handle && x.varianteId === varianteId);
+  return l?.cantidad ?? 0;
+}
+
+/** Cuantas se pueden añadir todavia, contando lo que ya hay. */
+export function disponibleParaAgregar(handle: string, varianteId: string): number {
+  return margen(tope(handle, varianteId), enCarrito(handle, varianteId));
+}
 
 /**
  * Respaldo en memoria para cuando `localStorage` no se puede usar.
@@ -142,14 +233,107 @@ function sanear(crudo: unknown): LineaGuardada[] {
     if (!handle || !varianteId || cantidad < 1) continue;
     /* Una misma variante repetida se suma en vez de duplicar la linea. */
     const ya = limpias.find((x) => x.handle === handle && x.varianteId === varianteId);
-    if (ya) ya.cantidad = Math.min(MAX_CANTIDAD, ya.cantidad + cantidad);
-    else limpias.push({ handle, varianteId, cantidad: Math.min(MAX_CANTIDAD, cantidad) });
+    if (ya) ya.cantidad = Math.min(MAX_POR_LINEA, ya.cantidad + cantidad);
+    else limpias.push({ handle, varianteId, cantidad: Math.min(MAX_POR_LINEA, cantidad) });
   }
   return limpias;
 }
 
-/** Lee las lineas guardadas. Nunca lanza: devuelve [] en el peor caso. */
+/* ===========================================================================
+   CARRITOS GUARDADOS QUE YA SE PASAN DEL TOPE
+
+   Existen de verdad: el `+` de /carrito no tenia techo, asi que hay
+   navegadores (el del cliente incluido) con 69 unidades de una variante
+   guardadas desde antes de este arreglo.
+
+   DECISION: se RECORTAN al tope al leer, y /carrito lo ANUNCIA.
+
+   Por que recortar y no conservar:
+     - Un carrito que el sitio no puede cumplir engaña a quien lo mira. Enseña
+       un subtotal, un envio y un total de un pedido que al confirmarse por
+       WhatsApp se va a tener que corregir a la baja. Es peor que el recorte:
+       el recorte se ve una vez, el numero falso viaja hasta la conversacion.
+     - El tope existe para que el pedido sea cumplible. Si una via lo respeta y
+       lo guardado no, el limite es decorativo.
+     - 69 unidades no son una intencion de compra: son el rastro de un boton
+       sin tope. Conservarlas no conserva ninguna decision de nadie.
+
+   Por que se recorta AL LEER y no con una migracion de clave:
+     - No se sube la clave a v2: v2 tiraria el carrito ENTERO, y la linea de 69
+       sigue siendo un producto que esa persona si queria. Se baja a 10 y lo
+       demas se queda intacto.
+     - Al leer, las tres vias ven la verdad desde el primer pintado, sin que
+       ninguna tenga que acordarse de llamar a una limpieza.
+
+   El recorte NO se escribe aqui: escribir desde la lectura haria que un
+   `leerGuardado()` tuviera efectos, y la lectura ocurre en cada pintado.
+   `recortarGuardado()` (mas abajo) es la que escribe, y la llama /carrito una
+   vez al cargar, que es el sitio donde se puede explicar lo que paso.
+   =========================================================================== */
+
+/**
+ * Aplica el tope de cada variante a lo leido. No escribe nada.
+ *
+ * El suelo es 1, no 0: una variante agotada da tope 0, y recortar su linea a 0
+ * la haria desaparecer del carrito sin decir nada. Se deja en 1 y /carrito
+ * pinta su «Agotado por ahora», que es la informacion util. Agregar mas sigue
+ * siendo imposible (margen 0) y el boton de agregar de la ficha ya esta
+ * desactivado para una variante agotada.
+ */
+function conTope(lineas: LineaGuardada[]): LineaGuardada[] {
+  return lineas.map((l) => {
+    const max = Math.max(1, Math.min(MAX_POR_LINEA, tope(l.handle, l.varianteId)));
+    return l.cantidad > max ? { ...l, cantidad: max } : l;
+  });
+}
+
+/**
+ * Recorta de verdad lo guardado y devuelve que lineas se tocaron.
+ *
+ * La llama /carrito al cargar: es la unica pagina que puede explicar un
+ * recorte, porque es la que enseña las cantidades. Si no hay nada que
+ * recortar no escribe ni avisa.
+ */
+export function recortarGuardado(): { handle: string; varianteId: string; antes: number; ahora: number }[] {
+  /* CRUDO, no `leerGuardado()`: esa ya viene acotada, asi que comparar contra
+     ella nunca encontraria diferencia y el recorte no se escribiria ni se
+     anunciaria nunca. Es justo el caso del carrito de 69 del cliente. */
+  const antes = leerCrudo();
+  const ahora = conTope(antes);
+  const tocadas = ahora
+    .map((l, i) => ({
+      handle: l.handle,
+      varianteId: l.varianteId,
+      antes: antes[i].cantidad,
+      ahora: l.cantidad,
+    }))
+    .filter((c) => c.antes !== c.ahora);
+  if (tocadas.length) aplicar(ahora);
+  return tocadas;
+}
+
+/**
+ * Lee las lineas guardadas, YA ACOTADAS al tope de cada variante.
+ *
+ * El recorte se aplica en la lectura para que las tres vias vean la misma
+ * verdad sin tener que acordarse de nada: un carrito de 69 guardado de antes
+ * se lee como 10 desde el primer pintado. Lo guardado no se toca aqui (leer no
+ * escribe); de eso se encarga `recortarGuardado()`.
+ *
+ * Nunca lanza: devuelve [] en el peor caso.
+ */
 export function leerGuardado(): LineaGuardada[] {
+  return conTope(leerCrudo());
+}
+
+/**
+ * Lo guardado TAL CUAL, saneado pero SIN aplicar el tope.
+ *
+ * Solo lo usa `recortarGuardado()`, que necesita ver las cantidades de verdad
+ * para poder decir «de 69 a 10». Todo lo demas pasa por `leerGuardado()`, que
+ * ya viene acotado: ninguna via puede leer un 69 por descuido.
+ */
+function leerCrudo(): LineaGuardada[] {
   if (memoria) return memoria.map((l) => ({ ...l }));
   const s = almacen();
   if (!s) return [];
@@ -288,31 +472,102 @@ function aplicar(lineas: LineaGuardada[]): LineaGuardada[] {
 }
 
 /**
- * Agrega unidades de una variante. Si la variante ya estaba, suma.
- * Devuelve el carrito guardado resultante.
+ * QUE PASO al intentar agregar o cambiar una cantidad.
+ *
+ * Existe porque un limite que falla en silencio es peor que no tenerlo: las
+ * tres vias necesitan poder decir «se quedo en 10» en vez de no hacer nada.
+ * `pedidas` contra `agregadas` es la unica forma de que quien llama sepa si
+ * hubo recorte sin volver a leer el carrito y restar.
  */
-export function agregar(handle: string, varianteId: string, cantidad = 1): LineaGuardada[] {
-  const n = Math.max(1, Math.floor(cantidad));
-  const lineas = leerGuardado();
-  const ya = lineas.find((l) => l.handle === handle && l.varianteId === varianteId);
-  if (ya) ya.cantidad = Math.min(MAX_CANTIDAD, ya.cantidad + n);
-  else lineas.push({ handle, varianteId, cantidad: Math.min(MAX_CANTIDAD, n) });
-  return aplicar(lineas);
+export interface Resultado {
+  /** El carrito guardado resultante. Lo que devolvia antes esta API. */
+  lineas: LineaGuardada[];
+  /** Cuantas unidades se pidieron. */
+  pedidas: number;
+  /** Cuantas entraron de verdad. 0 si ya estaba en el tope. */
+  agregadas: number;
+  /** En cuantas unidades quedo la linea de esa variante. */
+  total: number;
+  /** El tope vigente de esa variante. */
+  tope: number;
+  /** true si entro menos de lo pedido: la interfaz tiene que avisar. */
+  recortado: boolean;
 }
 
-/** Fija la cantidad exacta de una variante. Cantidad <= 0 quita la linea. */
-export function cambiarCantidad(
-  handle: string,
-  varianteId: string,
-  cantidad: number,
-): LineaGuardada[] {
-  const n = Math.floor(cantidad);
-  if (n < 1) return quitar(handle, varianteId);
+/**
+ * Agrega unidades de una variante, SIN PASAR DEL TOPE.
+ *
+ * Suma lo que ya hubiera de esa variante y recorta: si hay 8 y el tope es 10,
+ * pedir 5 agrega 2 y devuelve `recortado: true`. Si ya hay 10, agrega 0. No
+ * rechaza la operacion entera ni la hace en silencio: deja lo que cabe y dice
+ * lo que paso.
+ *
+ * Es el punto por el que pasan las TRES vias, asi que da igual de donde venga
+ * la llamada: la ficha, la tarjeta del catalogo o el `+` de /carrito.
+ */
+export function agregar(handle: string, varianteId: string, cantidad = 1): Resultado {
+  const pedidas = Math.max(1, Math.floor(cantidad));
+  const lineas = leerGuardado();
+  const max = tope(handle, varianteId);
+  const ya = lineas.find((l) => l.handle === handle && l.varianteId === varianteId);
+  const habia = ya?.cantidad ?? 0;
+  const agregadas = Math.min(pedidas, margen(max, habia));
+
+  if (agregadas > 0) {
+    if (ya) ya.cantidad = habia + agregadas;
+    else lineas.push({ handle, varianteId, cantidad: agregadas });
+  }
+
+  const total = habia + agregadas;
+  /* Si no entro nada, no se escribe ni se avisa al resto de la pagina: el
+     estado no cambio y repintar la lista entera movería el foco por nada.
+     Quien llamo se entera por el Resultado, que es para lo que esta. */
+  return {
+    lineas: agregadas > 0 ? aplicar(lineas) : lineas,
+    pedidas,
+    agregadas,
+    total,
+    tope: max,
+    recortado: agregadas < pedidas,
+  };
+}
+
+/**
+ * Fija la cantidad exacta de una variante, SIN PASAR DEL TOPE.
+ * Cantidad <= 0 quita la linea.
+ *
+ * Es por donde entra el `+` de /carrito, que no tenia techo ninguno: el
+ * cliente llego a 69 unidades desde ahi. Ahora se queda en el tope y lo dice.
+ */
+export function cambiarCantidad(handle: string, varianteId: string, cantidad: number): Resultado {
+  const pedidas = Math.floor(cantidad);
+  const max = tope(handle, varianteId);
+
+  if (pedidas < 1) {
+    const lineas = quitar(handle, varianteId);
+    return { lineas, pedidas: 0, agregadas: 0, total: 0, tope: max, recortado: false };
+  }
+
   const lineas = leerGuardado();
   const ya = lineas.find((l) => l.handle === handle && l.varianteId === varianteId);
-  if (!ya) return lineas;
-  ya.cantidad = Math.min(MAX_CANTIDAD, n);
-  return aplicar(lineas);
+  if (!ya) {
+    return { lineas, pedidas, agregadas: 0, total: 0, tope: max, recortado: false };
+  }
+
+  const habia = ya.cantidad;
+  /* El suelo es 1 por lo mismo que en `conTope()`: una variante agotada (tope
+     0) con linea guardada no desaparece por teclear un numero. */
+  const total = Math.max(1, Math.min(Math.min(MAX_POR_LINEA, max), pedidas));
+  ya.cantidad = total;
+
+  return {
+    lineas: total !== habia ? aplicar(lineas) : lineas,
+    pedidas,
+    agregadas: total - habia,
+    total,
+    tope: max,
+    recortado: total < pedidas,
+  };
 }
 
 /** Quita una linea entera. */
