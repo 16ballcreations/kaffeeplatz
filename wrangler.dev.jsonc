@@ -63,9 +63,15 @@
 
   // Fotos subidas desde el panel (fase 6). Bucket de PRUEBAS, aparte del de
   // produccion: lo que se suba aqui no aparece en kaffeeplatz.co.
-  "r2_buckets": [
-    { "binding": "MEDIOS", "bucket_name": "kaffeeplatz-medios-dev" }
-  ],
+  //
+  // DESACTIVADO hasta que R2 este habilitado en la cuenta (9 oct 2026: la API
+  // responde "Please enable R2 through the Cloudflare Dashboard", 10042).
+  // Sin el binding el panel de fotos funciona y la subida responde 503 con
+  // un mensaje claro. Para activarlo: habilitar R2 en el dashboard,
+  // `npx wrangler r2 bucket create kaffeeplatz-medios-dev`, descomentar.
+  // "r2_buckets": [
+  //   { "binding": "MEDIOS", "bucket_name": "kaffeeplatz-medios-dev" }
+  // ],
 
   "observability": {
     "enabled": true

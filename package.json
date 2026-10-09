@@ -20,7 +20,7 @@
     "d1:migrar": "wrangler d1 migrations apply kaffeeplatz --local",
     "d1:sembrar": "node scripts/sembrar-d1.mjs && wrangler d1 execute kaffeeplatz --local --file tmp/semilla.sql",
     "d1:comparar": "node --no-warnings scripts/comparar-d1.mjs",
-    "deploy:dev": "astro build && wrangler deploy --config wrangler.dev.jsonc"
+    "deploy:dev": "SITE_URL=https://kaffeeplatz-dev.16ballcreations.workers.dev astro build && node scripts/verificar-puerta.mjs && node scripts/verificar-noindex.mjs && wrangler deploy --config wrangler.dev.jsonc"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.13",
