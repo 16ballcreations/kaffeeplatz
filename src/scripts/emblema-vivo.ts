@@ -2,16 +2,17 @@
  * emblema-vivo.ts — el emblema de la portada, hecho de partículas.
  * ===========================================================================
  * Ocupa el lado derecho del hero, donde antes iba la foto del AeroPress. Un
- * polvo dorado flota en el hero; desde abajo crece la rama del emblema (tallo,
- * hojas en sus dos tonos de oro con las nervaduras, cerezas que pasan de verde
- * a oro y maduran a rojo) y, con las cerezas ya rojas, se cierra el resto del
- * logo: el anillo doble y KAFFEEPLATZ atravesando el tallo. La rama sigue
- * meciéndose dentro del logo; el cursor aparta las partículas y vuelven.
+ * polvo dorado flota en el hero; desde abajo crece la matica del logo, tomada
+ * punto por punto de su imagen aislada (planta-oro): sube el tallo, salen las
+ * ramas, se abren las hojas y las bayas pasan de verde a oro y maduran a rojo.
+ * Con las bayas ya rojas se cierra el resto del emblema: el anillo doble y
+ * KAFFEEPLATZ atravesando el tallo. La matica sigue meciéndose dentro del
+ * logo; el cursor aparta las partículas y vuelven.
  *
  * Misma técnica que el orbe de 16 Ball Creations: canvas 2D sin librerías, los
  * puntos agrupados por color y brillo para que un cuadro sean unas decenas de
- * trazos y no miles. Las formas salen de código (curvas y máscaras de texto),
- * así que se afinan contra el emblema sin tocar imágenes.
+ * trazos y no miles. La planta sale de la imagen del logo y el nombre de una
+ * máscara de texto, así que si cambia el logo basta con cambiar la imagen.
  *
  * El texto, los botones y el SEO del hero siguen siendo HTML; nada depende de
  * esto. Con «reducir movimiento» se pinta el emblema ya completo y quieto. Se
@@ -20,8 +21,7 @@
 
 type Punto = {
   x: number; y: number; c: number; a: number; b: number;
-  k: number; ox: number; oy: number; hoja: number; u: number; r: number;
-  hf: number; banda: boolean;
+  k: number; ox: number; oy: number; r: number; hf: number; banda: boolean;
 };
 type Marca = { x: number; y: number; c: number; a: number; b: number; ox: number; oy: number };
 
@@ -136,109 +136,101 @@ function iniciar(hero: HTMLElement, lienzo: HTMLCanvasElement, zona: HTMLElement
   };
 
   /* ======================================================================
-     LA RAMA
-     Caja de 400×545 (base del tallo en 200,532); luego se desplaza 100,10
-     para centrarla en la caja de 600 del emblema.
+     LA MATICA
+     Sale de la imagen aislada de la planta del logo (planta-oro): cada punto
+     es un píxel de la imagen, con su tono. Medidas en la imagen de 900 px de
+     ancho; el tramo desnudo del tallo (y≈492) queda detrás del nombre, como
+     en el emblema, y el pie del tallo se corta en el anillo.
      ====================================================================== */
-  const KS = 0, KL = 1, KC = 2; // tallo, hoja, cereza
-  const CREC = 2.4; // segundos que tarda el tallo en llegar arriba
+  const KS = 0, KC = 2; // tallo y hojas, bayas
+  const CREC = 5.2; // segundos que tarda la matica en crecer entera
+  const K = 0.42, TALLO_X = 413, TRAMO_Y = 492;
+  /* las bayas de la imagen (x, y, radio en la de 900): las tres de arriba,
+     las dos del centro y los dos puntos sueltos */
+  const BAYAS = [[410, 42, 42], [325, 118, 40], [500, 125, 40], [330, 608, 32], [497, 598, 32], [268, 575, 26], [568, 568, 24]];
+  let pivoteY = 560;
 
-  function genRama(st: number) {
-    const P = [[200, 532], [183, 400], [232, 250], [206, 96]];
-    const bz = (t: number) => {
-      const m = 1 - t;
-      return [0, 1].map((k) => m * m * m * P[0][k] + 3 * m * m * t * P[1][k] + 3 * m * t * t * P[2][k] + t * t * t * P[3][k]);
-    };
-    const bd = (t: number) => {
-      const m = 1 - t;
-      return [0, 1].map((k) => 3 * m * m * (P[1][k] - P[0][k]) + 6 * m * t * (P[2][k] - P[1][k]) + 3 * t * t * (P[3][k] - P[2][k]));
-    };
-    const pts: Punto[] = [];
-    const add = (x: number, y: number, c: number, a: number, b: number, k: number, ox: number, oy: number, hoja = -1, u = 0) =>
-      pts.push({ x, y, c, a, b, k, ox, oy, hoja, u, r: R(), hf: 0, banda: false });
-
-    // tallo: nace de abajo arriba, cada punto desde un poco más abajo
-    const n = Math.ceil(470 / st);
-    for (let i = 0; i <= n; i++) {
-      const t = i / n, p = bz(t), d = bd(t), L = Math.hypot(d[0], d[1]);
-      const nx = -d[1] / L, ny = d[0] / L, w = 7.5 * (1 - t) + 2.4, q = bz(Math.max(0, t - 0.05));
-      for (let o = -w / 2; o <= w / 2 + 0.01; o += st * 0.75)
-        add(p[0] + nx * o, p[1] + ny * o, o < -w * 0.2 ? 2 : o > w * 0.2 ? 4 : 3, 0.9, t * CREC + R() * 0.04, KS, q[0], q[1]);
+  function genMatica(img: HTMLImageElement, st: number) {
+    const w = img.naturalWidth, h = img.naturalHeight, f = 900 / w;
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const m = c.getContext('2d', { willReadFrequently: true });
+    if (!m) return [];
+    m.drawImage(img, 0, 0);
+    const d = m.getImageData(0, 0, w, h).data;
+    const pi = st / K / f; // separación en píxeles de la imagen
+    const cols = Math.ceil(w / pi), filas = Math.ceil(h / pi);
+    const celda = new Int32Array(cols * filas).fill(-1);
+    const pts: Punto[] = [], gx: number[] = [], gy: number[] = [];
+    for (let j = 0; j < filas; j++) for (let i = 0; i < cols; i++) {
+      const ix = Math.min(w - 1, ((i + 0.5) * pi) | 0), iy = Math.min(h - 1, ((j + 0.5) * pi) | 0);
+      const o = (iy * w + ix) * 4;
+      if (d[o + 3] < 128) continue;
+      const X = ix * f, Y = iy * f;
+      const x = 300 + (X - TALLO_X) * K + (R() - 0.5) * st * 0.4;
+      const y = BANDA + (Y - TRAMO_Y) * K + (R() - 0.5) * st * 0.4;
+      if ((x - 300) ** 2 + (y - 300) ** 2 > 262 * 262) continue; // dentro del anillo
+      // el degradado de la imagen (claro arriba, tostado abajo) pasa a la paleta
+      const lum = 0.3 * d[o] + 0.59 * d[o + 1] + 0.11 * d[o + 2];
+      // (un escalón más claro que la imagen: sobre el lino oscuro el tostado
+      // de abajo se apagaba)
+      const col = lum > 200 ? 1 : lum > 160 ? 2 : lum > 115 ? 3 : 4;
+      const baya = BAYAS.some(([bx, by, br]) => (X - bx) ** 2 + (Y - by) ** 2 < br * br);
+      celda[j * cols + i] = pts.length;
+      gx.push(i); gy.push(j);
+      pts.push({ x, y, c: col, a: col === 4 ? 0.9 : 1, b: 0, k: baya ? KC : KS, ox: x, oy: y, r: R(), hf: 0, banda: false });
     }
+    const n = pts.length;
+    if (!n) return pts;
 
-    // hojas: mitad clara y mitad oscura como en el emblema, con nervio
-    // central y siete nervaduras por lado; se despliegan desde el tallo
-    const hoja = (tA: number, lado: number, largo: number, ancho: number, angDeg: number, caida: number, idx: number) => {
-      const b = bz(tA), d = bd(tA);
-      const th = Math.atan2(d[1], d[0]) + (lado * angDeg * Math.PI) / 180;
-      const ax = Math.cos(th), ay = Math.sin(th);
-      const nx = Math.cos(th + (lado * Math.PI) / 2), ny = Math.sin(th + (lado * Math.PI) / 2);
-      const inicio = tA * CREC + 0.25;
-      for (let a = 0; a <= largo; a += st) {
-        const u = a / largo;
-        const hw = (ancho / 2) * Math.pow(Math.sin(Math.PI * u), 0.8) * (1 - 0.25 * u);
-        const cd = caida * largo * u * u;
-        const ox = b[0] + ax * a * 0.75 + nx * cd, oy = b[1] + ay * a * 0.75 + ny * cd;
-        for (let v = -hw; v <= hw + 0.01; v += st * 0.9) {
-          const av = Math.abs(v);
-          let col = v > 0 ? 4 : 2, alfa = 0.78;
-          if (av < st * 0.55) { col = 0; alfa = 0.95; }
-          else if (hw - av < st * 0.9) { col = v > 0 ? 3 : 1; alfa = 0.95; }
-          else {
-            for (let k = 0; k < 7; k++) {
-              const ue = 0.1 + k * 0.12 + (0.14 * av) / Math.max(hw, 1);
-              if (Math.abs(u - ue) * largo < st * 0.55) { col = v > 0 ? 2 : 1; alfa = 0.95; break; }
-            }
-          }
-          const jt = (R() - 0.5) * st * 0.45, jv = (R() - 0.5) * st * 0.3;
-          add(b[0] + ax * (a + jt) + nx * (cd + v + jv), b[1] + ay * (a + jt) + ny * (cd + v + jv), col, alfa,
-            inicio + u * 1.15 + R() * 0.08, KL, ox, oy, idx, u);
-        }
+    /* Orden de crecimiento: distancia caminando por la planta desde el pie
+       del tallo. Así sube el tallo, salen las ramas y las hojas se abren
+       desde donde se pegan. Cada punto nace donde está su vecino anterior. */
+    const dist = new Float32Array(n).fill(Infinity), padre = new Int32Array(n).fill(-1);
+    let raiz = 0;
+    for (let i = 1; i < n; i++) if (pts[i].y > pts[raiz].y || (pts[i].y === pts[raiz].y && Math.abs(pts[i].x - 300) < Math.abs(pts[raiz].x - 300))) raiz = i;
+    dist[raiz] = 0;
+    const cola = [raiz];
+    for (let q = 0; q < cola.length; q++) {
+      const u = cola[q];
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        if (!dx && !dy) continue;
+        const i = gx[u] + dx, j = gy[u] + dy;
+        if (i < 0 || j < 0 || i >= cols || j >= filas) continue;
+        const v = celda[j * cols + i];
+        if (v < 0) continue;
+        const nd = dist[u] + Math.hypot(dx, dy);
+        if (nd < dist[v] - 1e-3) { dist[v] = nd; padre[v] = u; cola.push(v); }
       }
-    };
-    hoja(0.16, -1, 150, 62, 64, 0.12, 0);
-    hoja(0.25, 1, 166, 66, 58, 0.1, 1);
-    hoja(0.52, -1, 118, 50, 56, 0.08, 2);
-    hoja(0.58, 1, 128, 52, 52, 0.08, 3);
-    hoja(0.8, -1, 80, 36, 50, 0.05, 4);
-    hoja(0.85, 1, 88, 38, 48, 0.05, 5);
-
-    // cerezas: pedúnculo, fruto y un brillo crema arriba a la izquierda
-    const cereza = (bx: number, by: number, cx: number, cy: number, rad: number, b0: number) => {
-      const L = Math.hypot(cx - bx, cy - by);
-      for (let s = 0; s <= L; s += st * 0.8) {
-        const f = s / L;
-        add(bx + (cx - bx) * f, by + (cy - by) * f, 3, 0.85, b0 - 0.3 + f * 0.3, KS, bx, by);
+    }
+    // piezas sueltas (los puntos y el grano de la izquierda): nacen después
+    // del punto alcanzado más cercano, como si brotaran de él
+    const alcanzados: number[] = [];
+    for (let i = 0; i < n; i++) if (dist[i] < Infinity) alcanzados.push(i);
+    for (let i = 0; i < n; i++) {
+      if (dist[i] < Infinity) continue;
+      let mejor = -1, md = Infinity;
+      for (const v of alcanzados) {
+        const dd = (gx[i] - gx[v]) ** 2 + (gy[i] - gy[v]) ** 2;
+        if (dd < md) { md = dd; mejor = v; }
       }
-      for (let y = -rad; y <= rad; y += st * 0.8) for (let x = -rad; x <= rad; x += st * 0.8) {
-        const d2 = x * x + y * y;
-        if (d2 > rad * rad) continue;
-        const hx = x + rad * 0.38, hy = y + rad * 0.38;
-        if (hx * hx + hy * hy < rad * rad * 0.1) add(cx + x, cy + y, 0, 0.9, b0 + 0.2, KS, cx, cy);
-        else add(cx + x, cy + y, 2, d2 > rad * rad * 0.7 ? 1 : 0.85, b0 + (Math.sqrt(d2) / rad) * 0.25, KC, cx, cy);
-      }
-    };
-    const rc = bz(0.38);
-    [[-36, -12, 12], [-56, 8, 13], [-30, 18, 12], [-50, -32, 11]].forEach((o, i) =>
-      cereza(rc[0], rc[1], rc[0] + o[0], rc[1] + o[1], o[2], 4.5 + i * 0.18));
-    const tip = bz(1);
-    [[-90, 40], [-50, 32], [-130, 32]].forEach((o, i) => {
-      const a = (o[0] * Math.PI) / 180;
-      cereza(tip[0], tip[1], tip[0] + Math.cos(a) * o[1], tip[1] + Math.sin(a) * o[1], 9, 2.9 + i * 0.15);
-    });
-
-    // altura relativa (para el bamboleo) y paso a la caja del emblema
-    for (const p of pts) {
-      p.hf = Math.max(0, Math.min(1, (532 - p.y) / 440));
-      p.x += 100; p.y += 10; p.ox += 100; p.oy += 10;
-      p.banda = Math.abs(p.y - BANDA) < 40;
+      dist[i] = dist[mejor] + Math.sqrt(md) * 1.5; padre[i] = mejor;
+    }
+    let dmax = 0, arriba = Infinity;
+    for (let i = 0; i < n; i++) { if (dist[i] > dmax) dmax = dist[i]; if (pts[i].y < arriba) arriba = pts[i].y; }
+    pivoteY = pts[raiz].y;
+    for (let i = 0; i < n; i++) {
+      const p = pts[i], pa = padre[i] >= 0 ? pts[padre[i]] : p;
+      p.b = (dist[i] / dmax) * CREC + R() * 0.06;
+      p.ox = pa.x; p.oy = pa.y;
+      p.hf = Math.max(0, Math.min(1, (pivoteY - p.y) / (pivoteY - arriba)));
+      p.banda = Math.abs(p.y - BANDA) < 24;
     }
     return pts;
   }
   /* verde, luego oro, luego rojo; el umbral de cada punto es distinto para
      que el cambio se vea granulado y no de golpe */
   const madurez = (p: Punto, T: number) => {
-    const f = (T - p.b - 0.5) / 2.4;
+    const f = (T - p.b - 0.3) / 1.6;
     if (f < p.r * 0.5) return 7;
     if (f < 0.5 + p.r * 0.5) return 2;
     return p.r < 0.3 ? 6 : 5;
@@ -247,7 +239,7 @@ function iniciar(hero: HTMLElement, lienzo: HTMLCanvasElement, zona: HTMLElement
   /* ======================================================================
      EL RESTO DEL EMBLEMA, cuando las cerezas ya están rojas
      ====================================================================== */
-  const LOGO = 7.4, BANDA = 300;
+  const LOGO = 7.4, BANDA = 300; // el logo se cierra con las bayas ya rojas
   function genEmblema(st: number) {
     const L: Marca[] = [];
     // el anillo doble, trazado desde abajo hacia los dos lados
@@ -288,10 +280,11 @@ function iniciar(hero: HTMLElement, lienzo: HTMLCanvasElement, zona: HTMLElement
   let vis = new Uint8Array(0), nac = vis;
   let T = 0;
 
+  let planta: HTMLImageElement | null = null;
   const preparar = () => {
     semilla(7);
     const st = paso();
-    rama = genRama(st);
+    rama = planta ? genMatica(planta, st) : [];
     logo = genEmblema(st);
     const n = rama.length + logo.length;
     px = new Float32Array(n); py = new Float32Array(n); vx = new Float32Array(n); vy = new Float32Array(n);
@@ -335,12 +328,12 @@ function iniciar(hero: HTMLElement, lienzo: HTMLCanvasElement, zona: HTMLElement
         continue;
       }
       if (!nac[i]) { nac[i] = 1; if (!vis[i]) { px[i] = p.ox; py[i] = p.oy; } }
-      // bamboleo: giro sobre la base del tallo, más fuerte cuanto más alto
+      // bamboleo: giro sobre el pie del tallo, más fuerte cuanto más alto;
+      // lo que se aleja del tallo (hojas, bayas) tiembla un poco además
       const ang = sw * p.hf * p.hf * 1.6, c = Math.cos(ang), sn = Math.sin(ang);
-      const rx = p.x - 300, ry = p.y - 542;
+      const rx = p.x - 300, ry = p.y - pivoteY;
       const tx = 300 + rx * c - ry * sn;
-      let ty = 542 + rx * sn + ry * c;
-      if (p.k === KL) ty += Math.sin(T * 2.1 + p.hoja * 1.7) * 1.4 * p.u;
+      const ty = pivoteY + rx * sn + ry * c + Math.sin(T * 2.1 + p.x * 0.05) * 1.3 * Math.min(1, Math.abs(rx) / 120);
       resorte(i, tx, ty, 60, am, dt, mx, my, rr);
       const a = Math.min(1, (T - p.b) * 2.2) * p.a * (p.banda ? tapa : 1);
       put(p.k === KC ? madurez(p, T) : p.c, a, ox + px[i] * s, oy + py[i] * s, p.k === KC ? z * 1.15 : z);
@@ -405,8 +398,18 @@ function iniciar(hero: HTMLElement, lienzo: HTMLCanvasElement, zona: HTMLElement
     medir(); sembrarMotas(); preparar();
     if (reduce) quieto(); else arrancar();
   };
-  // el nombre se dibuja con la Cormorant de la página: se espera a que esté,
-  // con un tope para no quedarse sin emblema si la fuente no llega
+  // la matica sale de la imagen de la planta (si no carga, queda el anillo y
+  // el nombre); el nombre se dibuja con la Cormorant de la página. Se espera
+  // a las dos, con un tope para no quedarse sin emblema si la fuente no llega.
+  const imagen = new Promise<void>((listo) => {
+    const src = zona.dataset.planta;
+    if (!src) return listo();
+    const img = new Image();
+    img.onload = () => { planta = img; listo(); };
+    img.onerror = () => listo();
+    img.src = src;
+  });
   const fuente = document.fonts?.load ? document.fonts.load('600 100px "Cormorant Garamond"') : Promise.resolve();
-  Promise.race([fuente, new Promise((r) => setTimeout(r, 1500))]).then(arranque, arranque);
+  const fuenteConTope = Promise.race([fuente, new Promise((r) => setTimeout(r, 1500))]);
+  Promise.all([imagen, fuenteConTope]).then(arranque, arranque);
 }

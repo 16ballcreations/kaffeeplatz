@@ -92,7 +92,12 @@ const fecha = (d: Date) =>
       {/* El emblema vivo (scripts/emblema-vivo.ts): la rama crece y se cierra
           el logo. Esta caja solo marca donde va; el lienzo cubre todo el hero
           para que el polvo flote tambien detras del texto. */}
-      <div class="v-hero__visual v-hero__emblema" data-kp-emblema aria-hidden="true">
+      <div
+        class="v-hero__visual v-hero__emblema"
+        data-kp-emblema
+        data-planta={recurso('/img/marca/planta-oro.w640.webp')}
+        aria-hidden="true"
+      >
         <noscript>
           <img
             src={recurso('/img/marca/emblema.webp')}
