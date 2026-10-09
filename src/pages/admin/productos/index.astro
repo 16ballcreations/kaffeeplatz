@@ -1,31 +1,87 @@
 ---
 /**
- * /admin/productos — la lista, con buscador y filtros.
+ * /admin/productos — la lista, con buscador y filtros. Y, desde el 9 oct 2026,
+ * la entrada al inventario y a las fotos, que ya no tienen pantalla propia.
  *
  * El buscador es un formulario GET normal: funciona sin JavaScript, la URL se
  * puede guardar como favorito («mis agotados») y los avisos de la portada del
- * panel enlazan aquí con `?estado=agotados`, `sin-foto` o `archivados`. Por
- * eso esos tres valores son exactamente los de `src/admin/atencion.ts`.
+ * panel enlazan aquí con `?estado=agotados`, `sin-foto`, `archivados`,
+ * `negativo` o `descuadre`. Por eso esos valores son exactamente los de
+ * `src/admin/atencion.ts`.
+ *
+ * CON EL INVENTARIO ENCENDIDO cada fila dice cuántas se pueden vender
+ * («Verde 3 · Rosa 0»), con los negativos en rojo, y hay filtros para lo que
+ * hay que mirar: stock en negativo, poco stock (1 o 2), sin unidades, cuentas
+ * que no cuadran. Apagado, la lista sale como antes y la cabecera lo dice. La
+ * cabecera lleva también el interruptor (con su pantalla de confirmación) y
+ * «Contar la bodega», para el día del conteo inicial.
+ *
+ * Lo que enseñaba la antigua lista de fotos va en cada fila: fotos sin
+ * publicar y versiones sin foto propia.
  *
  * El filtrado es en memoria sobre todas las filas (ver `listarProductos`):
  * así «termometro» encuentra «Termómetro», que es como se escribe en el
  * teléfono.
  */
 import Panel from '../../../layouts/Panel.astro';
+import Respuesta from '../../../admin/inventario-respuesta.astro';
 import { ruta } from '../../../datos/sitio';
 import { formatearPrecio } from '../../../datos/formas';
 import { baseAdmin } from '../../../admin/base';
 import { listarProductos, categoriasDeProducto, type FilaListado } from '../../../admin/productos/leer';
 import { normalizarBusqueda } from '../../../admin/productos/texto';
+import { inventarioDelPanel, type FilaInventario } from '../../../datos/inventario';
+import { respuestaDeInventario, type RespuestaInventario } from '../../../admin/inventario-lectura';
+import { nombreVariante, cuando } from '../../../admin/inventario-textos';
 import '../../../styles/panel-productos.css';
+import '../../../styles/panel-inventario.css';
+import '../../../styles/panel-inventario-avisos.css';
 
 export const prerender = false;
 
+/* --- El inventario: se lee aparte y nunca tumba la lista ------------------ */
+const stock = new Map<string, FilaInventario[]>();
+const descuadre = new Set<string>();
+const descuadres: string[] = [];
+let activo = false;
+let cambio: { cuando: string; accion: string } | null = null;
+let sinInventario = false;
+let respuesta: RespuestaInventario = { franja: null, pregunta: null, error: null, paquete: null };
+try {
+  const inv = inventarioDelPanel(Astro.locals);
+  const [todo, a, c, u] = await Promise.all([inv.todo(), inv.activo(), inv.cuadre(), inv.ultimoCambioDelInterruptor()]);
+  activo = a;
+  cambio = u;
+  for (const f of todo.datos ?? []) stock.set(f.productoHandle, [...(stock.get(f.productoHandle) ?? []), f]);
+  const handleDe = new Map((todo.datos ?? []).map((f) => [f.varianteId, f.productoHandle]));
+  for (const d of c.datos ?? []) {
+    const h = handleDe.get(d.variante_id);
+    if (h) descuadre.add(h);
+    descuadres.push(`${d.producto_titulo}${nombreVariante(d.titulo) ? ` — ${d.titulo}` : ''}`);
+  }
+  sinInventario = todo.estado !== 'ok';
+  respuesta = await respuestaDeInventario(inv, Astro.url.searchParams, []);
+} catch (fallo) {
+  console.error('[admin] lista sin inventario:', fallo instanceof Error ? fallo.message : fallo);
+  sinInventario = true;
+}
+const de = (p: FilaListado) => stock.get(p.handle) ?? [];
+/** Las versiones a la venta de un producto vivo: las que cuentan para «poco» y «sin unidades». */
+const enVenta = (p: FilaListado) => (p.archivado ? [] : de(p).filter((v) => v.aLaVenta));
+
 /** Los estados del filtro. `tienda` es lo que se ve en el sitio: el valor por defecto. */
-const ESTADOS: { id: string; nombre: string; vale: (p: FilaListado) => boolean }[] = [
+const ESTADOS: { id: string; nombre: string; vale: (p: FilaListado) => boolean; inventario?: boolean }[] = [
   { id: 'tienda', nombre: 'En la tienda', vale: (p) => !p.archivado },
   { id: 'agotados', nombre: 'Agotados', vale: (p) => !p.archivado && !p.disponible },
   { id: 'sin-foto', nombre: 'Sin foto', vale: (p) => !p.archivado && p.fotos === 0 },
+  { id: 'fotos', nombre: 'Fotos por revisar', vale: (p) => p.porRevisar > 0 || (!p.archivado && p.sinFotoPropia.length > 0) },
+  /* Los de inventario, solo con el inventario encendido (apagado, nadie lleva
+     la cuenta y un «−2» sería ruido). La portada lleva a `negativo` y
+     `descuadre`. */
+  { id: 'negativo', nombre: 'Stock en negativo', vale: (p) => de(p).some((v) => v.fisico < 0), inventario: true },
+  { id: 'poco', nombre: 'Poco stock (1 o 2)', vale: (p) => enVenta(p).some((v) => v.vendible > 0 && v.vendible <= 2), inventario: true },
+  { id: 'sin-stock', nombre: 'Sin unidades', vale: (p) => enVenta(p).some((v) => v.vendible <= 0), inventario: true },
+  { id: 'descuadre', nombre: 'Cuentas que no cuadran', vale: (p) => descuadre.has(p.handle), inventario: true },
   { id: 'archivados', nombre: 'Archivados', vale: (p) => p.archivado },
   { id: 'todos', nombre: 'Todos', vale: () => true },
 ];
@@ -33,6 +89,7 @@ const ESTADOS: { id: string; nombre: string; vale: (p: FilaListado) => boolean }
 const q = (Astro.url.searchParams.get('q') ?? '').trim();
 const categoria = Astro.url.searchParams.get('categoria') ?? '';
 const estado = ESTADOS.find((e) => e.id === Astro.url.searchParams.get('estado')) ?? ESTADOS[0]!;
+const paquete = respuesta.paquete;
 
 let filas: FilaListado[] = [];
 let categorias: { id: string; nombre: string }[] = [];
@@ -55,6 +112,17 @@ const vistas = filas.filter(
     (!buscado || normalizarBusqueda(`${p.titulo} ${p.handle}`).includes(buscado)),
 );
 const filtrando = Boolean(q || categoria || estado.id !== 'tienda');
+
+/* Los enlaces a la ficha arrastran el paquete abierto: «Añadir otra cosa»
+   elige aquí el producto y allí la versión. */
+const aFicha = (id: number) => ruta(`/admin/productos/${id}${paquete ? `?paquete=${paquete.id}` : ''}`);
+/** «Verde 3 · Rosa 0», o solo el número si hay una sola versión. */
+const cifras = (p: FilaListado) =>
+  de(p).map((v) => ({
+    nombre: de(p).length > 1 ? nombreVariante(v.varianteTitulo) : null,
+    n: v.fisico < 0 ? v.fisico : Math.max(0, v.vendible),
+    clase: v.fisico < 0 ? 'pl-n--rojo' : v.vendible <= 0 ? 'pl-n--cero' : v.vendible <= 2 ? 'pl-n--poco' : '',
+  }));
 ---
 
 <Panel titulo="Productos" seccion="productos">
@@ -62,6 +130,51 @@ const filtrando = Boolean(q || categoria || estado.id !== 'tienda');
     <h1 class="p-titulo">Productos</h1>
     <a class="v-boton v-boton--oro" href={ruta('/admin/productos/nuevo')}>Añadir producto</a>
   </div>
+
+  <div data-region="pregunta">
+    {
+      paquete && (
+        <div class="pi-paquete">
+          <p>
+            {`Añadiendo al paquete ${paquete.cliente ? `de ${paquete.cliente}` : 'de esta venta'}: lleva `}
+            {paquete.articulos.map((a) => `${a.cantidad} × ${a.titulo}`).join(', ') || 'nada todavía'}. Elige el
+            producto y pulsa «Añadir 1 al paquete» en su versión.
+          </p>
+          <a class="pi-enlace-boton" href={ruta('/admin/productos')}>Terminar</a>
+        </div>
+      )
+    }
+  </div>
+
+  {/* EL INVENTARIO, en la cabecera: si la tienda usa las cantidades o no, el
+      interruptor (con su pantalla que pide confirmar) y el conteo. Va en la
+      primera línea para que nunca haya duda de si lo que se toca ya afecta a
+      la tienda. */}
+  <section class={`pi-interruptor ${activo ? 'pi-interruptor--on' : ''}`} id="inventario" aria-label="Inventario">
+    <p>
+      {
+        sinInventario
+          ? 'No se pudo leer el inventario ahora mismo.'
+          : activo
+            ? 'Inventario encendido: la tienda usa las cantidades, y lo que llega a 0 sale como Agotado.'
+            : 'Inventario apagado: la tienda vende sin mirar cantidades. Cuando termines de contar, enciéndelo.'
+      }
+      {cambio && ` (${cambio.accion === 'activar' ? 'Encendido' : 'Apagado'} ${cuando(cambio.cuando)}.)`}
+    </p>
+    <span class="pl-botones">
+      <a class="pi-enlace-boton" href={ruta('/admin/productos/contar')}>Contar la bodega</a>
+      <a class="pi-enlace-boton" href={ruta('/admin/inventario/interruptor')}>{activo ? 'Apagar…' : 'Encender…'}</a>
+    </span>
+  </section>
+  {
+    descuadres.length > 0 && (
+      <ul class="pi-avisos">
+        <li>
+          {`La cuenta de ${descuadres.length === 1 ? 'una cosa no coincide' : `${descuadres.length} cosas no coinciden`} con su historial: ${descuadres.join(', ')}. No es un error tuyo: avisa a soporte para que lo revisen.`}
+        </li>
+      </ul>
+    )
+  }
 
   {
     sinBase ? (
@@ -71,6 +184,7 @@ const filtrando = Boolean(q || categoria || estado.id !== 'tienda');
     ) : (
       <>
         <form method="get" action={ruta('/admin/productos')} class="pp-buscador" role="search">
+          {paquete && <input type="hidden" name="paquete" value={paquete.id} />}
           <div class="pp-campo pp-buscador__q">
             <label class="p-campo__etiqueta" for="b-q">Buscar</label>
             <input id="b-q" name="q" type="search" value={q} placeholder="Chemex, filtro, hervidor…" />
@@ -87,7 +201,7 @@ const filtrando = Boolean(q || categoria || estado.id !== 'tienda');
           <div class="pp-campo">
             <label class="p-campo__etiqueta" for="b-estado">Mostrar</label>
             <select id="b-estado" name="estado">
-              {ESTADOS.map((e) => (
+              {ESTADOS.filter((e) => !e.inventario || activo || e.id === estado.id).map((e) => (
                 <option value={e.id} selected={e.id === estado.id}>{e.nombre}</option>
               ))}
             </select>
@@ -111,7 +225,7 @@ const filtrando = Boolean(q || categoria || estado.id !== 'tienda');
           <ul class="pp-lista">
             {vistas.map((p) => (
               <li>
-                <a class="pp-producto" href={ruta(`/admin/productos/${p.id}`)}>
+                <a class="pp-producto" href={aFicha(p.id)}>
                   <span class="pp-producto__titulo">{p.titulo}</span>
                   <span class="pp-producto__datos">
                     <span>{nombreCategoria.get(p.categoria) ?? p.categoria}</span>
@@ -119,12 +233,34 @@ const filtrando = Boolean(q || categoria || estado.id !== 'tienda');
                       {p.variantes > 1 ? 'desde ' : ''}
                       {formatearPrecio(p.precio)}
                     </span>
-                    {p.variantes > 1 && <span>{p.variantes} opciones</span>}
+                    {p.variantes > 1 && <span>{p.variantes} versiones</span>}
                   </span>
+                  {activo && cifras(p).length > 0 && (
+                    <span class="pl-stock">
+                      <span>Para vender:</span>
+                      {cifras(p).map((c) => (
+                        <span class={`pl-n ${c.clase}`}>
+                          {c.nombre && `${c.nombre} `}
+                          <b class="v-num">{c.n}</b>
+                        </span>
+                      ))}
+                    </span>
+                  )}
                   <span class="pp-etiquetas">
                     {p.archivado && <span class="pp-etiqueta pp-etiqueta--archivado">Archivado</span>}
                     {!p.archivado && !p.disponible && <span class="pp-etiqueta pp-etiqueta--agotado">Agotado</span>}
+                    {activo && de(p).some((v) => v.fisico < 0) && (
+                      <span class="pp-etiqueta pp-etiqueta--agotado">Stock en negativo</span>
+                    )}
                     {p.fotos === 0 && <span class="pp-etiqueta">Sin foto</span>}
+                    {p.porRevisar > 0 && (
+                      <span class="pp-etiqueta pp-etiqueta--destacado">
+                        {p.porRevisar === 1 ? '1 foto sin publicar' : `${p.porRevisar} fotos sin publicar`}
+                      </span>
+                    )}
+                    {!p.archivado && p.sinFotoPropia.length > 0 && (
+                      <span class="pp-etiqueta">{`Sin fotos propias: ${p.sinFotoPropia.join(', ')}`}</span>
+                    )}
                     {p.destacado && <span class="pp-etiqueta pp-etiqueta--destacado">Destacado</span>}
                   </span>
                 </a>
@@ -135,4 +271,16 @@ const filtrando = Boolean(q || categoria || estado.id !== 'tienda');
       </>
     )
   }
+
+  <div data-region="franja">
+    <Respuesta
+      parte="franja"
+      franja={respuesta.franja}
+      error={respuesta.error}
+      pregunta={null}
+      paqueteAbierto={paquete?.id ?? null}
+      pantalla="/admin/productos"
+      volver="lista"
+    />
+  </div>
 </Panel>

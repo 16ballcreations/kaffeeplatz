@@ -445,3 +445,43 @@
   border-color: var(--v-linea-oro);
   color: var(--v-oro);
 }
+
+/* --- Inventario en la lista y en «Contar la bodega» ------------------------ */
+.pl-botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pl-stock {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.75rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.pl-n--poco b {
+  color: var(--v-oro);
+}
+
+.pl-n--cero b {
+  color: var(--v-tinta-3);
+}
+
+.pl-n--rojo,
+.pl-n--rojo b {
+  color: var(--p-aviso);
+}
+
+.pl-contar__fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pl-contar__nombre small {
+  display: block;
+  color: var(--v-tinta-3);
+}

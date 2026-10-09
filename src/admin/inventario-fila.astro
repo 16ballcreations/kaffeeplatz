@@ -15,12 +15,17 @@
  *     pedirle que aprenda un modelo de datos.
  *   - «Vendí 1 por WhatsApp», el botón más grande: es el 90 % del uso y cuesta
  *     UN toque (G.3). Sin preguntas: el motivo ya lo dice el botón.
- *   - «Cambiar», plegado: cargar mercancía, devoluciones, roturas, corregir la
- *     cuenta, retirar de la venta. Todo con `<details>`, que se abre sin
- *     JavaScript.
+ *   - «Cambiar», plegado: cargar mercancía, devoluciones, roturas y corregir
+ *     la cuenta. Todo con `<details>`, que se abre sin JavaScript.
+ *   - «A la venta» YA NO está aquí: es la casilla de la tarjeta de la versión
+ *     en la ficha del producto, que lo guarda con su cerrojo y su auditoría.
+ *     Dos interruptores para lo mismo en la misma tarjeta se contradirían.
  *
  * Todos los formularios van a `/admin/inventario/accion` por POST y vuelven
- * aquí con 303; ver `src/admin/inventario-acciones.ts`.
+ * con 303 a la pantalla que diga `volver`; ver `src/admin/inventario-acciones.ts`.
+ * Con JavaScript, en la ficha del producto, van por `fetch` y solo se
+ * sustituye esta fila (`data-inv`, ver productos/cliente-bloques.ts): lo
+ * escrito en los demás bloques no se toca.
  */
 import type { FilaInventario } from '../datos/inventario';
 import { ruta } from '../datos/sitio';
@@ -34,9 +39,17 @@ interface Props {
   abierto: boolean;
   /** Es la única variante del producto: el título ya lo dice la cabecera. */
   unica: boolean;
+  /** Clave de vuelta tras el POST (ver `volverA` en inventario-acciones.ts). */
+  volver: string;
+  /**
+   * `li` en una lista; `div` dentro de la tarjeta de la versión en la ficha
+   * del producto, donde es un sub-bloque y no un elemento de lista.
+   */
+  como?: 'li' | 'div';
 }
 
-const { fila: f, paquete, abierto, unica } = Astro.props as Props;
+const { fila: f, paquete, abierto, unica, volver, como = 'li' } = Astro.props as Props;
+const Envoltorio = como;
 const accion = ruta('/admin/inventario/accion');
 
 /* Lo que alguien está pagando AHORA: físico menos vendible, que ya descuenta
@@ -63,7 +76,7 @@ if (negativo) {
 }
 ---
 
-<li class="pi-fila" id={`v${f.varianteId}`}>
+<Envoltorio class="pi-fila" id={`v${f.varianteId}`} data-inv-fila={f.varianteId}>
   <div class="pi-fila__cabeza">
     <a class="pi-fila__nombre" href={ruta(`/admin/inventario/${f.varianteId}`)}>{nombre}</a>
     <span
@@ -74,9 +87,10 @@ if (negativo) {
   <p class={`pi-estado ${claseEstado}`}>{estado}</p>
 
   <div class="pi-fila__acciones">
-    <form method="post" action={accion}>
+    <form method="post" action={accion} data-inv>
       <input type="hidden" name="accion" value="whatsapp" />
       <input type="hidden" name="v" value={f.varianteId} />
+      <input type="hidden" name="volver" value={volver} />
       {paquete && <input type="hidden" name="paquete" value={paquete} />}
       <button class="v-boton v-boton--oro pi-vender" type="submit">
         {paquete ? 'Añadir 1 al paquete' : 'Vendí 1 por WhatsApp'}
@@ -88,10 +102,11 @@ if (negativo) {
       <div class="pi-mas__panel">
         {/* Un número y el motivo en el botón: «cargar diez en tres toques»
             (abrir, teclear 10, «Llegó mercancía»), que es la prueba 27. */}
-        <form method="post" action={accion} class="pi-grupo">
+        <form method="post" action={accion} data-inv class="pi-grupo">
           <input type="hidden" name="accion" value="sumar" />
           <input type="hidden" name="v" value={f.varianteId} />
-          {paquete && <input type="hidden" name="paquete" value={paquete} />}
+          <input type="hidden" name="volver" value={volver} />
+      {paquete && <input type="hidden" name="paquete" value={paquete} />}
           <label for={`n${f.varianteId}`}>¿Cuántas?</label>
           <input
             class="pi-num"
@@ -115,11 +130,12 @@ if (negativo) {
         {/* «Corregir la cuenta» es el ÚNICO sitio donde se exige escribir,
             porque es el único donde el motivo no lo explica ya (G.6). El
             número que veía va oculto: si cambió mientras tanto, no se pisa. */}
-        <form method="post" action={accion} class="pi-grupo">
+        <form method="post" action={accion} data-inv class="pi-grupo">
           <input type="hidden" name="accion" value="corregir" />
           <input type="hidden" name="v" value={f.varianteId} />
           <input type="hidden" name="anterior" value={f.fisico} />
-          {paquete && <input type="hidden" name="paquete" value={paquete} />}
+          <input type="hidden" name="volver" value={volver} />
+      {paquete && <input type="hidden" name="paquete" value={paquete} />}
           <label for={`c${f.varianteId}`}>Corregir la cuenta: en la estantería hay de verdad</label>
           <input
             class="pi-num"
@@ -145,23 +161,8 @@ if (negativo) {
           <button class="pi-boton" type="submit">Guardar la cuenta</button>
         </form>
 
-        <form method="post" action={accion} class="pi-grupo">
-          <input type="hidden" name="accion" value="alaventa" />
-          <input type="hidden" name="v" value={f.varianteId} />
-          <input type="hidden" name="si" value={f.aLaVenta ? '0' : '1'} />
-          {paquete && <input type="hidden" name="paquete" value={paquete} />}
-          <button class="pi-boton" type="submit">
-            {f.aLaVenta ? 'Retirar de la venta' : 'Volver a ponerlo a la venta'}
-          </button>
-          <small>
-            {f.aLaVenta
-              ? 'No toca cuántos tienes: solo deja de ofrecerse en la tienda.'
-              : 'Vuelve a ofrecerse en la tienda si hay unidades.'}
-          </small>
-        </form>
-
         <p class="pi-fila__pie"><a href={ruta(`/admin/inventario/${f.varianteId}`)}>Qué pasó con esto →</a></p>
       </div>
     </details>
   </div>
-</li>
+</Envoltorio>

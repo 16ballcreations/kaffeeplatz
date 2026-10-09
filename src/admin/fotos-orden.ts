@@ -40,9 +40,12 @@ export interface FotoOrden {
   grupo: string;
 }
 
-/** Las fotos por revisar van aparte: todavía no son de ningún color. */
-export function grupoDe(f: { varianteId: number | null; porRevisar: boolean }): string {
-  if (f.porRevisar) return 'revisar';
+/**
+ * El grupo es la sección de la ficha donde está la foto: las generales del
+ * producto o las de una versión. Una foto sin publicar ya está en su sección
+ * (se subió en ella, o allí la mandó su nombre) y se ordena con las demás.
+ */
+export function grupoDe(f: { varianteId: number | null }): string {
   return f.varianteId === null ? 'producto' : `v${f.varianteId}`;
 }
 

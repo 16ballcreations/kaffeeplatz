@@ -1,0 +1,108 @@
+/**
+ * panel-ficha.css — la ficha del producto por bloques: Producto, una tarjeta
+ * por versión y Versiones, cada uno con su botón (pedido del cliente, 9 oct
+ * 2026). Lo carga solo /admin/productos/<id>; los campos, las fotos y el
+ * inventario traen su propio CSS (panel-productos, panel-fotos,
+ * panel-inventario). Aquí solo lo que es de la ficha.
+ *
+ * PRIMERO 375 PX: todo en una columna, nada más ancho que la pantalla, y los
+ * botones de guardar a todo el ancho en el teléfono, donde se pulsan con el
+ * pulgar.
+ */
+
+.pb-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+}
+
+.pb-cabeza .p-seccion__titulo {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pb-numero {
+  color: var(--v-tinta-3);
+  font-weight: 400;
+}
+
+/* «Sin guardar»: la marca de que este bloque tiene cambios que no se han
+   guardado. Junto al título, porque es lo que se ve al desplazarse. */
+.pb-sin-guardar {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--p-aviso);
+  border-radius: var(--v-r-pildora);
+  color: var(--p-aviso);
+  font-size: var(--v-t-micro);
+  white-space: nowrap;
+}
+
+.pb-bloque[data-sucio] {
+  border-color: var(--p-aviso);
+}
+
+.pb-subtitulo {
+  margin: 1.5rem 0 0.5rem;
+  font-size: var(--v-t-peq);
+  font-weight: 600;
+  color: var(--v-tinta);
+}
+
+.pb-guardar {
+  margin-top: 1rem;
+}
+
+.pb-pendientes {
+  font-size: var(--v-t-micro);
+  color: var(--v-oro);
+}
+
+.pb-estado:focus {
+  outline: none;
+}
+
+.pb-estado:empty {
+  display: none;
+}
+
+.pb-fila-nombre {
+  color: var(--v-tinta);
+}
+
+/* El inventario de la versión: debajo del botón de guardar, separado por una
+   raya, porque NO se guarda con él (se aplica al pulsar). */
+.pb-inventario {
+  margin-top: 1.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--v-linea-2);
+}
+
+.pb-inventario .pi-fila {
+  list-style: none;
+  margin: 0;
+}
+
+/* Una foto subida que se publica al guardar su bloque. */
+.f-foto--revisar {
+  border-style: dashed;
+  border-color: var(--v-linea-oro);
+}
+
+.f-etiqueta--revisar {
+  border-color: var(--v-linea-oro);
+  color: var(--v-oro);
+  white-space: normal;
+}
+
+.pb-varias .f-subida {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 30rem) {
+  .pb-guardar .v-boton {
+    width: 100%;
+  }
+}

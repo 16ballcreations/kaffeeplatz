@@ -1,6 +1,7 @@
 /**
- * POST /admin/inventario/accion — todos los botones de la pantalla de
- * inventario y del interruptor. Hace el cambio y responde 303 (PRG).
+ * POST /admin/inventario/accion — todos los botones de inventario (en la ficha
+ * de cada producto, en «Contar la bodega») y del interruptor. Hace el cambio
+ * y responde 303 (PRG) a la pantalla que diga `volver`.
  *
  * Un solo punto de entrada y no una ruta por botón: son siete acciones sobre
  * la misma cosa (una variante), y la lista de qué hace cada una se lee entera
@@ -27,6 +28,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
   return new Response(null, { status: 303, headers: cabecerasPanel({ Location: ruta(destino) }) });
 };
 
-/** Un GET aquí no hace nada: vuelve a la pantalla. Igual que `/admin/salir`. */
+/** Un GET aquí no hace nada: vuelve a la lista de productos. Igual que `/admin/salir`. */
 export const GET: APIRoute = () =>
-  new Response(null, { status: 303, headers: cabecerasPanel({ Location: ruta('/admin/inventario') }) });
+  new Response(null, { status: 303, headers: cabecerasPanel({ Location: ruta('/admin/productos') }) });

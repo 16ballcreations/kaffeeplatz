@@ -1,0 +1,146 @@
+---
+/**
+ * FotosBloque — las fotos de UN bloque de la ficha: las generales del
+ * producto, o las de una versión («Verde»).
+ *
+ * Vive DENTRO del `<form>` de su bloque: versión, toma y descripción de cada
+ * foto se guardan con el botón del bloque («Guardar producto», «Guardar esta
+ * versión»), y ese mismo guardado PUBLICA las que esperaban (ver
+ * consultas/imagenes-escribir.ts, `sentenciasAsignaciones`).
+ *
+ * Subir, bajar, portada y quitar son otra cosa: se aplican AL PULSAR, porque
+ * son el orden de la tienda y no un dato a medio escribir. Son botones del
+ * mismo formulario con `formaction` a /admin/productos/<id>/fotos: sin JS el
+ * navegador envía el formulario allí y vuelve con 303 (lo no guardado de ESTE
+ * bloque se pierde, como pasaba en la antigua pantalla de fotos; se dice en
+ * la ayuda); con JS van por `fetch` y solo se mueve la tarjeta
+ * (fotos-cliente-rejilla.ts).
+ *
+ * «Versión» es un desplegable por foto, y no solo la tarjeta donde está, por
+ * «Subir varias»: una foto con el nombre mal puesto cae en la sección
+ * equivocada (o en la del producto) y desde aquí se manda a la buena.
+ *
+ * TODO A 375 PX: una columna, controles de 44 px, y ↑↓ además de arrastrar
+ * (B.7, punto 5).
+ */
+import { miniatura } from '../../datos/imagenes';
+import type { FotoVista } from './ficha';
+
+
+interface Props {
+  fotos: FotoVista[];
+  /** 'producto' o 'v<id>': el grupo de reordenación (fotos-orden.ts). */
+  grupo: string;
+  /** Las versiones entre las que se puede elegir. Vacío si hay menos de dos. */
+  versiones: { id: number; titulo: string }[];
+  roles: { id: string; nombre: string }[];
+  /** Nombre de la versión de este bloque (para «Portada de Verde»), o null. */
+  version: string | null;
+  rutaFotos: string;
+  errores: Record<string, string>;
+}
+
+const { fotos, grupo, versiones, roles, version, rutaFotos, errores } = Astro.props as Props;
+---
+
+{
+  fotos.length === 0 ? (
+    <p class="f-nota" data-f-vacio>
+      {version
+        ? `Sin fotos propias todavía: en la tienda, al elegir ${version} se ven las del producto.`
+        : 'Este producto todavía no tiene fotos generales.'}
+    </p>
+  ) : (
+    <p class="f-nota" data-f-vacio hidden />
+  )
+}
+<ol class="f-fotos" data-f-lista={grupo}>
+  {
+    fotos.map((f) => {
+      const eAlt = errores[`alt-${f.id}`];
+      const eFoto = errores[`foto-${f.id}`];
+      return (
+        <li class:list={['f-foto', { 'f-foto--revisar': f.porRevisar }]} data-f-foto={f.id} id={`foto-${f.id}`}>
+          <img class="f-foto__img" src={miniatura(f.clave)} alt="" loading="lazy" width="96" height="96" />
+          <div class="f-foto__cuerpo">
+            <p class="f-foto__marcas">
+              <span class="f-etiqueta f-etiqueta--oro" data-f-marca-producto hidden={!f.portada}>
+                ★ Portada del catálogo
+              </span>
+              <span class="f-etiqueta f-etiqueta--oro" data-f-marca-variante hidden={!f.portadaDe}>
+                {`★ Portada de ${f.portadaDe ?? ''}`}
+              </span>
+              {f.porRevisar && (
+                <span class="f-etiqueta f-etiqueta--revisar">Sin publicar: se publica al guardar</span>
+              )}
+              {f.nombreOriginal && <span class="f-foto__nombre">{f.nombreOriginal}</span>}
+            </p>
+            <input type="hidden" name="foto" value={f.id} />
+            <div class="f-foto__campos">
+              {versiones.length > 0 && (
+                <label class="f-campo">
+                  <span>Versión</span>
+                  <select name={`variante-${f.id}`} data-f-variante aria-invalid={eFoto ? 'true' : undefined}>
+                    <option value="">Del producto (todas)</option>
+                    {versiones.map((v) => (
+                      <option value={v.id} selected={f.varianteId === v.id}>{v.titulo}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label class="f-campo">
+                <span>Toma</span>
+                <select name={`rol-${f.id}`} data-f-rol>
+                  <option value="">Sin clasificar</option>
+                  {roles.map((r) => (
+                    <option value={r.id} selected={f.rol === r.id}>{r.nombre}</option>
+                  ))}
+                </select>
+              </label>
+              <label class="f-campo f-campo--ancho">
+                <span>Qué se ve (descripción)</span>
+                <input
+                  name={`alt-${f.id}`}
+                  value={f.alt}
+                  data-f-alt
+                  data-f-alt-auto={String(f.auto)}
+                  aria-invalid={eAlt ? 'true' : undefined}
+                  aria-describedby={eAlt ? `e-alt-${f.id}` : undefined}
+                />
+              </label>
+            </div>
+            {eAlt && <p class="pp-error-campo" id={`e-alt-${f.id}`}>{eAlt}</p>}
+            {eFoto && <p class="pp-error-campo">{eFoto}</p>}
+            <div class="f-acciones">
+              <button class="f-boton" type="submit" formaction={rutaFotos} name="accion" value={`subir:${f.id}`}>
+                ↑<span class="f-oculto"> Subir</span>
+              </button>
+              <button class="f-boton" type="submit" formaction={rutaFotos} name="accion" value={`bajar:${f.id}`}>
+                ↓<span class="f-oculto"> Bajar</span>
+              </button>
+              {!f.porRevisar && (
+                <button class="f-boton" type="submit" formaction={rutaFotos} name="accion" value={`portada:${f.id}`}>
+                  Portada del catálogo
+                </button>
+              )}
+              {!f.porRevisar && version && (
+                <button class="f-boton" type="submit" formaction={rutaFotos} name="accion" value={`portada-variante:${f.id}`}>
+                  {`Portada de ${version}`}
+                </button>
+              )}
+              <button
+                class="f-boton f-boton--peligro"
+                type="submit"
+                formaction={rutaFotos}
+                name="accion"
+                value={`quitar:${f.id}`}
+              >
+                Quitar
+              </button>
+            </div>
+          </div>
+        </li>
+      );
+    })
+  }
+</ol>

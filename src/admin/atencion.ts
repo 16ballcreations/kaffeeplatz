@@ -95,7 +95,7 @@ export async function loQueNecesitaAtencion(db: BaseAdmin): Promise<Aviso[]> {
       db,
       `SELECT COUNT(*) AS n FROM productos p
         WHERE p.archivado_en IS NULL
-          AND NOT EXISTS (SELECT 1 FROM imagenes i WHERE i.producto_id = p.id)`,
+          AND NOT EXISTS (SELECT 1 FROM imagenes i WHERE i.producto_id = p.id AND i.por_revisar = 0)`,
     ),
     /* `imagen IS NULL OR imagen = ''`: la columna admite NULL (un artículo real
        no tiene portada, anomalía 2 de B.0) y la semilla podría dejar cadena
@@ -206,8 +206,9 @@ export async function avisosDelInventario(locals: unknown): Promise<Aviso[]> {
   if (!activo) return avisos;
 
   const [negativos, descuadres] = await Promise.all([
-    /* Mismo criterio que la pantalla de inventario (`fisico < 0`), que es
-       adonde lleva la tarjeta y donde se ven con nombre. */
+    /* Mismo criterio que el filtro «Stock en negativo» de la lista de
+       productos (`fisico < 0`), que es adonde lleva la tarjeta y donde se ven
+       con nombre. */
     cifra(inv.todo, (d) => d.filter((v) => v.fisico < 0).length),
     cifra(inv.cuadre, (d) => d.length),
   ]);
@@ -217,7 +218,7 @@ export async function avisosDelInventario(locals: unknown): Promise<Aviso[]> {
       titulo: 'Cosas con stock en negativo',
       detalle: 'Se vendió más de lo que había. Corrige la cuenta cuando sepas cuántos hay.',
       cuenta: negativos,
-      href: '/admin/inventario',
+      href: '/admin/productos?estado=negativo',
       fallo: negativos === null,
     },
     {
@@ -225,7 +226,7 @@ export async function avisosDelInventario(locals: unknown): Promise<Aviso[]> {
       titulo: 'Cuentas que no cuadran',
       detalle: 'El stock no coincide con su historial. No es un error tuyo: avisa a soporte.',
       cuenta: descuadres,
-      href: '/admin/inventario',
+      href: '/admin/productos?estado=descuadre',
       fallo: descuadres === null,
     },
   );

@@ -33,20 +33,26 @@ function lote(db: BaseAdmin, sentencias: Sentencia[]): Promise<ResultadoEscritur
   return db.batch(sentencias);
 }
 
-/** Las dos portadas, recalculadas desde el orden. Ver la cabecera. */
-function sincronizarPortadas(db: BaseAdmin, productoId: number): Sentencia[] {
+/**
+ * Las dos portadas, recalculadas desde el orden. Ver la cabecera.
+ *
+ * Las dos SOLO con fotos publicadas (`por_revisar = 0`). Desde que las fotos
+ * viven dentro de la ficha del producto, una foto subida en la tarjeta
+ * «Verde» ya tiene `variante_id` y espera, `por_revisar`, a que se pulse
+ * «Guardar esta versión»: hasta entonces la tienda no la enseña
+ * (consultas/productos.ts filtra igual), y una portada que la tienda no
+ * enseña sería una portada rota.
+ */
+export function sincronizarPortadas(db: BaseAdmin, productoId: number): Sentencia[] {
   return [
     db
       .prepare(
         `UPDATE productos SET portada_id =
-           (SELECT id FROM imagenes WHERE producto_id = ?1 ORDER BY orden, id LIMIT 1)
+           (SELECT id FROM imagenes WHERE producto_id = ?1 AND por_revisar = 0
+             ORDER BY orden, id LIMIT 1)
          WHERE id = ?1`,
       )
       .bind(productoId),
-    /* Solo con fotos YA REVISADAS: una recién subida no es de ningún color
-       hasta que la dueña lo confirme, así que tampoco puede ser portada de
-       uno. (Hoy no tiene `variante_id` mientras está por revisar; la
-       condición lo deja escrito por si eso cambia.) */
     db
       .prepare(
         `UPDATE variantes SET portada_id =
@@ -77,22 +83,36 @@ export interface FotoNueva {
   ancho: number;
   alto: number;
   nombreOriginal: string;
+  /** La versión donde se subió (o la que sugirió el nombre). `null` = del producto. */
+  varianteId: number | null;
+  /** La toma que sugirió el nombre, si la hay. */
+  rol: string | null;
 }
 
 /**
- * Una foto recién subida: al final de la lista, sin variante ni rol, y
- * marcada `por_revisar` (la sugerencia la decide la dueña, no el nombre).
- * Devuelve su id.
+ * Una foto recién subida: al final de la lista, en la sección donde se subió
+ * (o la que sugirió su nombre en «Subir varias») y marcada `por_revisar`.
+ *
+ * `por_revisar` ya no significa «sin variante»: significa «todavía no
+ * publicada». Se publica cuando se guarda el bloque donde está, que es el
+ * momento en que la dueña la ha visto en su sitio. Un nombre mal escrito no
+ * publica nada en el color equivocado: deja la foto, sin publicar, en una
+ * tarjeta donde salta a la vista. Devuelve su id.
  */
 export async function insertarFoto(db: BaseAdmin, productoId: number, f: FotoNueva): Promise<number> {
   const r = await lote(db, [
     db
       .prepare(
         `INSERT INTO imagenes (producto_id, variante_id, rol, clave, alt, ancho, alto, orden, nombre_original, por_revisar)
-         VALUES (?1, NULL, NULL, ?2, ?3, ?4, ?5,
+         VALUES (?1,
+                 (SELECT id FROM variantes WHERE id = ?7 AND producto_id = ?1),
+                 (SELECT id FROM roles_imagen WHERE id = ?8),
+                 ?2, ?3, ?4, ?5,
                  (SELECT COALESCE(MAX(orden) + 1, 0) FROM imagenes WHERE producto_id = ?1), ?6, 1)`,
       )
-      .bind(productoId, f.clave, f.alt, f.ancho, f.alto, f.nombreOriginal),
+      /* Variante y rol pasan por un SELECT: si la versión se quitó entre la
+         lectura y la subida, la foto cae en el producto en vez de fallar. */
+      .bind(productoId, f.clave, f.alt, f.ancho, f.alto, f.nombreOriginal, f.varianteId, f.rol),
     /* `last_insert_rowid()` es el de la sentencia anterior: el batch corre en
        orden sobre la misma conexión. */
     db
@@ -116,29 +136,33 @@ export interface Asignacion {
 }
 
 /**
- * Guarda variante, rol y alt de varias fotos, y las da por revisadas.
+ * Las sentencias que guardan versión, rol y alt de las fotos de UN bloque, y
+ * las dan por publicadas. No las ejecuta: van dentro del `batch()` del bloque
+ * (consultas/productos-escribir.ts), DETRÁS de su cerrojo, para que un
+ * conflicto no deje las fotos guardadas y los datos no, ni al revés.
  *
- * Solo escribe (y audita) las que cambian de verdad, más las que estaban por
- * revisar: guardar ES confirmar la sugerencia, aunque coincida con lo que ya
- * había. La validación (que la variante sea de este producto, que el rol
- * exista, que el alt no esté vacío) la hace quien llama, contra los datos que
- * acaba de leer.
+ * Solo escribe (y audita) las que cambian de verdad, más las que esperaban
+ * publicarse: guardar el bloque ES publicarlas, aunque nada más cambie. La
+ * validación (que la versión sea de este producto, que el rol exista, que el
+ * alt no esté vacío) la hace quien llama, contra los datos que acaba de leer.
  */
-export async function guardarAsignaciones(
+export function sentenciasAsignaciones(
   db: BaseAdmin,
   productoId: number,
   actuales: FotoPanel[],
   cambios: Asignacion[],
-): Promise<number> {
+): { sentencias: Sentencia[]; cambiadas: number; publicadas: number } {
   const porId = new Map(actuales.map((f) => [f.id, f]));
   const sentencias: Sentencia[] = [];
-  let n = 0;
+  let cambiadas = 0;
+  let publicadas = 0;
   for (const c of cambios) {
     const a = porId.get(c.id);
     if (!a) continue;
     const igual = a.varianteId === c.varianteId && a.rol === c.rol && a.alt === c.alt;
     if (igual && !a.porRevisar) continue;
-    n++;
+    if (a.porRevisar) publicadas++;
+    else cambiadas++;
     sentencias.push(
       db
         .prepare(
@@ -151,13 +175,11 @@ export async function guardarAsignaciones(
         c.id,
         'editar',
         { variante_id: a.varianteId, rol: a.rol, alt: a.alt, por_revisar: a.porRevisar ? 1 : 0 },
-        a.porRevisar ? 'asignación confirmada' : 'asignación cambiada',
+        a.porRevisar ? 'publicada al guardar su bloque' : 'versión, toma o descripción cambiada',
       ),
     );
   }
-  if (!n) return 0;
-  await lote(db, [...sentencias, ...sincronizarPortadas(db, productoId)]);
-  return n;
+  return { sentencias, cambiadas, publicadas };
 }
 
 /**

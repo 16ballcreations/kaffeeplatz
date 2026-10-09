@@ -25,7 +25,7 @@ export const MAX_NOMBRE_VARIANTE = 60;
 export const MAX_FILAS = 40;
 export const MAX_PRECIO = 100_000_000;
 
-/** Una fila de «precio y opciones» tal como llegó del formulario. */
+/** Una fila del bloque «Versiones» tal como llegó del formulario. */
 export interface FilaBorrador {
   /** Id de la variante en D1, o `null` si es una fila nueva. */
   id: number | null;
@@ -128,7 +128,7 @@ export interface FilasValidadas {
 }
 
 /**
- * Valida las filas de «precio y opciones».
+ * Valida las filas del bloque «Versiones».
  *
  * `conHistorial` son los ids que no se pueden quitar (tienen movimientos de
  * inventario, reservas o paquetes): marcarlos para quitar es un error con
@@ -168,16 +168,16 @@ export function validarFilas(
     for (const { fila } of quedan) {
       const i = b.filas.indexOf(fila);
       if (!fila.titulo) {
-        e[`v${i}_titulo`] = 'Escribe el nombre de esta opción, por ejemplo «Negro» o «6 tazas».';
+        e[`v${i}_titulo`] = 'Escribe el nombre de esta versión, por ejemplo «Negro» o «6 tazas».';
         continue;
       }
       const clave = fila.titulo.toLocaleLowerCase('es');
       if (vistos.has(clave)) {
-        e[`v${i}_titulo`] = `Ya hay otra opción llamada «${fila.titulo}». Cada una necesita un nombre distinto.`;
+        e[`v${i}_titulo`] = `Ya hay otra versión llamada «${fila.titulo}». Cada una necesita un nombre distinto.`;
       } else vistos.set(clave, i);
     }
     if (!b.opcionNombre) {
-      e.opcion_nombre = 'Escribe qué cambia entre las opciones: «Color», «Tamaño»…';
+      e.opcion_nombre = 'Escribe qué cambia entre las versiones: «Color», «Tamaño»…';
     }
   }
   b.filas.forEach((f, i) => {

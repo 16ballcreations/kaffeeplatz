@@ -14,8 +14,8 @@
  *
  * LAS ETIQUETAS SON LAS PALABRAS DE ANDREINA
  * ---------------------------------------------------------------------------
- * «Fotos», no «Medios». «Diario», no «Blog» ni «Contenido». «Inventario», no
- * «Stock». Conoce su catálogo al dedillo y no es técnica: la palabra correcta es
+ * «Diario», no «Blog» ni «Contenido». «Para despachar», no «Pedidos
+ * pendientes». Conoce su catálogo al dedillo y no es técnica: la palabra correcta es
  * la que ella usa, y en ningún sitio aparece un id.
  */
 
@@ -34,11 +34,15 @@ export interface Seccion {
 export const SECCIONES: Seccion[] = [
   { clave: 'inicio', etiqueta: 'Inicio', href: '/admin', listo: true, fase: 4 },
   { clave: 'productos', etiqueta: 'Productos', href: '/admin/productos', listo: true, fase: 5 },
-  { clave: 'fotos', etiqueta: 'Fotos', href: '/admin/fotos', listo: true, fase: 6 },
+  /* «Fotos» e «Inventario» ya no son secciones: viven dentro de la ficha de
+     cada producto (pedidos del cliente, 9 oct 2026: «se me hace confuso que
+     por un lado se suban las imágenes y por otro los datos», y el inventario
+     «en la misma vista de productos»). /admin/fotos e /admin/inventario
+     redirigen a Productos. El encendido del inventario y el conteo de la
+     bodega están en la cabecera de la lista de productos. */
   { clave: 'diario', etiqueta: 'Diario', href: '/admin/diario', listo: true, fase: 7 },
   /* Justo detrás de Diario porque es donde se piden: los temas del diario
      viven ahí. Antes solo se llegaba por un enlace al pie del diario. */
   { clave: 'categorias', etiqueta: 'Categorías', href: '/admin/categorias', listo: true, fase: 7 },
-  { clave: 'inventario', etiqueta: 'Inventario', href: '/admin/inventario', listo: true, fase: 9 },
   { clave: 'despachos', etiqueta: 'Para despachar', href: '/admin/despachos', listo: true, fase: 9 },
 ];

@@ -1,0 +1,77 @@
+---
+/**
+ * EstadoBloque — lo que un bloque de la ficha dice de sí mismo: «Guardado»,
+ * «Todavía no se ha guardado», el error, o el aviso de que otra pestaña
+ * guardó ESTE bloque mientras ella lo editaba.
+ *
+ * Va DENTRO de cada bloque, junto a su botón, y no arriba de la página: con
+ * cuatro bloques y un teléfono de 375 px, un «Guardado» arriba no se ve desde
+ * la tarjeta «Verde», y no diría cuál de los cuatro se guardó.
+ *
+ * DOS PESTAÑAS: AVISAR, NO PISAR (prueba obligatoria 12)
+ * ---------------------------------------------------------------------------
+ * Cada bloque lleva el cerrojo con el que se pintó (migrations/0009). Si al
+ * guardarlo la base tiene otro, no se guarda nada: se repinta con lo que ella
+ * escribió, la lista de diferencias y el cerrojo NUEVO, de modo que volver a
+ * pulsar «Guardar» es una DECISIÓN informada de quedarse con lo suyo, no un
+ * accidente. Guardar OTRO bloque no cuenta como conflicto.
+ *
+ * `tabindex="-1"`: con JS, tras guardar, el foco viene aquí para que un
+ * lector de pantalla lea el resultado sin buscarlo.
+ */
+import { ruta } from '../../datos/sitio';
+
+interface Props {
+  hecho?: string;
+  aviso?: string;
+  /** Diferencias con lo guardado, si fue un conflicto. */
+  conflicto?: string[] | null;
+  desaparecida?: boolean;
+  /** El error general, o `true` si solo hay errores de campos. */
+  error?: string | boolean;
+  boton: string;
+  productoId: number;
+}
+
+const { hecho, aviso, conflicto, desaparecida, error, boton, productoId } = Astro.props as Props;
+---
+
+<div class="pb-estado" data-bloque-estado tabindex="-1">
+  {hecho && <p class="pp-hecho" role="status">{hecho}</p>}
+  {aviso && <p class="pp-aviso" role="status">{aviso}</p>}
+  {
+    desaparecida ? (
+      <div class="p-error pp-conflicto" role="alert">
+        <p>
+          <b>Esta versión ya no existe:</b> la quitaron desde otra pantalla mientras la editabas. No se
+          guardó nada. Lo que escribiste sigue aquí para que puedas copiarlo; si la necesitas, añádela
+          otra vez en «Versiones».
+        </p>
+      </div>
+    ) : (
+      conflicto && (
+        <div class="p-error pp-conflicto" role="alert">
+          <p>
+            <b>Alguien guardó esto mismo mientras lo editabas</b> (quizá en otra pestaña o en otro
+            teléfono). <b>No se guardó nada</b> y lo que escribiste sigue aquí.
+          </p>
+          {conflicto.length > 0 && (
+            <ul>
+              {conflicto.map((d) => (
+                <li>{d}</li>
+              ))}
+            </ul>
+          )}
+          <p>
+            {`Si pulsas «${boton}» otra vez, lo que ves aquí reemplazará lo guardado. Si prefieres ver primero lo otro, `}
+            <a href={ruta(`/admin/productos/${productoId}`)} target="_blank" rel="noopener">
+              ábrelo en otra pestaña
+            </a>.
+          </p>
+        </div>
+      )
+    )
+  }
+  {typeof error === 'string' && error && <p class="p-error" role="alert">{error}</p>}
+  {error === true && <p class="p-error" role="alert">No se guardó: hay algo que corregir. Lo verás marcado arriba.</p>}
+</div>
