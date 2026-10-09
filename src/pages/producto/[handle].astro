@@ -31,6 +31,7 @@ import { categoriaPorId } from '../../datos/categorias';
 import { GUIA_DE_PRODUCTO, ENVIOS } from '../../datos/guias';
 import {
   obtenerProductos,
+  obtenerCategorias,
   obtenerDestinoDeArchivado,
   respuestaDeEmergencia,
   marcarEtiquetas,
@@ -86,11 +87,13 @@ if (!d) {
 const lecturaDiario = await obtenerArticulos(Astro.locals);
 const articulos = lecturaDiario.estado === 'ok' ? (lecturaDiario.datos ?? []) : [];
 
-marcarEtiquetas(Astro.locals, [`producto:${d.handle}`, 'catalogo']);
+marcarEtiquetas(Astro.locals, [`producto:${d.handle}`, 'catalogo', 'categorias']);
 
 const portada = d.imagenes[0];
 const hayRango = new Set(d.variantes.map((v) => v.precio)).size > 1;
-const categoria = categoriaPorId(d.categoria);
+/* El nombre de la categoria (migas, rotulo, enlace) es el de D1: lo que la
+   dueña puso en el panel. Ver `obtenerCategorias`. */
+const categoria = categoriaPorId(d.categoria, await obtenerCategorias(Astro.locals));
 
 /* Solo hay selector cuando hay de verdad entre que elegir. */
 const conSelector = d.variantes.length > 1;

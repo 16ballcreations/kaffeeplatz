@@ -169,10 +169,25 @@ export async function borrarRol(db: BaseAdmin, id: string): Promise<boolean> {
   return r[1]?.meta?.changes === 1;
 }
 
-/** Los handles de los productos de una categoría: para invalidar sus fichas. */
+/**
+ * Los handles de las fichas que pintan el nombre de una categoría: para
+ * invalidar sus copias al renombrarla.
+ *
+ * No son solo los productos de la categoría. Desde que la tienda lee los
+ * nombres de D1, cada ficha pinta también la categoría de sus «También te
+ * puede servir», y esos relacionados cruzan categorías (`relacionadosDe`
+ * prefiere la misma, pero rellena con otras). Calcular en SQL qué fichas
+ * enseñan qué tarjeta sería repetir aquí ese orden; con ~25 fichas y una
+ * edición al mes, borrar las copias de todas es más barato que equivocarse.
+ * Si la categoría no la usa ningún producto, no se pinta en ninguna ficha y
+ * no se devuelve nada.
+ */
 export async function productosDeCategoria(db: BaseD1, id: string): Promise<string[]> {
   const { results } = await db
-    .prepare('SELECT handle FROM productos WHERE categoria = ?')
+    .prepare(
+      `SELECT handle FROM productos
+        WHERE EXISTS (SELECT 1 FROM productos u WHERE u.categoria = ?)`,
+    )
     .bind(id)
     .all<{ handle: string }>();
   return results.map((f) => f.handle);

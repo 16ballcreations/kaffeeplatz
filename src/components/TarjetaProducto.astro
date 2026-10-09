@@ -32,6 +32,7 @@ import Precio from './Precio.astro';
 import AccionesTarjeta from './AccionesTarjeta.astro';
 import { ruta } from '../datos/sitio';
 import { categoriaPorId } from '../datos/categorias';
+import { obtenerCategorias } from '../datos/catalogo';
 import { resumenOpciones } from '../datos/guias';
 
 interface Props {
@@ -55,7 +56,10 @@ const {
 const [portada, segunda] = producto.imagenes;
 const enlace = ruta(`/producto/${producto.handle}`);
 const hayRango = new Set(producto.variantes.map((v) => v.precio)).size > 1;
-const categoria = categoriaPorId(producto.categoria).nombre;
+/* El nombre de D1, el que edita la dueña. `obtenerCategorias` recuerda la
+   lectura por peticion: veinticinco tarjetas son una sola consulta, la misma
+   que ya hizo la pagina. */
+const categoria = categoriaPorId(producto.categoria, await obtenerCategorias(Astro.locals)).nombre;
 const opciones = resumenOpciones(producto.opciones);
 /** Foto con fondo propio (JPG en origen) frente a recorte sobre blanco. */
 /** Ancho en pantalla de la foto de la tarjeta: 3 columnas de ~400 px en
