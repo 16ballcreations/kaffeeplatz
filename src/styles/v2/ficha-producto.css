@@ -394,6 +394,14 @@
     backdrop-filter: blur(14px);
     border-top: 1px solid var(--v-linea);
   }
+  /* La barra es el ultimo <div> del <main>, asi que le cae el margen de
+     "aire antes del pie" de v2/base.css (main > div:last-of-type). Al ser
+     fixed con bottom:0, ese margen la despegaba del borde (~72px en movil)
+     y tapaba el final del pie. El selector iguala esa especificidad y gana
+     por ir despues en la cascada. */
+  main > div.v-barra-compra {
+    margin-bottom: 0;
+  }
   .v-barra-compra__info {
     display: flex;
     flex-direction: column;
