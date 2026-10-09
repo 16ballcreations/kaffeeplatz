@@ -140,7 +140,10 @@ if (ficha && radios.length) {
   const botones = Array.from(document.querySelectorAll<HTMLElement>('[data-v-wa]'));
   const minis = Array.from(document.querySelectorAll<HTMLElement>('[data-kp-galeria-mini][data-variante]'));
 
-  const elegir = (r: HTMLInputElement, desdeGaleria: boolean) => {
+  /* `origen` lo lee la galeria (GaleriaProducto.astro): 'selector' cuando la
+     persona elige el color, 'galeria' cuando pulso la miniatura de un color,
+     'inicio' al arrancar la ficha. */
+  const elegir = (r: HTMLInputElement, origen: 'selector' | 'galeria' | 'inicio') => {
     r.checked = true;
     for (const p of precios) p.textContent = r.dataset.precio ?? '';
     const disp = r.dataset.disponible === 'true';
@@ -174,22 +177,25 @@ if (ficha && radios.length) {
        variante agotada ni por el contador ni por el boton. */
     if (hayAgregar) cantidadDeVariante(r.dataset.varianteId ?? '', !disp);
 
-    /* Foto de la variante, si la galeria tiene el vinculo. */
-    if (!desdeGaleria) {
-      minis.find((m) => m.dataset.variante === r.value)?.click();
-    }
+    /* LA GALERIA SIGUE AL COLOR: filtra sus miniaturas y, si lo eligio la
+       persona, enseña la primera foto de ese color. Antes esto era un
+       `.click()` sobre la miniatura del color, que solo cambiaba la foto
+       grande; desde la fase 6 la galeria tambien esconde las fotos de los
+       otros colores, y eso es asunto suyo. Aqui solo se avisa del cambio. Si
+       la galeria no tiene fotos por color, nadie escucha y no pasa nada. */
+    document.dispatchEvent(new CustomEvent('kp:variante', { detail: { titulo: r.value, origen } }));
   };
 
-  for (const r of radios) r.addEventListener('change', () => elegir(r, false));
+  for (const r of radios) r.addEventListener('change', () => elegir(r, 'selector'));
 
   /* Sentido inverso: pulsar la miniatura de una variante la selecciona. */
   for (const m of minis) {
     m.addEventListener('click', () => {
       const r = radios.find((x) => x.value === m.dataset.variante);
-      if (r && !r.checked) elegir(r, true);
+      if (r && !r.checked) elegir(r, 'galeria');
     });
   }
 
   const marcado = radios.find((r) => r.checked) ?? radios[0];
-  elegir(marcado, marcado === radios[0]);
+  elegir(marcado, 'inicio');
 }
