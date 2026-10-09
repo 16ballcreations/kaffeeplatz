@@ -181,7 +181,6 @@ export interface FilaCuadre {
   reservas_activas: number;
 }
 
-
 export interface FilaDespacho {
   id: number;
   creadoEn: string;
@@ -210,8 +209,10 @@ export interface ResultadoConfirmacion {
 export interface ResultadoVentaWhatsapp {
   ok: boolean;
   /** Por qué no se pudo, para que el panel PREGUNTE en vez de fallar (G.4.2). */
-  motivo: 'reservado' | 'sin-stock' | 'no-existe' | null;
+  motivo: 'reservado' | 'sin-stock' | 'no-existe' | 'paquete-cerrado' | null;
   despachoId: number | null;
+  /** El movimiento escrito: lo que «Deshacer» sabe revertir. */
+  movimientoId?: number | null;
   fisico?: number;
   reservado?: number;
   vendible?: number;

@@ -1,0 +1,330 @@
+/**
+ * panel-inventario.css — la pantalla de inventario y su historial.
+ *
+ * Hoja propia, como las demás del panel: `v2.css` es del sitio público (y otro
+ * trabajo lo está partiendo), y `panel.css` es el armazón. Aquí no se define
+ * ni un color nuevo: todo son tokens de `v2.css` y de `panel.css` (`--p-aviso`
+ * es el rojo ya medido en `scripts/contraste.mjs`).
+ *
+ * PENSADA PARA EL PULGAR, A 375 PX
+ * ---------------------------------------------------------------------------
+ * Andreina va a usar esto con el móvil en una mano mientras contesta mensajes
+ * (G.3). Todo lo que se toca mide al menos `--p-toque` (44 px), «Vendí 1» es
+ * el botón más grande de cada fila porque es el 90 % del uso, y la franja de
+ * «Deshacer» va abajo, donde llega el pulgar, no arriba.
+ */
+
+/* --- El interruptor y los avisos de arriba --------------------------------- */
+.pi-interruptor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.25rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-left: 3px solid var(--v-tinta-3);
+  border-radius: var(--v-r-mini);
+  font-size: var(--v-t-peq);
+  line-height: 1.45;
+}
+
+.pi-interruptor--on {
+  border-left-color: var(--v-oro);
+}
+
+.pi-interruptor p {
+  margin: 0;
+  max-width: 46ch;
+}
+
+.pi-enlace-boton {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--p-toque);
+  padding: 0 1rem;
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-pildora);
+  color: var(--v-tinta);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pi-enlace-boton:hover,
+.pi-enlace-boton:focus-visible {
+  border-color: var(--v-oro);
+  color: var(--v-oro);
+}
+
+.pi-avisos {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pi-avisos li,
+.pi-ok {
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--v-r-mini);
+  font-size: var(--v-t-peq);
+  line-height: 1.45;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-aviso);
+  color: var(--p-aviso);
+}
+
+.pi-ok {
+  border-color: var(--v-linea-oro);
+  color: var(--v-tinta);
+  margin-bottom: 1.25rem;
+}
+
+/* --- Buscador -------------------------------------------------------------- */
+.pi-buscar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.pi-buscar input,
+.pi-num,
+.pi-texto {
+  min-height: var(--p-toque);
+  padding: 0.5rem 0.75rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta);
+  /* 16 px reales: por debajo Safari hace zoom al enfocar (ver panel-formas). */
+  font: inherit;
+  font-size: 1rem;
+}
+
+.pi-buscar input {
+  flex: 1;
+  min-width: 0;
+}
+
+.pi-buscar input:focus-visible,
+.pi-num:focus-visible,
+.pi-texto:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 1px;
+}
+
+/* --- Un producto y sus variantes ------------------------------------------ */
+.pi-producto {
+  margin-bottom: 1.75rem;
+}
+
+.pi-producto__titulo {
+  font-size: var(--v-t-cuerpo);
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.pi-producto__titulo small {
+  font-weight: 400;
+  color: var(--v-tinta-3);
+}
+
+.pi-filas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--p-linea);
+}
+
+.pi-fila {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--p-linea);
+  /* El ancla `#v123` de la vuelta del POST no debe quedar debajo de la barra
+     fija del panel. */
+  scroll-margin-top: 7rem;
+}
+
+.pi-fila__cabeza {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.pi-fila__nombre {
+  flex: 1;
+  min-width: 0;
+  color: var(--v-tinta);
+  text-decoration: none;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.pi-fila__nombre:hover,
+.pi-fila__nombre:focus-visible {
+  color: var(--v-oro);
+}
+
+/* El número grande: lo que puede vender. Es el que importa (G.6). */
+.pi-numero {
+  font-family: var(--v-serif);
+  font-size: 2rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.pi-numero--cero {
+  color: var(--v-tinta-3);
+}
+
+.pi-numero--rojo {
+  color: var(--p-aviso);
+}
+
+.pi-estado {
+  margin: 0.3rem 0 0;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-2);
+  line-height: 1.45;
+}
+
+.pi-estado--aviso {
+  color: var(--v-oro);
+}
+
+.pi-estado--rojo {
+  color: var(--p-aviso);
+}
+
+.pi-fila__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  align-items: flex-start;
+}
+
+.pi-fila__acciones > form {
+  flex: 1 1 11rem;
+}
+
+/* «Vendí 1 por WhatsApp»: el toque de G.3. El botón más grande de la fila. */
+.pi-vender {
+  width: 100%;
+  min-height: var(--p-toque);
+  justify-content: center;
+}
+
+/* --- «Cambiar»: lo que no es el 90 % del uso, plegado ---------------------- */
+.pi-mas {
+  flex: 1 1 8rem;
+}
+
+.pi-mas > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--p-toque);
+  padding: 0 1rem;
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-pildora);
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--v-t-peq);
+  font-weight: 500;
+}
+
+.pi-mas > summary::-webkit-details-marker {
+  display: none;
+}
+
+.pi-mas[open] > summary {
+  border-color: var(--v-oro);
+  color: var(--v-oro);
+}
+
+.pi-mas__panel {
+  display: grid;
+  gap: 1.1rem;
+  margin-top: 0.75rem;
+  padding: 1rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-mini);
+}
+
+/* Cuando el panel está abierto, ocupa la fila entera. */
+.pi-mas[open] {
+  flex-basis: 100%;
+}
+
+.pi-grupo {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pi-grupo legend,
+.pi-grupo label {
+  font-size: var(--v-t-peq);
+  font-weight: 500;
+  padding: 0;
+  margin-bottom: 0.15rem;
+}
+
+.pi-grupo small {
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+  line-height: 1.4;
+}
+
+.pi-num {
+  width: 6.5rem;
+  text-align: center;
+}
+
+.pi-texto {
+  width: 100%;
+}
+
+.pi-motivos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.5rem;
+}
+
+.pi-boton {
+  min-height: var(--p-toque);
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  background: var(--p-tarjeta-2);
+  color: var(--v-tinta);
+  font: inherit;
+  font-size: var(--v-t-peq);
+  text-align: center;
+  cursor: pointer;
+}
+
+.pi-boton:hover,
+.pi-boton:focus-visible {
+  border-color: var(--v-oro);
+}
+
+.pi-boton--rojo {
+  border-color: var(--p-aviso);
+  color: var(--p-aviso);
+}
+
+.pi-fila__pie {
+  font-size: var(--v-t-micro);
+}
+
+.pi-fila__pie a {
+  color: var(--v-tinta-2);
+}

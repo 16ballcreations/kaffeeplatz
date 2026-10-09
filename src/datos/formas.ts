@@ -55,6 +55,21 @@ export interface Variante {
   precioFormateado: string;
   disponible: boolean;
   sku: string | null;
+  /**
+   * Cuántas unidades se pueden vender AHORA (físico menos lo que alguien está
+   * pagando), o `undefined` si el inventario está apagado.
+   *
+   * OPCIONAL A PROPÓSITO, y es lo que mantiene la promesa del interruptor
+   * `inventario_activo` (R13): con el inventario apagado el campo NO EXISTE en
+   * el objeto —ni siquiera como `undefined`—, así que los componentes pintan
+   * exactamente lo de antes y `topeDe()` cae en su tope de sensatez. Lo
+   * rellena `conStock()` de `src/datos/inventario.ts`; ninguna consulta del
+   * catálogo lo conoce.
+   *
+   * Nunca negativo: un stock en −1 es 0 unidades pedibles, no "menos una". El
+   * negativo es un aviso para el panel, no un dato para el cliente.
+   */
+  stockDisponible?: number;
 }
 
 export interface Opcion {

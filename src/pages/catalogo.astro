@@ -21,6 +21,7 @@ import Icono from '../components/Icono.astro';
 import { ruta, SITIO } from '../datos/sitio';
 import { CATEGORIAS } from '../datos/categorias';
 import { obtenerProductos, respuestaDeEmergencia, marcarEtiquetas } from '../datos/catalogo';
+import { conStock } from '../datos/inventario';
 
 
 /* FASE 3: esta pagina LEE DE D1 y por eso deja de prerenderizarse. Es la
@@ -48,7 +49,12 @@ marcarEtiquetas(Astro.locals, ['catalogo']);
    titulo (posible, p. ej. dos "Server") quedarian a merced del orden de
    llegada, que al leer de D1 lo decide la base. El handle es unico por
    definicion, asi que el orden queda determinado siempre. */
-const productos = lectura.datos.slice().sort((a, b) => {
+/* FASE 9: el tope de cada tarjeta sale del stock si el inventario esta
+   encendido. Apagado, `conStock` devuelve el mismo array y la pagina sale
+   identica a la de antes. */
+const conTopes = await conStock(Astro.locals, lectura.datos);
+
+const productos = conTopes.slice().sort((a, b) => {
   if (a.disponible !== b.disponible) return a.disponible ? -1 : 1;
   if (!!a.destacado !== !!b.destacado) return a.destacado ? -1 : 1;
   return a.titulo.localeCompare(b.titulo, 'es') || a.handle.localeCompare(b.handle, 'es');

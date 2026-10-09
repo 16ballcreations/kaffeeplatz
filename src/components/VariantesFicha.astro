@@ -1,0 +1,48 @@
+---
+/**
+ * VariantesFicha — los radios de variante de la ficha («Color», «Tamaño»...).
+ *
+ * Salió de `src/pages/producto/[handle].astro` para bajar la página del límite
+ * de ~300 líneas, SIN CAMBIAR EL HTML: es el mismo marcado, movido. Los
+ * `data-*` de cada radio los lee `src/scripts/ficha-producto.ts`, que gobierna
+ * la máquina de estados de la variante (precio, foto, WhatsApp, tope); por eso
+ * este componente no trae script propio.
+ *
+ * Solo se pinta cuando hay de verdad entre qué elegir: la página decide.
+ */
+import type { Producto } from '../datos/formas';
+
+interface Props {
+  producto: Producto;
+  /** La variante marcada al cargar (la primera disponible). */
+  inicial: Producto['variantes'][number];
+  /** «Color», «Tamaño»: la leyenda del grupo. */
+  nombreOpcion: string;
+  /** true si las variantes no cuestan lo mismo: entonces cada una dice su precio. */
+  hayRango: boolean;
+}
+
+const { producto: d, inicial, nombreOpcion, hayRango } = Astro.props as Props;
+---
+
+<fieldset class="v-variantes" data-kp-ficha-opciones>
+  <legend>{nombreOpcion}</legend>
+  <div class="v-variantes__lista">
+    {d.variantes.map((v) => (
+      <label class="v-variante" data-disponible={String(v.disponible)}>
+        <input
+          type="radio"
+          name="variante"
+          value={v.titulo}
+          checked={v === inicial}
+          data-precio={v.precioFormateado}
+          data-disponible={String(v.disponible)}
+          data-variante-id={v.id}
+        />
+        <span class="v-variante__nombre">{v.titulo}</span>
+        {hayRango && <span class="v-variante__precio v-num">{v.precioFormateado}</span>}
+        {!v.disponible && <span class="v-variante__agotado">Agotado</span>}
+      </label>
+    ))}
+  </div>
+</fieldset>

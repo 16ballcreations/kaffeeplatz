@@ -1,0 +1,98 @@
+---
+/**
+ * /admin/inventario/interruptor — encender o apagar el inventario, con la
+ * consecuencia escrita delante. R13 y G.6 («el día del cambio»).
+ *
+ * POR QUÉ UNA PANTALLA ENTERA PARA UN SÍ/NO
+ * ===========================================================================
+ * Porque es el toque más caro del panel. Encender con la bodega sin contar
+ * deja la tienda en «Agotado» (las cantidades empiezan en 0), y eso no da
+ * ningún error: solo deja de vender. Así que antes de encender se dice CUÁNTO
+ * saldría agotado y CUÁLES, y se pide marcar una casilla que el SERVIDOR
+ * comprueba (`inventario-acciones.ts`), no un `confirm()` de JavaScript que sin
+ * JS no existe.
+ *
+ * Apagar no pide casilla: es la vuelta atrás de G.6, paso 5, y tiene que
+ * costar un toque. Las cantidades no se tocan al apagar.
+ */
+import Panel from '../../../layouts/Panel.astro';
+import { ruta } from '../../../datos/sitio';
+import { inventarioDelPanel, type FilaInventario } from '../../../datos/inventario';
+import { ERRORES, nombreCompleto } from '../../../admin/inventario-textos';
+import '../../../styles/panel-inventario.css';
+import '../../../styles/panel-inventario-avisos.css';
+
+export const prerender = false;
+
+let activo = false;
+let filas: FilaInventario[] = [];
+let fallo = false;
+try {
+  const inv = inventarioDelPanel(Astro.locals);
+  const [a, t] = await Promise.all([inv.activo(), inv.todo()]);
+  activo = a;
+  filas = t.datos ?? [];
+  fallo = t.estado !== 'ok';
+} catch {
+  fallo = true;
+}
+
+/* Lo que saldría «Agotado» al encender: lo que está a la venta, en un producto
+   vivo, y no tiene nada vendible. Es exactamente la fórmula de `sqlVendible`. */
+const saldrianAgotados = filas.filter((f) => !f.productoArchivado && f.aLaVenta && f.vendible <= 0);
+const aLaVenta = filas.filter((f) => !f.productoArchivado && f.aLaVenta).length;
+const error = ERRORES[Astro.url.searchParams.get('error') ?? ''] ?? null;
+---
+
+<Panel titulo="Encender o apagar el inventario" seccion="inventario">
+  <p class="pi-fila__pie"><a href={ruta('/admin/inventario')}>← Inventario</a></p>
+  <h1 class="p-titulo">{activo ? 'Apagar el inventario' : 'Encender el inventario'}</h1>
+
+  {error && <p class="p-error" role="alert">{error}</p>}
+
+  {
+    fallo ? (
+      <p class="p-error" role="alert">No se pudo leer el inventario ahora mismo. No cambies nada todavía.</p>
+    ) : activo ? (
+      <>
+        <p class="p-entradilla">
+          Al apagarlo, la tienda vuelve a vender todo lo que tengas «a la venta», sin mirar cuántos hay. Las
+          cantidades <strong>no se pierden</strong>: siguen aquí y puedes seguir cargándolas. Es la forma de
+          volver atrás si algo sale mal.
+        </p>
+        <form method="post" action={ruta('/admin/inventario/accion')}>
+          <input type="hidden" name="accion" value="interruptor" />
+          <input type="hidden" name="activo" value="0" />
+          <button class="v-boton v-boton--oro" type="submit">Apagar el inventario</button>
+        </form>
+      </>
+    ) : (
+      <>
+        <p class="p-entradilla">
+          Al encenderlo, la tienda empieza a usar estas cantidades: lo que esté en 0 sale como
+          <strong>Agotado</strong> y nadie puede pedir más de lo que hay. Hazlo cuando hayas contado la bodega, a
+          primera hora de un día de trabajo.
+        </p>
+        {saldrianAgotados.length > 0 ? (
+          <ul class="pi-avisos">
+            <li>
+              Ahora mismo {saldrianAgotados.length} de {aLaVenta} saldrían como Agotado:{' '}
+              {saldrianAgotados.map((f) => nombreCompleto(f.productoTitulo, f.varianteTitulo)).join(', ')}.
+            </li>
+          </ul>
+        ) : (
+          <p class="pi-ok">Todo lo que está a la venta tiene al menos una unidad.</p>
+        )}
+        <form method="post" action={ruta('/admin/inventario/accion')} class="pi-grupo">
+          <input type="hidden" name="accion" value="interruptor" />
+          <input type="hidden" name="activo" value="1" />
+          <label>
+            <input type="checkbox" name="confirmo" value="si" required /> Ya conté la bodega y los números están bien
+          </label>
+          <button class="v-boton v-boton--oro" type="submit">Encender el inventario</button>
+        </form>
+      </>
+    )
+  }
+  <p class="p-nota">La tienda puede tardar hasta 5 minutos en reflejar el cambio.</p>
+</Panel>

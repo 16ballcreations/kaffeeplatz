@@ -22,7 +22,12 @@
   "compatibility_date": "2026-09-30",
   "compatibility_flags": ["nodejs_compat"],
 
-  "main": "./dist/_worker.js/index.js",
+  // El envoltorio que añade `scheduled()` (el cron de reservas, G.2) al Worker
+  // que genera Astro. Reexporta su `fetch` intacto: el sitio se sirve igual.
+  // Se probó aquí antes que en producción; el cambio equivalente para
+  // `wrangler.jsonc` está documentado en CLOUDFLARE.md, sin aplicar.
+  // Requiere `npm run build` antes: importa `dist/_worker.js/index.js`.
+  "main": "./src/worker/entrada.ts",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
@@ -47,6 +52,14 @@
       "migrations_dir": "migrations"
     }
   ],
+
+  // Cada 5 minutos: caduca las reservas vencidas y, una vez al día (a las 5:00
+  // UTC, medianoche en Colombia), corre el cuadre. Por qué 5 y no 1: una
+  // reserva de 30 minutos liberada a los 33 no molesta a nadie, y cada pasada
+  // escribe filas que se pagan (G.2, R4).
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
 
   "observability": {
     "enabled": true

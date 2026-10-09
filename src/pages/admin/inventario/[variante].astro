@@ -1,0 +1,98 @@
+---
+/**
+ * /admin/inventario/<variante> — «Qué pasó» con una cosa. G.6 del plan.
+ *
+ * Es la pantalla que convierte «la cuenta no cuadra» en «ah, el 3 de octubre
+ * se rompieron dos», y la razón de que exista `movimientos`. En lenguaje de
+ * persona: fecha relativa, cantidad con signo, qué pasó y la nota si la hay.
+ *
+ * Lo que toca lo APARTADO (alguien empezó a pagar, no llegó a pagar) se pinta
+ * más tenue: no cambia cuántos hay en la estantería, y mezclarlo al mismo peso
+ * haría parecer que la cuenta sube y baja sola.
+ *
+ * El número de la URL es el id interno de la variante. No se pinta en ningún
+ * sitio (G.6: ids, no), pero hace falta para llegar aquí.
+ */
+import Panel from '../../../layouts/Panel.astro';
+import { ruta } from '../../../datos/sitio';
+import { inventarioDelPanel, type FilaMovimiento } from '../../../datos/inventario';
+import {
+  nombreCompleto,
+  cuando,
+  motivoLegible,
+  esDeLoApartado,
+  notaVisible,
+} from '../../../admin/inventario-textos';
+import '../../../styles/panel-inventario.css';
+import '../../../styles/panel-inventario-avisos.css';
+
+export const prerender = false;
+
+const id = Number(Astro.params.variante);
+if (!Number.isInteger(id) || id <= 0) return new Response(null, { status: 404 });
+
+let titulo = '';
+let fila = null as Awaited<ReturnType<ReturnType<typeof inventarioDelPanel>['variante']>>['datos'];
+let movimientos: FilaMovimiento[] = [];
+let fallo = false;
+try {
+  const inv = inventarioDelPanel(Astro.locals);
+  const [v, m] = await Promise.all([inv.variante(id), inv.movimientos(id, 100)]);
+  fila = v.datos;
+  movimientos = m.datos ?? [];
+  fallo = v.estado !== 'ok' || m.estado !== 'ok';
+} catch (e) {
+  console.error('[admin] historial sin base:', e instanceof Error ? e.message : e);
+  fallo = true;
+}
+if (!fallo && !fila) return new Response(null, { status: 404 });
+if (fila) titulo = nombreCompleto(fila.productoTitulo, fila.varianteTitulo);
+const apartado = fila ? Math.max(0, fila.fisico - fila.vendible) : 0;
+---
+
+<Panel titulo={titulo || 'Qué pasó'} seccion="inventario">
+  <p class="pi-fila__pie"><a href={ruta(`/admin/inventario#v${id}`)}>← Inventario</a></p>
+  <h1 class="p-titulo">{titulo || 'Qué pasó'}</h1>
+
+  {
+    fallo || !fila ? (
+      <p class="p-error" role="alert">No se pudo leer el historial ahora mismo. Inténtalo en un momento.</p>
+    ) : (
+      <>
+        <div class="pi-cabecera-historial">
+          <span>
+            <span class="pi-numero">{fila.fisico}</span> en la estantería
+          </span>
+          {apartado > 0 && <span>{apartado} lo está pagando alguien</span>}
+          <span>{fila.aLaVenta ? 'A la venta' : 'Retirado por ti'}</span>
+        </div>
+
+        <h2 class="p-seccion__titulo">Qué pasó</h2>
+        {movimientos.length === 0 ? (
+          <p class="p-entradilla">
+            Todavía nada. Lo primero suele ser cargar lo que hay en la estantería desde el inventario.
+          </p>
+        ) : (
+          <ol class="pi-historial">
+            {movimientos.map((m) => (
+              <li class={esDeLoApartado(m.motivo) ? 'pi-historial--tenue' : ''}>
+                <time datetime={`${m.created_at.replace(' ', 'T')}Z`}>{cuando(m.created_at)}</time>
+                <span class="pi-historial__n">
+                  {m.cantidad > 0 ? `+${m.cantidad}` : `−${Math.abs(m.cantidad)}`}
+                </span>
+                <span>
+                  {motivoLegible(m.motivo, m.nota)}
+                  {esDeLoApartado(m.motivo) && ' (apartado)'}
+                  {notaVisible(m.nota) && <span class="pi-historial__nota">«{notaVisible(m.nota)}»</span>}
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+        {movimientos.length === 100 && (
+          <p class="pi-estado">Se ven los 100 cambios más recientes.</p>
+        )}
+      </>
+    )
+  }
+</Panel>

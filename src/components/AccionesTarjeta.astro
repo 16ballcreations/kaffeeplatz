@@ -101,7 +101,9 @@ const textoElegir = `Elegir ${nombreDeOpcion(producto.opciones)}`;
         `data-kp-tope` es el tope de ESA variante, para que el carrito lo
         aplique sin conocer el catalogo. Lo decide `topeDe()` de
         src/scripts/topes.ts, el unico sitio del codigo que lo decide: esta
-        tarjeta no define ningun limite propio.
+        tarjeta no define ningun limite propio. `data-kp-tope-stock` solo sale
+        con el inventario encendido: marca que ese tope es stock real, para
+        que el carrito lo apunte y el `+` de /carrito no lo supere.
       */}
       <a
         href={enlace}
@@ -110,6 +112,7 @@ const textoElegir = `Elegir ${nombreDeOpcion(producto.opciones)}`;
         data-kp-handle={unica ? producto.handle : undefined}
         data-kp-variante-id={unica ? unica.id : undefined}
         data-kp-tope={unica ? String(topeDe(unica)) : undefined}
+        data-kp-tope-stock={unica?.stockDisponible === undefined ? undefined : ''}
         data-kp-titulo={producto.titulo}
         aria-label={
           unica

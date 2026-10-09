@@ -1,0 +1,167 @@
+---
+/**
+ * inventario-fila — una línea de la pantalla de inventario: un color, un
+ * tamaño, o el producto entero si no tiene variantes.
+ *
+ * Vive en `src/admin/` y no junto a la página porque `verificar-puerta.mjs`
+ * exige `prerender = false` a TODO fichero de `src/pages/admin/`, y un
+ * componente no es una página: así la comprobación sigue siendo estricta.
+ *
+ * QUÉ SE VE Y POR QUÉ (G.6)
+ * ===========================================================================
+ *   - UN número grande: lo que puede vender (físico menos lo que alguien está
+ *     pagando). Es el que importa. Lo de la estantería y lo apartado salen
+ *     debajo SOLO cuando se diferencian: enseñar siempre tres números es
+ *     pedirle que aprenda un modelo de datos.
+ *   - «Vendí 1 por WhatsApp», el botón más grande: es el 90 % del uso y cuesta
+ *     UN toque (G.3). Sin preguntas: el motivo ya lo dice el botón.
+ *   - «Cambiar», plegado: cargar mercancía, devoluciones, roturas, corregir la
+ *     cuenta, retirar de la venta. Todo con `<details>`, que se abre sin
+ *     JavaScript.
+ *
+ * Todos los formularios van a `/admin/inventario/accion` por POST y vuelven
+ * aquí con 303; ver `src/admin/inventario-acciones.ts`.
+ */
+import type { FilaInventario } from '../datos/inventario';
+import { ruta } from '../datos/sitio';
+import { nombreVariante } from './inventario-textos';
+
+interface Props {
+  fila: FilaInventario;
+  /** El paquete abierto (modo «Añadir otra cosa»), si lo hay. */
+  paquete: number | null;
+  /** Abrir «Cambiar» al pintar: volvió un error de esta fila. */
+  abierto: boolean;
+  /** Es la única variante del producto: el título ya lo dice la cabecera. */
+  unica: boolean;
+}
+
+const { fila: f, paquete, abierto, unica } = Astro.props as Props;
+const accion = ruta('/admin/inventario/accion');
+
+/* Lo que alguien está pagando AHORA: físico menos vendible, que ya descuenta
+   solo las reservas vigentes. */
+const apartado = Math.max(0, f.fisico - f.vendible);
+const negativo = f.fisico < 0;
+const numero = negativo ? f.fisico : Math.max(0, f.vendible);
+/* Con una sola variante, su nombre repetiría la cabecera del producto: se
+   dice lo que es el número. */
+const nombre = (!unica && nombreVariante(f.varianteTitulo)) || 'Cuántos tengo';
+
+let estado = 'A la venta';
+let claseEstado = '';
+if (negativo) {
+  estado = `Hay menos de lo que dice la cuenta (${f.fisico}). Corrígela cuando sepas cuántos hay.`;
+  claseEstado = 'pi-estado--rojo';
+} else if (!f.aLaVenta) {
+  estado = `Retirado por ti${f.fisico > 0 ? ` — hay ${f.fisico} en la estantería` : ''}.`;
+} else if (apartado > 0) {
+  estado = `${apartado} lo está pagando alguien ahora · en la estantería hay ${f.fisico}.`;
+  claseEstado = 'pi-estado--aviso';
+} else if (f.fisico === 0) {
+  estado = 'Agotado — se pondrá a la venta sola cuando cargues unidades.';
+}
+---
+
+<li class="pi-fila" id={`v${f.varianteId}`}>
+  <div class="pi-fila__cabeza">
+    <a class="pi-fila__nombre" href={ruta(`/admin/inventario/${f.varianteId}`)}>{nombre}</a>
+    <span
+      class={`pi-numero ${negativo ? 'pi-numero--rojo' : numero === 0 ? 'pi-numero--cero' : ''}`}
+      aria-label={`Puedes vender ${numero}`}>{numero}</span
+    >
+  </div>
+  <p class={`pi-estado ${claseEstado}`}>{estado}</p>
+
+  <div class="pi-fila__acciones">
+    <form method="post" action={accion}>
+      <input type="hidden" name="accion" value="whatsapp" />
+      <input type="hidden" name="v" value={f.varianteId} />
+      {paquete && <input type="hidden" name="paquete" value={paquete} />}
+      <button class="v-boton v-boton--oro pi-vender" type="submit">
+        {paquete ? 'Añadir 1 al paquete' : 'Vendí 1 por WhatsApp'}
+      </button>
+    </form>
+
+    <details class="pi-mas" open={abierto}>
+      <summary>Cambiar</summary>
+      <div class="pi-mas__panel">
+        {/* Un número y el motivo en el botón: «cargar diez en tres toques»
+            (abrir, teclear 10, «Llegó mercancía»), que es la prueba 27. */}
+        <form method="post" action={accion} class="pi-grupo">
+          <input type="hidden" name="accion" value="sumar" />
+          <input type="hidden" name="v" value={f.varianteId} />
+          {paquete && <input type="hidden" name="paquete" value={paquete} />}
+          <label for={`n${f.varianteId}`}>¿Cuántas?</label>
+          <input
+            class="pi-num"
+            id={`n${f.varianteId}`}
+            name="n"
+            type="number"
+            inputmode="numeric"
+            min="1"
+            max="999"
+            value="1"
+            required
+          />
+          <div class="pi-motivos">
+            <button class="pi-boton" type="submit" name="motivo" value="entrada">+ Llegó mercancía</button>
+            <button class="pi-boton" type="submit" name="motivo" value="devolucion">+ Me devolvieron</button>
+            <button class="pi-boton" type="submit" name="motivo" value="whatsapp">− Vendí por WhatsApp</button>
+            <button class="pi-boton pi-boton--rojo" type="submit" name="motivo" value="rotura">− Se rompió o se perdió</button>
+          </div>
+        </form>
+
+        {/* «Corregir la cuenta» es el ÚNICO sitio donde se exige escribir,
+            porque es el único donde el motivo no lo explica ya (G.6). El
+            número que veía va oculto: si cambió mientras tanto, no se pisa. */}
+        <form method="post" action={accion} class="pi-grupo">
+          <input type="hidden" name="accion" value="corregir" />
+          <input type="hidden" name="v" value={f.varianteId} />
+          <input type="hidden" name="anterior" value={f.fisico} />
+          {paquete && <input type="hidden" name="paquete" value={paquete} />}
+          <label for={`c${f.varianteId}`}>Corregir la cuenta: en la estantería hay de verdad</label>
+          <input
+            class="pi-num"
+            id={`c${f.varianteId}`}
+            name="nuevo"
+            type="number"
+            inputmode="numeric"
+            min="0"
+            max="9999"
+            value={Math.max(0, f.fisico)}
+            required
+          />
+          <label for={`t${f.varianteId}`}>¿Por qué? <small>(obligatorio)</small></label>
+          <input
+            class="pi-texto"
+            id={`t${f.varianteId}`}
+            name="nota"
+            type="text"
+            maxlength="200"
+            placeholder="Conté la bodega, se rompió una…"
+            required
+          />
+          <button class="pi-boton" type="submit">Guardar la cuenta</button>
+        </form>
+
+        <form method="post" action={accion} class="pi-grupo">
+          <input type="hidden" name="accion" value="alaventa" />
+          <input type="hidden" name="v" value={f.varianteId} />
+          <input type="hidden" name="si" value={f.aLaVenta ? '0' : '1'} />
+          {paquete && <input type="hidden" name="paquete" value={paquete} />}
+          <button class="pi-boton" type="submit">
+            {f.aLaVenta ? 'Retirar de la venta' : 'Volver a ponerlo a la venta'}
+          </button>
+          <small>
+            {f.aLaVenta
+              ? 'No toca cuántos tienes: solo deja de ofrecerse en la tienda.'
+              : 'Vuelve a ofrecerse en la tienda si hay unidades.'}
+          </small>
+        </form>
+
+        <p class="pi-fila__pie"><a href={ruta(`/admin/inventario/${f.varianteId}`)}>Qué pasó con esto →</a></p>
+      </div>
+    </details>
+  </div>
+</li>

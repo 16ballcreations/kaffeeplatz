@@ -1,9 +1,14 @@
 /**
  * worker/entrada.ts — el envoltorio que le añade `scheduled()` al Worker.
  * ===========================================================================
- * NO ESTÁ ENGANCHADO TODAVÍA. Para activarlo hay que cambiar dos líneas de
- * `wrangler.jsonc`, y este trabajo no toca ese fichero a propósito: el bloque
- * exacto está en el informe de entrega para que lo añada quien integre.
+ * ENGANCHADO SOLO EN EL CANAL DE PRUEBAS (`wrangler.dev.jsonc`: `main` apunta
+ * aquí y declara `triggers.crons`). Producción (`wrangler.jsonc`) sigue con
+ * `main` en el Worker de Astro y sin cron: el cambio equivalente, y cómo
+ * comprobarlo antes, está en CLOUDFLARE.md («Cron de reservas»), sin aplicar.
+ *
+ * Probado en local con `wrangler dev --local --test-scheduled` y
+ * `curl /__scheduled`: caduca las reservas vencidas, y las páginas dinámicas,
+ * las prerenderizadas y los assets salen idénticos a los del `main` de Astro.
  *
  * POR QUÉ HACE FALTA UN ENVOLTORIO
  * ---------------------------------------------------------------------------
@@ -65,7 +70,7 @@ export default {
    * haya binding, por ejemplo), para que el log diga la verdad.
    */
   async scheduled(
-    _evento: { cron?: string; scheduledTime?: number },
+    evento: { cron?: string; scheduledTime?: number },
     env: EntornoWorker,
     _ctx: ContextoCron,
   ): Promise<void> {
@@ -78,7 +83,11 @@ export default {
       return;
     }
     try {
-      await barrerReservas(db, tocaElCuadre());
+      /* La hora PROGRAMADA de la pasada, no la de reloj: si el runtime la
+         arranca con unos segundos de retraso, el cuadre de las 5:00 UTC no se
+         salta. (En local `/__scheduled` ignora `?time=` y manda la hora de reloj:
+         el cuadre se prueba desde el panel, que usa la misma `cuadre()`.) */
+      await barrerReservas(db, tocaElCuadre(new Date(evento.scheduledTime ?? Date.now())));
     } catch (fallo) {
       console.error(
         '[cron] el barrido falló de forma inesperada:',

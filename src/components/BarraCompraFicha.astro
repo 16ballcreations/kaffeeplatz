@@ -1,0 +1,78 @@
+---
+/**
+ * BarraCompraFicha — la barra fija inferior de la ficha, solo en móvil.
+ *
+ * Repite la acción principal (precio + agregar o WhatsApp) para que no haya
+ * que volver arriba. Salió de `src/pages/producto/[handle].astro` para bajar
+ * la página del límite de ~300 líneas, SIN CAMBIAR EL HTML: mismo marcado,
+ * movido. Los `data-v-*` los atiende `src/scripts/ficha-producto.ts`, igual
+ * que los de `BloqueCompra`: es la misma máquina de estados.
+ */
+import type { Producto } from '../datos/formas';
+import BotonWhatsApp from './BotonWhatsApp.astro';
+import Icono from './Icono.astro';
+
+interface Props {
+  producto: Producto;
+  inicial: Producto['variantes'][number];
+  conSelector: boolean;
+  mensajeAviso: string;
+  mensajeVariante: (titulo: string, precio: string) => string;
+}
+
+const { producto: d, inicial, conSelector, mensajeAviso, mensajeVariante } =
+  Astro.props as Props;
+---
+
+<div class="v-barra-compra" aria-label="Pedir este producto" role="region">
+  <div class="v-barra-compra__info">
+    <span class="v-barra-compra__nombre">{d.titulo}</span>
+    <span class="v-num" data-v-precio>{conSelector ? inicial.precioFormateado : d.precioFormateado}</span>
+  </div>
+  {/* En la barra movil solo cabe UNA accion: la principal. Con JS es
+      agregar al carrito; sin JS, o agotado, es WhatsApp. */}
+  {
+    d.disponible && (
+      <button
+        type="button"
+        class="v-boton v-boton--oro v-boton--sm v-agregar"
+        data-v-agregar
+        data-handle={d.handle}
+        data-variante-id={inicial.id}
+        hidden
+      >
+        <Icono nombre="bolsa" tam={18} />
+        <span>Agregar</span>
+      </button>
+    )
+  }
+  <BotonWhatsApp
+    producto={d}
+    mensaje={d.disponible ? undefined : mensajeAviso}
+    clase="v-boton v-boton--oro v-boton--sm"
+    data-v-wa="generico"
+    data-v-wa-barra
+  >
+    <Icono nombre={d.disponible ? 'whatsapp' : 'campana'} tam={18} />
+    <span>{d.disponible ? 'Pedir' : 'Avísame'}</span>
+  </BotonWhatsApp>
+  {
+    conSelector &&
+      d.variantes.map((v) => (
+        <BotonWhatsApp
+          mensaje={
+            v.disponible
+              ? mensajeVariante(v.titulo, v.precioFormateado)
+              : `Hola KaffeePlatz, me interesa ${d.titulo} (${v.titulo}). ¿Me avisan cuando vuelva a estar disponible?`
+          }
+          clase="v-boton v-boton--oro v-boton--sm"
+          data-v-wa={v.titulo}
+          data-v-wa-barra
+          hidden
+        >
+          <Icono nombre={v.disponible ? 'whatsapp' : 'campana'} tam={18} />
+          <span>{v.disponible ? 'Pedir' : 'Avísame'}</span>
+        </BotonWhatsApp>
+      ))
+  }
+</div>
