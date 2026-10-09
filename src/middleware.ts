@@ -99,7 +99,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const esperar = context.locals.runtime?.ctx?.waitUntil?.bind(context.locals.runtime.ctx);
   await guardarCopia(context.url, html, etiquetas, esperar);
 
+  /* Se lee AQUÍ y no junto a las etiquetas: lo marcan las tarjetas que
+     pintan un «Queda 1», y una tarjeta se renderiza mientras sale el cuerpo.
+     Hasta tener el HTML entero (`text()` de arriba) no se sabe si alguna lo
+     pintó. */
+  const corta = (context.locals as { cacheCorta?: boolean }).cacheCorta === true;
   const cabeceras = new Headers(respuesta.headers);
-  for (const [k, v] of Object.entries(cabecerasOk(etiquetas))) cabeceras.set(k, v);
+  for (const [k, v] of Object.entries(cabecerasOk(etiquetas, corta))) cabeceras.set(k, v);
   return new Response(html, { status: 200, headers: cabeceras });
 });

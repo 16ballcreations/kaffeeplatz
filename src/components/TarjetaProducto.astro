@@ -32,7 +32,10 @@ import Precio from './Precio.astro';
 import AccionesTarjeta from './AccionesTarjeta.astro';
 import { ruta } from '../datos/sitio';
 import { categoriaPorId } from '../datos/categorias';
-import { obtenerCategorias } from '../datos/catalogo';
+import { obtenerCategorias, marcarCacheCorta } from '../datos/catalogo';
+import { textoQueda } from '../scripts/queda';
+/* El «Queda 1»: hoja propia, ver su cabecera. */
+import '../styles/queda.css';
 import { resumenOpciones } from '../datos/guias';
 
 interface Props {
@@ -61,6 +64,18 @@ const hayRango = new Set(producto.variantes.map((v) => v.precio)).size > 1;
    que ya hizo la pagina. */
 const categoria = categoriaPorId(producto.categoria, await obtenerCategorias(Astro.locals)).nombre;
 const opciones = resumenOpciones(producto.opciones);
+/* «QUEDA 1» SOLO CON UNA VARIANTE. Con varias, la tarjeta no sabe cuál
+   quiere la persona: decir «Queda 1» del producto cuando es solo del color
+   verde seria mentir sobre los otros. Eso lo dice la ficha, al elegir. Con el
+   inventario apagado no hay `stockDisponible` y esto es siempre null. */
+const unica = producto.variantes.length === 1 ? producto.variantes[0] : undefined;
+const queda = producto.disponible && unica ? textoQueda(unica.stockDisponible) : null;
+/* R15: una pagina con este aviso no se guarda cinco minutos en el borde. */
+if (queda) marcarCacheCorta(Astro.locals);
+/* En el marcado, el aviso va PEGADO a la expresion del «Agotado», sin salto:
+   cada salto entre expresiones de Astro deja un espacio en el HTML aunque la
+   expresion no pinte nada (un comentario de JSX tambien), y con el
+   inventario apagado la tarjeta tiene que salir identica, byte a byte (R13). */
 /** Foto con fondo propio (JPG en origen) frente a recorte sobre blanco. */
 /** Ancho en pantalla de la foto de la tarjeta: 3 columnas de ~400 px en
     escritorio, 2 en tableta, carril de 78vw o rejilla de 2 en movil. */
@@ -126,7 +141,7 @@ const esFoto = (src: string) => (/\.jpe?g$/i.test(src) ? 'true' : undefined);
           </p>
         )
       }
-      {!producto.disponible && <p data-kp-agotado class="sr-only">Agotado</p>}
+      {queda && <p class="v-queda v-queda--tarjeta" data-kp-queda>{queda}</p>}{!producto.disponible && <p data-kp-agotado class="sr-only">Agotado</p>}
     </div>
   </a>
 

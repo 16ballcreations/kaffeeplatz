@@ -137,6 +137,8 @@ for (const b of agregarBotones) {
 if (ficha && radios.length) {
   const precios = document.querySelectorAll<HTMLElement>('[data-v-precio]');
   const estado = document.querySelector<HTMLElement>('[data-v-estado-variante]');
+  /* El «Queda 1». Solo existe con el inventario encendido. */
+  const queda = document.querySelector<HTMLElement>('[data-v-queda]');
   const botones = Array.from(document.querySelectorAll<HTMLElement>('[data-v-wa]'));
   const minis = Array.from(document.querySelectorAll<HTMLElement>('[data-kp-galeria-mini][data-variante]'));
 
@@ -150,6 +152,13 @@ if (ficha && radios.length) {
     if (estado) {
       estado.textContent = disp ? 'Disponible' : 'Agotado por ahora';
       estado.dataset.kpDisponible = String(disp);
+    }
+    /* El texto viene hecho del servidor en el radio (`textoQueda`): aqui solo
+       se copia. Una variante agotada no dice «Queda» de nada. */
+    if (queda) {
+      const texto = disp ? (r.dataset.queda ?? '') : '';
+      queda.textContent = texto;
+      queda.hidden = !texto;
     }
     for (const b of botones) b.hidden = b.dataset.vWa !== r.value;
 

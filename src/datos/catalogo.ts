@@ -199,3 +199,19 @@ export async function respuestaDeEmergencia(
 export function marcarEtiquetas(locals: unknown, etiquetas: string[]): void {
   (locals as { etiquetasCache?: string[] }).etiquetasCache = etiquetas;
 }
+
+/**
+ * Esta respuesta pinta un «Queda 1»: que el borde la guarde poco (R15).
+ *
+ * La llama QUIEN PINTA el aviso —la ficha, cada `TarjetaProducto`— y no la
+ * página, por la misma razón que la caché vive en el middleware: si dependiera
+ * de que cada página que usa tarjetas se acordara de mirar si alguna dice
+ * «Queda», la que se olvide cachearía cinco minutos un dato de escasez. Así
+ * da igual en qué página caiga la tarjeta.
+ *
+ * Solo ACORTA. No hace cacheable nada que no lo fuera: sin `marcarEtiquetas`
+ * el middleware sigue sin cachear, lleve esto o no.
+ */
+export function marcarCacheCorta(locals: unknown): void {
+  (locals as { cacheCorta?: boolean }).cacheCorta = true;
+}

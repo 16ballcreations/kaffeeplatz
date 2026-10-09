@@ -48,6 +48,14 @@ declare namespace App {
     etiquetasCache?: string[];
 
     /**
+     * La página pinta un «Queda 1»: el middleware le da un `s-maxage` corto
+     * (R15, `SEGUNDOS_CACHE_CORTA`). Lo pone `marcarCacheCorta` desde quien
+     * pinta el aviso, y el middleware lo lee DESPUÉS de tener el HTML entero,
+     * porque las tarjetas lo marcan mientras se renderizan.
+     */
+    cacheCorta?: boolean;
+
+    /**
      * FASE 4. La sesión del panel, puesta por la puerta (`src/admin/puerta.ts`).
      *
      * Una página de `/admin` puede dar por hecho que esto EXISTE: si no hubiera
