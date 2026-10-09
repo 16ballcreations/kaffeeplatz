@@ -1,0 +1,138 @@
+---
+/**
+ * /admin/productos — la lista, con buscador y filtros.
+ *
+ * El buscador es un formulario GET normal: funciona sin JavaScript, la URL se
+ * puede guardar como favorito («mis agotados») y los avisos de la portada del
+ * panel enlazan aquí con `?estado=agotados`, `sin-foto` o `archivados`. Por
+ * eso esos tres valores son exactamente los de `src/admin/atencion.ts`.
+ *
+ * El filtrado es en memoria sobre todas las filas (ver `listarProductos`):
+ * así «termometro» encuentra «Termómetro», que es como se escribe en el
+ * teléfono.
+ */
+import Panel from '../../../layouts/Panel.astro';
+import { ruta } from '../../../datos/sitio';
+import { formatearPrecio } from '../../../datos/formas';
+import { baseAdmin } from '../../../admin/base';
+import { listarProductos, categoriasDeProducto, type FilaListado } from '../../../admin/productos/leer';
+import { normalizarBusqueda } from '../../../admin/productos/texto';
+import '../../../styles/panel-productos.css';
+
+export const prerender = false;
+
+/** Los estados del filtro. `tienda` es lo que se ve en el sitio: el valor por defecto. */
+const ESTADOS: { id: string; nombre: string; vale: (p: FilaListado) => boolean }[] = [
+  { id: 'tienda', nombre: 'En la tienda', vale: (p) => !p.archivado },
+  { id: 'agotados', nombre: 'Agotados', vale: (p) => !p.archivado && !p.disponible },
+  { id: 'sin-foto', nombre: 'Sin foto', vale: (p) => !p.archivado && p.fotos === 0 },
+  { id: 'archivados', nombre: 'Archivados', vale: (p) => p.archivado },
+  { id: 'todos', nombre: 'Todos', vale: () => true },
+];
+
+const q = (Astro.url.searchParams.get('q') ?? '').trim();
+const categoria = Astro.url.searchParams.get('categoria') ?? '';
+const estado = ESTADOS.find((e) => e.id === Astro.url.searchParams.get('estado')) ?? ESTADOS[0]!;
+
+let filas: FilaListado[] = [];
+let categorias: { id: string; nombre: string }[] = [];
+let sinBase = false;
+try {
+  const db = baseAdmin(Astro.locals);
+  [filas, categorias] = await Promise.all([listarProductos(db), categoriasDeProducto(db)]);
+} catch (fallo) {
+  console.error('[admin] lista de productos:', fallo instanceof Error ? fallo.message : fallo);
+  sinBase = true;
+  Astro.response.status = 503;
+}
+
+const nombreCategoria = new Map(categorias.map((c) => [c.id, c.nombre]));
+const buscado = normalizarBusqueda(q);
+const vistas = filas.filter(
+  (p) =>
+    estado.vale(p) &&
+    (!categoria || p.categoria === categoria) &&
+    (!buscado || normalizarBusqueda(`${p.titulo} ${p.handle}`).includes(buscado)),
+);
+const filtrando = Boolean(q || categoria || estado.id !== 'tienda');
+---
+
+<Panel titulo="Productos" seccion="productos">
+  <div class="pp-cabeza">
+    <h1 class="p-titulo">Productos</h1>
+    <a class="v-boton v-boton--oro" href={ruta('/admin/productos/nuevo')}>Añadir producto</a>
+  </div>
+
+  {
+    sinBase ? (
+      <p class="p-error" role="alert">
+        No se pudo conectar con la tienda en este momento. Vuelve a intentarlo en un minuto.
+      </p>
+    ) : (
+      <>
+        <form method="get" action={ruta('/admin/productos')} class="pp-buscador" role="search">
+          <div class="pp-campo pp-buscador__q">
+            <label class="p-campo__etiqueta" for="b-q">Buscar</label>
+            <input id="b-q" name="q" type="search" value={q} placeholder="Chemex, filtro, hervidor…" />
+          </div>
+          <div class="pp-campo">
+            <label class="p-campo__etiqueta" for="b-categoria">Categoría</label>
+            <select id="b-categoria" name="categoria">
+              <option value="">Todas</option>
+              {categorias.map((c) => (
+                <option value={c.id} selected={c.id === categoria}>{c.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div class="pp-campo">
+            <label class="p-campo__etiqueta" for="b-estado">Mostrar</label>
+            <select id="b-estado" name="estado">
+              {ESTADOS.map((e) => (
+                <option value={e.id} selected={e.id === estado.id}>{e.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div class="pp-buscador__botones">
+            <button class="v-boton v-boton--linea" type="submit">Buscar</button>
+            {filtrando && <a href={ruta('/admin/productos')}>Quitar filtros</a>}
+          </div>
+        </form>
+
+        <p class="pp-cuenta" role="status">
+          {vistas.length === 1 ? '1 producto' : `${vistas.length} productos`}
+          {filtrando ? ' con estos filtros' : ' en la tienda'}
+        </p>
+
+        {vistas.length === 0 ? (
+          <p class="p-entradilla">
+            No hay productos que coincidan. {filtrando && <a href={ruta('/admin/productos')}>Ver todos</a>}
+          </p>
+        ) : (
+          <ul class="pp-lista">
+            {vistas.map((p) => (
+              <li>
+                <a class="pp-producto" href={ruta(`/admin/productos/${p.id}`)}>
+                  <span class="pp-producto__titulo">{p.titulo}</span>
+                  <span class="pp-producto__datos">
+                    <span>{nombreCategoria.get(p.categoria) ?? p.categoria}</span>
+                    <span class="v-num">
+                      {p.variantes > 1 ? 'desde ' : ''}
+                      {formatearPrecio(p.precio)}
+                    </span>
+                    {p.variantes > 1 && <span>{p.variantes} opciones</span>}
+                  </span>
+                  <span class="pp-etiquetas">
+                    {p.archivado && <span class="pp-etiqueta pp-etiqueta--archivado">Archivado</span>}
+                    {!p.archivado && !p.disponible && <span class="pp-etiqueta pp-etiqueta--agotado">Agotado</span>}
+                    {p.fotos === 0 && <span class="pp-etiqueta">Sin foto</span>}
+                    {p.destacado && <span class="pp-etiqueta pp-etiqueta--destacado">Destacado</span>}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </>
+    )
+  }
+</Panel>

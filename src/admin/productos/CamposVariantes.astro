@@ -1,0 +1,183 @@
+---
+/**
+ * CamposVariantes — «Precio y opciones»: las variantes, sin llamarlas así.
+ *
+ * PARA ANDREINA NO HAY VARIANTES, HAY COLORES Y TAMAÑOS
+ * ===========================================================================
+ * La regla de «nada de jerga» del plan: aquí no aparecen «variantes», ni
+ * «ids», ni «Default Title». Un producto que no viene en colores ni tamaños
+ * enseña UN precio y una casilla «A la venta», y nada más. Cuando añade una
+ * segunda opción, aparecen los nombres, las flechas para ordenarlas y el
+ * campo «¿Qué cambia entre ellas?» (Color, Tamaño).
+ *
+ * TODO FUNCIONA SIN JAVASCRIPT
+ * ---------------------------------------------------------------------------
+ * Subir, bajar y añadir son botones `submit` con `name="accion"`: el servidor
+ * mueve la fila y re-pinta el formulario con lo escrito, sin guardar (ver
+ * `aplicarAccion` en forma.ts). Quitar es una casilla que se aplica al
+ * guardar, así que marcarla por error no borra nada hasta pulsar «Guardar».
+ *
+ * EL STOCK NO SE TOCA AQUI
+ * ---------------------------------------------------------------------------
+ * «A la venta» es el interruptor manual de G.1 («esta Chemex está en el
+ * escaparate y no la vendo»), la misma columna que usa el inventario. Las
+ * UNIDADES se cargan en Inventario, que es otra pantalla con su propio libro
+ * de movimientos; editarlas aquí saltaría ese libro.
+ */
+import type { Borrador, Errores } from './forma';
+
+interface Props {
+  b: Borrador;
+  errores: Errores;
+  /** Por id de variante: fotos vinculadas y si tiene historia de inventario. */
+  info: Map<number, { fotos: number; conHistorial: boolean }>;
+}
+
+const { b, errores, info } = Astro.props as Props;
+const varias = b.filas.length > 1;
+---
+
+<input type="hidden" name="filas" value={b.filas.length} />
+
+{
+  (varias || b.opcionNombre) && (
+    <div class="pp-campo">
+      <label class="p-campo__etiqueta" for="f-opcion">¿Qué cambia entre las opciones?</label>
+      <input
+        id="f-opcion"
+        name="opcion_nombre"
+        type="text"
+        value={b.opcionNombre}
+        placeholder="Color, Tamaño, Capacidad…"
+        aria-invalid={errores.opcion_nombre ? 'true' : undefined}
+        aria-describedby={errores.opcion_nombre ? 'e-opcion_nombre' : undefined}
+      />
+      {errores.opcion_nombre && (
+        <p class="pp-error-campo" id="e-opcion_nombre">{errores.opcion_nombre}</p>
+      )}
+    </div>
+  )
+}
+
+<ol class="pp-filas">
+  {
+    b.filas.map((f, i) => {
+      const datos = f.id !== null ? info.get(f.id) : undefined;
+      const nombre = f.titulo || (varias ? `Opción ${i + 1}` : 'el producto');
+      const e = (k: string) => errores[`v${i}_${k}`];
+      return (
+        <li class:list={['pp-fila', { 'pp-fila--quitar': f.quitar }]}>
+          <input type="hidden" name={`v${i}_id`} value={f.id ?? ''} />
+
+          {varias && (
+            <div class="pp-fila__cabeza">
+              <span class="pp-fila__numero">Opción {i + 1}</span>
+              {/* Flechas como botones de verdad, con su nombre accesible. */}
+              <span class="pp-fila__mover">
+                <button
+                  type="submit"
+                  name="accion"
+                  value={`subir:${i}`}
+                  class="pp-flecha"
+                  disabled={i === 0}
+                  aria-label={`Subir ${nombre}`}
+                >
+                  ↑
+                </button>
+                <button
+                  type="submit"
+                  name="accion"
+                  value={`bajar:${i}`}
+                  class="pp-flecha"
+                  disabled={i === b.filas.length - 1}
+                  aria-label={`Bajar ${nombre}`}
+                >
+                  ↓
+                </button>
+              </span>
+            </div>
+          )}
+
+          <div class="pp-fila__campos">
+            <div class="pp-campo pp-campo--nombre">
+              <label class="p-campo__etiqueta" for={`f-v${i}-titulo`}>
+                {varias ? 'Nombre' : 'Nombre de la opción (opcional)'}
+              </label>
+              <input
+                id={`f-v${i}-titulo`}
+                name={`v${i}_titulo`}
+                type="text"
+                value={f.titulo}
+                placeholder="Negro, 6 tazas…"
+                aria-invalid={e('titulo') ? 'true' : undefined}
+                aria-describedby={e('titulo') ? `e-v${i}_titulo` : undefined}
+              />
+              {e('titulo') && <p class="pp-error-campo" id={`e-v${i}_titulo`}>{e('titulo')}</p>}
+            </div>
+
+            <div class="pp-campo pp-campo--precio">
+              <label class="p-campo__etiqueta" for={`f-v${i}-precio`}>Precio</label>
+              <span class="pp-precio">
+                <span aria-hidden="true">$</span>
+                {/* `text` y no `number`: `number` no acepta «315.000» con el
+                    punto de miles que se escribe en Colombia, y en algunos
+                    teléfonos lo vacía en silencio. `inputmode` saca igual el
+                    teclado numérico. */}
+                <input
+                  id={`f-v${i}-precio`}
+                  name={`v${i}_precio`}
+                  type="text"
+                  inputmode="numeric"
+                  value={f.precioTexto}
+                  placeholder="315.000"
+                  aria-invalid={e('precio') ? 'true' : undefined}
+                  aria-describedby={e('precio') ? `e-v${i}_precio` : undefined}
+                />
+              </span>
+              {e('precio') && <p class="pp-error-campo" id={`e-v${i}_precio`}>{e('precio')}</p>}
+            </div>
+          </div>
+
+          <div class="pp-fila__casillas">
+            <label class="pp-casilla">
+              <input type="checkbox" name={`v${i}_venta`} value="1" checked={f.aLaVenta} />
+              <span>
+                <b>A la venta</b>
+                <small>Desmárcalo para que salga «Agotado» sin borrar nada.</small>
+              </span>
+            </label>
+
+            {varias &&
+              (datos?.conHistorial ? (
+                <p class="pp-nota-fila">
+                  Ya tiene ventas o unidades registradas en el inventario, así que no se puede
+                  quitar. Si ya no lo vendes, desmarca «A la venta».
+                </p>
+              ) : (
+                <label class="pp-casilla pp-casilla--quitar">
+                  <input type="checkbox" name={`v${i}_quitar`} value="1" checked={f.quitar} />
+                  <span>
+                    <b>Quitar esta opción al guardar</b>
+                    {datos && datos.fotos > 0 && (
+                      <small>
+                        Sus {datos.fotos} {datos.fotos === 1 ? 'foto pasa' : 'fotos pasan'} a ser
+                        del producto en general; no se borran.
+                      </small>
+                    )}
+                  </span>
+                </label>
+              ))}
+            {e('quitar') && <p class="pp-error-campo">{e('quitar')}</p>}
+          </div>
+        </li>
+      );
+    })
+  }
+</ol>
+
+<button type="submit" name="accion" value="anadir" class="v-boton v-boton--linea pp-anadir">
+  {varias ? 'Añadir otra opción' : 'Viene en varios colores o tamaños: añadir otra opción'}
+</button>
+<p class="pp-ayuda">
+  Las unidades que tienes en la bodega no se cambian aquí: eso va en Inventario.
+</p>

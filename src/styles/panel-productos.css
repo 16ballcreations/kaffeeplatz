@@ -1,0 +1,445 @@
+/**
+ * panel-productos.css — las pantallas de productos del panel (fase 5).
+ *
+ * Aparte de `panel-formas.css` porque es el CSS de UNA sección y solo lo
+ * cargan sus páginas (lo importan ellas, no el layout). Los tokens (`--p-*`,
+ * `--v-*`) los definen `v2.css` y `panel.css`; aquí no se redefine ninguno.
+ *
+ * PENSADO PRIMERO PARA 375 PX
+ * ---------------------------------------------------------------------------
+ * Andreina edita desde el teléfono (nota de E). Todo control mide al menos
+ * `--p-toque` (44 px) de alto, los campos van a 16 px reales (por debajo,
+ * Safari en iPhone hace zoom al enfocar y descoloca la pantalla) y nada
+ * depende de pasar el ratón por encima. Las filas de precio se apilan en
+ * móvil y se ponen en línea a partir de 34rem.
+ */
+
+/* --- Campos ---------------------------------------------------------------- */
+.pp-campo {
+  margin-bottom: 1rem;
+}
+
+.pp-campo input[type='text'],
+.pp-campo input[type='search'],
+.pp-campo select,
+.pp-campo textarea {
+  width: 100%;
+  min-height: var(--p-toque);
+  padding: 0.6rem 0.8rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.pp-campo textarea {
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.pp-campo :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 1px;
+  border-color: var(--v-oro);
+}
+
+.pp-campo [aria-invalid='true'] {
+  border-color: var(--p-aviso);
+}
+
+.pp-error-campo {
+  margin-top: 0.4rem;
+  color: var(--p-aviso);
+  font-size: var(--v-t-peq);
+  line-height: 1.45;
+}
+
+.pp-ayuda {
+  margin-top: 0.4rem;
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+  line-height: 1.5;
+}
+
+/* El «$» y el «/producto/» van DENTRO de la caja, para que se lea como un
+   solo campo, pero fuera del input: no se envían ni se pueden borrar. */
+.pp-precio,
+.pp-prefijo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-left: 0.8rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta-3);
+}
+
+.pp-precio:focus-within,
+.pp-prefijo:focus-within {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 1px;
+}
+
+.pp-campo .pp-precio input,
+.pp-campo .pp-prefijo input {
+  border: 0;
+  padding-left: 0;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-casilla {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  min-height: var(--p-toque);
+  padding: 0.5rem 0;
+  cursor: pointer;
+}
+
+.pp-casilla input {
+  flex: none;
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-top: 0.1rem;
+  accent-color: var(--v-oro);
+}
+
+.pp-casilla b {
+  display: block;
+  font-weight: 500;
+}
+
+.pp-casilla small {
+  display: block;
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+  line-height: 1.45;
+}
+
+/* --- Bloques del formulario ------------------------------------------------ */
+.pp-bloque {
+  margin-top: 1.75rem;
+  padding: 1.25rem 1rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-img);
+}
+
+.pp-bloque .pp-campo :is(input, select, textarea),
+.pp-bloque .pp-precio,
+.pp-bloque .pp-prefijo {
+  background: var(--p-fondo);
+}
+
+/* El botón por defecto para Enter: existe, pero no se ve ni se enfoca. */
+.pp-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pp-guardar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.pp-guardar .v-boton {
+  min-height: var(--p-toque);
+}
+
+.pp-descartar {
+  color: var(--v-tinta-2);
+  font-size: var(--v-t-peq);
+}
+
+.pp-detalles {
+  margin-top: 0.75rem;
+}
+
+.pp-detalles summary {
+  min-height: var(--p-toque);
+  display: flex;
+  align-items: center;
+  color: var(--v-tinta-2);
+  font-size: var(--v-t-peq);
+  cursor: pointer;
+}
+
+/* --- Filas de precio y opciones -------------------------------------------- */
+.pp-filas {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.pp-fila {
+  padding: 0.9rem;
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+}
+
+.pp-fila--quitar {
+  border-style: dashed;
+  opacity: 0.7;
+}
+
+.pp-fila__cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.pp-fila__numero {
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pp-fila__mover {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pp-flecha {
+  width: var(--p-toque);
+  height: var(--p-toque);
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  background: transparent;
+  color: var(--v-tinta);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.pp-flecha:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.pp-fila__campos .pp-campo {
+  margin-bottom: 0.75rem;
+}
+
+@media (min-width: 34rem) {
+  .pp-fila__campos {
+    display: grid;
+    grid-template-columns: 1fr 11rem;
+    gap: 0.75rem;
+  }
+}
+
+.pp-nota-fila {
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+  line-height: 1.5;
+}
+
+.pp-anadir {
+  min-height: var(--p-toque);
+  white-space: normal;
+  text-align: left;
+}
+
+/* --- Mensajes -------------------------------------------------------------- */
+.pp-hecho,
+.pp-aviso {
+  padding: 0.75rem 0.9rem;
+  margin: 1rem 0;
+  border-radius: var(--v-r-mini);
+  font-size: var(--v-t-peq);
+  line-height: 1.45;
+}
+
+.pp-hecho {
+  border: 1px solid var(--v-linea-oro);
+  color: var(--v-oro);
+}
+
+.pp-aviso {
+  border: 1px solid var(--v-linea-2);
+  color: var(--v-tinta-2);
+}
+
+.pp-conflicto ul {
+  margin: 0.5rem 0;
+  padding-left: 1.1rem;
+}
+
+.pp-conflicto p + p {
+  margin-top: 0.5rem;
+}
+
+.pp-archivado {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  border: 1px dashed var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  font-size: var(--v-t-peq);
+}
+
+.pp-ver {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+  margin: 0.5rem 0 1rem;
+  font-size: var(--v-t-peq);
+}
+
+.pp-ver a {
+  color: var(--v-oro);
+}
+
+.pp-ver span,
+.pp-migas {
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+}
+
+.pp-migas a {
+  color: var(--v-tinta-2);
+}
+
+.pp-historial {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--v-t-peq);
+}
+
+.pp-historial time {
+  display: block;
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+}
+
+.pp-lista-simple {
+  margin: 1rem 0;
+  padding-left: 1.1rem;
+  color: var(--v-tinta-2);
+  line-height: 1.6;
+}
+
+/* --- Listado --------------------------------------------------------------- */
+.pp-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pp-buscador {
+  display: grid;
+  gap: 0 0.75rem;
+  margin-top: 1.25rem;
+}
+
+@media (min-width: 40rem) {
+  .pp-buscador {
+    grid-template-columns: 2fr 1fr 1fr auto;
+    align-items: end;
+  }
+}
+
+.pp-buscador__botones {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: var(--v-t-peq);
+}
+
+.pp-buscador__botones a {
+  color: var(--v-tinta-2);
+}
+
+.pp-cuenta {
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+  margin-bottom: 0.75rem;
+}
+
+.pp-lista {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pp-producto {
+  display: grid;
+  gap: 0.3rem;
+  min-height: var(--p-toque);
+  padding: 0.85rem 1rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta);
+  text-decoration: none;
+}
+
+.pp-producto:hover,
+.pp-producto:focus-visible {
+  border-color: var(--v-linea-oro);
+}
+
+.pp-producto__titulo {
+  font-weight: 500;
+}
+
+.pp-producto__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.9rem;
+  color: var(--v-tinta-2);
+  font-size: var(--v-t-peq);
+}
+
+.pp-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.pp-etiquetas:empty {
+  display: none;
+}
+
+.pp-etiqueta {
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-pildora);
+  color: var(--v-tinta-2);
+  font-size: var(--v-t-micro);
+}
+
+.pp-etiqueta--agotado,
+.pp-etiqueta--archivado {
+  border-color: var(--p-aviso);
+  color: var(--p-aviso);
+}
+
+.pp-etiqueta--destacado {
+  border-color: var(--v-linea-oro);
+  color: var(--v-oro);
+}
