@@ -59,6 +59,31 @@
  * los JSON, así que el sitio sigue sirviendo las fotos exactamente como hoy.
  * R2 es la fase 6; subirlas ahora sería cambiar dos cosas a la vez y no poder
  * saber cuál rompió qué.
+ *
+ * LAS FOTOS SUBIDAS DESDE EL PANEL SE CONSERVAN
+ * ---------------------------------------------------------------------------
+ * Desde la fase 6 hay fotos que NO vienen del JSON: las que la dueña sube por
+ * el panel (clave '/medios/...' en R2, y `nombre_original` relleno; ver
+ * migrations/0006_fotos.sql). El JSON no las conoce, así que «borrar las hijas
+ * y reinsertarlas» las perdía para siempre: la fila desaparecía y el fichero
+ * se quedaba en R2 sin que nadie supiera de qué producto era. Resembrar en
+ * local para probar algo no puede costar las fotos de una sesión.
+ *
+ * Por eso aquí solo se borran las fotos de la semilla, y las del panel:
+ *   - recuperan su color por TÍTULO de variante, porque las variantes sí se
+ *     borran y reinsertan (con ids nuevos) y su ON DELETE SET NULL las dejaría
+ *     como «del producto»; si ese color ya no está en el JSON, se quedan del
+ *     producto, que es lo mismo que haría borrarlo en el panel;
+ *   - van DETRÁS de las de la semilla, en el orden relativo que tenían. Si
+ *     una era portada (la primera), deja de serlo: la semilla pisa el orden
+ *     como pisa todo lo demás (R8), pero no la foto;
+ *   - y, en los productos que las tienen, las portadas se recalculan desde el
+ *     orden, igual que hace el panel en cada escritura (`sincronizarPortadas`).
+ *     Los demás quedan con `portada_id` NULL, como siempre.
+ *
+ * El color se aparta en una tabla de paso (`semilla_fotos_panel`) porque hay
+ * que leerlo ANTES de borrar las variantes y usarlo DESPUÉS de reinsertarlas.
+ * Se crea y se tira dentro de la misma transacción.
  */
 
 import fs from 'node:fs';
@@ -75,6 +100,11 @@ const num = (v) => {
   return String(Math.trunc(v));
 };
 const bool = (v) => (v ? '1' : '0');
+
+/** Una foto subida desde el panel (ver la cabecera). Sin `LIKE`: igualdad
+    sobre el prefijo, como el resto de consultas del proyecto. */
+const ES_DEL_PANEL = "(substr(clave, 1, 8) = '/medios/' OR nombre_original IS NOT NULL)";
+const PASO = 'semilla_fotos_panel';
 
 async function main() {
   const productos = leerProductos();
@@ -94,9 +124,15 @@ async function main() {
   L.push('BEGIN TRANSACTION;');
   L.push('');
 
+  L.push(
+    `CREATE TABLE IF NOT EXISTS ${PASO} (imagen_id INTEGER PRIMARY KEY,\n` +
+      '  variante_titulo TEXT, orden_anterior INTEGER NOT NULL);',
+  );
+  L.push('');
   catalogos(L);
   for (const p of productos) producto(L, p);
   for (const a of articulos) await articulo(L, a);
+  L.push(`DROP TABLE ${PASO};`);
 
   L.push('COMMIT;');
   L.push('');
@@ -169,7 +205,15 @@ function producto(L, p) {
      un instante. Al ir todo en una transacción da igual para el resultado,
      pero el orden correcto hace que el SQL se pueda leer sin dudar. */
   const idp = `(SELECT id FROM productos WHERE handle = ${h})`;
-  L.push(`DELETE FROM imagenes  WHERE producto_id = ${idp};`);
+  /* Las fotos del panel se quedan; antes de borrar las variantes se aparta
+     de qué color era cada una (ver la cabecera). */
+  L.push(`DELETE FROM ${PASO};`);
+  L.push(
+    `INSERT INTO ${PASO} (imagen_id, variante_titulo, orden_anterior)\n` +
+      `  SELECT i.id, v.titulo, i.orden FROM imagenes i LEFT JOIN variantes v ON v.id = i.variante_id\n` +
+      `   WHERE i.producto_id = ${idp} AND ${ES_DEL_PANEL.replace(/clave|nombre_original/g, 'i.$&')};`,
+  );
+  L.push(`DELETE FROM imagenes  WHERE producto_id = ${idp} AND NOT ${ES_DEL_PANEL};`);
   L.push(`DELETE FROM variantes WHERE producto_id = ${idp};`);
   L.push(`DELETE FROM opciones  WHERE producto_id = ${idp};`);
 
@@ -192,14 +236,44 @@ function producto(L, p) {
     const vid = img.variante
       ? `(SELECT id FROM variantes WHERE producto_id = ${idp} AND titulo = ${txt(img.variante)})`
       : 'NULL';
+    /* `WHERE NOT EXISTS`: si una foto del panel conservada tuviera la misma
+       clave, el UNIQUE (producto_id, clave) tumbaría la transacción entera.
+       Es la misma foto: con la que ya está basta. */
     L.push(
       `INSERT INTO imagenes (producto_id, variante_id, rol, clave, alt, orden)\n` +
-        `  VALUES (${idp}, ${vid}, NULL, ${txt(img.src)}, ${txt(img.alt)}, ${num(i)});`,
+        `  SELECT ${idp}, ${vid}, NULL, ${txt(img.src)}, ${txt(img.alt)}, ${num(i)}\n` +
+        `   WHERE NOT EXISTS (SELECT 1 FROM imagenes WHERE producto_id = ${idp} AND clave = ${txt(img.src)});`,
     );
   });
-  /* `portada_id` queda NULL en los 25, lo que hace que el respaldo "primera
-     foto" mantenga EXACTAMENTE el comportamiento de hoy. La migración no
-     cambia ni un píxel del sitio actual; solo habilita lo nuevo (B.7). */
+  /* Las del panel: su color por título, y detrás de las de la semilla en su
+     orden de antes. El puesto se cuenta sobre la tabla de paso (el orden
+     ANTERIOR), no sobre `imagenes`, porque este mismo UPDATE la va cambiando. */
+  L.push(
+    `UPDATE imagenes SET\n` +
+      `    variante_id = (SELECT v.id FROM ${PASO} s JOIN variantes v ON v.titulo = s.variante_titulo\n` +
+      `                    WHERE s.imagen_id = imagenes.id AND v.producto_id = imagenes.producto_id),\n` +
+      `    orden = ${num(p.imagenes.length)} + (SELECT COUNT(*) FROM ${PASO} s, ${PASO} yo\n` +
+      `                    WHERE yo.imagen_id = imagenes.id AND (s.orden_anterior < yo.orden_anterior\n` +
+      `                      OR (s.orden_anterior = yo.orden_anterior AND s.imagen_id < yo.imagen_id)))\n` +
+      `  WHERE id IN (SELECT imagen_id FROM ${PASO});`,
+  );
+  /* Las portadas, desde el orden: la misma regla que `sincronizarPortadas`
+     (src/datos/consultas/imagenes-escribir.ts). SOLO si el producto tiene
+     fotos del panel: sin ellas, `portada_id` se queda NULL como siempre dejó
+     la semilla (el respaldo «primera foto», que es lo que comprueba
+     `comparar-d1.mjs`). Una portada que apuntaba a una foto de la semilla ya
+     la dejó en NULL el ON DELETE SET NULL al borrarla. */
+  L.push(
+    `UPDATE productos SET portada_id =\n` +
+      `    (SELECT id FROM imagenes WHERE producto_id = productos.id ORDER BY orden, id LIMIT 1)\n` +
+      `  WHERE handle = ${h} AND EXISTS (SELECT 1 FROM ${PASO});`,
+  );
+  L.push(
+    `UPDATE variantes SET portada_id =\n` +
+      `    (SELECT i.id FROM imagenes i WHERE i.variante_id = variantes.id AND i.por_revisar = 0\n` +
+      `      ORDER BY i.orden, i.id LIMIT 1)\n` +
+      `  WHERE producto_id = ${idp} AND EXISTS (SELECT 1 FROM ${PASO});`,
+  );
   L.push('');
 }
 
