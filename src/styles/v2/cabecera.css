@@ -1,0 +1,230 @@
+/* v2/cabecera.css — Cabecera fija, navegacion y menu movil.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   CABECERA
+   =========================================================================== */
+
+/* El cristal va en un pseudo-elemento y NO en la cabecera: un
+   backdrop-filter en la cabecera la convertiria en el bloque contenedor del
+   panel del menu movil (position: fixed) y lo dejaria atrapado en 72px. */
+.v-cabecera {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-cabecera);
+  isolation: isolate;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s var(--v-curva);
+}
+
+.v-cabecera::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgb(21 20 19 / 0.72);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  transition: background-color 0.3s var(--v-curva);
+}
+
+.v-cabecera[data-compacta] {
+  border-bottom-color: var(--v-linea);
+}
+
+.v-cabecera[data-compacta]::before {
+  background: rgb(15 14 13 / 0.9);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .v-cabecera::before {
+    background: var(--v-abismo);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+.v-cabecera__fila {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  height: var(--v-cabecera-alto);
+}
+
+.v-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  margin-right: auto;
+}
+
+.v-logo__emblema {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.v-logo__nombre {
+  font-family: var(--v-serif);
+  font-size: 1.375rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.v-nav ul {
+  list-style: none;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.v-nav a {
+  display: block;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--v-r-pildora);
+  color: var(--v-tinta-2);
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition:
+    color 0.25s var(--v-curva),
+    background-color 0.25s var(--v-curva);
+}
+
+.v-nav a:hover {
+  color: var(--v-tinta);
+  background: rgb(253 247 231 / 0.05);
+}
+
+.v-nav a[aria-current='page'] {
+  color: var(--v-oro);
+  background: rgb(222 193 133 / 0.08);
+}
+
+/* Menu movil ------------------------------------------------------------ */
+.v-menu {
+  display: none;
+}
+
+.v-menu summary {
+  list-style: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--v-linea-2);
+  cursor: pointer;
+}
+
+.v-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.v-menu__barras {
+  position: relative;
+  width: 18px;
+  height: 10px;
+}
+
+.v-menu__barras span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: var(--v-tinta);
+  border-radius: 2px;
+  transition:
+    transform 0.4s var(--v-curva),
+    top 0.4s var(--v-curva);
+}
+
+.v-menu__barras span:first-child {
+  top: 0;
+}
+
+.v-menu__barras span:last-child {
+  top: 8.5px;
+}
+
+.v-menu[open] .v-menu__barras span:first-child {
+  top: 4.25px;
+  transform: rotate(45deg);
+}
+
+.v-menu[open] .v-menu__barras span:last-child {
+  top: 4.25px;
+  transform: rotate(-45deg);
+}
+
+.v-menu__panel {
+  position: fixed;
+  inset: var(--v-cabecera-alto) 0 0;
+  z-index: var(--z-menu);
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem var(--v-gutter) calc(2rem + env(safe-area-inset-bottom));
+  background: var(--v-abismo);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body:has(.v-menu[open]) {
+  overflow: hidden;
+}
+
+.v-menu__panel ul {
+  list-style: none;
+}
+
+.v-menu__panel li {
+  border-bottom: 1px solid var(--v-linea);
+}
+
+.v-menu__panel li a {
+  display: block;
+  padding: 1rem 0;
+  font-family: var(--v-serif);
+  font-size: 2rem;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.v-menu__panel li a[aria-current='page'] {
+  color: var(--v-oro);
+  font-style: italic;
+}
+
+.v-menu__nota {
+  color: var(--v-tinta-2);
+  font-size: var(--v-t-peq);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .v-menu[open] .v-menu__panel li {
+    animation: v-sube 0.6s var(--v-curva) both;
+    animation-delay: calc(var(--i) * 45ms + 60ms);
+  }
+}
+
+@media (max-width: 960px) {
+  .v-nav {
+    display: none;
+  }
+  .v-menu {
+    display: block;
+  }
+}
+
+@media (max-width: 520px) {
+  .v-cabecera__cta span {
+    display: none;
+  }
+  .v-cabecera__cta {
+    width: 2.75rem;
+    padding: 0;
+  }
+  .v-logo__nombre {
+    font-size: 1.25rem;
+  }
+}

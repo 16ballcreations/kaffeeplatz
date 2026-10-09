@@ -1,0 +1,371 @@
+/* v2/carrito-pagina.css — Carrito: pagina /carrito, resumen, aviso sin JS y movil.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* --- Pagina /carrito ---------------------------------------------------- */
+
+.v-carrito__cabeza {
+  margin-bottom: clamp(2rem, 1.5rem + 1.5vw, 3rem);
+}
+
+/* Lista y resumen. El resumen se queda pegado al bajar en escritorio: el
+   total es la informacion que la persona consulta mientras edita arriba. */
+.v-carrito__cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 22rem);
+  gap: clamp(1.5rem, 1rem + 2vw, 3rem);
+  align-items: start;
+}
+
+.v-lineas {
+  list-style: none;
+  border-radius: var(--v-r-sup);
+  background: var(--v-superficie);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea);
+  overflow: hidden;
+}
+
+.v-linea {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 1rem 1.25rem;
+  padding: 1.25rem;
+}
+
+.v-linea + .v-linea {
+  border-top: 1px solid var(--v-linea);
+}
+
+.v-linea__foto {
+  display: block;
+  width: 5rem;
+  border-radius: var(--v-r-mini);
+  overflow: hidden;
+  background: var(--v-crema); /* el passe-partout crema de la marca */
+}
+
+.v-linea__foto img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.v-linea__info {
+  min-width: 0;
+}
+
+.v-linea__titulo {
+  font-family: var(--v-serif);
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--v-tinta);
+  text-decoration: none;
+}
+
+.v-linea__titulo:hover {
+  color: var(--v-oro);
+}
+
+.v-linea__variante {
+  margin-top: 0.25rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.v-linea__unitario {
+  margin-top: 0.25rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-3);
+}
+
+.v-linea__agotado {
+  margin-top: 0.5rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-2);
+}
+
+/* Control de cantidad: <button> reales a los lados de un <input number>.
+   Los signos se pintan con ::after desde data-signo, asi el texto accesible
+   (sr-only, nombrando el producto) queda separado del glifo visible. */
+.v-linea__cantidad {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--v-r-pildora);
+  border: 1px solid var(--v-linea-2);
+}
+
+.v-paso {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: var(--v-r-pildora);
+  background: transparent;
+  color: var(--v-tinta);
+  font-family: var(--v-sans);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.25s var(--v-curva), background-color 0.25s var(--v-curva);
+}
+
+.v-paso::after {
+  content: attr(data-signo);
+}
+
+.v-paso:hover:not(:disabled) {
+  color: var(--v-oro);
+  background: rgb(222 193 133 / 0.12);
+}
+
+.v-paso:disabled {
+  color: var(--v-tinta-3);
+  cursor: not-allowed;
+}
+
+.v-paso__valor {
+  width: 2.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--v-tinta);
+  font-family: var(--v-sans);
+  font-size: 0.9375rem;
+  text-align: center;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Las flechas nativas estorban en un control que ya tiene sus botones. */
+.v-paso__valor::-webkit-outer-spin-button,
+.v-paso__valor::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.v-linea__derecha {
+  display: grid;
+  justify-items: end;
+  gap: 0.375rem;
+  text-align: right;
+}
+
+.v-linea__subtotal {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  color: var(--v-tinta);
+}
+
+.v-quitar {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--v-tinta-3);
+  font-family: var(--v-sans);
+  font-size: var(--v-t-micro);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.25s var(--v-curva);
+}
+
+.v-quitar:hover {
+  color: var(--v-oro);
+}
+
+.v-carrito__pie-lista {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.v-vaciar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  padding: 0.375rem 0;
+  background: transparent;
+  color: var(--v-tinta-3);
+  font-family: var(--v-sans);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: color 0.25s var(--v-curva);
+}
+
+.v-vaciar:hover {
+  color: var(--v-tinta);
+}
+
+/* --- Resumen ------------------------------------------------------------ */
+
+.v-resumen {
+  position: sticky;
+  top: calc(var(--v-cabecera-alto) + 1rem);
+  padding: 1.75rem;
+  border-radius: var(--v-r-sup);
+  background: var(--v-elevado);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea);
+}
+
+.v-resumen h2 {
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h3);
+}
+
+.v-resumen__filas {
+  margin: 1.25rem 0 0;
+}
+
+.v-resumen__filas > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.v-resumen__filas dt {
+  color: var(--v-tinta-2);
+  font-size: 0.9375rem;
+}
+
+.v-resumen__filas dd {
+  margin: 0;
+  color: var(--v-tinta);
+}
+
+.v-resumen__total {
+  margin-top: 0.5rem;
+  padding-top: 0.875rem !important;
+  border-top: 1px solid var(--v-linea);
+}
+
+.v-resumen__total dt {
+  color: var(--v-tinta) !important;
+  font-size: 1.0625rem !important;
+}
+
+.v-resumen__total dd {
+  font-size: 1.375rem;
+  font-weight: 500;
+}
+
+/* Cuanto falta para el envio gratis: oro, porque es un incentivo, no un aviso
+   de error. */
+.v-resumen__falta {
+  margin-top: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--v-r-mini);
+  background: rgb(222 193 133 / 0.1);
+  color: var(--v-oro);
+  font-size: var(--v-t-peq);
+}
+
+.v-resumen__envio {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--v-linea);
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.v-resumen__envio strong {
+  color: var(--v-tinta);
+  font-weight: 500;
+}
+
+.v-resumen__envio ul {
+  list-style: none;
+  margin: 0.875rem 0;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.v-resumen__envio li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.v-resumen__envio li span:last-child {
+  color: var(--v-tinta);
+  white-space: nowrap;
+}
+
+.v-resumen__nota {
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+}
+
+.v-resumen__accion {
+  margin-top: 1.5rem;
+}
+
+/* El hueco de la fase 2: una nota, no un boton muerto. */
+.v-resumen__pago {
+  margin-top: 0.875rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+  text-align: center;
+}
+
+/* --- Aviso de "sin JavaScript" ----------------------------------------- */
+
+.v-aviso {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+  padding: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  border-radius: var(--v-r-sup);
+  background: var(--v-superficie);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea);
+}
+
+.v-aviso h2 {
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h3);
+}
+
+.v-aviso p {
+  color: var(--v-tinta-2);
+  max-width: 52ch;
+}
+
+/* --- Movil -------------------------------------------------------------- */
+
+@media (max-width: 860px) {
+  .v-carrito__cuerpo {
+    grid-template-columns: 1fr;
+  }
+  /* En movil el resumen va detras de la lista y deja de ser sticky: pegado
+     taparia las lineas que se estan editando. */
+  .v-resumen {
+    position: static;
+  }
+}
+
+/* A 375px la linea pasa a dos filas: foto + info arriba, cantidad y total
+   abajo. Nada se sale: el objetivo es cero scroll horizontal. */
+@media (max-width: 560px) {
+  .v-linea {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.875rem 1rem;
+  }
+  .v-linea__foto {
+    width: 4rem;
+  }
+  .v-linea__cantidad {
+    grid-column: 1 / 2;
+  }
+  .v-linea__derecha {
+    grid-column: 2 / 3;
+  }
+  .v-linea__titulo {
+    font-size: 1.125rem;
+  }
+}

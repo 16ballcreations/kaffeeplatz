@@ -1,0 +1,99 @@
+/* v2/nosotros.css — Pagina Nosotros.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   NOSOTROS
+   =========================================================================== */
+
+.v-criterio {
+  list-style: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.v-criterio li {
+  padding: 2rem;
+  border-radius: var(--v-r-sup);
+  background: var(--v-superficie);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea);
+}
+
+.v-criterio__grande {
+  grid-row: span 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 360px;
+  background:
+    radial-gradient(ellipse at 80% 10%, rgb(222 193 133 / 0.12), transparent 60%),
+    var(--v-elevado) !important;
+}
+
+.v-criterio h3 {
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h3);
+  line-height: 1.15;
+}
+
+.v-criterio__grande h3 {
+  font-size: var(--v-t-h2);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.v-criterio p {
+  margin-top: 0.75rem;
+  color: var(--v-tinta-2);
+}
+
+.v-criterio a {
+  color: var(--v-oro);
+}
+
+@media (max-width: 760px) {
+  .v-criterio {
+    grid-template-columns: 1fr;
+  }
+  .v-criterio__grande {
+    grid-row: auto;
+    min-height: 0;
+  }
+}
+
+.v-hechos {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 3rem 4rem;
+  margin-top: 3rem;
+}
+
+.v-hechos .v-icono {
+  color: var(--v-oro);
+}
+
+.v-hechos h3 {
+  margin-top: 1rem;
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h3);
+}
+
+.v-hechos p {
+  margin-top: 0.5rem;
+  color: var(--v-tinta-2);
+  max-width: 46ch;
+}
+
+.v-hechos a {
+  color: var(--v-oro);
+}
+
+@media (max-width: 640px) {
+  .v-hechos {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}

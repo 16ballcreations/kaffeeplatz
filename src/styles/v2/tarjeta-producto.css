@@ -1,0 +1,142 @@
+/* v2/tarjeta-producto.css — Tarjeta de producto.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   TARJETA DE PRODUCTO
+   =========================================================================== */
+
+.v-tarjeta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0.5rem;
+  border-radius: var(--v-r-sup);
+  background: var(--v-superficie);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea);
+  transition:
+    box-shadow 0.35s var(--v-curva),
+    transform 0.5s var(--v-curva);
+}
+
+.v-tarjeta:hover {
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea-oro), 0 24px 48px -28px rgb(0 0 0 / 0.9);
+}
+
+.v-tarjeta__enlace {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  text-decoration: none;
+  border-radius: var(--v-r-img);
+}
+
+.v-tarjeta__media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--v-r-img);
+  background: var(--v-crema);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.v-tarjeta__img {
+  grid-area: 1 / 1;
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  transition:
+    opacity 0.5s var(--v-curva),
+    transform 0.9s var(--v-curva);
+}
+
+/* Fotos que ya traen fondo propio (capturas, JPG en origen): llenan el
+   marco con aire. La marca la pone TarjetaProducto: tras pasar a WebP la
+   extension ya no distingue foto de recorte. */
+.v-tarjeta__img[data-foto] {
+  width: 90%;
+  height: 90%;
+  border-radius: var(--v-r-mini);
+}
+
+.v-tarjeta__img--2 {
+  opacity: 0;
+}
+
+@media (hover: hover) {
+  .v-tarjeta:hover .v-tarjeta__img {
+    transform: scale(1.04);
+  }
+  .v-tarjeta:hover [data-doble] .v-tarjeta__img:not(.v-tarjeta__img--2) {
+    opacity: 0;
+  }
+  .v-tarjeta:hover .v-tarjeta__img--2 {
+    opacity: 1;
+  }
+}
+
+.v-tarjeta__estado {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--v-r-pildora);
+  background: var(--v-tinta-oscura);
+  color: var(--v-crema);
+  font-size: var(--v-t-micro);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.v-tarjeta[data-kp-disponible='false'] .v-tarjeta__img {
+  filter: grayscale(0.85);
+  opacity: 0.55;
+}
+
+.v-tarjeta__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 0.75rem 0.5rem;
+}
+
+.v-tarjeta__categoria {
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+  letter-spacing: 0.02em;
+}
+
+.v-tarjeta__titulo {
+  font-family: var(--v-serif);
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.15;
+  transition: color 0.25s var(--v-curva);
+}
+
+.v-tarjeta__enlace:hover .v-tarjeta__titulo {
+  color: var(--v-oro);
+}
+
+.v-tarjeta__precio {
+  margin-top: 0.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--v-oro);
+}
+
+[data-kp-precio-prefijo] {
+  font-weight: 400;
+  color: var(--v-tinta-2);
+  font-size: 0.875em;
+}
+
+[data-kp-precio-valor] {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* La fila de acciones de la tarjeta (compra + WhatsApp) tiene su propia hoja:
+   src/styles/acciones-tarjeta.css, importada por AccionesTarjeta.astro. Las
+   reglas `.v-tarjeta__accion*` que habia aqui se fueron con ella. */

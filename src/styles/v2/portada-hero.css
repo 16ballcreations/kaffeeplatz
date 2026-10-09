@@ -1,0 +1,142 @@
+/* v2/portada-hero.css — Portada: hero.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   HERO
+   =========================================================================== */
+
+.v-hero {
+  position: relative;
+  overflow: hidden;
+  margin-top: calc(var(--v-cabecera-alto) * -1);
+  padding-top: var(--v-cabecera-alto);
+  border-bottom: 1px solid var(--v-linea);
+}
+
+.v-hero__rejilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  align-items: center;
+  gap: clamp(2rem, 1rem + 4vw, 5rem);
+  min-height: min(88dvh, 860px);
+  padding-block: clamp(3rem, 2rem + 4vw, 5.5rem);
+}
+
+.v-hero h1 {
+  font-size: var(--v-t-display);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  max-width: 11ch;
+}
+
+.v-hero h1 em {
+  display: inline-block;
+  padding-bottom: 0.08em;
+}
+
+.v-hero__entradilla {
+  margin-top: 1.75rem;
+  max-width: 38ch;
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  line-height: 1.55;
+  color: var(--v-tinta-2);
+}
+
+.v-hero .v-acciones {
+  margin-top: 2.5rem;
+}
+
+.v-hero__visual {
+  position: relative;
+  justify-self: end;
+  width: min(100%, 520px);
+}
+
+/* El arco: una ventana de capilla sobre crema. Recoge la curva del emblema. */
+.v-hero__arco {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 999px 999px var(--v-r-sup) var(--v-r-sup);
+  background: var(--v-crema);
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px var(--v-linea-oro),
+    0 0 0 10px rgb(222 193 133 / 0.04),
+    0 40px 80px -30px rgb(0 0 0 / 0.8);
+}
+
+.v-hero__arco img {
+  position: absolute;
+  inset: 8% 6% 4%;
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.v-hero__sello {
+  position: absolute;
+  left: -8%;
+  bottom: 14%;
+  width: clamp(96px, 7vw + 40px, 140px);
+  height: auto;
+  border-radius: 50%;
+  box-shadow: 0 20px 40px -12px rgb(0 0 0 / 0.75);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .v-hero__sello {
+    animation: v-aparece 1.1s var(--v-curva) 0.6s both;
+  }
+}
+
+.v-hero__pie {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--v-r-pildora);
+  border: 1px solid var(--v-linea);
+  background: rgb(253 247 231 / 0.03);
+  text-decoration: none;
+  font-size: var(--v-t-peq);
+  transition: border-color 0.3s var(--v-curva);
+}
+
+.v-hero__pie:hover {
+  border-color: var(--v-linea-oro);
+}
+
+.v-hero__pie-nombre {
+  margin-right: auto;
+  color: var(--v-tinta);
+}
+
+.v-hero__pie [data-kp-precio] {
+  color: var(--v-oro);
+}
+
+@media (max-width: 860px) {
+  .v-hero__rejilla {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding-block: 2.5rem 3.5rem;
+  }
+  .v-hero__visual {
+    justify-self: center;
+    width: min(100%, 380px);
+  }
+  .v-hero__sello {
+    left: -4%;
+  }
+}
+
+@media (max-width: 520px) {
+  .v-hero .v-acciones .v-boton {
+    width: 100%;
+  }
+  .v-hero__visual {
+    width: min(84%, 340px);
+  }
+}

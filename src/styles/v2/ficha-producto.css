@@ -1,0 +1,418 @@
+/* v2/ficha-producto.css — Ficha de producto, incluida la barra fija de compra.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   FICHA DE PRODUCTO
+   =========================================================================== */
+
+.v-migas {
+  padding-top: 1.5rem;
+}
+
+.v-migas ol {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-3);
+}
+
+.v-migas li + li::before {
+  content: '/';
+  margin-right: 0.5rem;
+  color: var(--v-linea-2);
+}
+
+.v-migas a {
+  color: var(--v-tinta-2);
+  text-decoration: none;
+}
+
+.v-migas a:hover {
+  color: var(--v-oro);
+}
+
+.v-migas [aria-current] {
+  color: var(--v-tinta);
+}
+
+.v-ficha {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: clamp(2rem, 1rem + 4vw, 5rem);
+  align-items: start;
+  padding-top: 1.5rem;
+}
+
+.v-ficha__galeria {
+  position: sticky;
+  top: calc(var(--v-cabecera-alto) + 1.5rem);
+}
+
+/* La galeria de C, reestilada. Mismos ganchos, mismo script. */
+[data-kp-galeria-principal] {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 0.5rem;
+  border-radius: var(--v-r-sup);
+  background: var(--v-superficie);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea);
+}
+
+[data-kp-galeria-principal] img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: var(--v-r-img);
+  padding: 6%;
+}
+
+/* El crema va en el contenedor y la foto en multiply: los fondos blancos de
+   las fotos de estudio se funden con el passe-partout. */
+[data-kp-galeria-principal] {
+  background-color: var(--v-superficie);
+}
+
+[data-kp-galeria-principal]::before {
+  content: '';
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--v-r-img);
+  background: var(--v-crema);
+}
+
+[data-kp-galeria-principal] img {
+  grid-area: 1 / 1;
+  position: relative;
+  mix-blend-mode: multiply;
+}
+
+[data-kp-galeria-miniaturas] {
+  list-style: none;
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+[data-kp-galeria-mini] {
+  position: relative;
+  display: block;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--v-r-mini);
+  background-color: var(--v-crema);
+  background-size: 82%;
+  background-position: center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px var(--v-linea);
+  opacity: 0.6;
+  transition:
+    opacity 0.25s var(--v-curva),
+    box-shadow 0.25s var(--v-curva);
+}
+
+[data-kp-galeria-mini] img {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+}
+
+[data-kp-galeria-mini]:hover {
+  opacity: 0.9;
+}
+
+[data-kp-galeria-mini][aria-pressed='true'] {
+  opacity: 1;
+  box-shadow:
+    0 0 0 2px var(--v-canvas),
+    0 0 0 3px var(--v-oro);
+}
+
+.v-ficha__categoria {
+  font-size: var(--v-t-peq);
+  color: var(--v-oro);
+  margin-bottom: 0.75rem;
+}
+
+.v-ficha h1 {
+  font-size: var(--v-t-h1);
+  line-height: 1;
+}
+
+.v-ficha__precio-fila {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.v-ficha__precio {
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--v-tinta);
+}
+
+.v-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--v-r-pildora);
+  font-size: 0.8125rem;
+  background: rgb(222 193 133 / 0.1);
+  color: var(--v-oro);
+}
+
+.v-estado[data-kp-disponible='false'] {
+  background: rgb(253 247 231 / 0.06);
+  color: var(--v-tinta-2);
+}
+
+.v-variantes {
+  border: 0;
+  padding: 0;
+  margin: 2rem 0 0;
+}
+
+.v-variantes legend {
+  margin-bottom: 0.75rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.v-variantes__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.v-variante {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.875rem;
+  padding: 0 1.125rem;
+  border-radius: var(--v-r-pildora);
+  border: 1px solid var(--v-linea-2);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition:
+    border-color 0.25s var(--v-curva),
+    background-color 0.25s var(--v-curva);
+}
+
+.v-variante input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.v-variante:hover {
+  border-color: var(--v-tinta-3);
+}
+
+.v-variante:has(input:checked) {
+  border-color: var(--v-oro);
+  background: rgb(222 193 133 / 0.1);
+}
+
+.v-variante:has(input:focus-visible) {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 3px;
+}
+
+.v-variante__precio {
+  color: var(--v-tinta-2);
+  font-size: 0.8125rem;
+}
+
+.v-variante[data-disponible='false'] .v-variante__nombre {
+  color: var(--v-tinta-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--v-linea-2);
+}
+
+.v-variante__agotado {
+  font-size: 0.75rem;
+  color: var(--v-tinta-3);
+}
+
+.v-ficha__accion {
+  margin-top: 2rem;
+}
+
+.v-ficha__nota {
+  margin-top: 0.875rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+  text-align: center;
+}
+
+.v-garantias {
+  list-style: none;
+  margin-top: 2rem;
+  border-radius: var(--v-r-sup);
+  background: var(--v-superficie);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea);
+}
+
+.v-garantias li {
+  display: flex;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
+}
+
+.v-garantias li + li {
+  border-top: 1px solid var(--v-linea);
+}
+
+.v-garantias .v-icono {
+  color: var(--v-oro);
+  margin-top: 0.125rem;
+}
+
+.v-garantias strong {
+  display: block;
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.v-garantias span {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.v-ficha__descripcion {
+  margin-top: 2.5rem;
+}
+
+.v-ficha__descripcion h2 {
+  font-family: var(--v-serif);
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+[data-kp-ficha-descripcion] {
+  color: var(--v-tinta-2);
+  line-height: 1.7;
+}
+
+[data-kp-ficha-descripcion] p + p {
+  margin-top: 1rem;
+}
+
+.v-guia {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 2rem;
+  padding: 0.5rem 1.25rem 0.5rem 0.5rem;
+  border-radius: var(--v-r-sup);
+  border: 1px solid var(--v-linea);
+  text-decoration: none;
+  transition: border-color 0.3s var(--v-curva);
+}
+
+.v-guia:hover {
+  border-color: var(--v-linea-oro);
+}
+
+.v-guia__foto {
+  aspect-ratio: 1;
+  border-radius: var(--v-r-img);
+  overflow: hidden;
+  background: var(--v-elevado);
+}
+
+.v-guia__foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.v-guia__etiqueta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-oro);
+}
+
+.v-guia__titulo {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: var(--v-serif);
+  font-size: 1.125rem;
+  line-height: 1.25;
+}
+
+.v-guia > .v-icono {
+  color: var(--v-tinta-2);
+}
+
+@media (max-width: 860px) {
+  .v-ficha {
+    grid-template-columns: 1fr;
+    padding-top: 1rem;
+  }
+  .v-ficha__galeria {
+    position: static;
+  }
+}
+
+/* Barra de compra fija, solo en movil. */
+.v-barra-compra {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .v-barra-compra {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: var(--z-flotante);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem var(--v-gutter) calc(0.75rem + env(safe-area-inset-bottom));
+    background: rgb(15 14 13 / 0.94);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-top: 1px solid var(--v-linea);
+  }
+  .v-barra-compra__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    margin-right: auto;
+    font-size: var(--v-t-peq);
+  }
+  .v-barra-compra__nombre {
+    color: var(--v-tinta-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .v-barra-compra [data-v-precio] {
+    font-size: 1.0625rem;
+    font-weight: 500;
+    color: var(--v-tinta);
+  }
+  .v-con-barra .v-pie {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+}

@@ -1,0 +1,33 @@
+/* v2/carril.css — Carril horizontal (destacados, relacionados).
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   CARRIL HORIZONTAL (destacados, relacionados)
+   =========================================================================== */
+
+.v-carril {
+  list-style: none;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(260px, 1fr);
+  gap: 1rem;
+  max-width: calc(var(--v-ancho) + 2 * var(--v-gutter));
+  margin-inline: auto;
+  padding-inline: var(--v-gutter);
+  padding-bottom: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--v-gutter);
+  scrollbar-width: thin;
+  scrollbar-color: var(--v-linea-2) transparent;
+}
+
+.v-carril > li {
+  scroll-snap-align: start;
+}
+
+@media (max-width: 640px) {
+  .v-carril {
+    grid-auto-columns: 78%;
+  }
+}

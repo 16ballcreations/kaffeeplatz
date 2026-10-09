@@ -1,0 +1,128 @@
+/* v2/acciones.css — Acciones: botones en pildora y enlaces de accion.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   ACCIONES
+   =========================================================================== */
+
+.v-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+}
+
+.v-boton {
+  --alto: 3.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  min-height: var(--alto);
+  padding: 0 1.5rem;
+  border-radius: var(--v-r-pildora);
+  font-family: var(--v-sans);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    transform 0.4s var(--v-curva),
+    background-color 0.3s var(--v-curva),
+    border-color 0.3s var(--v-curva),
+    color 0.3s var(--v-curva);
+}
+
+.v-boton:active {
+  transform: scale(0.98);
+}
+
+.v-boton--sm {
+  --alto: 2.625rem;
+  padding: 0 1.125rem;
+  font-size: 0.875rem;
+}
+
+.v-boton--ancho {
+  width: 100%;
+}
+
+/* La accion principal. Oro relleno + tinta oscura = 10.4:1. */
+.v-boton--oro {
+  background: var(--v-oro);
+  color: var(--v-tinta-oscura);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 10px 30px -12px rgb(222 193 133 / 0.45);
+}
+
+.v-boton--oro:hover {
+  background: var(--v-oro-hover);
+}
+
+/* Boton-en-boton: el icono final vive en su propio circulo y se desplaza. */
+.v-boton__icono {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-right: -0.875rem;
+  border-radius: 50%;
+  background: rgb(26 26 26 / 0.1);
+  transition: transform 0.4s var(--v-curva);
+}
+
+.v-boton:hover .v-boton__icono {
+  transform: translateX(3px) scale(1.05);
+}
+
+.v-boton--linea {
+  color: var(--v-tinta);
+  border-color: var(--v-linea-2);
+  background: rgb(253 247 231 / 0.03);
+}
+
+.v-boton--linea:hover {
+  border-color: var(--v-oro);
+  color: var(--v-oro);
+}
+
+/* Sobre crema el oro relleno no se separa del fondo (1.85:1): la accion
+   se invierte a tinta oscura con texto crema (16:1). */
+.v-boton--tinta {
+  background: var(--v-tinta-oscura);
+  color: var(--v-crema) !important;
+  box-shadow: 0 12px 28px -16px rgb(26 26 26 / 0.6);
+}
+
+.v-boton--tinta:hover {
+  background: #2a2724;
+}
+
+.v-enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--v-oro);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding-block: 0.375rem;
+  background: linear-gradient(currentColor, currentColor) left bottom / 0 1px no-repeat;
+  transition: background-size 0.45s var(--v-curva);
+}
+
+.v-enlace:hover {
+  background-size: 100% 1px;
+}
+
+.v-enlace .v-icono {
+  transition: transform 0.4s var(--v-curva);
+}
+
+.v-enlace:hover .v-icono {
+  transform: translateX(3px);
+}

@@ -1,0 +1,317 @@
+/* v2/catalogo.css — Catalogo.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   CATALOGO
+   =========================================================================== */
+
+.v-herramientas {
+  position: sticky;
+  top: var(--v-cabecera-alto);
+  z-index: calc(var(--z-cabecera) - 1);
+  margin-inline: calc(var(--v-gutter) * -1);
+  padding: 0.875rem var(--v-gutter);
+  background: rgb(21 20 19 / 0.94);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--v-linea);
+  margin-bottom: 2rem;
+}
+
+.v-herramientas__fila {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.v-pildoras {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+}
+
+.v-pildoras::-webkit-scrollbar {
+  display: none;
+}
+
+.v-pildoras button,
+[data-kp-filtros-grupo] button {
+  all: unset;
+  box-sizing: border-box;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: var(--v-r-pildora);
+  border: 1px solid var(--v-linea-2);
+  color: var(--v-tinta-2);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.25s var(--v-curva),
+    border-color 0.25s var(--v-curva),
+    color 0.25s var(--v-curva);
+}
+
+.v-pildoras button:last-child {
+  margin-right: 32px;
+}
+
+.v-pildoras button span,
+[data-kp-filtro-n] {
+  font-size: 0.75rem;
+  color: var(--v-tinta-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.v-pildoras button:hover,
+[data-kp-filtros-grupo] button:hover {
+  color: var(--v-tinta);
+  border-color: var(--v-tinta-3);
+}
+
+.v-pildoras button[aria-pressed='true'],
+[data-kp-filtros-grupo] button[aria-pressed='true'] {
+  background: var(--v-oro);
+  border-color: var(--v-oro);
+  color: var(--v-tinta-oscura);
+  font-weight: 500;
+}
+
+.v-pildoras button[aria-pressed='true'] span,
+[data-kp-filtros-grupo] button[aria-pressed='true'] [data-kp-filtro-n] {
+  color: rgb(26 26 26 / 0.7);
+}
+
+.v-pildoras button:focus-visible,
+[data-kp-filtros-grupo] button:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 2px;
+}
+
+.v-herramientas__ajustes {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: none;
+}
+
+.v-interruptor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.875rem;
+  color: var(--v-tinta-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.v-interruptor input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.v-interruptor__pista {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: var(--v-r-pildora);
+  background: var(--v-elevado-2);
+  box-shadow: inset 0 0 0 1px var(--v-linea-2);
+  transition: background-color 0.3s var(--v-curva);
+}
+
+.v-interruptor__pista::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--v-tinta-2);
+  transition:
+    transform 0.35s var(--v-curva),
+    background-color 0.3s var(--v-curva);
+}
+
+.v-interruptor input:checked + .v-interruptor__pista {
+  background: var(--v-oro);
+}
+
+.v-interruptor input:checked + .v-interruptor__pista::after {
+  transform: translateX(16px);
+  background: var(--v-tinta-oscura);
+}
+
+.v-interruptor input:focus-visible + .v-interruptor__pista {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 3px;
+}
+
+.v-selector {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.v-selector select {
+  appearance: none;
+  height: 2.5rem;
+  padding: 0 2.5rem 0 1rem;
+  border-radius: var(--v-r-pildora);
+  border: 1px solid var(--v-linea-2);
+  background: var(--v-superficie);
+  color: var(--v-tinta);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.v-selector .v-icono {
+  position: absolute;
+  right: 0.875rem;
+  pointer-events: none;
+  color: var(--v-tinta-2);
+}
+
+.v-herramientas__estado {
+  display: none;
+}
+
+/* En escritorio todas las categorias a la vista: se parten en lineas en vez
+   de esconderse en un carril. El carril queda para movil. */
+@media (min-width: 861px) {
+  .v-herramientas__fila {
+    align-items: flex-start;
+  }
+  .v-pildoras {
+    flex-wrap: wrap;
+    overflow: visible;
+    mask-image: none;
+  }
+  .v-pildoras button:last-child {
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .v-herramientas__fila {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .v-pildoras {
+    margin-inline: calc(var(--v-gutter) * -1);
+    padding-inline: var(--v-gutter);
+  }
+  .v-herramientas__ajustes {
+    justify-content: space-between;
+  }
+}
+
+.v-rejilla {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+  .v-rejilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .v-rejilla {
+    gap: 0.625rem;
+  }
+  .v-rejilla .v-tarjeta {
+    padding: 0.375rem;
+  }
+  .v-rejilla .v-tarjeta__cuerpo {
+    padding: 0.75rem 0.375rem 0.25rem;
+  }
+  .v-rejilla .v-tarjeta__titulo {
+    font-size: 1.125rem;
+  }
+  .v-rejilla .v-tarjeta__categoria span {
+    display: none;
+  }
+}
+
+/* Ficha de asesoria intercalada: la unica tarjeta en oro. */
+.v-asesoria {
+  display: flex;
+}
+
+.v-asesoria__interior {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 2rem;
+  border-radius: var(--v-r-sup);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgb(222 193 133 / 0.16), transparent 60%),
+    var(--v-elevado);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea-oro);
+}
+
+.v-asesoria__interior > .v-icono {
+  color: var(--v-oro);
+}
+
+.v-asesoria h2 {
+  margin-top: auto;
+  padding-top: 2rem;
+  font-family: var(--v-serif);
+  font-style: italic;
+  font-size: var(--v-t-h2);
+  line-height: 1.05;
+  font-weight: 400;
+}
+
+.v-asesoria p {
+  margin: 0.75rem 0 1.5rem;
+  color: var(--v-tinta-2);
+  font-size: 0.9375rem;
+}
+
+@media (max-width: 520px) {
+  .v-asesoria {
+    grid-column: 1 / -1;
+  }
+  .v-asesoria__interior {
+    padding: 1.5rem;
+  }
+}
+
+.v-vacio {
+  display: grid;
+  justify-items: start;
+  gap: 1rem;
+  padding: 3rem;
+  border-radius: var(--v-r-sup);
+  border: 1px dashed var(--v-linea-2);
+}
+
+.v-vacio h2 {
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h3);
+}
+
+.v-vacio p {
+  color: var(--v-tinta-2);
+}

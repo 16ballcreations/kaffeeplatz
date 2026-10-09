@@ -1,0 +1,58 @@
+/* v2/encabezados.css — Encabezados de pagina interior.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   ENCABEZADOS DE PAGINA
+   =========================================================================== */
+
+.v-encabezado {
+  padding-top: clamp(2.5rem, 1.5rem + 4vw, 5rem);
+  padding-bottom: clamp(2rem, 1.5rem + 2vw, 3rem);
+}
+
+.v-encabezado h1,
+.v-encabezado__interior h1 {
+  max-width: 16ch;
+}
+
+.v-encabezado__texto,
+.v-encabezado [data-kp-entradilla] {
+  margin-top: 1.25rem;
+  max-width: 52ch;
+  color: var(--v-tinta-2);
+  font-size: 1.0625rem;
+}
+
+.v-encabezado [data-kp-kicker] {
+  font-size: var(--v-t-micro);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--v-oro);
+  margin-bottom: 1.25rem;
+}
+
+.v-encabezado--partido {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+  gap: 3rem;
+  align-items: center;
+}
+
+.v-encabezado__emblema {
+  justify-self: end;
+  width: min(100%, 360px);
+  border-radius: 50%;
+  box-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.8);
+}
+
+@media (max-width: 760px) {
+  .v-encabezado--partido {
+    grid-template-columns: 1fr;
+  }
+  .v-encabezado__emblema {
+    justify-self: start;
+    width: 160px;
+    order: -1;
+  }
+}

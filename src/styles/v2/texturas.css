@@ -1,0 +1,80 @@
+/* v2/texturas.css — Texturas de marca.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   TEXTURAS DE MARCA
+   =========================================================================== */
+
+.v-lino-oscuro {
+  background-color: var(--v-abismo);
+  background-image:
+    radial-gradient(ellipse 80% 70% at 75% 40%, rgb(222 193 133 / 0.08), transparent 70%),
+    linear-gradient(rgb(15 14 13 / 0.82), rgb(15 14 13 / 0.82)),
+    url('/img/marca/lino-tile.webp');
+  background-size: auto, auto, 320px;
+}
+
+.v-franja-crema {
+  position: relative;
+  padding-block: var(--v-seccion);
+  margin-top: var(--v-seccion);
+  background-color: var(--v-crema);
+  color: var(--v-tinta-oscura);
+}
+
+/* Lino claro en capa aparte, a la opacidad que el cliente aprobo en C
+   (0.30): el tejido se nota y el crema sigue leyendose como crema. */
+.v-lino-claro {
+  isolation: isolate;
+}
+
+.v-lino-claro::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url('/img/marca/lino-tile-claro.webp') center top / 232px repeat;
+  opacity: 0.3;
+  mix-blend-mode: multiply;
+}
+
+/* Sobre crema se reasignan tintas y el oro legible. */
+.v-franja-crema .v-titulo,
+.v-franja-crema h2,
+.v-franja-crema h3 {
+  color: var(--v-tinta-oscura);
+}
+
+.v-franja-crema .v-titulo em {
+  color: var(--v-oro-legible);
+}
+
+.v-franja-crema p {
+  color: var(--v-tinta-oscura-2);
+}
+
+.v-franja-crema a {
+  color: var(--v-oro-legible);
+}
+
+.v-franja-crema :focus-visible {
+  outline-color: var(--v-oro-legible);
+}
+
+/* Costura de saco: la puntada dorada en el canto de la franja (idea de C). */
+.v-franja-crema::before {
+  content: '';
+  position: absolute;
+  inset: 14px 0 auto;
+  height: 1px;
+  background: repeating-linear-gradient(90deg, var(--v-oro-legible) 0 10px, transparent 10px 18px);
+  opacity: 0.45;
+}
+
+/* Passe-partout crema para fotos de producto. */
+.v-marco {
+  background: var(--v-crema);
+  border-radius: var(--v-r-img);
+  overflow: hidden;
+}
