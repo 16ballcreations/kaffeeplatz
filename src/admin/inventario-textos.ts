@@ -27,10 +27,15 @@ export function nombreVariante(titulo: string): string | null {
   return titulo === 'Default Title' ? null : titulo;
 }
 
-/** «Hervidor mango de madera — Blanco», o solo el producto si no hay variantes. */
+/**
+ * «Hervidor mango de madera — Blanco», o solo el producto si la variante no
+ * dice nada nuevo («Default Title», o se llama igual que el producto: el
+ * Aeropress Original tiene una variante «Aeropress Original»). Misma regla que
+ * `TITULO_SQL` de `consultas/inventario-panel-leer.ts`.
+ */
 export function nombreCompleto(producto: string, variante: string): string {
   const v = nombreVariante(variante);
-  return v ? `${producto} — ${v}` : producto;
+  return v && v !== producto ? `${producto} — ${v}` : producto;
 }
 
 /** «1 unidad», «3 unidades». */
@@ -103,6 +108,7 @@ export function minutosDesde(utc: string, ahora: Date = new Date()): number {
  */
 export function motivoLegible(motivo: MotivoMovimiento, nota: string | null): string {
   if (nota?.startsWith('deshecho #')) return 'Deshecho: se corrigió un toque anterior';
+  if (motivo === 'ajuste' && nota === NOTA_ROTURA) return NOTA_ROTURA;
   switch (motivo) {
     case 'entrada':
       return 'Llegó mercancía';
@@ -125,6 +131,18 @@ export function motivoLegible(motivo: MotivoMovimiento, nota: string | null): st
     case 'despacho':
       return 'Salió el paquete';
   }
+}
+
+/**
+ * La nota con la que «Se rompió o se perdió» se guarda como `ajuste`. No es un
+ * motivo propio a propósito: el CHECK de 0004 es una lista cerrada y una rotura
+ * ES corregir la cuenta, con el porqué ya escrito.
+ */
+export const NOTA_ROTURA = 'Se rompió o se perdió';
+
+/** ¿La nota ya la dice el motivo? Entonces no se repite debajo. */
+export function notaVisible(nota: string | null): string | null {
+  return !nota || nota.startsWith('deshecho #') || nota === NOTA_ROTURA ? null : nota;
 }
 
 /** ¿Este movimiento toca lo apartado y no la estantería? (se pinta tenue) */
@@ -155,7 +173,12 @@ export const ERRORES: Record<string, string> = {
 };
 
 /** Lo que dice la franja tras un cambio de cantidad. */
-export function textoHecho(m: { motivo: MotivoMovimiento; cantidad: number; titulo: string }): string {
+export function textoHecho(m: {
+  motivo: MotivoMovimiento;
+  cantidad: number;
+  titulo: string;
+  nota?: string | null;
+}): string {
   const n = Math.abs(m.cantidad);
   switch (m.motivo) {
     case 'venta_whatsapp':
@@ -165,6 +188,7 @@ export function textoHecho(m: { motivo: MotivoMovimiento; cantidad: number; titu
     case 'devolucion':
       return `+${n} ${m.titulo} · volvió a la estantería`;
     case 'ajuste':
+      if (m.nota === NOTA_ROTURA) return `−${n} ${m.titulo} · se rompió o se perdió`;
       return m.cantidad > 0
         ? `+${n} ${m.titulo} · cuenta corregida`
         : `−${n} ${m.titulo} · cuenta corregida`;

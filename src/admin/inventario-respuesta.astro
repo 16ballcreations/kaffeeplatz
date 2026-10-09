@@ -44,8 +44,12 @@ interface Props {
   /**
    * Qué parte pintar. La pregunta va ARRIBA (es lo primero que hay que
    * contestar); la franja y el error van al FINAL del contenido, porque una
-   * franja `sticky` con `bottom` solo se pega abajo si en el flujo está
-   * después de lo que se desplaza.
+   * franja con posición «pegada» y `bottom` solo se pega abajo si en el flujo
+   * está después de lo que se desplaza.
+   *
+   * (Esa palabra, en inglés, no se escribe en este fichero: Tailwind lee los
+   * `.astro` buscando clases y la convertiría en una utilidad nueva del CSS
+   * PÚBLICO, que cambiaría el hash de la hoja de todas las páginas.)
    */
   parte: 'pregunta' | 'franja';
 }
@@ -66,13 +70,13 @@ const volver = ruta(`/admin/inventario${paqueteAbierto ? `?paquete=${paqueteAbie
       </h2>
       {pregunta.motivo === 'reservado' ? (
         <p>
-          Tienes {pregunta.fisico} {pregunta.titulo}, pero <strong>alguien lo está pagando ahora mismo</strong> en
+          {`Tienes ${pregunta.fisico} ${pregunta.titulo}, pero `} <strong>alguien lo está pagando ahora mismo</strong> en
           la tienda{pregunta.minutos !== null ? ` (le quedan ${pregunta.minutos} minutos)` : ''}. Si esperas y no
           paga, vuelve solo a estar a la venta.
         </p>
       ) : (
         <p>
-          Según la cuenta no te queda ningún {pregunta.titulo}. Si lo acabas de vender, es que la cuenta estaba mal:
+          {`Según la cuenta no te queda ningún ${pregunta.titulo}. `}Si lo acabas de vender, es que la cuenta estaba mal:
           puedes venderlo igual (la cuenta quedará en negativo para que la revises) o corregirla primero.
         </p>
       )}
@@ -112,6 +116,9 @@ const volver = ruta(`/admin/inventario${paqueteAbierto ? `?paquete=${paqueteAbie
   franja && (
     <div class="pi-franja" role="status">
       <p class="pi-franja__texto">{franja.texto}</p>
+      {/* Cerrar es un enlace a la misma pantalla sin el aviso: sin JS la franja
+          no se va sola, y tapa las filas de abajo. */}
+      <a class="pi-franja__cerrar" href={`${volver}${franja.deshacer ? `#v${franja.deshacer.v}` : ''}`} aria-label="Cerrar el aviso">×</a>
       {franja.deshacer && (
         <form method="post" action={accion}>
           <input type="hidden" name="accion" value="deshacer" />
@@ -127,7 +134,7 @@ const volver = ruta(`/admin/inventario${paqueteAbierto ? `?paquete=${paqueteAbie
         </a>
       )}
       {franja.paquete && (
-        <form method="post" action={accion}>
+        <form method="post" action={accion} class="pi-franja__nombre">
           <input type="hidden" name="accion" value="nombrar" />
           <input type="hidden" name="d" value={franja.paquete.d} />
           {franja.deshacer && <input type="hidden" name="v" value={franja.deshacer.v} />}

@@ -26,10 +26,27 @@
 }
 
 .pi-franja__texto {
-  flex: 1 1 100%;
+  /* Todo el ancho menos la X: lo que venga después baja a la línea de abajo. */
+  flex: 1 1 calc(100% - var(--p-toque) - 0.75rem);
+  min-width: 0;
   margin: 0;
   font-weight: 500;
 }
+
+.pi-franja__cerrar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--p-toque);
+  height: var(--p-toque);
+  margin: -0.5rem -0.5rem 0 0;
+  color: var(--v-tinta-2);
+  font-size: 1.5rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+
 
 .pi-franja form {
   display: flex;
@@ -55,8 +72,14 @@
 
 .pi-franja .pi-texto {
   width: auto;
-  flex: 1;
-  min-width: 8rem;
+  flex: 1 1 8rem;
+  min-width: 0;
+}
+
+/* «Ponerle nombre» ocupa su propia línea: campo y botón juntos no caben al
+   lado de «Deshacer» a 375 px. */
+.pi-franja .pi-franja__nombre {
+  flex: 1 1 100%;
 }
 
 /* --- «No puedo descontarlo todavía» (G.4.2): pregunta, no error ----------- */

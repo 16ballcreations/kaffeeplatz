@@ -32,9 +32,11 @@ interface Props {
   paquete: number | null;
   /** Abrir «Cambiar» al pintar: volvió un error de esta fila. */
   abierto: boolean;
+  /** Es la única variante del producto: el título ya lo dice la cabecera. */
+  unica: boolean;
 }
 
-const { fila: f, paquete, abierto } = Astro.props as Props;
+const { fila: f, paquete, abierto, unica } = Astro.props as Props;
 const accion = ruta('/admin/inventario/accion');
 
 /* Lo que alguien está pagando AHORA: físico menos vendible, que ya descuenta
@@ -42,7 +44,9 @@ const accion = ruta('/admin/inventario/accion');
 const apartado = Math.max(0, f.fisico - f.vendible);
 const negativo = f.fisico < 0;
 const numero = negativo ? f.fisico : Math.max(0, f.vendible);
-const nombre = nombreVariante(f.varianteTitulo) ?? 'Cuántos tengo';
+/* Con una sola variante, su nombre repetiría la cabecera del producto: se
+   dice lo que es el número. */
+const nombre = (!unica && nombreVariante(f.varianteTitulo)) || 'Cuántos tengo';
 
 let estado = 'A la venta';
 let claseEstado = '';

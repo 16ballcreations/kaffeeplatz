@@ -123,8 +123,10 @@ const para = (p: PaqueteDespacho) =>
                     <input type="hidden" name="d" value={p.id} />
                     <small>
                       Anular es para un paquete que NO va a salir (se canceló la venta). Lo que llevaba vuelve a
-                      la estantería y se puede volver a vender. El dinero, si lo hubo, se devuelve aparte
-                      {p.origen === 'bold' ? ' desde Bold' : ''}.
+                      la estantería y se puede volver a vender.{' '}
+                      {p.origen === 'bold'
+                        ? 'El dinero se devuelve aparte, desde Bold.'
+                        : 'Si te pagaron, el dinero se devuelve aparte.'}
                     </small>
                     <label>
                       <input type="checkbox" name="confirmo" value="si" required /> Sí, este paquete no va a salir

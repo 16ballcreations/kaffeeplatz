@@ -32,14 +32,12 @@
 
 import type { BaseD1Escritura, ResultadoVentaWhatsapp } from './inventario-formas';
 import { stockExacto } from './inventario-leer';
+import { TITULO_SQL } from './inventario-panel-leer';
 
 /** Cuánto tiempo se puede deshacer algo. La franja de G.6 dice «unos segundos»;
     15 minutos cubren el «uy, me equivoqué» de quien se dio cuenta al rato. */
 export const MINUTOS_PARA_DESHACER = 15;
 
-/** El título que se copia al artículo y se enseña: sin "Default Title". */
-const TITULO_SQL = `CASE WHEN v.titulo = 'Default Title' THEN p.titulo
-                         ELSE p.titulo || ' — ' || v.titulo END`;
 
 /** El resultado común de los cambios de cantidad. */
 export interface ResultadoAjuste {
@@ -378,10 +376,20 @@ export async function deshacerMovimiento(
   }
   const r = await db.batch(sentencias);
   if (!r[0]?.meta.changes) {
-    return { ok: false, error: esVenta ? 'paquete-cerrado' : 'no-deshacible' };
+    /* Solo para elegir la FRASE: la decisión ya la tomó la guarda. */
+    const yaEstaba = await db
+      .prepare('SELECT 1 AS si FROM movimientos WHERE variante_id = ?1 AND nota = ?2 LIMIT 1')
+      .bind(m.variante_id, marca)
+      .first<{ si: number }>();
+    return { ok: false, error: esVenta && !yaEstaba ? 'paquete-cerrado' : 'no-deshacible' };
   }
   return { ok: true };
 }
+
+/* SOBRE `entidad_id` EN LA AUDITORÍA: se pasa como `String(id)` y no con
+   `CAST(? AS TEXT)`. D1 enlaza los números de JavaScript como REAL, y el CAST
+   de un REAL da '4.0': el historial de «¿qué le pasó al paquete 4?» no lo
+   encontraría buscando '4'. Comprobado en local. */
 
 /* ------------------------------------------------------------------ a la venta */
 
@@ -406,10 +414,10 @@ export async function ponerALaVenta(
     db
       .prepare(
         `INSERT INTO auditoria (entidad, entidad_id, accion, antes, nota)
-         SELECT 'variante', CAST(?1 AS TEXT), 'editar', json_object('disponible', 1 - ?2), ?3
+         SELECT 'variante', ?1, 'editar', json_object('disponible', CAST(1 - ?2 AS INTEGER)), ?3
           WHERE changes() = 1`,
       )
-      .bind(varianteId, valor, aLaVenta ? 'puesta a la venta' : 'retirada de la venta'),
+      .bind(String(varianteId), valor, aLaVenta ? 'puesta a la venta' : 'retirada de la venta'),
     db
       .prepare(
         `UPDATE productos SET disponible = COALESCE(
@@ -460,9 +468,9 @@ export async function cerrarDespacho(
       db
         .prepare(
           `INSERT INTO auditoria (entidad, entidad_id, accion, nota)
-           SELECT 'despacho', CAST(?1 AS TEXT), 'despachar', ?2 WHERE changes() = 1`,
+           SELECT 'despacho', ?1, 'despachar', ?2 WHERE changes() = 1`,
         )
-        .bind(despachoId, nota?.trim() || null),
+        .bind(String(despachoId), nota?.trim() || null),
     ]);
     return Boolean(r[0]?.meta.changes);
   }
@@ -477,9 +485,9 @@ export async function cerrarDespacho(
     db
       .prepare(
         `INSERT INTO auditoria (entidad, entidad_id, accion, nota)
-         SELECT 'despacho', CAST(?1 AS TEXT), 'anular', ?2 WHERE changes() = 1`,
+         SELECT 'despacho', ?1, 'anular', ?2 WHERE changes() = 1`,
       )
-      .bind(despachoId, nota?.trim() || null),
+      .bind(String(despachoId), nota?.trim() || null),
     /* `changes() = 1` aquí mira la auditoría, que solo se escribió si el
        paquete se anuló de verdad en esta llamada. */
     db
@@ -513,9 +521,9 @@ export async function reabrirDespacho(db: BaseD1Escritura, despachoId: number): 
     db
       .prepare(
         `INSERT INTO auditoria (entidad, entidad_id, accion)
-         SELECT 'despacho', CAST(?1 AS TEXT), 'reabrir' WHERE changes() = 1`,
+         SELECT 'despacho', ?1, 'reabrir' WHERE changes() = 1`,
       )
-      .bind(despachoId),
+      .bind(String(despachoId)),
   ]);
   return Boolean(r[0]?.meta.changes);
 }

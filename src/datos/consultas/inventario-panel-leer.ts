@@ -38,6 +38,18 @@ export interface MovimientoContado {
   titulo: string;
 }
 
+/**
+ * El nombre de una variante para una persona, en SQL (alias `v` y `p`): solo
+ * el producto si no tiene variantes de verdad («Default Title», o una sola
+ * variante que se llama como el producto), y «Producto — Color» si las tiene.
+ * Es la misma regla que `nombreCompleto()` de `src/admin/inventario-textos.ts`;
+ * está en SQL porque el título se COPIA al artículo del paquete (para que
+ * la lista de hace tres meses diga lo que se vendió aunque se renombre).
+ */
+export const TITULO_SQL = `CASE WHEN v.titulo = 'Default Title' OR v.titulo = p.titulo
+                                 OR (SELECT COUNT(*) FROM variantes x WHERE x.producto_id = p.id) = 1
+                            THEN p.titulo ELSE p.titulo || ' — ' || v.titulo END`;
+
 interface FilaPaquete {
   id: number;
   created_at: string;
@@ -118,8 +130,7 @@ async function articulosDe(
          FROM despacho_items di WHERE di.despacho_id IN (${marcas})
        UNION ALL
        SELECT m.despacho_id, -SUM(m.cantidad),
-              CASE WHEN v.titulo = 'Default Title' THEN p.titulo
-                   ELSE p.titulo || ' — ' || v.titulo END,
+              ${TITULO_SQL},
               MIN(m.id)
          FROM movimientos m
          JOIN variantes v ON v.id = m.variante_id
@@ -134,7 +145,11 @@ async function articulosDe(
   for (const f of results) {
     if (f.cantidad <= 0) continue;
     const lista = mapa.get(f.despacho_id) ?? [];
-    lista.push({ cantidad: f.cantidad, titulo: f.titulo });
+    /* «1 × Chemex» y luego «2 × Chemex» (tres toques en «Añadir 1») se
+       enseñan como «3 × Chemex»: es lo que hay que meter en la caja. */
+    const igual = lista.find((a) => a.titulo === f.titulo);
+    if (igual) igual.cantidad += f.cantidad;
+    else lista.push({ cantidad: f.cantidad, titulo: f.titulo });
     mapa.set(f.despacho_id, lista);
   }
   return mapa;
@@ -163,8 +178,7 @@ export async function movimientoContado(
   const f = await db
     .prepare(
       `SELECT m.id, m.created_at, m.variante_id, m.cantidad, m.motivo, m.despacho_id, m.nota,
-              CASE WHEN v.titulo = 'Default Title' THEN p.titulo
-                   ELSE p.titulo || ' — ' || v.titulo END AS titulo
+              ${TITULO_SQL} AS titulo
          FROM movimientos m
          JOIN variantes v ON v.id = m.variante_id
          JOIN productos p ON p.id = v.producto_id

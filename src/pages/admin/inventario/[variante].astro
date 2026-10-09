@@ -21,6 +21,7 @@ import {
   cuando,
   motivoLegible,
   esDeLoApartado,
+  notaVisible,
 } from '../../../admin/inventario-textos';
 import '../../../styles/panel-inventario.css';
 import '../../../styles/panel-inventario-avisos.css';
@@ -82,9 +83,7 @@ const apartado = fila ? Math.max(0, fila.fisico - fila.vendible) : 0;
                 <span>
                   {motivoLegible(m.motivo, m.nota)}
                   {esDeLoApartado(m.motivo) && ' (apartado)'}
-                  {m.nota && !m.nota.startsWith('deshecho #') && (
-                    <span class="pi-historial__nota">«{m.nota}»</span>
-                  )}
+                  {notaVisible(m.nota) && <span class="pi-historial__nota">«{notaVisible(m.nota)}»</span>}
                 </span>
               </li>
             ))}

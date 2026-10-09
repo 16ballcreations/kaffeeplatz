@@ -26,6 +26,7 @@
  */
 
 import { inventarioDelPanel, type InventarioDelPanel } from '../datos/inventario';
+import { NOTA_ROTURA } from './inventario-textos';
 
 /** Un entero del formulario dentro de [min, max], o `null`. */
 function entero(form: FormData, campo: string, min: number, max: number): number | null {
@@ -72,7 +73,7 @@ export async function accionInventario(form: FormData, locals: unknown): Promise
         if (motivo === 'whatsapp') return await vender(inv, form, v, paquete, n);
         const r =
           motivo === 'rotura'
-            ? await inv.ajustar({ varianteId: v, delta: -n, motivo: 'ajuste', nota: 'Se rompió o se perdió' })
+            ? await inv.ajustar({ varianteId: v, delta: -n, motivo: 'ajuste', nota: NOTA_ROTURA })
             : motivo === 'devolucion' || motivo === 'entrada'
               ? await inv.ajustar({ varianteId: v, delta: n, motivo })
               : null;
