@@ -129,7 +129,6 @@ const ACCIONES: Record<string, string> = {
   editar: 'Editado',
   archivar: 'Archivado',
   restaurar: 'Restaurado',
-  reordenar: 'Reordenadas las opciones',
 };
 ---
 
@@ -258,10 +257,7 @@ const ACCIONES: Record<string, string> = {
               {historial.map((c) => (
                 <li>
                   <time datetime={c.fecha}>{fecha(c.fecha)}</time>
-                  <span>
-                    {ACCIONES[c.accion] ?? c.accion}
-                    {c.nota && c.accion === 'editar' ? `: ${c.nota}` : ''}
-                  </span>
+                  <span>{`${ACCIONES[c.accion] ?? c.accion}${c.nota && c.accion === 'editar' ? `: ${c.nota}` : ''}`}</span>
                 </li>
               ))}
             </ul>

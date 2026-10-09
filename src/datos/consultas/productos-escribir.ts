@@ -77,9 +77,13 @@ export interface Guardado {
   opcionNombre: string | null;
   /** Foto del producto ANTES de guardar, para la auditoría. */
   antes: unknown;
-  /** Resumen legible del cambio: «precio de Morado, título». */
+  /**
+   * Resumen legible del cambio: «precio de Morado: $315.000 → $300.000». Un
+   * reordenado va aquí también («orden de las opciones») y no en una fila
+   * `reordenar` aparte: es parte del mismo guardado, y dos filas para un solo
+   * botón pulsado harían el historial más largo sin decir más.
+   */
   nota: string;
-  reordenado: boolean;
 }
 
 export type ResultadoGuardar =
@@ -238,17 +242,6 @@ export async function guardarProducto(
       db
         .prepare('INSERT INTO opciones (producto_id, nombre, valores, orden) VALUES (?1, ?2, ?3, 0)')
         .bind(g.productoId, g.opcionNombre, JSON.stringify(g.variantes.map((v) => v.titulo))),
-    );
-  }
-
-  if (g.reordenado) {
-    s.push(
-      db
-        .prepare(
-          `INSERT INTO auditoria (entidad, entidad_id, accion, nota)
-           VALUES ('producto', ?1, 'reordenar', ?2)`,
-        )
-        .bind(String(g.productoId), g.variantes.map((v) => v.titulo).join(' · ')),
     );
   }
 

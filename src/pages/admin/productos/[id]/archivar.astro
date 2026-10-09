@@ -94,14 +94,18 @@ const paquetes = compromisos?.despachosPendientes ?? 0;
             ventas siguen igual.
           </p>
         ) : (pagando > 0 || paquetes > 0) && (
-          <p class="p-error" role="alert">
-            Este producto tiene
-            {pagando > 0 && <b> {pagando} {pagando === 1 ? 'unidad que alguien está pagando' : 'unidades que alguien está pagando'}</b>}
-            {pagando > 0 && paquetes > 0 && ' y'}
-            {paquetes > 0 && <b> {paquetes} {paquetes === 1 ? 'paquete sin despachar' : 'paquetes sin despachar'}</b>}.
-            Si lo archivas, dejará de verse en la tienda, pero esas ventas siguen y los paquetes
-            hay que mandarlos igual.
-          </p>
+          /* `.p-error` es flex: el texto va dentro de un solo <p> para que las
+             negritas no se conviertan en columnas. */
+          <div class="p-error" role="alert">
+            <p>
+              Este producto tiene
+              {pagando > 0 && <b> {pagando} {pagando === 1 ? 'unidad que alguien está pagando' : 'unidades que alguien está pagando'}</b>}
+              {pagando > 0 && paquetes > 0 && ' y'}
+              {paquetes > 0 && <b> {paquetes} {paquetes === 1 ? 'paquete sin despachar' : 'paquetes sin despachar'}</b>}.
+              Si lo archivas, dejará de verse en la tienda, pero esas ventas siguen y los paquetes
+              hay que mandarlos igual.
+            </p>
+          </div>
         )}
 
         <form method="post" action={ruta(`/admin/productos/${p.id}/archivar`)} class="pp-guardar">

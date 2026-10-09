@@ -336,6 +336,8 @@
   padding-left: 1.1rem;
   color: var(--v-tinta-2);
   line-height: 1.6;
+  /* El reset de v2.css quita las viñetas; aquí sí hacen falta. */
+  list-style: disc;
 }
 
 /* --- Listado --------------------------------------------------------------- */

@@ -154,7 +154,6 @@ export async function guardarEdicion(
     opcionNombre,
     antes: instantanea(actual),
     nota: cambios.join('; '),
-    reordenado,
   });
   if (r.ok) return { ok: true, sinCambios: false };
 
