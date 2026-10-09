@@ -68,13 +68,17 @@ export async function guardarBloqueVersiones(
   actual: ProductoPanel,
   b: Borrador,
 ): Promise<ResultadoBloque> {
+  /* El cerrojo ANTES que la validación: si otra pantalla cambió la lista, el
+     formulario puede traer filas que ya no existen (y sin nombre, porque el
+     de las que existen no viaja), y el error útil es «cambió mientras
+     editabas», no «escribe el nombre». */
+  if (b.version !== actual.versionVariantes) return { ok: false, estado: 409, errores: {} };
   completar(b, actual);
   const historial = new Map(
     actual.variantes.filter((v) => v.conHistorial).map((v) => [v.id, v.titulo] as const),
   );
   const filas = validarFilas(b, historial);
   if (Object.keys(filas.errores).length) return { ok: false, estado: 400, errores: filas.errores };
-  if (b.version !== actual.versionVariantes) return { ok: false, estado: 409, errores: {} };
 
   /* Toda versión guardada tiene que venir en el formulario. Si falta alguna
      con el mismo cerrojo, el formulario no es el que pintó el panel (o llegó
@@ -145,7 +149,7 @@ export function diferenciasVersiones(ahora: ProductoPanel, b: Borrador): string[
   }
   for (const f of b.filas) {
     if (f.id !== null && !ahora.variantes.some((v) => v.id === f.id)) {
-      d.push(`«${f.titulo || 'Una versión'}» ya no existe: la quitaron desde otra pantalla.`);
+      d.push(`${f.titulo ? `«${f.titulo}»` : 'Una de las versiones'} ya no existe: la quitaron desde otra pantalla.`);
     }
   }
   const orden = (ids: (number | null)[]) => ids.filter((x) => x !== null && ahora.variantes.some((v) => v.id === x)).join(',');
