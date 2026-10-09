@@ -250,7 +250,7 @@ borde **sin ejecutar el Worker**.
 ### Pruebas propias
 
 ```bash
-npm run probar:saneador    # 45 casos: XSS, el <br> de 16bc, Markdown
+npm run probar:saneador    # saneador, Markdown y diario: XSS, el <br> de 16bc
 npm run verificar:puerta   # las 4 propiedades de la puerta
 npm run contraste          # incluye los colores del panel
 ```
