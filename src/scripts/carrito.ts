@@ -61,6 +61,7 @@
  */
 
 import { MAX_POR_LINEA, margen, topeDe } from './topes';
+import { recordarTopes, topeRecordado } from './topes-recordados';
 
 /* ===========================================================================
    TIPOS
@@ -170,22 +171,37 @@ export function registrarTopes(
 }
 
 /**
- * El tope de una variante: lo registrado, o el de sensatez si no se registro.
+ * Lo mismo que `registrarTopes`, para las paginas que LEEN DE D1 (la ficha y
+ * las tarjetas): ademas apunta los topes que vienen del stock, para que
+ * /carrito —que no lee de D1— no deje pasar de ahi. Ver `topes-recordados.ts`.
+ */
+export function registrarTopesVivos(
+  entradas: Iterable<{ handle: string; varianteId: string; tope: number; deStock: boolean }>,
+): void {
+  const lista = Array.from(entradas);
+  registrarTopes(lista);
+  recordarTopes(lista);
+}
+
+/**
+ * El tope de una variante: lo registrado, o el de sensatez si no se registro,
+ * y nunca por encima del stock que vio la ficha (fase 9).
  *
  * Es la funcion que la interfaz consulta para pintar (desactivar el `+`, decir
  * cuanto queda). El limite de verdad lo aplican `agregar()` y
  * `cambiarCantidad()`, no quien pinta.
  */
 export function tope(handle: string, varianteId: string): number {
-  const registrado = topes.get(clave(handle, varianteId));
-  if (registrado !== undefined) return registrado;
   /* Sin registro no se sabe si la variante esta disponible, asi que se asume
      que si: es el caso normal (lo agotado no se puede agregar de todas formas,
-     porque el boton que lo haria esta desactivado) y da el tope de sensatez,
-     que es el valor correcto para el dato de hoy. Pasa por `topeDe()` y no por
-     la constante para que el dia del inventario no quede un camino que
+     porque el boton que lo haria esta desactivado) y da el tope de sensatez.
+     Pasa por `topeDe()` y no por la constante para que no quede un camino que
      devuelva un numero que `topeDe()` ya no daria. */
-  return topeDe({ disponible: true });
+  const registrado = topes.get(clave(handle, varianteId)) ?? topeDe({ disponible: true });
+  /* El stock que apunto la ficha o la tarjeta. Sin inventario no hay apuntes y
+     esto es exactamente lo de antes. */
+  const recordado = topeRecordado(handle, varianteId);
+  return recordado === undefined ? registrado : Math.min(registrado, recordado);
 }
 
 /** Cuantas unidades de esa variante hay YA en el carrito guardado. */

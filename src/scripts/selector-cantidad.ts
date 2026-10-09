@@ -41,7 +41,7 @@
  * esta acotado aunque el campo muestre algo raro en ese instante.
  */
 
-import { disponibleParaAgregar, enCarrito, registrarTopes, suscribir } from './carrito';
+import { disponibleParaAgregar, enCarrito, registrarTopesVivos, suscribir } from './carrito';
 
 /** El contenedor del selector, con el tope de la variante actual. */
 const caja = document.querySelector<HTMLElement>('[data-kp-cantidad]');
@@ -193,13 +193,16 @@ export function iniciar(): void {
      el limite deja de depender de que este selector se acuerde de mirarlo. */
   const handle = caja.dataset.handle;
   if (handle) {
-    registrarTopes(
+    registrarTopesVivos(
       Array.from(
         document.querySelectorAll<HTMLElement>('[data-kp-cantidad-tope-variante]'),
       ).map((el) => ({
         handle,
         varianteId: el.dataset.kpCantidadTopeVariante ?? '',
         tope: Number.parseInt(el.dataset.tope ?? '', 10),
+        /* `data-tope-stock` solo existe con el inventario encendido: entonces
+           el tope es stock real y /carrito tiene que saberlo. */
+        deStock: el.hasAttribute('data-tope-stock'),
       })),
     );
   }

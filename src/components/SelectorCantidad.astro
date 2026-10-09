@@ -162,10 +162,18 @@ const topeInicial = topeDe(inicial);
   <p class="v-cantidad__tope" data-kp-cantidad-aviso role="status" aria-live="polite" hidden></p>
 
   {/* El tope de cada variante, para que el script lo lea al cambiarla. Son
-      datos, no interfaz: no hay nada que ver aqui. */}
+      datos, no interfaz: no hay nada que ver aqui. `data-tope-stock` solo
+      aparece con el inventario encendido (fase 9): dice que ese tope es stock
+      real, y el script se lo apunta al carrito para /carrito. Apagado no se
+      imprime y el HTML es el de siempre. */}
   {
     variantes.map((v) => (
-      <span hidden data-kp-cantidad-tope-variante={v.id} data-tope={String(topeDe(v))} />
+      <span
+        hidden
+        data-kp-cantidad-tope-variante={v.id}
+        data-tope={String(topeDe(v))}
+        data-tope-stock={v.stockDisponible === undefined ? undefined : ''}
+      />
     ))
   }
 </div>

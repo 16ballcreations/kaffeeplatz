@@ -11,15 +11,22 @@
  *   - Barra inferior fija en movil con precio y accion.
  *   - Confianza junto al boton: envios, atencion humana, sin pago en linea.
  *   - "Cómo prepararlo": enlace a la guia del diario que aplica.
+ *
+ * PARTIDA EN PIEZAS (fase 9): la pagina iba por 378 lineas, por encima del
+ * limite del repo. Lo que se CALCULA (relacionados, mensajes, JSON-LD) vive en
+ * `./_ficha.ts`; los radios de variante en `VariantesFicha.astro` y la barra
+ * movil en `BarraCompraFicha.astro`. El HTML que sale es el mismo, byte a
+ * byte: se comprobo comparando las 25 fichas antes y despues del corte.
  */
 import Base from '../../layouts/Base.astro';
 import GaleriaProducto from '../../components/GaleriaProducto.astro';
 import BloqueCompra from '../../components/BloqueCompra.astro';
-import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
+import VariantesFicha from '../../components/VariantesFicha.astro';
+import BarraCompraFicha from '../../components/BarraCompraFicha.astro';
 import TarjetaProducto from '../../components/TarjetaProducto.astro';
 import Imagen from '../../components/Imagen.astro';
 import Icono from '../../components/Icono.astro';
-import { SITIO, ruta } from '../../datos/sitio';
+import { ruta } from '../../datos/sitio';
 import { categoriaPorId } from '../../datos/categorias';
 import { GUIA_DE_PRODUCTO, ENVIOS } from '../../datos/guias';
 import {
@@ -29,6 +36,8 @@ import {
   marcarEtiquetas,
 } from '../../datos/catalogo';
 import { obtenerArticulos } from '../../datos/diario';
+import { conStock } from '../../datos/inventario';
+import { nombreDeOpcionFicha, mensajesFicha, relacionadosDe, jsonLdFicha } from './_ficha';
 
 
 /* FASE 3: las 25 fichas pasan a servirse desde D1. Ya no hay
@@ -51,7 +60,13 @@ if (lectura.estado !== 'ok' || !lectura.datos) {
   return respuestaDeEmergencia(Astro.url, lectura);
 }
 
-const d = lectura.datos.find((p) => p.handle === handle);
+/* FASE 9: cuantas unidades se pueden pedir de cada variante. Con el inventario
+   APAGADO `conStock` devuelve el mismo array sin tocar y la ficha sale igual
+   que antes; encendido, cada variante trae `stockDisponible` y el selector de
+   cantidad, la tarjeta de los relacionados y el carrito topan ahi. */
+const todos = await conStock(Astro.locals, lectura.datos);
+
+const d = todos.find((p) => p.handle === handle);
 if (!d) {
   /* R3: un handle que no esta vivo puede ser dos cosas MUY distintas.
      Si esta ARCHIVADO, es una URL que Google ya indexo: 301 a su categoria,
@@ -63,8 +78,6 @@ if (!d) {
   }
   return new Response(null, { status: 404 });
 }
-
-const todos = lectura.datos;
 
 /* El diario solo se usa para el enlace "Como prepararlo". Si falla, la ficha se
    pinta SIN ese enlace en vez de no pintarse: es un adorno util, no el
@@ -81,76 +94,16 @@ const categoria = categoriaPorId(d.categoria);
 
 /* Solo hay selector cuando hay de verdad entre que elegir. */
 const conSelector = d.variantes.length > 1;
-const nombreOpcion = d.opciones[0]?.nombre
-  ? d.opciones[0].nombre.charAt(0).toUpperCase() + d.opciones[0].nombre.slice(1).toLowerCase()
-  : 'Opción';
+const nombreOpcion = nombreDeOpcionFicha(d);
 /* Por defecto se marca la primera variante disponible. */
 const inicial = d.variantes.find((v) => v.disponible) ?? d.variantes[0];
 
-const mensajeVariante = (titulo: string, precio: string) =>
-  `Hola KaffeePlatz, me interesa ${d.titulo} (${titulo}, ${precio}). ¿Está disponible?`;
-const mensajeAviso = `Hola KaffeePlatz, me interesa ${d.titulo}. ¿Me avisan cuando vuelva a estar disponible?`;
-
-/* Relacionados: misma categoria primero, luego cercania de precio. */
-const relacionados = todos
-  .filter((p) => p.handle !== d.handle && p.imagenes.length > 0)
-  .sort((a, b) => {
-    const ca = a.categoria === d.categoria ? 0 : 1;
-    const cb = b.categoria === d.categoria ? 0 : 1;
-    if (ca !== cb) return ca - cb;
-    if (a.disponible !== b.disponible) return a.disponible ? -1 : 1;
-    const da = Math.abs(a.precio - d.precio);
-    const db = Math.abs(b.precio - d.precio);
-    if (da !== db) return da - db;
-    /* DESEMPATE POR `handle`. Sin esto el orden de dos productos igual de
-       "cercanos" lo decide el orden de llegada, y como aqui hay un
-       `.slice(0, 4)` justo despues, un empate en la cuarta posicion hace que
-       un producto entre o salga de la fila segun quien llegue antes. Son 6
-       fichas con un empate exacto en ese corte. Al leer de D1 el orden de
-       llegada lo decide la base, no el disco, asi que sin desempate la pagina
-       cambiaria sin que cambiara ningun dato. */
-    return a.handle.localeCompare(b.handle, 'es');
-  })
-  .slice(0, 4);
-
+const { mensajeVariante, mensajeAviso } = mensajesFicha(d);
+const relacionados = relacionadosDe(d, todos);
 const guia = articulos.find((a) => a.handle === GUIA_DE_PRODUCTO[d.handle]);
 
 const url = new URL(ruta(`/producto/${d.handle}`), Astro.site).toString();
-
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Product',
-  name: d.titulo,
-  description: d.descripcionTexto,
-  sku: d.handle,
-  brand: { '@type': 'Brand', name: d.vendor },
-  image: d.imagenes.map((i) => new URL(ruta(i.src), Astro.site).toString()),
-  url,
-  offers:
-    d.variantes.length > 1
-      ? {
-          '@type': 'AggregateOffer',
-          priceCurrency: 'COP',
-          lowPrice: Math.min(...d.variantes.map((v) => v.precio)),
-          highPrice: Math.max(...d.variantes.map((v) => v.precio)),
-          offerCount: d.variantes.length,
-          availability: d.disponible
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
-          url,
-          seller: { '@type': 'Organization', name: SITIO.nombre },
-        }
-      : {
-          '@type': 'Offer',
-          priceCurrency: 'COP',
-          price: d.precio,
-          availability: d.disponible
-            ? 'https://schema.org/InStock'
-            : 'https://schema.org/OutOfStock',
-          url,
-          seller: { '@type': 'Organization', name: SITIO.nombre },
-        },
-};
+const jsonLd = jsonLdFicha(d, url, Astro.site);
 ---
 
 <Base
@@ -205,27 +158,12 @@ const jsonLd = {
 
       {
         conSelector && (
-          <fieldset class="v-variantes" data-kp-ficha-opciones>
-            <legend>{nombreOpcion}</legend>
-            <div class="v-variantes__lista">
-              {d.variantes.map((v) => (
-                <label class="v-variante" data-disponible={String(v.disponible)}>
-                  <input
-                    type="radio"
-                    name="variante"
-                    value={v.titulo}
-                    checked={v === inicial}
-                    data-precio={v.precioFormateado}
-                    data-disponible={String(v.disponible)}
-                    data-variante-id={v.id}
-                  />
-                  <span class="v-variante__nombre">{v.titulo}</span>
-                  {hayRango && <span class="v-variante__precio v-num">{v.precioFormateado}</span>}
-                  {!v.disponible && <span class="v-variante__agotado">Agotado</span>}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <VariantesFicha
+            producto={d}
+            inicial={inicial}
+            nombreOpcion={nombreOpcion}
+            hayRango={hayRango}
+          />
         )
       }
 
@@ -316,58 +254,13 @@ const jsonLd = {
   }
 
   {/* Barra fija inferior, solo movil. Repite la accion principal. */}
-  <div class="v-barra-compra" aria-label="Pedir este producto" role="region">
-    <div class="v-barra-compra__info">
-      <span class="v-barra-compra__nombre">{d.titulo}</span>
-      <span class="v-num" data-v-precio>{conSelector ? inicial.precioFormateado : d.precioFormateado}</span>
-    </div>
-    {/* En la barra movil solo cabe UNA accion: la principal. Con JS es
-        agregar al carrito; sin JS, o agotado, es WhatsApp. */}
-    {
-      d.disponible && (
-        <button
-          type="button"
-          class="v-boton v-boton--oro v-boton--sm v-agregar"
-          data-v-agregar
-          data-handle={d.handle}
-          data-variante-id={inicial.id}
-          hidden
-        >
-          <Icono nombre="bolsa" tam={18} />
-          <span>Agregar</span>
-        </button>
-      )
-    }
-    <BotonWhatsApp
-      producto={d}
-      mensaje={d.disponible ? undefined : mensajeAviso}
-      clase="v-boton v-boton--oro v-boton--sm"
-      data-v-wa="generico"
-      data-v-wa-barra
-    >
-      <Icono nombre={d.disponible ? 'whatsapp' : 'campana'} tam={18} />
-      <span>{d.disponible ? 'Pedir' : 'Avísame'}</span>
-    </BotonWhatsApp>
-    {
-      conSelector &&
-        d.variantes.map((v) => (
-          <BotonWhatsApp
-            mensaje={
-              v.disponible
-                ? mensajeVariante(v.titulo, v.precioFormateado)
-                : `Hola KaffeePlatz, me interesa ${d.titulo} (${v.titulo}). ¿Me avisan cuando vuelva a estar disponible?`
-            }
-            clase="v-boton v-boton--oro v-boton--sm"
-            data-v-wa={v.titulo}
-            data-v-wa-barra
-            hidden
-          >
-            <Icono nombre={v.disponible ? 'whatsapp' : 'campana'} tam={18} />
-            <span>{v.disponible ? 'Pedir' : 'Avísame'}</span>
-          </BotonWhatsApp>
-        ))
-    }
-  </div>
+  <BarraCompraFicha
+    producto={d}
+    inicial={inicial}
+    conSelector={conSelector}
+    mensajeAviso={mensajeAviso}
+    mensajeVariante={mensajeVariante}
+  />
 </Base>
 
 <script>

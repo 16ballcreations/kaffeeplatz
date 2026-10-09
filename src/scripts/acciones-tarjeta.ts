@@ -55,7 +55,7 @@
  * registra en el carrito al arrancar: asi el limite no depende de que esta
  * pagina se acuerde de comprobarlo antes de llamar.
  */
-import { agregar, disponibleParaAgregar, registrarTopes, suscribir, tope } from './carrito';
+import { agregar, disponibleParaAgregar, registrarTopesVivos, suscribir, tope } from './carrito';
 
 /** Cuanto dura la confirmacion antes de retirarse. Igual que en la ficha. */
 const MS_AVISO = 6000;
@@ -64,13 +64,16 @@ const enlaces = document.querySelectorAll<HTMLAnchorElement>('a[data-kp-agregar]
 
 /* Los topes de todo lo agregable de esta pagina, ANTES de escuchar nada: el
    carrito tiene que conocerlos ya en el primer clic. */
-registrarTopes(
+registrarTopesVivos(
   Array.from(enlaces)
     .filter((el) => el.dataset.kpHandle && el.dataset.kpVarianteId)
     .map((el) => ({
       handle: el.dataset.kpHandle as string,
       varianteId: el.dataset.kpVarianteId as string,
       tope: Number.parseInt(el.dataset.kpTope ?? '', 10),
+      /* Con el inventario encendido el tope es stock real: se apunta para que
+         el `+` de /carrito no lo supere (ver topes-recordados.ts). */
+      deStock: el.hasAttribute('data-kp-tope-stock'),
     })),
 );
 
