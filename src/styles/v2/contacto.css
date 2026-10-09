@@ -1,0 +1,207 @@
+/* v2/contacto.css — Pagina de contacto.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   CONTACTO
+   =========================================================================== */
+
+.v-contacto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.v-contacto__wa {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(2rem, 1.5rem + 2vw, 3rem);
+  border-radius: var(--v-r-sup);
+  background:
+    radial-gradient(ellipse at 100% 0%, rgb(222 193 133 / 0.16), transparent 60%),
+    var(--v-elevado);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea-oro);
+}
+
+.v-contacto__wa > .v-icono {
+  color: var(--v-oro);
+}
+
+.v-contacto__wa h3 {
+  margin-top: 1.5rem;
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h2);
+}
+
+.v-contacto__wa p {
+  margin-top: 0.5rem;
+  color: var(--v-tinta-2);
+}
+
+.v-contacto__numero {
+  font-size: 1.5rem !important;
+  color: var(--v-tinta) !important;
+  margin: 1rem 0 2rem !important;
+}
+
+.v-contacto__apoyo {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--v-r-sup);
+  background: var(--v-superficie);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea);
+}
+
+.v-contacto__apoyo li {
+  display: flex;
+  gap: 1rem;
+  padding: 1.75rem;
+  flex: 1;
+}
+
+.v-contacto__apoyo li + li {
+  border-top: 1px solid var(--v-linea);
+}
+
+.v-contacto__apoyo .v-icono {
+  color: var(--v-oro);
+  margin-top: 0.25rem;
+}
+
+.v-contacto__apoyo h3 {
+  font-family: var(--v-serif);
+  font-size: 1.375rem;
+}
+
+.v-contacto__apoyo p {
+  margin-top: 0.25rem;
+  color: var(--v-tinta-2);
+  font-size: 0.9375rem;
+}
+
+.v-contacto__apoyo a {
+  color: var(--v-oro);
+}
+
+@media (max-width: 760px) {
+  .v-contacto {
+    grid-template-columns: 1fr;
+  }
+}
+
+.v-envios {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 1rem + 4vw, 5rem);
+  align-items: center;
+}
+
+.v-envios p {
+  margin-top: 1rem;
+  max-width: 48ch;
+}
+
+.v-envios__tabla {
+  margin: 0;
+  border-radius: var(--v-r-sup);
+  background: rgb(255 255 255 / 0.55);
+  box-shadow: 0 0 0 1px var(--v-crema-borde);
+}
+
+.v-envios__tabla div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.v-envios__tabla div + div {
+  border-top: 1px solid var(--v-crema-borde);
+}
+
+.v-envios__tabla dt {
+  color: var(--v-tinta-oscura-2);
+}
+
+.v-envios__tabla dd {
+  margin: 0;
+  font-weight: 500;
+  color: var(--v-tinta-oscura);
+  text-align: right;
+}
+
+@media (max-width: 760px) {
+  .v-envios {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Formulario (maqueta sin backend) ----------------------------------------- */
+[data-kp-formulario-contacto] {
+  margin-top: 2rem;
+}
+
+[data-kp-aviso] {
+  padding: 1rem 1.25rem;
+  border-radius: var(--v-r-mini);
+  border: 1px dashed var(--v-linea-oro);
+  color: var(--v-tinta-2);
+  font-size: var(--v-t-peq);
+  margin-bottom: 1.5rem;
+}
+
+[data-kp-aviso] strong {
+  color: var(--v-oro);
+  font-weight: 500;
+}
+
+[data-kp-form] {
+  display: grid;
+  gap: 1.25rem;
+}
+
+[data-kp-campo] {
+  display: grid;
+  gap: 0.5rem;
+}
+
+[data-kp-campo] label {
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+[data-kp-campo] input,
+[data-kp-campo] textarea {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border-radius: var(--v-r-mini);
+  border: 1px solid var(--v-linea-2);
+  background: var(--v-superficie);
+  color: var(--v-tinta);
+  font: inherit;
+  transition: border-color 0.25s var(--v-curva);
+}
+
+[data-kp-campo] input:focus,
+[data-kp-campo] textarea:focus {
+  border-color: var(--v-oro);
+  outline: none;
+}
+
+[data-kp-enviar] {
+  justify-self: start;
+  height: 3rem;
+  padding: 0 1.75rem;
+  border-radius: var(--v-r-pildora);
+  border: 1px solid var(--v-linea-2);
+  background: transparent;
+  color: var(--v-tinta-2);
+  font: inherit;
+  font-weight: 500;
+}
+
+[data-kp-enviar]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

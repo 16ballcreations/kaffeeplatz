@@ -1,0 +1,59 @@
+/* v2/whatsapp-flotante.css — Boton flotante de WhatsApp.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   BOTON FLOTANTE DE WHATSAPP
+   =========================================================================== */
+
+.v-flotante {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  /* Mismo anclaje que el acceso al carrito, que cuelga de este. La variable
+     la define flotante-carrito.css y la ficha la sube para no taparse con su
+     barra de compra; el valor de reserva es el de siempre. Hoy la ficha no
+     pinta este boton (sinFlotante), pero si algun dia lo pinta se movera con
+     su vecino en vez de quedarse debajo de la barra. */
+  bottom: var(--v-flotante-base, max(1rem, env(safe-area-inset-bottom)));
+  z-index: var(--z-flotante);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  height: 3.5rem;
+  padding: 0 1.25rem 0 1rem;
+  border-radius: var(--v-r-pildora);
+  background: var(--v-oro);
+  color: var(--v-tinta-oscura);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 18px 40px -14px rgb(0 0 0 / 0.7),
+    0 0 0 1px rgb(26 26 26 / 0.25);
+  transition: transform 0.4s var(--v-curva);
+}
+
+.v-flotante:hover {
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .v-flotante {
+    animation: v-aparece 0.8s var(--v-curva) 1.2s both;
+  }
+}
+
+@media (max-width: 640px) {
+  .v-flotante {
+    width: 3.5rem;
+    padding: 0;
+    justify-content: center;
+  }
+  .v-flotante__texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}

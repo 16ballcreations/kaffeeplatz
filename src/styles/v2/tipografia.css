@@ -1,0 +1,63 @@
+/* v2/tipografia.css — Tipografia de seccion: antetitulos, titulos con acento.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   TIPOGRAFIA DE SECCION
+   =========================================================================== */
+
+h1,
+.v-titulo {
+  font-family: var(--v-serif);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+  color: var(--v-tinta);
+}
+
+h1 {
+  font-size: var(--v-t-h1);
+}
+
+.v-titulo {
+  font-size: var(--v-t-h2);
+  line-height: 1.08;
+}
+
+/* La cursiva como acento: una palabra, en oro. Holgura para descendentes. */
+h1 em,
+.v-titulo em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--v-oro);
+  padding-right: 0.04em;
+}
+
+.v-eyebrow {
+  font-family: var(--v-sans);
+  font-size: var(--v-t-micro);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--v-oro);
+  margin-bottom: 1.25rem;
+}
+
+.v-sub {
+  margin-top: 1rem;
+  color: var(--v-tinta-2);
+  font-size: 1.0625rem;
+  max-width: 44ch;
+}
+
+.v-cabeza-fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-bottom: clamp(2rem, 1.5rem + 1.5vw, 3rem);
+}
+
+.v-cabeza-fila .v-titulo {
+  max-width: 18ch;
+}

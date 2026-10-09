@@ -1,0 +1,75 @@
+/* v2/tokens.css — Tokens de Obsidiana II: negros, tinta, oro, formas, capas.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+:root {
+  /* --- Negros calidos, del mas hondo al mas alto ----------------------- */
+  --v-abismo: #0f0e0d;
+  --v-canvas: #151413;
+  --v-superficie: #1c1b19;
+  --v-elevado: #24221f;
+  --v-elevado-2: #2c2926;
+
+  /* --- Crema --------------------------------------------------------- */
+  --v-crema: #fdf7e7;
+  --v-crema-2: #f6eedb;
+  --v-crema-borde: #e6dabd;
+
+  /* --- Texto sobre oscuro (verificado con scripts/contraste.mjs) ------ */
+  --v-tinta: #fdf7e7;
+  --v-tinta-2: #b9b1a2;
+  --v-tinta-3: #9a9384;
+
+  /* --- Texto sobre crema --------------------------------------------- */
+  --v-tinta-oscura: #1a1a1a;
+  --v-tinta-oscura-2: #5c4c3e;
+
+  /* --- Oro ----------------------------------------------------------- */
+  --v-oro: #dec185;
+  --v-oro-hover: #e9d3a3;
+  --v-oro-legible: #8f6724;
+  --v-oro-metal: linear-gradient(145deg, #e6cd97 0%, #dec185 35%, #b89a5e 100%);
+
+  /* --- Lineas -------------------------------------------------------- */
+  --v-linea: rgb(253 247 231 / 0.1);
+  --v-linea-2: rgb(253 247 231 / 0.18);
+  --v-linea-oro: rgb(222 193 133 / 0.35);
+  --v-brillo: inset 0 1px 0 rgb(253 247 231 / 0.06);
+
+  /* --- Tipografia ---------------------------------------------------- */
+  --v-serif: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+  --v-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --v-t-display: clamp(2.75rem, 1.4rem + 5vw, 5.75rem);
+  --v-t-h1: clamp(2.5rem, 1.6rem + 3.6vw, 4.5rem);
+  --v-t-h2: clamp(2rem, 1.5rem + 2vw, 3.25rem);
+  --v-t-h3: clamp(1.375rem, 1.2rem + 0.6vw, 1.75rem);
+  --v-t-cuerpo: 1rem;
+  --v-t-peq: 0.875rem;
+  --v-t-micro: 0.75rem;
+
+  /* --- Espacio ------------------------------------------------------- */
+  --v-ancho: 1320px;
+  --v-gutter: clamp(1rem, 0.5rem + 2.5vw, 2.5rem);
+  --v-seccion: clamp(4.5rem, 3rem + 6vw, 8.5rem);
+  --v-prosa-ancho: 42rem;
+
+  /* --- Formas (ver regla arriba) -------------------------------------- */
+  --v-r-sup: 20px;
+  --v-r-img: 14px;
+  --v-r-mini: 10px;
+  --v-r-pildora: 999px;
+
+  /* --- Movimiento ---------------------------------------------------- */
+  --v-curva: cubic-bezier(0.16, 1, 0.3, 1);
+  --v-curva-suave: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* --- Capas --------------------------------------------------------- */
+  --z-flotante: 30;
+  --z-cabecera: 40;
+  --z-menu: 50;
+  --z-grano: 60;
+
+  --v-cabecera-alto: 72px;
+
+  color-scheme: dark;
+}

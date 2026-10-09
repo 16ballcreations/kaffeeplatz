@@ -1,0 +1,223 @@
+/* v2/portada-buscador.css — Portada: buscador de metodo.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   BUSCADOR DE METODO
+   =========================================================================== */
+
+.v-metodo {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(2rem, 1rem + 4vw, 5rem);
+  align-items: start;
+}
+
+/* Los hijos de la rejilla no deben crecer por su contenido: el carril de
+   pestanas en movil es mas ancho que la pantalla a proposito. */
+.v-metodo > *,
+.v-hero__rejilla > *,
+.v-ficha > *,
+.v-compra > *,
+.v-editorial > * {
+  min-width: 0;
+}
+
+.v-metodo__opciones {
+  display: flex;
+  flex-direction: column;
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--v-linea);
+}
+
+.v-metodo__opciones button {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 1.25rem 0.25rem;
+  border-bottom: 1px solid var(--v-linea);
+  cursor: pointer;
+  transition: padding 0.4s var(--v-curva);
+}
+
+.v-metodo__gusto {
+  font-family: var(--v-serif);
+  font-size: clamp(1.5rem, 1.25rem + 0.9vw, 2rem);
+  line-height: 1.15;
+  color: var(--v-tinta-3);
+  transition: color 0.3s var(--v-curva);
+}
+
+.v-metodo__nombre {
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-3);
+  white-space: nowrap;
+}
+
+.v-metodo__opciones button:hover .v-metodo__gusto {
+  color: var(--v-tinta);
+}
+
+.v-metodo__opciones button[aria-selected='true'] {
+  padding-left: 1rem;
+  box-shadow: inset 2px 0 0 var(--v-oro);
+}
+
+.v-metodo__opciones button[aria-selected='true'] .v-metodo__gusto {
+  color: var(--v-tinta);
+  font-style: italic;
+}
+
+.v-metodo__opciones button[aria-selected='true'] .v-metodo__nombre {
+  color: var(--v-oro);
+}
+
+.v-metodo__opciones button:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: -2px;
+}
+
+/* Sin JS: los cuatro paneles apilados. Con JS: uno solo. */
+.v-metodo__paneles {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.v-metodo__panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  padding: 0.5rem;
+  border-radius: var(--v-r-sup);
+  background: var(--v-superficie);
+  box-shadow: var(--v-brillo), 0 0 0 1px var(--v-linea);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .v-metodo--js .v-metodo__panel[data-activo='true'] {
+    animation: v-aparece 0.7s var(--v-curva) both;
+  }
+}
+
+.v-metodo__foto {
+  aspect-ratio: 4 / 5;
+  display: grid;
+  place-items: center;
+}
+
+.v-metodo__foto img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.v-metodo__info {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.25rem 1.5rem 0.5rem;
+}
+
+.v-metodo__info h3 {
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h2);
+  line-height: 1.05;
+  font-weight: 500;
+}
+
+.v-metodo__para {
+  display: block;
+  font-family: var(--v-sans);
+  font-size: var(--v-t-peq);
+  color: var(--v-oro);
+  margin-bottom: 0.5rem;
+}
+
+.v-metodo__info > p {
+  margin-top: 1rem;
+  color: var(--v-tinta-2);
+}
+
+.v-metodo__productos {
+  list-style: none;
+  margin: 1.5rem 0 2rem;
+  border-top: 1px solid var(--v-linea);
+}
+
+.v-metodo__productos a {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--v-linea);
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition: color 0.25s var(--v-curva);
+}
+
+.v-metodo__productos a:hover {
+  color: var(--v-oro);
+}
+
+.v-metodo__productos [data-kp-precio] {
+  color: var(--v-tinta-2);
+}
+
+.v-metodo__info .v-acciones {
+  margin-top: auto;
+  gap: 1rem;
+}
+
+@media (max-width: 960px) {
+  .v-metodo {
+    grid-template-columns: 1fr;
+  }
+  .v-metodo__opciones {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 0.5rem;
+    border-top: 0;
+    margin-top: 1.75rem;
+    margin-inline: calc(var(--v-gutter) * -1);
+    padding-inline: var(--v-gutter);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .v-metodo__opciones::-webkit-scrollbar {
+    display: none;
+  }
+  .v-metodo__opciones button {
+    flex: none;
+    width: auto;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 0.75rem 1.25rem;
+    border: 1px solid var(--v-linea-2);
+    border-radius: var(--v-r-pildora);
+    scroll-snap-align: start;
+  }
+  .v-metodo__opciones button[aria-selected='true'] {
+    padding-left: 1.25rem;
+    box-shadow: none;
+    border-color: var(--v-oro);
+    background: rgb(222 193 133 / 0.08);
+  }
+  .v-metodo__gusto {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .v-metodo__panel {
+    grid-template-columns: 1fr;
+  }
+  .v-metodo__foto {
+    aspect-ratio: 4 / 3;
+  }
+  .v-metodo__info {
+    padding: 0.5rem 1rem 1.25rem;
+  }
+}

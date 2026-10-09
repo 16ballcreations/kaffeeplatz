@@ -1,0 +1,111 @@
+/* v2/portada-diario.css — Portada: diario en composicion editorial.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   DIARIO EN PORTADA: composicion editorial
+   =========================================================================== */
+
+.v-editorial {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 1rem + 3vw, 4rem);
+}
+
+.v-editorial__principal {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+}
+
+.v-editorial__foto {
+  aspect-ratio: 16 / 10;
+  border-radius: var(--v-r-sup);
+  overflow: hidden;
+  background: var(--v-superficie);
+  margin-bottom: 1.5rem;
+}
+
+.v-editorial__foto img,
+.v-editorial__mini img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1s var(--v-curva);
+}
+
+.v-editorial a:hover img {
+  transform: scale(1.04);
+}
+
+.v-editorial time {
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+  letter-spacing: 0.02em;
+}
+
+.v-editorial__principal h3 {
+  margin-top: 0.5rem;
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h3);
+  line-height: 1.15;
+  font-weight: 500;
+}
+
+.v-editorial__principal p {
+  margin-top: 0.75rem;
+  color: var(--v-tinta-2);
+  max-width: 60ch;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.v-editorial__lista {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.v-editorial__lista li + li {
+  border-top: 1px solid var(--v-linea);
+}
+
+.v-editorial__lista a {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 1.25rem;
+  align-items: center;
+  padding-block: 1.25rem;
+  text-decoration: none;
+}
+
+.v-editorial__lista li:first-child a {
+  padding-top: 0;
+}
+
+.v-editorial__mini {
+  aspect-ratio: 1;
+  border-radius: var(--v-r-mini);
+  overflow: hidden;
+  background: var(--v-superficie);
+}
+
+.v-editorial__lista h3 {
+  margin-top: 0.25rem;
+  font-family: var(--v-serif);
+  font-size: 1.25rem;
+  line-height: 1.2;
+  font-weight: 500;
+  transition: color 0.25s var(--v-curva);
+}
+
+.v-editorial a:hover h3 {
+  color: var(--v-oro);
+}
+
+@media (max-width: 860px) {
+  .v-editorial {
+    grid-template-columns: 1fr;
+  }
+}

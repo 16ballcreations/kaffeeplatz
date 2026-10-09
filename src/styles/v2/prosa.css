@@ -1,0 +1,145 @@
+/* v2/prosa.css — Prosa: secciones de texto (cafe, ritual).
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   PROSA (secciones de texto, cafe, ritual)
+   =========================================================================== */
+
+.v-prosa {
+  max-width: calc(var(--v-prosa-ancho) + 2 * var(--v-gutter));
+}
+
+.v-prosa--centro {
+  text-align: center;
+}
+
+.v-prosa h2 {
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h2);
+  line-height: 1.08;
+  font-weight: 500;
+}
+
+.v-prosa h2 em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--v-oro);
+}
+
+.v-franja-crema .v-prosa h2 em {
+  color: var(--v-oro-legible);
+}
+
+.v-prosa > p,
+.v-prosa > div > p {
+  margin-top: 1.25rem;
+  color: var(--v-tinta-2);
+  font-size: 1.0625rem;
+}
+
+.v-franja-crema .v-prosa > p {
+  color: var(--v-tinta-oscura-2);
+}
+
+.v-prosa a {
+  color: var(--v-oro);
+}
+
+[data-kp-nota] {
+  margin-top: 1.25rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-3);
+}
+
+[data-kp-acciones] {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Bloque PROVISIONAL de /cafe: sigue distinguiendose del contenido real. */
+.v-provisional {
+  margin-top: 1rem;
+  padding-block: 2rem;
+  border: 1px dashed var(--v-linea-oro) !important;
+  border-radius: var(--v-r-sup) !important;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 12px,
+    rgb(222 193 133 / 0.035) 12px 24px
+  ) !important;
+  padding: clamp(1.5rem, 1rem + 2vw, 3rem) !important;
+  max-width: calc(var(--v-ancho) - 0rem);
+}
+
+.v-provisional [data-kp-provisional] {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin-top: 2.5rem;
+}
+
+.v-provisional [data-kp-provisional-aviso] {
+  display: inline-block;
+  padding: 0.75rem 1rem;
+  border-radius: var(--v-r-mini);
+  background: rgb(222 193 133 / 0.08);
+  color: var(--v-oro);
+  font-size: var(--v-t-peq);
+}
+
+.v-provisional h2 {
+  font-family: var(--v-serif);
+  font-size: var(--v-t-h3);
+}
+
+.v-provisional p,
+.v-provisional li {
+  color: var(--v-tinta-2);
+}
+
+.v-provisional p + p {
+  margin-top: 0.75rem;
+}
+
+.v-provisional > section > p:first-of-type {
+  margin-top: 0.75rem;
+}
+
+[data-kp-lista] {
+  list-style: none;
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+[data-kp-lista='criterio'] {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+[data-kp-lista='criterio'] li {
+  padding: 1.5rem;
+  border-radius: var(--v-r-img);
+  background: var(--v-superficie);
+}
+
+[data-kp-lista] h3 {
+  font-family: var(--v-serif);
+  font-size: 1.375rem;
+  color: var(--v-tinta);
+}
+
+[data-kp-lista] h3 + p {
+  margin-top: 0.5rem;
+}
+
+[data-kp-lista='pendientes'] li {
+  padding-left: 1rem;
+  border-left: 2px solid var(--v-linea-oro);
+}
+
+[data-kp-lista='pendientes'] strong {
+  color: var(--v-oro);
+  font-weight: 500;
+}

@@ -1,0 +1,61 @@
+/* v2/movimiento.css — Movimiento: entrada, revelado y reduced-motion.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   MOVIMIENTO
+   =========================================================================== */
+
+@keyframes v-sube {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes v-aparece {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .v-entra {
+    animation: v-sube 1s var(--v-curva) both;
+    animation-delay: calc(var(--d, 0) * 90ms + 80ms);
+  }
+
+  .v-js [data-v-revelar] {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.9s var(--v-curva),
+      transform 0.9s var(--v-curva);
+    transition-delay: calc(var(--d, 0) * 80ms);
+  }
+
+  .v-js [data-v-revelar].v-visto {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

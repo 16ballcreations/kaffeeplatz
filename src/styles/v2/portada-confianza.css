@@ -1,0 +1,77 @@
+/* v2/portada-confianza.css — Portada: franja de confianza.
+   Hoja de v2.css (Obsidiana II): el orden del manifiesto es la cascada. */
+
+/* ===========================================================================
+   FRANJA DE CONFIANZA
+   =========================================================================== */
+
+.v-confianza {
+  border-bottom: 1px solid var(--v-linea);
+  background: var(--v-abismo);
+}
+
+.v-confianza__lista {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.v-confianza__lista li {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 2rem 1.5rem;
+}
+
+.v-confianza__lista li + li {
+  border-left: 1px solid var(--v-linea);
+}
+
+.v-confianza__lista li:first-child {
+  padding-left: 0;
+}
+
+.v-confianza .v-icono {
+  color: var(--v-oro);
+  margin-top: 0.125rem;
+}
+
+.v-confianza h2 {
+  font-family: var(--v-sans);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.v-confianza p {
+  margin-top: 0.25rem;
+  color: var(--v-tinta-2);
+  font-size: var(--v-t-peq);
+  line-height: 1.5;
+}
+
+@media (max-width: 1024px) {
+  .v-confianza__lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .v-confianza__lista li:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .v-confianza__lista li:nth-child(n + 3) {
+    border-top: 1px solid var(--v-linea);
+  }
+}
+
+@media (max-width: 560px) {
+  .v-confianza__lista {
+    grid-template-columns: 1fr;
+  }
+  .v-confianza__lista li {
+    padding: 1.25rem 0;
+    border-left: 0 !important;
+  }
+  .v-confianza__lista li + li {
+    border-top: 1px solid var(--v-linea);
+  }
+}

@@ -88,12 +88,20 @@ const activo = (href: string) =>
     : camino === href ||
       camino.startsWith(`${href}/`) ||
       (href === '/catalogo' && camino.startsWith('/producto/'));
+
+/* DATA-KP-BASE: lleva el `base` de Astro al navegador: el modulo del carrito
+   arma enlaces a /producto/<handle> desde JavaScript y necesita el mismo
+   prefijo que `ruta()` pone en el servidor.
+
+   OJO: entre `<!doctype html>` y `<html>` no puede ir NADA, ni siquiera un
+   comentario de plantilla entre llaves. El compilador de Astro lo trata como contenido, abre
+   el <body> por su cuenta y DESCARTA las etiquetas <html>, <head> y <body>
+   que vienen despues, con todos sus atributos: se perdian `lang`,
+   `data-kp-base` y la clase del <body> (`claseCuerpo`, p. ej. v-con-barra).
+   Por eso este comentario vive aqui y no en la plantilla. */
 ---
 
 <!doctype html>
-{/* data-kp-base lleva el `base` de Astro al navegador: el modulo del carrito
-    arma enlaces a /producto/<handle> desde JavaScript y necesita el mismo
-    prefijo que `ruta()` pone en el servidor. */}
 <html lang="es-CO" data-kp-base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
   <head>
     <meta charset="utf-8" />
