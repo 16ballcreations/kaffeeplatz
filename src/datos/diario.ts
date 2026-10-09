@@ -21,6 +21,7 @@
 import type { Articulo } from './formas';
 import type { BaseD1 } from './consultas/productos';
 import { listaDeArticulos, articuloPorHandle, handleRetirado } from './consultas/diario';
+import { temasDelDiario, type Tema } from './consultas/diario-panel';
 import { leer, type Lectura } from './resiliencia';
 
 export type { Articulo };
@@ -72,4 +73,14 @@ export function obtenerArticulo(
  */
 export function articuloRetirado(locals: unknown, handle: string): Promise<Lectura<boolean>> {
   return leer(() => handleRetirado(base(locals), handle));
+}
+
+/**
+ * Los temas del diario desde D1 (fase 7): el nombre y el orden que la dueña
+ * edita en el panel son los que se ven en los filtros de /diario. La página
+ * cae a la lista de `categorias.ts` si esto falla: un filtro con los nombres
+ * de ayer es mejor que un diario que no se pinta.
+ */
+export function obtenerTemas(locals: unknown): Promise<Lectura<Tema[]>> {
+  return leer(() => temasDelDiario(base(locals)));
 }

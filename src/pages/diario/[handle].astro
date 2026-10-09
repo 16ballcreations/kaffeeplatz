@@ -3,9 +3,8 @@
  * /diario/[handle] — Articulo del diario. 16 paginas.
  */
 import Base from '../../layouts/Base.astro';
-import Imagen from '../../components/Imagen.astro';
 import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
-import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
+import ArticuloCompleto from './_ArticuloCompleto.astro';
 import TarjetaProducto from '../../components/TarjetaProducto.astro';
 import { SITIO, ruta } from '../../datos/sitio';
 import { GUIA_DE_PRODUCTO } from '../../datos/guias';
@@ -71,12 +70,6 @@ const delMetodo = productos
 const d = articulo;
 
 const iso = d.fecha.toISOString().slice(0, 10);
-const fechaLegible = d.fecha.toLocaleDateString('es-CO', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
 
 const otros = todos
   .filter((a) => a.handle !== d.handle)
@@ -121,55 +114,8 @@ const jsonLd = {
   ]}
   jsonLd={jsonLd}
 >
-  <article data-kp-articulo-completo class="v-articulo v-limite">
-    <header data-kp-articulo-encabezado>
-      <p data-kp-kicker>Diario</p>
-      <h1>{d.titulo}</h1>
-      <p data-kp-articulo-meta>
-        <time datetime={iso}>{fechaLegible}</time> · {d.autor}
-      </p>
-      {d.resumen && <p data-kp-entradilla>{d.resumen}</p>}
-    </header>
-
-    {
-      d.imagen && (
-        <figure data-kp-articulo-portada>
-          <Imagen
-            src={d.imagen}
-            alt={`Portada de: ${d.titulo}`}
-            prioridad
-            clase="w-full h-auto"
-            tamanos="(max-width: 1100px) 94vw, 1024px"
-          />
-        </figure>
-      )
-    }
-
-    {/*
-      `set:html` en vez de `<Content />`: leyendo de D1 no hay componente que
-      renderizar, hay HTML ya hecho. `cuerpo_html` se renderiza y se sanea AL
-      GUARDAR (B.1), no al leer, por dos razones: convertir Markdown en cada
-      visita es gasto por peticion, y asi el HTML que llega al publico ya paso
-      por el filtro.
-
-      REGLA DEL PLAN (B.5), y este es uno de los dos unicos sitios donde se
-      aplica: `set:html` SOLO con `cuerpo_html` y `descripcion_html`, que ya
-      pasaron por el saneador. En ningun otro sitio. Todo lo demas (titulos,
-      alt, nombres de variante) lo escapa Astro solo con `{titulo}`.
-    */}
-    <div data-kp-prosa set:html={d.cuerpoHtml} />
-
-    <aside data-kp-articulo-cierre>
-      <p>¿Te quedó alguna duda sobre el método o el equipo? Escríbenos y lo vemos contigo.</p>
-      <BotonWhatsApp
-        clase="v-boton v-boton--oro"
-        mensaje={`Hola KaffeePlatz, leí "${d.titulo}" y tengo una duda.`}
-      >
-        Preguntar por WhatsApp
-      </BotonWhatsApp>
-      <p><a href={ruta('/catalogo')}>Ver el catálogo</a></p>
-    </aside>
-  </article>
+  {/* El cuerpo del articulo, compartido con la vista previa del panel. */}
+  <ArticuloCompleto articulo={d} />
 
   {
     delMetodo.length > 0 && (

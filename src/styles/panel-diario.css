@@ -1,0 +1,275 @@
+/**
+ * panel-diario.css — el diario y las categorías del panel (fase 7).
+ *
+ * APARTE DE `panel-formas.css`, Y CARGADO SOLO DONDE SE USA
+ * ===========================================================================
+ * Las fases 5–7 se escriben a la vez en ramas distintas; si las tres crecieran
+ * `panel-formas.css`, cada fusión sería un conflicto en el mismo fichero. Este
+ * lo importan solo las páginas de /admin/diario y /admin/categorias. Los
+ * tokens (`--p-toque`, `--p-tarjeta`, `--v-*`) son de `panel.css` y `v2.css`:
+ * aquí no se redefine ninguno.
+ *
+ * TODO PENSADO PRIMERO PARA 375 PX
+ * ---------------------------------------------------------------------------
+ * Andreina edita desde el celular (nota sobre quién usa esto). Una columna,
+ * blancos de toque de 44 px como mínimo (`--p-toque`), textos de 16 px en los
+ * campos para que Safari no haga zoom, y nada que dependa de pasar el ratón
+ * por encima. Las dos columnas (`pd-doble`) aparecen solo cuando caben.
+ */
+
+/* --- Cabecera, pestañas y lista ---------------------------------------- */
+.pd-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.pd-cabeza .p-titulo { margin: 0; }
+.pd-cabeza .v-boton { min-height: var(--p-toque); }
+
+.pd-migas { margin-bottom: 0.5rem; font-size: var(--v-t-peq); }
+.pd-migas a, .pd-pie-enlace a { color: var(--v-oro); }
+.pd-pie-enlace { margin: 1.5rem 0 0; font-size: var(--v-t-peq); }
+
+.pd-pestanas {
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--v-linea-2);
+  margin-bottom: 1rem;
+}
+.pd-pestanas a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--p-toque);
+  /* Ajustado para que las tres pestañas quepan enteras a 375 px: una
+     pestaña cortada por el borde parece que no existe. */
+  padding: 0 0.55rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+.pd-pestanas a[aria-current='page'] { color: var(--v-tinta); border-bottom-color: var(--v-oro); }
+.pd-cuenta {
+  font-size: var(--v-t-micro);
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--v-r-pildora);
+  background: var(--p-tarjeta-2);
+}
+
+.pd-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.pd-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem;
+  min-height: var(--p-toque);
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta);
+  text-decoration: none;
+}
+.pd-item:hover, .pd-item:focus-visible { border-color: var(--v-linea-oro); }
+.pd-item img, .pd-item .pd-sin-foto {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.pd-item__texto { display: grid; gap: 0.2rem; min-width: 0; }
+.pd-item__titulo { font-weight: 500; line-height: 1.3; }
+.pd-item__meta { font-size: var(--v-t-micro); color: var(--v-tinta-3); }
+
+.pd-sin-foto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--p-tarjeta-2);
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+  text-align: center;
+}
+
+/* --- Mensajes ------------------------------------------------------------ */
+.pd-ok {
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--v-linea-oro);
+  border-radius: var(--v-r-mini);
+  background: var(--p-tarjeta);
+  font-size: var(--v-t-peq);
+}
+.pd-nota-estado {
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  border-left: 3px solid var(--v-oro);
+  background: var(--p-tarjeta);
+  font-size: var(--v-t-peq);
+  line-height: 1.5;
+}
+.pd-chip {
+  font-size: var(--v-t-micro);
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--v-r-pildora);
+  border: 1px solid var(--v-linea-2);
+}
+.pd-chip--publicado { border-color: var(--v-oro); color: var(--v-oro); }
+.pd-chip--archivado { color: var(--v-tinta-3); }
+
+.pd-resumen-errores ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
+.pd-resumen-errores a { color: inherit; }
+.pd-error-campo {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--p-aviso);
+  font-size: var(--v-t-peq);
+}
+.pd-ayuda {
+  display: block;
+  margin: 0.25rem 0 0.4rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+  line-height: 1.5;
+}
+
+/* --- Campos que `panel-formas.css` no cubre ------------------------------ */
+.pd-fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.pd-fieldset:disabled { opacity: 0.7; }
+
+.p-campo textarea,
+.p-campo select {
+  width: 100%;
+  min-height: var(--p-toque);
+  padding: 0.6rem 0.8rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.p-campo textarea:focus-visible,
+.p-campo select:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 1px;
+}
+.p-campo [aria-invalid='true'] { border-color: var(--p-aviso); }
+.pd-cuerpo { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.95rem; }
+
+.pd-doble { display: grid; gap: 0 1rem; }
+@media (min-width: 640px) {
+  .pd-doble { grid-template-columns: 1fr 1fr; }
+  .pd-doble:has(.pd-corto) { grid-template-columns: 1fr 7rem; }
+}
+
+.pd-prefijo { display: flex; align-items: center; gap: 0.25rem; }
+.pd-prefijo > span { color: var(--v-tinta-3); font-size: var(--v-t-peq); }
+.pd-direccion { margin-bottom: 1rem; }
+.pd-direccion__fija { overflow-wrap: anywhere; font-size: var(--v-t-peq); color: var(--v-tinta-2); }
+
+.pd-plegable { margin-bottom: 1rem; }
+.pd-plegable > summary {
+  min-height: var(--p-toque);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  cursor: pointer;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+.pd-chuleta dl { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.75rem; font-size: var(--v-t-peq); }
+.pd-chuleta dd { margin: 0; color: var(--v-tinta-2); }
+
+/* --- Portada: radios con miniatura -------------------------------------- */
+.pd-portadas, .pd-estado { border: 0; padding: 0; margin: 0 0 1rem; min-width: 0; }
+.pd-portada-actual { display: flex; align-items: center; gap: 0.75rem; margin: 0.25rem 0 0.5rem; font-size: var(--v-t-peq); }
+.pd-portada-actual img, .pd-portada-actual .pd-sin-foto { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; }
+.pd-rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 0.5rem; }
+.pd-opcion {
+  position: relative;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  border: 2px solid transparent;
+  border-radius: var(--v-r-mini);
+  background: var(--p-tarjeta);
+  cursor: pointer;
+}
+.pd-opcion:has(input:checked) { border-color: var(--v-oro); }
+.pd-opcion:has(input:focus-visible) { outline: 2px solid var(--v-oro); outline-offset: 2px; }
+/* El radio sigue ahí para el teclado y el lector de pantalla; la marca
+   visible es el borde. */
+.pd-opcion input { position: absolute; opacity: 0; inset: 0.4rem auto auto 0.4rem; }
+.pd-opcion img, .pd-opcion .pd-sin-foto { width: 100%; aspect-ratio: 1; height: auto; object-fit: cover; border-radius: 6px; }
+.pd-opcion__nombre { font-size: 0.7rem; line-height: 1.3; color: var(--v-tinta-2); overflow-wrap: anywhere; }
+
+.pd-radio { display: flex; align-items: flex-start; gap: 0.6rem; min-height: var(--p-toque); padding: 0.4rem 0; font-size: var(--v-t-peq); cursor: pointer; }
+.pd-radio input { width: 1.25rem; height: 1.25rem; margin-top: 0.1rem; accent-color: var(--v-oro); flex: none; }
+
+.pd-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  position: sticky;
+  bottom: 0;
+  padding: 0.75rem 0;
+  background: var(--p-fondo);
+  border-top: 1px solid var(--p-linea);
+}
+.pd-acciones .v-boton { flex: 1 1 9rem; justify-content: center; min-height: var(--p-toque); }
+
+.pd-archivar, .pd-borrar {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--p-linea);
+}
+.pd-archivar .v-boton, .pd-borrar .v-boton { min-height: var(--p-toque); }
+
+/* --- Categorías: filas plegables ----------------------------------------- */
+.pd-filas { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; gap: 0.5rem; }
+.pd-fila {
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-mini);
+  padding: 0 0.75rem;
+}
+.pd-fila[open] { padding-bottom: 0.9rem; }
+.pd-fila > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--p-toque);
+  cursor: pointer;
+}
+.pd-fila__orden {
+  flex: none;
+  min-width: 2rem;
+  text-align: center;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+}
+.pd-fila__nombre { flex: 1; min-width: 0; }
+.pd-fila__uso { font-size: var(--v-t-micro); color: var(--v-tinta-3); white-space: nowrap; }
+.pd-fila .v-boton { min-height: var(--p-toque); }
+.pd-fila--nueva > summary { color: var(--v-oro); }
+
+/* --- Vista previa (dentro del layout de la tienda) ----------------------- */
+.pd-previa {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  padding: 0.75rem 1rem;
+  background: var(--v-oro);
+  color: var(--v-tinta-oscura);
+  font-size: var(--v-t-peq);
+  text-align: center;
+}

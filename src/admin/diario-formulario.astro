@@ -1,0 +1,246 @@
+---
+/**
+ * diario-formulario — el formulario de un artículo, para alta y edición.
+ *
+ * Vive en `src/admin/` y no en `src/pages/admin/diario/` porque
+ * `verificar-puerta.mjs` exige `prerender = false` a todo lo que haya bajo
+ * `src/pages/admin/`, y un componente no es una página.
+ *
+ * FUNCIONA SIN JAVASCRIPT, Y NO POR PURISMO
+ * ===========================================================================
+ * Andreina edita desde el celular, a veces con mala señal. Un formulario que
+ * depende de un script que no llegó a cargar es un formulario que se ve bien y
+ * no guarda. Aquí todo es HTML: los dos botones son `submit`, la vista previa
+ * es un `formaction` a otra ruta con `formtarget="_blank"`, y elegir la
+ * portada son radios. Nada que cargar, nada que pueda fallar en silencio.
+ *
+ * LO QUE ESCRIBIO SIEMPRE VUELVE
+ * ---------------------------------------------------------------------------
+ * Los valores vienen SIEMPRE de `valores`, que tras un error son los que llegaron
+ * en el POST, no los de la base (A.5, el «buen patrón»). Astro escapa todo lo
+ * que va entre llaves; aquí no hay ni un `set:html`. Y no hay `maxlength`:
+ * el navegador cortaría en silencio un texto pegado, que es justo el
+ * «truncar en vez de avisar» que el plan prohíbe. El tope lo pone el servidor,
+ * con un mensaje.
+ *
+ * LA DIRECCION SE GENERA SOLA
+ * ---------------------------------------------------------------------------
+ * «Nada de slugs» (nota sobre quién usa esto): la dirección se deriva del
+ * título y queda plegada en un «Cambiar la dirección» que solo se abre si ella
+ * quiere o si hay un error en ella. En un artículo que ya estuvo publicado no
+ * es editable: se enseña y se explica por qué.
+ */
+import { ruta } from '../datos/sitio';
+import { miniatura } from '../datos/imagenes';
+import type { ValoresArticulo, Errores } from './diario-validar';
+import type { Tema } from '../datos/consultas/diario-panel';
+import type { Portada } from './diario-portadas';
+
+interface Props {
+  accion: string;
+  valores: ValoresArticulo;
+  errores: Errores;
+  temas: Tema[];
+  portadas: Portada[];
+  /** La dirección ya no se puede cambiar (estuvo publicado). */
+  handleBloqueado: boolean;
+  /** Archivado: se enseña, pero no se edita. */
+  soloLectura?: boolean;
+}
+
+const { accion, valores: v, errores: e, temas, portadas, handleBloqueado, soloLectura = false } =
+  Astro.props as Props;
+
+/* Para los `aria-describedby` y `aria-invalid`: un lector de pantalla lee el
+   error al llegar al campo, no solo en el resumen de arriba. */
+const err = (c: keyof Errores) =>
+  e[c] ? { 'aria-invalid': 'true' as const, 'aria-describedby': `e-${c}` } : {};
+
+const ETIQUETAS: Record<string, string> = {
+  titulo: 'Título',
+  handle: 'Dirección',
+  fecha: 'Fecha',
+  autor: 'Autor',
+  resumen: 'Resumen',
+  cuerpoMd: 'Texto',
+  imagen: 'Portada',
+  categoria: 'Tema',
+};
+const listaErrores = Object.entries(e).filter(([c]) => c !== 'general');
+const portadaActual = portadas.find((p) => p.clave === v.imagen);
+const dominio = Astro.url.host;
+---
+
+<form method="post" action={ruta(accion)} class="pd-form">
+  {e.general && <p class="p-error" role="alert">{e.general}</p>}
+  {
+    listaErrores.length > 0 && (
+      <div class="p-error pd-resumen-errores" role="alert">
+        <div>
+          <strong>Falta arreglar {listaErrores.length === 1 ? 'una cosa' : `${listaErrores.length} cosas`}:</strong>
+          <ul>
+            {listaErrores.map(([c, m]) => (
+              <li><a href={`#c-${c}`}>{ETIQUETAS[c] ?? c}</a>: {m}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    )
+  }
+
+  <fieldset class="pd-fieldset" disabled={soloLectura}>
+    <input type="hidden" name="version" value={String(v.version)} />
+
+    <label class="p-campo" id="c-titulo">
+      <span class="p-campo__etiqueta">Título</span>
+      <input type="text" name="titulo" value={v.titulo} required {...err('titulo')} />
+      {e.titulo && <span class="pd-error-campo" id="e-titulo">{e.titulo}</span>}
+    </label>
+
+    {
+      handleBloqueado ? (
+        <div class="pd-direccion" id="c-handle">
+          <span class="p-campo__etiqueta">Dirección en la tienda</span>
+          <p class="pd-direccion__fija">{dominio}/diario/<b>{v.handle}</b></p>
+          <p class="pd-ayuda">
+            No se puede cambiar: este artículo ya estuvo publicado y su dirección puede estar
+            compartida en WhatsApp o en Google. Cambiarla rompería esos enlaces.
+          </p>
+          <input type="hidden" name="handle" value={v.handle} />
+        </div>
+      ) : (
+        <details class="pd-plegable" id="c-handle" open={!!e.handle}>
+          <summary>
+            Dirección en la tienda:{' '}
+            <span class="pd-direccion__fija">{v.handle ? `/diario/${v.handle}` : 'se crea sola a partir del título'}</span>
+          </summary>
+          <label class="p-campo">
+            <span class="p-campo__etiqueta">Cambiar la dirección</span>
+            <span class="pd-prefijo">
+              <span>/diario/</span>
+              <input
+                type="text"
+                name="handle"
+                value={v.handle}
+                autocapitalize="none"
+                autocomplete="off"
+                spellcheck="false"
+                inputmode="url"
+                {...err('handle')}
+              />
+            </span>
+            <span class="pd-ayuda">Déjala vacía y se crea sola. Solo letras sin tilde, números y guiones.</span>
+            {e.handle && <span class="pd-error-campo" id="e-handle">{e.handle}</span>}
+          </label>
+        </details>
+      )
+    }
+
+    <div class="pd-doble">
+      <label class="p-campo" id="c-fecha">
+        <span class="p-campo__etiqueta">Fecha</span>
+        <input type="date" name="fecha" value={v.fecha} required {...err('fecha')} />
+        {e.fecha && <span class="pd-error-campo" id="e-fecha">{e.fecha}</span>}
+      </label>
+      <label class="p-campo" id="c-categoria">
+        <span class="p-campo__etiqueta">Tema</span>
+        <select name="categoria" {...err('categoria')}>
+          {temas.map((t) => <option value={t.id} selected={t.id === v.categoria}>{t.nombre}</option>)}
+        </select>
+        {e.categoria && <span class="pd-error-campo" id="e-categoria">{e.categoria}</span>}
+      </label>
+    </div>
+
+    <label class="p-campo" id="c-autor">
+      <span class="p-campo__etiqueta">Autor</span>
+      <input type="text" name="autor" value={v.autor} autocomplete="name" {...err('autor')} />
+      {e.autor && <span class="pd-error-campo" id="e-autor">{e.autor}</span>}
+    </label>
+
+    <label class="p-campo" id="c-resumen">
+      <span class="p-campo__etiqueta">Resumen</span>
+      <span class="pd-ayuda">Dos o tres frases. Es lo que se ve en la lista del diario y en Google.</span>
+      <textarea name="resumen" rows="4" {...err('resumen')}>{v.resumen}</textarea>
+      {e.resumen && <span class="pd-error-campo" id="e-resumen">{e.resumen}</span>}
+    </label>
+
+    <label class="p-campo" id="c-cuerpoMd">
+      <span class="p-campo__etiqueta">Texto del artículo</span>
+      <textarea name="cuerpo" rows="18" class="pd-cuerpo" {...err('cuerpoMd')}>{v.cuerpoMd}</textarea>
+      {e.cuerpoMd && <span class="pd-error-campo" id="e-cuerpoMd">{e.cuerpoMd}</span>}
+    </label>
+    <details class="pd-plegable pd-chuleta">
+      <summary>Cómo dar formato al texto</summary>
+      <dl>
+        <dt>Un párrafo nuevo</dt><dd>Deja una línea en blanco.</dd>
+        <dt><code>## Subtítulo</code></dt><dd>Un subtítulo grande. Con <code>###</code>, uno más pequeño.</dd>
+        <dt><code>**negrita**</code></dt><dd><strong>negrita</strong></dd>
+        <dt><code>*cursiva*</code></dt><dd><em>cursiva</em></dd>
+        <dt><code>- algo</code></dt><dd>Una lista con puntos (una línea por cosa).</dd>
+        <dt><code>1. paso</code></dt><dd>Una lista numerada.</dd>
+        <dt><code>[texto](https://…)</code></dt><dd>Un enlace. También vale <code>[texto](/catalogo)</code>.</dd>
+      </dl>
+      <p class="pd-ayuda">Pulsa «Vista previa» para ver cómo queda antes de guardar.</p>
+    </details>
+
+    <fieldset class="pd-portadas" id="c-imagen">
+      <legend class="p-campo__etiqueta">Portada</legend>
+      <div class="pd-portada-actual">
+        {
+          portadaActual ? (
+            <img src={miniatura(portadaActual.clave)} alt="" width="96" height="96" loading="lazy" />
+          ) : (
+            <span class="pd-sin-foto" aria-hidden="true">Sin foto</span>
+          )
+        }
+        <span>{portadaActual ? portadaActual.nombre : 'Este artículo no tiene portada.'}</span>
+      </div>
+      {e.imagen && <span class="pd-error-campo" id="e-imagen">{e.imagen}</span>}
+      <details class="pd-plegable" open={!!e.imagen}>
+        <summary>Elegir otra portada</summary>
+        <div class="pd-rejilla">
+          <label class="pd-opcion">
+            <input type="radio" name="imagen" value="" checked={!v.imagen} />
+            <span class="pd-sin-foto">Sin foto</span>
+            <span class="pd-opcion__nombre">Sin portada</span>
+          </label>
+          {
+            portadas.map((p) => (
+              <label class="pd-opcion">
+                <input type="radio" name="imagen" value={p.clave} checked={p.clave === v.imagen} />
+                <img src={miniatura(p.clave)} alt="" width="160" height="160" loading="lazy" decoding="async" />
+                <span class="pd-opcion__nombre">{p.grupo === 'productos' ? 'Producto: ' : ''}{p.nombre}</span>
+              </label>
+            ))
+          }
+        </div>
+      </details>
+    </fieldset>
+
+    <fieldset class="pd-estado">
+      <legend class="p-campo__etiqueta">¿Se ve en la tienda?</legend>
+      <label class="pd-radio">
+        <input type="radio" name="estado" value="borrador" checked={!v.publicado} />
+        <span><b>Borrador</b> — solo lo ves tú, aquí en el panel.</span>
+      </label>
+      <label class="pd-radio">
+        <input type="radio" name="estado" value="publicado" checked={v.publicado} />
+        <span><b>Publicado</b> — se ve en el diario de la tienda.</span>
+      </label>
+    </fieldset>
+
+    <div class="pd-acciones">
+      <button class="v-boton v-boton--oro" type="submit" name="accion" value="guardar">Guardar</button>
+      {/* Sin JavaScript: el mismo formulario, a otra ruta y en otra pestaña.
+          No guarda nada: pinta lo escrito con la plantilla de la tienda. */}
+      <button
+        class="v-boton v-boton--linea"
+        type="submit"
+        formaction={ruta('/admin/diario/vista-previa')}
+        formtarget="_blank"
+      >
+        Vista previa
+      </button>
+    </div>
+  </fieldset>
+</form>

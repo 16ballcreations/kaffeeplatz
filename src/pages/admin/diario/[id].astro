@@ -1,0 +1,179 @@
+---
+/**
+ * /admin/diario/<id> — editar un artículo, archivarlo o restaurarlo.
+ *
+ * POR QUE EL ID Y NO LA DIRECCION EN LA URL DEL PANEL
+ * ===========================================================================
+ * La dirección (`handle`) de un borrador se puede cambiar; el id no cambia
+ * nunca. Si la URL del panel fuera /admin/diario/<handle>, cambiar la
+ * dirección dejaría la pestaña abierta apuntando a un artículo que «ya no
+ * existe». Con el id, la pestaña sigue sirviendo. Ella no lo ve como dato: es
+ * solo la URL de esta pantalla.
+ *
+ * TRES POST EN UNA RUTA, ELEGIDOS POR `accion`
+ * ---------------------------------------------------------------------------
+ * guardar | archivar | restaurar. Archivar y restaurar llevan su propio
+ * formulario (no se pueden anidar formularios) con la `version`, así que
+ * archivar desde una pestaña vieja también avisa en vez de pisar.
+ */
+import Panel from '../../../layouts/Panel.astro';
+import { ruta } from '../../../datos/sitio';
+import { baseAdmin } from '../../../admin/base';
+import { leerFormulario, type ValoresArticulo, type Errores } from '../../../admin/diario-validar';
+import { portadasDisponibles } from '../../../admin/diario-portadas';
+import { enlaceSinCache } from '../../../admin/diario-cache';
+import {
+  procesarEdicion,
+  redirigir,
+  valoresDe,
+  MENSAJES_OK,
+  AVISOS,
+  ERROR_AL_GUARDAR,
+  ERROR_AL_CARGAR,
+} from '../../../admin/diario-pagina';
+import {
+  articuloParaEditar,
+  temasDelDiario,
+  type ArticuloEditable,
+  type Tema,
+} from '../../../datos/consultas/diario-panel';
+import { CATEGORIAS_DIARIO } from '../../../datos/categorias';
+import Formulario from '../../../admin/diario-formulario.astro';
+import '../../../styles/panel-diario.css';
+
+export const prerender = false;
+
+const crudo = Astro.params.id ?? '';
+const id = /^\d{1,9}$/.test(crudo) ? Number(crudo) : 0;
+
+/* Antes de tocar la base, por la misma razón que en `nuevo.astro`: si D1
+   falla, lo escrito vuelve a la pantalla. */
+const forma = Astro.request.method === 'POST' ? await Astro.request.formData() : null;
+
+let actual: ArticuloEditable | null = null;
+let temas: Tema[] = CATEGORIAS_DIARIO;
+let valores: ValoresArticulo | null = forma ? leerFormulario(forma) : null;
+let errores: Errores = {};
+
+try {
+  const db = baseAdmin(Astro.locals);
+  if (id) [actual, temas] = await Promise.all([articuloParaEditar(db, id), temasDelDiario(db)]);
+  if (actual) {
+    if (forma) {
+      const d = await procesarEdicion(db, actual, forma, Astro.url);
+      if (d.tipo === 'redirigir') return redirigir(d.a);
+      valores = d.valores;
+      errores = d.errores;
+      Astro.response.status = d.estado;
+    } else {
+      valores = valoresDe(actual);
+    }
+  }
+} catch (e) {
+  console.error('[admin] edición de artículo:', e instanceof Error ? e.message : e);
+  errores = { general: forma ? ERROR_AL_GUARDAR : ERROR_AL_CARGAR };
+  Astro.response.status = 503;
+}
+
+/* No existe (y no fue un fallo de la base): 404 con salida, no una página en
+   blanco. */
+const noExiste = !actual && Astro.response.status !== 503;
+if (noExiste) Astro.response.status = 404;
+
+const ok = MENSAJES_OK[Astro.url.searchParams.get('ok') ?? ''];
+const aviso = AVISOS[Astro.url.searchParams.get('aviso') ?? ''];
+const archivado = !!actual?.archivado_en;
+const publicado = actual?.publicado === 1 && !archivado;
+const estadoTexto = archivado ? 'Archivado' : publicado ? 'Publicado' : 'Borrador';
+/* Si la base falló durante un POST, no se sabe si la dirección estaba libre:
+   se trata como fija, que es lo que no puede romper un enlace. */
+const handleBloqueado = actual ? !actual.handle_libre : true;
+---
+
+<Panel titulo={actual?.titulo ?? 'Artículo'} seccion="diario">
+  <p class="pd-migas">
+    <a href={ruta(`/admin/diario?estado=${archivado ? 'archivados' : publicado ? 'publicados' : 'borradores'}`)}>← Diario</a>
+  </p>
+
+  {
+    noExiste ? (
+      <>
+        <h1 class="p-titulo">Ese artículo no existe</h1>
+        <p class="p-entradilla">
+          Puede que el enlace esté mal copiado. <a href={ruta('/admin/diario')}>Volver al diario</a>.
+        </p>
+      </>
+    ) : (
+      <>
+        <div class="pd-cabeza">
+          <h1 class="p-titulo">{actual?.titulo || valores?.titulo || 'Artículo'}</h1>
+          {actual && <span class={`pd-chip pd-chip--${estadoTexto.toLowerCase()}`}>{estadoTexto}</span>}
+        </div>
+
+        {ok && <p class="pd-ok" role="status">{ok}</p>}
+        {aviso && <p class="p-error" role="alert">{aviso}</p>}
+
+        {
+          publicado && actual && (
+            <p class="pd-pie-enlace">
+              <a href={enlaceSinCache(`/diario/${actual.handle}`)} target="_blank" rel="noopener">
+                Ver en la tienda
+              </a>
+            </p>
+          )
+        }
+
+        {
+          archivado && (
+            <p class="pd-nota-estado">
+              Este artículo está archivado: no se ve en la tienda y quien entre a su dirección llega
+              al diario. Para cambiarlo, primero restáuralo.
+            </p>
+          )
+        }
+
+        {
+          valores ? (
+            <Formulario
+              accion={`/admin/diario/${id}`}
+              valores={valores}
+              errores={errores}
+              temas={temas}
+              portadas={portadasDisponibles(actual?.imagen)}
+              handleBloqueado={handleBloqueado}
+              soloLectura={archivado}
+            />
+          ) : (
+            errores.general && <p class="p-error" role="alert">{errores.general}</p>
+          )
+        }
+
+        {
+          actual && (
+            <form method="post" action={ruta(`/admin/diario/${id}`)} class="pd-archivar">
+              <input type="hidden" name="version" value={String(actual.version)} />
+              {archivado ? (
+                <>
+                  <input type="hidden" name="accion" value="restaurar" />
+                  <p class="pd-ayuda">
+                    Restaurar lo deja como estaba antes de archivarlo
+                    ({actual.publicado === 1 ? 'publicado' : 'borrador'}).
+                  </p>
+                  <button class="v-boton v-boton--oro" type="submit">Restaurar</button>
+                </>
+              ) : (
+                <>
+                  <input type="hidden" name="accion" value="archivar" />
+                  <p class="pd-ayuda">
+                    Archivar lo quita de la tienda sin borrarlo. Lo puedes restaurar cuando quieras.
+                  </p>
+                  <button class="v-boton v-boton--linea" type="submit">Archivar</button>
+                </>
+              )}
+            </form>
+          )
+        }
+      </>
+    )
+  }
+</Panel>

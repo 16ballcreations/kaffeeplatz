@@ -35,6 +35,6 @@ export const SECCIONES: Seccion[] = [
   { clave: 'inicio', etiqueta: 'Inicio', href: '/admin', listo: true, fase: 4 },
   { clave: 'productos', etiqueta: 'Productos', href: '/admin/productos', listo: false, fase: 5 },
   { clave: 'fotos', etiqueta: 'Fotos', href: '/admin/fotos', listo: false, fase: 6 },
-  { clave: 'diario', etiqueta: 'Diario', href: '/admin/diario', listo: false, fase: 7 },
+  { clave: 'diario', etiqueta: 'Diario', href: '/admin/diario', listo: true, fase: 7 },
   { clave: 'inventario', etiqueta: 'Inventario', href: '/admin/inventario', listo: false, fase: 9 },
 ];
