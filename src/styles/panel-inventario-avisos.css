@@ -1,0 +1,241 @@
+/**
+ * panel-inventario-avisos.css — lo que aparece DESPUÉS de tocar algo: la
+ * franja de «Deshacer», la pregunta cuando no se puede descontar, y las dos
+ * listas que se leen (el historial «Qué pasó» y «Productos a despachar»).
+ *
+ * Separado de `panel-inventario.css` por el límite de tamaño del repo, con la
+ * frontera natural: aquello son los controles de la fila; esto, las respuestas.
+ */
+
+/* --- La franja de «Deshacer», abajo, donde llega el pulgar (G.6) ----------- */
+.pi-franja {
+  position: sticky;
+  bottom: 0.75rem;
+  z-index: 15;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  margin: 1.5rem 0;
+  padding: 0.75rem 0.9rem;
+  background: var(--p-tarjeta-2);
+  border: 1px solid var(--v-linea-oro);
+  border-radius: var(--v-r-mini);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.45);
+  font-size: var(--v-t-peq);
+}
+
+.pi-franja__texto {
+  flex: 1 1 100%;
+  margin: 0;
+  font-weight: 500;
+}
+
+.pi-franja form {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.pi-franja--error {
+  border-color: var(--p-aviso);
+}
+
+.pi-franja--error .pi-franja__texto {
+  color: var(--p-aviso);
+  font-weight: 400;
+}
+
+/* Un enlace con forma de botón dentro de la franja («Añadir otra cosa»). */
+.pi-franja a.pi-boton {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.pi-franja .pi-texto {
+  width: auto;
+  flex: 1;
+  min-width: 8rem;
+}
+
+/* --- «No puedo descontarlo todavía» (G.4.2): pregunta, no error ----------- */
+.pi-pregunta {
+  margin: 0 0 1.5rem;
+  padding: 1rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--v-oro);
+  border-radius: var(--v-r-mini);
+  line-height: 1.5;
+  scroll-margin-top: 7rem;
+}
+
+.pi-pregunta h2 {
+  margin: 0 0 0.4rem;
+  font-size: var(--v-t-cuerpo);
+}
+
+.pi-pregunta p {
+  margin: 0 0 0.75rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.pi-pregunta__botones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.5rem;
+}
+
+.pi-pregunta__botones a.pi-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* El aviso de que se está llenando un paquete abierto. */
+.pi-paquete {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px dashed var(--v-oro);
+  border-radius: var(--v-r-mini);
+  font-size: var(--v-t-peq);
+}
+
+.pi-paquete p {
+  margin: 0;
+}
+
+/* --- «Qué pasó»: el historial de una variante ----------------------------- */
+.pi-cabecera-historial {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  align-items: baseline;
+  margin-bottom: 1.5rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.pi-historial {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--p-linea);
+}
+
+.pi-historial li {
+  display: grid;
+  grid-template-columns: 5.5rem 3rem 1fr;
+  gap: 0.25rem 0.75rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--p-linea);
+  font-size: var(--v-t-peq);
+  line-height: 1.4;
+}
+
+.pi-historial time {
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+  padding-top: 0.1rem;
+}
+
+.pi-historial__n {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+}
+
+.pi-historial__nota {
+  display: block;
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-micro);
+}
+
+/* Lo que toca lo apartado y no la estantería: se lee, pero no grita. */
+.pi-historial .pi-historial--tenue {
+  opacity: 0.6;
+}
+
+/* --- «Productos a despachar» --------------------------------------------- */
+.pd-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pd-paquete {
+  padding: 0.9rem 1rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-mini);
+  scroll-margin-top: 7rem;
+}
+
+/* Lo roto va primero y en rojo, siempre (G.6). */
+.pd-paquete--roto {
+  border-color: var(--p-aviso);
+}
+
+.pd-roto {
+  margin: 0 0 0.4rem;
+  color: var(--p-aviso);
+  font-size: var(--v-t-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pd-origen {
+  margin: 0 0 0.4rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+}
+
+.pd-articulos {
+  list-style: none;
+  margin: 0 0 0.4rem;
+  padding: 0;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.pd-para {
+  margin: 0 0 0.75rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.pd-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.pd-acciones > form {
+  flex: 1 1 10rem;
+}
+
+.pd-acciones .v-boton {
+  width: 100%;
+  min-height: var(--p-toque);
+  justify-content: center;
+}
+
+.pi-ancho {
+  width: 100%;
+}
+
+.pi-pregunta .pi-pregunta__nota {
+  margin: 0.75rem 0 0;
+  font-size: var(--v-t-micro);
+}

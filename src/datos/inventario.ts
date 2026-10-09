@@ -79,6 +79,7 @@ import {
   yaDeshecho,
   varianteDelPanel,
   ultimoCambioDelInterruptor,
+  proximaReserva,
   type PaqueteDespacho,
   type MovimientoContado,
 } from './consultas/inventario-panel-leer';
@@ -304,6 +305,7 @@ export function inventarioDelPanel(locals: unknown) {
     yaDeshecho: (m: { id: number; varianteId: number }) => leer(() => yaDeshecho(db, m)),
     paquetes: () => leer(() => paquetes(db)),
     paquete: (id: number) => leer(() => paquete(db, id)),
+    proximaReserva: (varianteId: number) => leer(() => proximaReserva(db, varianteId)),
     ultimoCambioDelInterruptor: () => ultimoCambioDelInterruptor(db),
   };
 }

@@ -1,0 +1,150 @@
+---
+/**
+ * inventario-respuesta — lo que la pantalla de inventario dice DESPUÉS de un toque.
+ *
+ * Tres cosas, y ninguna es un error de base de datos (prueba 24):
+ *
+ *   1. LA FRANJA, abajo: «−1 Hervidor blanco · vendido por WhatsApp ·
+ *      [Deshacer] [Añadir otra cosa] [Ponerle nombre]» (G.3, flujo 2). Deshacer
+ *      escribe un movimiento contrario; nunca borra.
+ *   2. LA PREGUNTA, cuando «Vendí 1» no pudo descontar porque alguien lo está
+ *      pagando o porque la cuenta dice 0 (G.4.2). El panel PREGUNTA, no falla:
+ *      «Esperar» no cambia nada; «Venderlo igual» deja la cuenta en negativo,
+ *      anotado para revisar.
+ *   3. UN ERROR LEGIBLE, si lo hubo: la frase sale de `ERRORES`, nunca de la URL.
+ *
+ * La página decide QUÉ decir (relee el movimiento de la base); esto solo lo
+ * pinta.
+ */
+import { ruta } from '../datos/sitio';
+
+export interface Franja {
+  texto: string;
+  /** Movimiento que se puede deshacer, y la variante (para volver a su fila). */
+  deshacer?: { m: number; v: number };
+  /** Paquete de WhatsApp recién creado: «Añadir otra cosa» y «Ponerle nombre». */
+  paquete?: { d: number; cliente: string | null };
+}
+
+export interface Pregunta {
+  motivo: 'reservado' | 'sin-stock';
+  titulo: string;
+  v: number;
+  n: number;
+  fisico: number;
+  minutos: number | null;
+}
+
+interface Props {
+  franja: Franja | null;
+  error: string | null;
+  pregunta: Pregunta | null;
+  /** El paquete abierto, para que los formularios lo arrastren. */
+  paqueteAbierto: number | null;
+  /**
+   * Qué parte pintar. La pregunta va ARRIBA (es lo primero que hay que
+   * contestar); la franja y el error van al FINAL del contenido, porque una
+   * franja `sticky` con `bottom` solo se pega abajo si en el flujo está
+   * después de lo que se desplaza.
+   */
+  parte: 'pregunta' | 'franja';
+}
+
+const { franja: f, error: e, pregunta: p, paqueteAbierto, parte } = Astro.props as Props;
+const pregunta = parte === 'pregunta' ? p : null;
+const franja = parte === 'franja' ? f : null;
+const error = parte === 'franja' ? e : null;
+const accion = ruta('/admin/inventario/accion');
+const volver = ruta(`/admin/inventario${paqueteAbierto ? `?paquete=${paqueteAbierto}` : ''}`);
+---
+
+{
+  pregunta && (
+    <section class="pi-pregunta" id="pregunta" aria-labelledby="t-pregunta">
+      <h2 id="t-pregunta">
+        {pregunta.motivo === 'reservado' ? 'No puedo descontarlo todavía' : 'La cuenta dice que no te queda'}
+      </h2>
+      {pregunta.motivo === 'reservado' ? (
+        <p>
+          Tienes {pregunta.fisico} {pregunta.titulo}, pero <strong>alguien lo está pagando ahora mismo</strong> en
+          la tienda{pregunta.minutos !== null ? ` (le quedan ${pregunta.minutos} minutos)` : ''}. Si esperas y no
+          paga, vuelve solo a estar a la venta.
+        </p>
+      ) : (
+        <p>
+          Según la cuenta no te queda ningún {pregunta.titulo}. Si lo acabas de vender, es que la cuenta estaba mal:
+          puedes venderlo igual (la cuenta quedará en negativo para que la revises) o corregirla primero.
+        </p>
+      )}
+      <div class="pi-pregunta__botones">
+        <a class="pi-boton" href={`${volver}#v${pregunta.v}`}>
+          {pregunta.motivo === 'reservado' ? 'Esperar' : 'No, dejarlo'}
+        </a>
+        <form method="post" action={accion}>
+          <input type="hidden" name="accion" value="whatsapp" />
+          <input type="hidden" name="v" value={pregunta.v} />
+          <input type="hidden" name="n" value={pregunta.n} />
+          <input type="hidden" name="forzar" value="1" />
+          {paqueteAbierto && <input type="hidden" name="paquete" value={paqueteAbierto} />}
+          <button class="pi-boton pi-boton--rojo pi-ancho" type="submit">
+            Venderlo igual
+          </button>
+        </form>
+      </div>
+      {pregunta.motivo === 'reservado' && (
+        <p class="pi-pregunta__nota">
+          Si vendes igual y la otra persona termina de pagar, tendrás que devolverle el dinero desde Bold.
+        </p>
+      )}
+    </section>
+  )
+}
+
+{
+  error && (
+    <div class="pi-franja pi-franja--error" role="alert">
+      <p class="pi-franja__texto">{error}</p>
+    </div>
+  )
+}
+
+{
+  franja && (
+    <div class="pi-franja" role="status">
+      <p class="pi-franja__texto">{franja.texto}</p>
+      {franja.deshacer && (
+        <form method="post" action={accion}>
+          <input type="hidden" name="accion" value="deshacer" />
+          <input type="hidden" name="m" value={franja.deshacer.m} />
+          <input type="hidden" name="v" value={franja.deshacer.v} />
+          {paqueteAbierto && <input type="hidden" name="paquete" value={paqueteAbierto} />}
+          <button class="pi-boton" type="submit">Deshacer</button>
+        </form>
+      )}
+      {franja.paquete && !paqueteAbierto && (
+        <a class="pi-boton" href={ruta(`/admin/inventario?paquete=${franja.paquete.d}`)}>
+          Añadir otra cosa
+        </a>
+      )}
+      {franja.paquete && (
+        <form method="post" action={accion}>
+          <input type="hidden" name="accion" value="nombrar" />
+          <input type="hidden" name="d" value={franja.paquete.d} />
+          {franja.deshacer && <input type="hidden" name="v" value={franja.deshacer.v} />}
+          {paqueteAbierto && <input type="hidden" name="paquete" value={paqueteAbierto} />}
+          <label class="sr-only" for="cliente-franja">Para quién es</label>
+          <input
+            class="pi-texto"
+            id="cliente-franja"
+            name="cliente"
+            type="text"
+            maxlength="80"
+            placeholder="¿Para quién? (opcional)"
+            value={franja.paquete.cliente ?? ''}
+          />
+          <button class="pi-boton" type="submit">Ponerle nombre</button>
+        </form>
+      )}
+    </div>
+  )
+}

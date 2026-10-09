@@ -213,6 +213,21 @@ export async function varianteDelPanel(db: BaseD1, id: number): Promise<FilaInve
   return (await stockDeTodo(db)).find((v) => v.varianteId === id) ?? null;
 }
 
+/**
+ * Cuándo vence la próxima reserva VIGENTE de una variante: el «le quedan 23
+ * minutos» de la pregunta de G.4.2. `null` si nadie la está pagando.
+ */
+export async function proximaReserva(db: BaseD1, varianteId: number): Promise<string | null> {
+  const f = await db
+    .prepare(
+      `SELECT MIN(vence_en) AS proxima FROM reservas
+        WHERE variante_id = ? AND estado = 'activa' AND vence_en > datetime('now')`,
+    )
+    .bind(varianteId)
+    .first<{ proxima: string | null }>();
+  return f?.proxima ?? null;
+}
+
 /** El último cambio del interruptor, de la auditoría: «lo encendiste el 9 oct». */
 export async function ultimoCambioDelInterruptor(
   db: BaseD1,

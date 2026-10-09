@@ -1,0 +1,174 @@
+---
+/**
+ * /admin/despachos — «Productos a despachar». G.6 del plan.
+ *
+ * LA LISTA QUE PIDIÓ EL CLIENTE
+ * ===========================================================================
+ * «En el caso de Bold, el producto vendido queda bloqueado y en una lista de
+ * productos a despachar.» Aquí están las DOS vías mezcladas en UNA lista,
+ * porque para Andreina son lo mismo: paquetes que hay que armar.
+ *
+ *   - Lo roto va primero y en rojo, siempre: pagado en la tienda y sin unidad
+ *     (G.4.5). Es lo que hay que hablar con alguien hoy.
+ *   - El origen se DICE, no se codifica: «Pagado en la tienda» / «Vendido por
+ *     WhatsApp». Nunca `origen='bold'`.
+ *   - «Ya salió» es un toque, con una mano mientras se pega la guía. Deshacer
+ *     queda disponible un rato en «Salieron hace poco».
+ *   - «Anular» está plegado y pide confirmar: devuelve las unidades a la
+ *     estantería y no tiene deshacer.
+ *
+ * Lo que todavía NO puede mostrar, y por qué: la dirección y el teléfono de
+ * los pedidos de Bold viven en `pedidos`, que es de la fase 2 del carrito y no
+ * existe aún. Cuando exista, se pinta aquí, en la lista y no detrás de un
+ * «Ver» (G.6: es el dato que hace falta para armar el paquete).
+ */
+import Panel from '../../../layouts/Panel.astro';
+import { ruta } from '../../../datos/sitio';
+import {
+  inventarioDelPanel,
+  MINUTOS_PARA_DESHACER,
+  type PaqueteDespacho,
+} from '../../../datos/inventario';
+import { ERRORES, cuando, minutosDesde } from '../../../admin/inventario-textos';
+import '../../../styles/panel-inventario.css';
+import '../../../styles/panel-inventario-avisos.css';
+
+export const prerender = false;
+
+let pendientes: PaqueteDespacho[] = [];
+let recientes: PaqueteDespacho[] = [];
+let fallo = false;
+try {
+  const l = await inventarioDelPanel(Astro.locals).paquetes();
+  pendientes = l.datos?.pendientes ?? [];
+  recientes = l.datos?.recientes ?? [];
+  fallo = l.estado !== 'ok';
+} catch {
+  fallo = true;
+}
+
+const q = Astro.url.searchParams;
+const accion = ruta('/admin/despachos/accion');
+const error = ERRORES[q.get('error') ?? ''] ?? null;
+const avisos: Record<string, string> = {
+  salio: 'Marcado como enviado. Si fue un toque sin querer, está abajo en «Salieron hace poco».',
+  anulado: 'Paquete anulado: lo que llevaba volvió a la estantería.',
+  reabierto: 'De vuelta en la lista.',
+};
+const hecho = avisos[q.get('hecho') ?? ''] ?? null;
+
+const origen = (p: PaqueteDespacho) =>
+  `${p.origen === 'bold' ? 'Pagado en la tienda' : 'Vendido por WhatsApp'} · ${cuando(p.creadoEn)}`;
+const para = (p: PaqueteDespacho) =>
+  p.cliente ? `Para ${p.cliente}` : p.origen === 'bold' ? 'Pedido de la tienda' : null;
+---
+
+<Panel titulo="Para despachar" seccion="despachos">
+  <h1 class="p-titulo">Para despachar {!fallo && `(${pendientes.length})`}</h1>
+  <p class="p-entradilla">
+    Lo que hay que empacar y sacar, venga de la tienda o de WhatsApp. Lo más antiguo primero.
+  </p>
+
+  {error && <p class="p-error" role="alert">{error}</p>}
+  {hecho && <p class="pi-ok" role="status">{hecho}</p>}
+
+  {
+    fallo ? (
+      <p class="p-error" role="alert">No se pudo leer la lista ahora mismo. Inténtalo en un momento.</p>
+    ) : pendientes.length === 0 ? (
+      <p class="pi-ok">No hay nada pendiente de enviar.</p>
+    ) : (
+      <ul class="pd-lista">
+        {pendientes.map((p) => (
+          <li class={`pd-paquete ${p.sinStock ? 'pd-paquete--roto' : ''}`} id={`d${p.id}`}>
+            {p.sinStock && <p class="pd-roto">Pagado y no hay unidad — hay que hablar con el cliente</p>}
+            <p class="pd-origen">{origen(p)}</p>
+            <ul class="pd-articulos">
+              {p.articulos.length ? (
+                p.articulos.map((a) => <li>{a.cantidad} × {a.titulo}</li>)
+              ) : (
+                <li>Mira el pedido para ver qué lleva.</li>
+              )}
+            </ul>
+            {para(p) && <p class="pd-para">{para(p)}</p>}
+
+            <div class="pd-acciones">
+              <form method="post" action={accion}>
+                <input type="hidden" name="accion" value="salio" />
+                <input type="hidden" name="d" value={p.id} />
+                <button class="v-boton v-boton--oro" type="submit">Ya salió</button>
+              </form>
+              <details class="pi-mas">
+                <summary>Más</summary>
+                <div class="pi-mas__panel">
+                  {p.origen === 'whatsapp' && (
+                    <form method="post" action={accion} class="pi-grupo">
+                      <input type="hidden" name="accion" value="nombrar" />
+                      <input type="hidden" name="d" value={p.id} />
+                      <label for={`c${p.id}`}>Para quién es</label>
+                      <input
+                        class="pi-texto"
+                        id={`c${p.id}`}
+                        name="cliente"
+                        type="text"
+                        maxlength="80"
+                        value={p.cliente ?? ''}
+                        placeholder="Marcela, Juan…"
+                      />
+                      <button class="pi-boton" type="submit">Guardar el nombre</button>
+                    </form>
+                  )}
+                  <form method="post" action={accion} class="pi-grupo">
+                    <input type="hidden" name="accion" value="anular" />
+                    <input type="hidden" name="d" value={p.id} />
+                    <small>
+                      Anular es para un paquete que NO va a salir (se canceló la venta). Lo que llevaba vuelve a
+                      la estantería y se puede volver a vender. El dinero, si lo hubo, se devuelve aparte
+                      {p.origen === 'bold' ? ' desde Bold' : ''}.
+                    </small>
+                    <label>
+                      <input type="checkbox" name="confirmo" value="si" required /> Sí, este paquete no va a salir
+                    </label>
+                    <button class="pi-boton pi-boton--rojo" type="submit">Anular el paquete</button>
+                  </form>
+                </div>
+              </details>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  {
+    recientes.length > 0 && (
+      <section class="p-seccion" aria-labelledby="t-recientes">
+        <h2 class="p-seccion__titulo" id="t-recientes">Salieron hace poco</h2>
+        <ul class="pd-lista">
+          {recientes.map((p) => (
+            <li class="pd-paquete" id={`d${p.id}`}>
+              <p class="pd-origen">
+                Salió {cuando(p.despachadoEn ?? p.creadoEn)} · {origen(p)}
+              </p>
+              <ul class="pd-articulos">
+                {p.articulos.map((a) => (
+                  <li>
+                    {a.cantidad} × {a.titulo}
+                  </li>
+                ))}
+              </ul>
+              {para(p) && <p class="pd-para">{para(p)}</p>}
+              {p.despachadoEn && minutosDesde(p.despachadoEn) < MINUTOS_PARA_DESHACER && (
+                <form method="post" action={accion}>
+                  <input type="hidden" name="accion" value="reabrir" />
+                  <input type="hidden" name="d" value={p.id} />
+                  <button class="pi-boton" type="submit">No salió: volver a la lista</button>
+                </form>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Panel>
