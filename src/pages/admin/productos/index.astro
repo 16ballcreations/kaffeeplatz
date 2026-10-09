@@ -170,7 +170,11 @@ const cifras = (p: FilaListado) =>
     descuadres.length > 0 && (
       <ul class="pi-avisos">
         <li>
-          {`La cuenta de ${descuadres.length === 1 ? 'una cosa no coincide' : `${descuadres.length} cosas no coinciden`} con su historial: ${descuadres.join(', ')}. No es un error tuyo: avisa a soporte para que lo revisen.`}
+          {/* Solo los tres primeros nombres: con muchas cuentas descuadradas
+              (p. ej. un stock cargado a mano en la base) la lista entera era
+              un muro de texto. El resto se ve con el filtro. */}
+          {`La cuenta de ${descuadres.length === 1 ? 'una cosa no coincide' : `${descuadres.length} cosas no coinciden`} con su historial: ${descuadres.slice(0, 3).join(', ')}${descuadres.length > 3 ? ` y ${descuadres.length - 3} más` : ''}. No es un error tuyo: avisa a soporte para que lo revisen. `}
+          {descuadres.length > 3 && <a href={ruta('/admin/productos?estado=descuadre')}>Ver todas</a>}
         </li>
       </ul>
     )
