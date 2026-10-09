@@ -86,6 +86,9 @@ console.log('EN PRODUCCION');
 console.log('  npx wrangler secret put ADMIN_CLAVE_HASH');
 console.log('  (y pega el hash cuando lo pida)');
 console.log('');
-console.log('EN LOCAL (.dev.vars, que NO se versiona)');
-console.log(`  echo 'ADMIN_CLAVE_HASH=${hash}' >> .dev.vars`);
+/* Entre comillas simples DENTRO del fichero: wrangler expande los `$` de
+   .dev.vars y, sin ellas, `$sha256$100000$...` llega mutilado y el panel
+   rechaza la clave buena. Ver el README. */
+console.log('EN LOCAL (.dev.vars, que NO se versiona; el hash entre comillas simples)');
+console.log(`  printf "ADMIN_CLAVE_HASH='%s'\\n" '${hash}' >> .dev.vars`);
 console.log('');
