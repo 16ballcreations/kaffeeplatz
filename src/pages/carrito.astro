@@ -5,9 +5,10 @@
  *
  * COMO SE PINTA, Y POR QUE ASI
  * ---------------------------------------------------------------------------
- * El sitio es estatico (`output: 'static'`): el build NO puede saber que lleva
- * cada visitante. Asi que esta pagina se entrega con tres estados en el HTML y
- * el script enciende el que toca:
+ * El servidor NO sabe que lleva cada visitante: el carrito vive en su
+ * `localStorage`, no en una cookie. Asi que esta pagina es la MISMA para todos
+ * (y por eso se puede cachear en el borde), se entrega con tres estados en el
+ * HTML y el script enciende el que toca:
  *
  *   1. `[data-carrito-sin-js]` — lo UNICO visible sin JavaScript. Explica que
  *                          el carrito necesita JS y ofrece el WhatsApp
@@ -27,14 +28,24 @@
  * (ni siquiera propios), y el marcado del <li> se lee aqui, en el .astro, no
  * en una cadena dentro del JavaScript.
  *
- * EL CATALOGO VIAJA EN LA PAGINA
+ * EL CATALOGO VIAJA EN LA PAGINA, Y SALE DE D1
  * ---------------------------------------------------------------------------
  * `localStorage` solo guarda handle + varianteId + cantidad (ver
  * src/scripts/carrito.ts). Titulo, precio y foto se releen de este catalogo,
- * que se serializa en el build: si la dueña cambia un precio y se vuelve a
- * publicar, un carrito viejo muestra el precio NUEVO. El precio nunca sale del
+ * que se serializa en cada pintado: si la dueña cambia un precio en el panel,
+ * un carrito viejo muestra el precio NUEVO. El precio nunca sale del
  * navegador, que es la regla de seguridad del plan y lo que necesitara la
  * fase 2.
+ *
+ * Hasta la fase 5 del panel este catalogo salia de `astro:content` (los JSON
+ * del build) mientras el resto del sitio ya leia de D1. Con el panel creando
+ * productos eso era un fallo SILENCIOSO: un producto nuevo se agregaba desde
+ * su ficha y `resolver()` lo descartaba al pintar el carrito, porque no estaba
+ * en los JSON. Y una variante creada en el panel tiene un id (`kp-<n>`) que
+ * los JSON no conocen. Ahora lee de `src/datos/catalogo.ts`, la misma frontera
+ * que `/catalogo` y la ficha: mismo origen, misma forma, mismos ids. Es el
+ * punto 3 de la seccion D del plan («`resolver()` del carrito tendra que leer
+ * de D1»), que pedia cambiar el origen y no la logica.
  *
  * AUN NO HAY PAGO
  * ---------------------------------------------------------------------------
@@ -42,25 +53,40 @@
  * NO promete un pago que no existe: el hueco esta preparado (`v-resumen__pago`)
  * con una nota honesta, no con un boton muerto.
  */
-import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Icono from '../components/Icono.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import { SITIO, ruta } from '../datos/sitio';
 import { ENVIOS } from '../datos/guias';
 import { ENVIO_GRATIS_DESDE, TARIFA_PLANA_ENVIO, formatearPesos } from '../datos/envio';
+import { obtenerProductos, respuestaDeEmergencia, marcarEtiquetas } from '../datos/catalogo';
 import type { Catalogo } from '../scripts/carrito';
 /* Lo que el tope necesita decir (motivo bajo la cantidad, aviso de recorte).
    Hoja propia: v2.css ya pasa de 3.900 lineas y no se engorda. */
 import '../styles/topes.css';
 
-const productos = await getCollection('productos');
+/* Lee de D1, asi que se pinta en cada peticion (o sale de la cache de borde).
+   Explicito aunque `output: 'server'` ya lo implique: si alguien cambiara el
+   modo por defecto, esta pagina volveria a congelar el catalogo en el build. */
+export const prerender = false;
+
+/* R1, el mismo patron que /catalogo: la lectura nunca lanza, y si D1 no
+   responde se sirve la copia de cache o la pagina de cortesia con 503. Un
+   carrito con el catalogo VACIO no es una opcion: `resolver()` descartaria
+   todas las lineas y la persona veria su pedido borrado sin motivo. */
+const lectura = await obtenerProductos(Astro.locals);
+if (lectura.estado !== 'ok' || !lectura.datos) {
+  return respuestaDeEmergencia(Astro.url, lectura);
+}
+
+/* Depende del catalogo entero: cualquier producto puede estar en un carrito. */
+marcarEtiquetas(Astro.locals, ['catalogo']);
 
 /* El catalogo reducido a lo que el carrito necesita pintar. Nada mas: esto
-   viaja en el HTML de la pagina. */
+   viaja en el HTML de la pagina. La capa de datos ya devuelve la forma que
+   devolvia `getCollection` en `.data`, asi que el mapeo es el de siempre. */
 const catalogo: Catalogo = Object.fromEntries(
-  productos.map((p) => {
-    const d = p.data;
+  lectura.datos.map((d) => {
     const img = d.imagenes[0];
     return [
       d.handle,
@@ -197,12 +223,13 @@ const otras = ENVIOS[1];
         <p class="v-resumen__falta" data-carrito-falta hidden></p>
 
         {/*
-          TEXTO DE ENVIO. Derivado de la politica real
-          (contenido-original/datos/politicas/shipping-policy.md): los plazos
-          son los suyos, literales, via ENVIOS. La tarifa plana es el valor
-          PENDIENTE DE CONFIRMAR de src/datos/envio.ts; la politica dice que
-          hoy el costo "se calcula al momento de la compra segun el destino y
-          el peso", asi que el texto no promete que sea definitivo.
+          TEXTO DE ENVIO. Los plazos salen de la politica real
+          (contenido-original/datos/politicas/shipping-policy.md), literales,
+          via ENVIOS. La tarifa plana (15.000 COP) la CONFIRMO el cliente el
+          9 oct 2026 y sustituye al "se calcula segun el destino y el peso" de
+          la politica antigua; vive solo en src/datos/envio.ts. La nota de
+          abajo ("confirmamos el valor final") se mantiene porque el pedido se
+          sigue cerrando por WhatsApp hasta que llegue el pago con Bold.
         */}
         <div class="v-resumen__envio">
           <p>

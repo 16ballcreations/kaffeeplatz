@@ -1,0 +1,118 @@
+---
+/**
+ * /admin/productos/<id>/archivar — confirmar y archivar.
+ *
+ * LA CONFIRMACION ES UNA PAGINA, NO UN `confirm()` DEL NAVEGADOR
+ * ===========================================================================
+ * El hallazgo malo de A.5: en 16bc el «¿seguro?» era solo JavaScript, y sin
+ * JS o con una petición directa borraba sin preguntar. Aquí el GET pinta la
+ * pregunta y SOLO el POST archiva (que además pasa por la comprobación de
+ * `Origin` de la puerta). No hay forma de archivar sin haber visto esta
+ * pantalla, salvo fabricando el POST a mano con una sesión abierta.
+ *
+ * EL AVISO DE G.4.6
+ * ---------------------------------------------------------------------------
+ * Andreina no puede saber si alguien está pagando ese producto ahora mismo, y
+ * sin decírselo, archivar se siente como cancelar. Se le dan los dos números
+ * (unidades que alguien está pagando, paquetes sin despachar) y la verdad:
+ * esas ventas siguen. Archivar NO toca reservas, despachos ni stock (ver
+ * `cambiarArchivado`).
+ *
+ * Si la consulta de compromisos falla (inventario a medio migrar, p. ej.), la
+ * pantalla se pinta igual con un aviso de que no se pudo comprobar: no se
+ * enseña un «0» que no se ha contado.
+ */
+import Panel from '../../../../layouts/Panel.astro';
+import { ruta } from '../../../../datos/sitio';
+import { baseAdmin } from '../../../../admin/base';
+import { productoParaEditar, type ProductoPanel } from '../../../../admin/productos/leer';
+import { baseEscritura, instantanea } from '../../../../admin/productos/guardar';
+import { invalidarProducto } from '../../../../admin/productos/cache';
+import { cambiarArchivado } from '../../../../datos/consultas/productos-escribir';
+import { compromisosDeProducto } from '../../../../datos/consultas/inventario-leer';
+import '../../../../styles/panel-productos.css';
+
+export const prerender = false;
+
+const id = Number(Astro.params.id);
+let p: ProductoPanel | null = null;
+let compromisos: { reservasActivas: number; despachosPendientes: number } | null = null;
+let error = '';
+
+try {
+  const db = baseAdmin(Astro.locals);
+  if (Number.isInteger(id) && id > 0) p = await productoParaEditar(db, id);
+
+  if (p && Astro.request.method === 'POST') {
+    await cambiarArchivado(baseEscritura(db), p.id, true, instantanea(p));
+    await invalidarProducto(Astro.url.origin, p.handle);
+    /* Ya archivado o recién archivado, el destino es el mismo: la ficha del
+       panel, que lo dice y ofrece restaurar. */
+    return Astro.redirect(ruta(`/admin/productos/${p.id}?hecho=archivado`), 303);
+  }
+
+  if (p && !p.archivadoEn) {
+    compromisos = await compromisosDeProducto(db, p.handle).catch((fallo) => {
+      console.error('[admin] compromisos:', fallo instanceof Error ? fallo.message : fallo);
+      return null;
+    });
+  }
+} catch (fallo) {
+  console.error('[admin] archivar:', fallo instanceof Error ? fallo.message : fallo);
+  error = 'No se pudo archivar en este momento. Vuelve a intentarlo en un minuto.';
+  Astro.response.status = 503;
+}
+
+if (!error && !p) Astro.response.status = 404;
+if (p?.archivadoEn && Astro.request.method === 'GET') {
+  return Astro.redirect(ruta(`/admin/productos/${p.id}`), 303);
+}
+
+const pagando = compromisos?.reservasActivas ?? 0;
+const paquetes = compromisos?.despachosPendientes ?? 0;
+---
+
+<Panel titulo="Archivar" seccion="productos">
+  <p class="pp-migas"><a href={ruta(p ? `/admin/productos/${p.id}` : '/admin/productos')}>← Volver</a></p>
+  {
+    error ? (
+      <p class="p-error" role="alert">{error}</p>
+    ) : !p ? (
+      <h1 class="p-titulo">No encontramos ese producto</h1>
+    ) : (
+      <div class="pp-confirmar">
+        <h1 class="p-titulo">¿Archivar «{p.titulo}»?</h1>
+        <ul class="pp-lista-simple">
+          <li>Deja de verse en la tienda y en el catálogo.</li>
+          <li>Quien entre a su dirección irá a su categoría, no a una página rota.</li>
+          <li>No se borra nada: precio, fotos, unidades e historial se quedan. Puedes restaurarlo cuando quieras.</li>
+        </ul>
+
+        {compromisos === null ? (
+          <p class="pp-aviso" role="status">
+            No se pudo comprobar si alguien está pagando este producto ahora mismo. Si archivas, esas
+            ventas siguen igual.
+          </p>
+        ) : (pagando > 0 || paquetes > 0) && (
+          /* `.p-error` es flex: el texto va dentro de un solo <p> para que las
+             negritas no se conviertan en columnas. */
+          <div class="p-error" role="alert">
+            <p>
+              Este producto tiene
+              {pagando > 0 && <b> {pagando} {pagando === 1 ? 'unidad que alguien está pagando' : 'unidades que alguien está pagando'}</b>}
+              {pagando > 0 && paquetes > 0 && ' y'}
+              {paquetes > 0 && <b> {paquetes} {paquetes === 1 ? 'paquete sin despachar' : 'paquetes sin despachar'}</b>}.
+              Si lo archivas, dejará de verse en la tienda, pero esas ventas siguen y los paquetes
+              hay que mandarlos igual.
+            </p>
+          </div>
+        )}
+
+        <form method="post" action={ruta(`/admin/productos/${p.id}/archivar`)} class="pp-guardar">
+          <button type="submit" class="v-boton v-boton--oro">Sí, archivar</button>
+          <a href={ruta(`/admin/productos/${p.id}`)} class="pp-descartar">No, dejarlo como está</a>
+        </form>
+      </div>
+    )
+  }
+</Panel>

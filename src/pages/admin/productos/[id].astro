@@ -1,0 +1,269 @@
+---
+/**
+ * /admin/productos/<id> — editar un producto.
+ *
+ * GET pinta lo guardado; POST guarda (o mueve filas sin guardar) y, si todo
+ * va bien, redirige con 303 a esta misma página (PRG, patrón 4 de A.6): así
+ * recargar después de guardar no vuelve a enviar nada. Si algo no vale, se
+ * re-pinta con LO QUE ELLA ESCRIBIÓ y el error al lado, con estado 400.
+ *
+ * DOS PESTAÑAS: AVISAR, NO PISAR (prueba obligatoria 12)
+ * ===========================================================================
+ * El formulario lleva la `version` con la que se pintó. Si al guardar la base
+ * tiene otra, alguien guardó entretanto (otra pestaña, otro teléfono). No se
+ * guarda nada: se responde 409 con lo que ella escribió intacto, la lista de
+ * diferencias con lo guardado ahora y la `version` nueva, de modo que volver a
+ * pulsar «Guardar» es una DECISIÓN informada de quedarse con lo suyo, no un
+ * accidente. La carrera exacta (dos guardados en el mismo milisegundo) la
+ * cubre el cerrojo dentro del batch: ver `productos-escribir.ts`.
+ *
+ * La puerta ya garantizó la sesión y el `Origin` de todo POST: no se repite.
+ */
+import Panel from '../../../layouts/Panel.astro';
+import CamposBasicos from '../../../admin/productos/CamposBasicos.astro';
+import CamposVariantes from '../../../admin/productos/CamposVariantes.astro';
+import { ruta } from '../../../datos/sitio';
+import { baseAdmin } from '../../../admin/base';
+import {
+  productoParaEditar,
+  categoriasDeProducto,
+  cambiosRecientes,
+  type ProductoPanel,
+  type CambioReciente,
+} from '../../../admin/productos/leer';
+import { leerFormulario, aplicarAccion, type Borrador, type Errores } from '../../../admin/productos/forma';
+import {
+  borradorDesde,
+  guardarEdicion,
+  diferenciasConLoGuardado,
+  reconciliar,
+  baseEscritura,
+} from '../../../admin/productos/guardar';
+import { invalidarProducto, enlaceFicha } from '../../../admin/productos/cache';
+import '../../../styles/panel-productos.css';
+
+/* Requisito de seguridad: ver la cabecera de Panel.astro. */
+export const prerender = false;
+
+const HECHO: Record<string, string> = {
+  guardado: 'Guardado. Ya se ve así en la tienda.',
+  'sin-cambios': 'No había nada que cambiar: todo estaba ya guardado así.',
+  creado: 'Producto creado. Revisa el precio y añade sus colores o tamaños si los tiene.',
+  restaurado: 'Restaurado: el producto vuelve a verse en la tienda.',
+  archivado: 'Archivado: ya no se ve en la tienda. Puedes restaurarlo cuando quieras.',
+  fallo: 'No se pudo completar en este momento. Vuelve a intentarlo en un minuto.',
+};
+
+const id = Number(Astro.params.id);
+let actual: ProductoPanel | null = null;
+let categorias: { id: string; nombre: string }[] = [];
+let historial: CambioReciente[] = [];
+let b: Borrador | null = null;
+let errores: Errores = {};
+let aviso = '';
+let conflicto: string[] | null = null;
+let sinBase = false;
+
+try {
+  const db = baseAdmin(Astro.locals);
+  if (Number.isInteger(id) && id > 0) {
+    [actual, categorias] = await Promise.all([productoParaEditar(db, id), categoriasDeProducto(db)]);
+  }
+
+  if (actual && Astro.request.method === 'POST') {
+    const forma = await Astro.request.formData();
+    b = leerFormulario(forma);
+    const accion = String(forma.get('accion') ?? 'guardar');
+
+    if (accion !== 'guardar') {
+      /* Subir, bajar, añadir: se re-pinta SIN guardar. Se dice, para que no
+         crea que ya está hecho. */
+      if (aplicarAccion(b, accion)) aviso = 'Todavía no se ha guardado: pulsa «Guardar cambios» cuando termines.';
+    } else {
+      const r = await guardarEdicion(baseEscritura(db), actual, b, categorias.map((c) => c.id));
+      if (r.ok) {
+        if (!r.sinCambios) await invalidarProducto(Astro.url.origin, actual.handle);
+        return Astro.redirect(
+          ruta(`/admin/productos/${id}?hecho=${r.sinCambios ? 'sin-cambios' : 'guardado'}`),
+          303,
+        );
+      }
+      if (r.estado === 409) {
+        /* Se relee: el `actual` de arriba puede ser ya viejo si la carrera fue
+           exacta. Lo que se le enseña tiene que ser lo de AHORA. */
+        const ahora = (await productoParaEditar(db, id)) ?? actual;
+        conflicto = diferenciasConLoGuardado(ahora, b);
+        reconciliar(b, ahora);
+        actual = ahora;
+      } else {
+        errores = r.errores;
+      }
+      Astro.response.status = r.estado;
+    }
+  }
+
+  if (actual) historial = await cambiosRecientes(db, id).catch(() => []);
+} catch (fallo) {
+  console.error('[admin] editar producto:', fallo instanceof Error ? fallo.message : fallo);
+  sinBase = true;
+  Astro.response.status = 503;
+}
+
+if (!sinBase && !actual) Astro.response.status = 404;
+if (actual && !b) b = borradorDesde(actual);
+
+const info = new Map(
+  (actual?.variantes ?? []).map((v) => [v.id, { fotos: v.fotos, conHistorial: v.conHistorial }] as const),
+);
+const hecho = HECHO[Astro.url.searchParams.get('hecho') ?? ''] ?? '';
+const fecha = (iso: string) =>
+  new Date(iso.replace(' ', 'T') + 'Z').toLocaleString('es-CO', {
+    timeZone: 'America/Bogota',
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+const ACCIONES: Record<string, string> = {
+  crear: 'Creado',
+  editar: 'Editado',
+  archivar: 'Archivado',
+  restaurar: 'Restaurado',
+};
+---
+
+<Panel titulo={actual?.titulo ?? 'Producto'} seccion="productos">
+  <p class="pp-migas"><a href={ruta('/admin/productos')}>← Todos los productos</a></p>
+
+  {
+    sinBase ? (
+      <p class="p-error" role="alert">
+        No se pudo conectar con la tienda en este momento. Vuelve a intentarlo en un minuto.
+      </p>
+    ) : !actual || !b ? (
+      <>
+        <h1 class="p-titulo">No encontramos ese producto</h1>
+        <p class="p-entradilla">
+          Puede que el enlace esté mal copiado. <a href={ruta('/admin/productos')}>Volver a la lista</a>.
+        </p>
+      </>
+    ) : (
+      <>
+        <h1 class="p-titulo">{actual.titulo}</h1>
+
+        {hecho && !conflicto && Astro.request.method === 'GET' && (
+          <p class="pp-hecho" role="status">{hecho}</p>
+        )}
+
+        {actual.archivadoEn ? (
+          <div class="pp-archivado">
+            <p>
+              <b>Archivado.</b> No se ve en la tienda y su dirección lleva a su categoría. Puedes
+              seguir editándolo.
+            </p>
+            <form method="post" action={ruta(`/admin/productos/${actual.id}/restaurar`)}>
+              <button class="v-boton v-boton--oro" type="submit">Restaurar en la tienda</button>
+            </form>
+          </div>
+        ) : (
+          <p class="pp-ver">
+            <a href={enlaceFicha(actual.handle, actual.version)} target="_blank" rel="noopener">
+              Ver cómo queda en la tienda ↗
+            </a>
+            <span>Se abre en otra pestaña.</span>
+          </p>
+        )}
+
+        {conflicto && (
+          <div class="p-error pp-conflicto" role="alert">
+            <div>
+              <p>
+                <b>Alguien guardó este producto mientras lo editabas</b> (quizá en otra pestaña o
+                en otro teléfono). <b>No se guardó nada</b> y lo que escribiste sigue abajo.
+              </p>
+              {conflicto.length > 0 && (
+                <ul>
+                  {conflicto.map((d) => (
+                    <li>{d}</li>
+                  ))}
+                </ul>
+              )}
+              <p>
+                Si pulsas «Guardar cambios» otra vez, lo que ves en esta pantalla reemplazará lo
+                guardado. Si prefieres ver primero lo otro,
+                <a href={ruta(`/admin/productos/${actual.id}`)} target="_blank" rel="noopener">
+                  ábrelo en otra pestaña
+                </a>.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {errores.general && (
+          <p class="p-error" role="alert">{errores.general}</p>
+        )}
+        {Object.keys(errores).length > 0 && !errores.general && (
+          <p class="p-error" role="alert">
+            No se guardó: hay algo que corregir. Lo verás marcado abajo.
+          </p>
+        )}
+        {aviso && <p class="pp-aviso" role="status">{aviso}</p>}
+
+        <form method="post" action={ruta(`/admin/productos/${actual.id}`)} class="pp-forma" novalidate>
+          {/* El PRIMER botón submit del formulario es el que dispara Enter en
+              un campo. Sin este, Enter en un precio pulsaría «subir» de la
+              primera fila. Oculto a la vista y al lector: el visible está
+              abajo. */}
+          <button type="submit" name="accion" value="guardar" class="pp-oculto" tabindex="-1" aria-hidden="true">
+            Guardar
+          </button>
+          <input type="hidden" name="version" value={b.version} />
+
+          <section class="pp-bloque" aria-labelledby="t-basico">
+            <h2 class="p-seccion__titulo" id="t-basico">El producto</h2>
+            <CamposBasicos b={b} errores={errores} categorias={categorias} />
+          </section>
+
+          <section class="pp-bloque" aria-labelledby="t-precio">
+            <h2 class="p-seccion__titulo" id="t-precio">Precio y opciones</h2>
+            <CamposVariantes b={b} errores={errores} info={info} />
+          </section>
+
+          <div class="pp-guardar">
+            <button type="submit" name="accion" value="guardar" class="v-boton v-boton--oro">
+              Guardar cambios
+            </button>
+            <a href={ruta(`/admin/productos/${actual.id}`)} class="pp-descartar">Descartar lo que no guardé</a>
+          </div>
+        </form>
+
+        <section class="pp-bloque" aria-labelledby="t-mas">
+          <h2 class="p-seccion__titulo" id="t-mas">Más</h2>
+          <p class="pp-ayuda">
+            Dirección en la tienda: <code>/producto/{actual.handle}</code>. No se cambia, para no
+            romper los enlaces que ya compartiste.
+          </p>
+          {!actual.archivadoEn && (
+            <a class="v-boton v-boton--linea" href={ruta(`/admin/productos/${actual.id}/archivar`)}>
+              Archivar (quitar de la tienda)
+            </a>
+          )}
+        </section>
+
+        {historial.length > 0 && (
+          <section class="pp-bloque" aria-labelledby="t-historial">
+            <h2 class="p-seccion__titulo" id="t-historial">Últimos cambios</h2>
+            <ul class="pp-historial">
+              {historial.map((c) => (
+                <li>
+                  <time datetime={c.fecha}>{fecha(c.fecha)}</time>
+                  <span>{`${ACCIONES[c.accion] ?? c.accion}${c.nota && c.accion === 'editar' ? `: ${c.nota}` : ''}`}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </>
+    )
+  }
+</Panel>

@@ -1,0 +1,79 @@
+---
+/**
+ * CamposBasicos — nombre, descripción, categoría y «destacar». Los comparten
+ * el alta y la edición, para que los dos formularios no puedan divergir.
+ *
+ * SIN `maxlength` A PROPOSITO
+ * ===========================================================================
+ * `maxlength` hace que el navegador CORTE lo que se pega por encima del límite,
+ * sin decir nada. Es el truncado en silencio que prohíbe R7 (hallazgo 4 de
+ * A.6), solo que hecho por el navegador en vez de por el servidor. El límite
+ * lo comprueba el servidor y, si se pasa, devuelve el error con el número de
+ * letras; lo escrito no se pierde.
+ *
+ * Cada error va al lado de su campo, enlazado con `aria-describedby` y con
+ * `aria-invalid`, para que un lector de pantalla lo lea al llegar al campo.
+ */
+import type { Borrador, Errores } from './forma';
+
+interface Props {
+  b: Borrador;
+  errores: Errores;
+  categorias: { id: string; nombre: string }[];
+}
+
+const { b, errores, categorias } = Astro.props as Props;
+const desc = (campo: string, ayuda?: string) =>
+  [errores[campo] ? `e-${campo}` : '', ayuda ?? ''].filter(Boolean).join(' ') || undefined;
+---
+
+<div class="pp-campo">
+  <label class="p-campo__etiqueta" for="f-titulo">Nombre del producto</label>
+  <input
+    id="f-titulo"
+    name="titulo"
+    type="text"
+    value={b.titulo}
+    autocomplete="off"
+    aria-invalid={errores.titulo ? 'true' : undefined}
+    aria-describedby={desc('titulo')}
+  />
+  {errores.titulo && <p class="pp-error-campo" id="e-titulo">{errores.titulo}</p>}
+</div>
+
+<div class="pp-campo">
+  <label class="p-campo__etiqueta" for="f-descripcion">Descripción</label>
+  <textarea
+    id="f-descripcion"
+    name="descripcion"
+    rows="8"
+    aria-invalid={errores.descripcion ? 'true' : undefined}
+    aria-describedby={desc('descripcion', 'a-descripcion')}>{b.descripcion}</textarea>
+  <p class="pp-ayuda" id="a-descripcion">
+    Deja una línea en blanco entre párrafos. Para resaltar algo, ponlo entre dos asteriscos:
+    **así**. Para una lista, empieza cada línea con un guion.
+  </p>
+  {errores.descripcion && <p class="pp-error-campo" id="e-descripcion">{errores.descripcion}</p>}
+</div>
+
+<div class="pp-campo">
+  <label class="p-campo__etiqueta" for="f-categoria">Categoría</label>
+  <select
+    id="f-categoria"
+    name="categoria"
+    aria-invalid={errores.categoria ? 'true' : undefined}
+    aria-describedby={desc('categoria')}
+  >
+    {!b.categoria && <option value="">Elige una…</option>}
+    {categorias.map((c) => <option value={c.id} selected={c.id === b.categoria}>{c.nombre}</option>)}
+  </select>
+  {errores.categoria && <p class="pp-error-campo" id="e-categoria">{errores.categoria}</p>}
+</div>
+
+<label class="pp-casilla">
+  <input type="checkbox" name="destacado" value="1" checked={b.destacado} />
+  <span>
+    <b>Destacar</b>
+    <small>Sale en la portada de la tienda y primero en el catálogo.</small>
+  </span>
+</label>

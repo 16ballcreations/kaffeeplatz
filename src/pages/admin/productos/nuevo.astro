@@ -1,0 +1,218 @@
+---
+/**
+ * /admin/productos/nuevo — añadir un producto.
+ *
+ * LO MINIMO PARA EXISTIR, Y EL RESTO EN LA EDICION
+ * ===========================================================================
+ * El alta pide nombre, precio y categoría (y la descripción si la tiene a
+ * mano). Los colores y tamaños se añaden después, en la pantalla de edición,
+ * a la que se llega directamente al crear. Un formulario de alta con filas de
+ * variantes sería el doble de largo en un teléfono para el caso que menos se
+ * da: 19 de los 25 productos del respaldo tienen una sola.
+ *
+ * LA DIRECCION SE GENERA SOLA
+ * ---------------------------------------------------------------------------
+ * Nota de E («`handle` se presenta como "la dirección del producto" y, mejor,
+ * se genera solo»): sale del nombre con las mismas reglas que la convención de
+ * fotos. Solo si ella abre «Cambiar la dirección» puede escribirla. Si ya
+ * existe —también entre los archivados: un handle es único para siempre, porque
+ * una URL archivada sigue redirigiendo— se le añade -2, -3...
+ *
+ * Mismo ciclo que la edición: 400 con lo escrito si algo no vale, 303 a la
+ * edición si se creó (PRG).
+ */
+import Panel from '../../../layouts/Panel.astro';
+import CamposBasicos from '../../../admin/productos/CamposBasicos.astro';
+import { ruta } from '../../../datos/sitio';
+import { baseAdmin } from '../../../admin/base';
+import { categoriasDeProducto, handleLibre } from '../../../admin/productos/leer';
+import { leerFormulario, validarBasicos, leerPrecio, type Borrador, type Errores } from '../../../admin/productos/forma';
+import { baseEscritura } from '../../../admin/productos/guardar';
+import { aHandle, descripcionAGuardar } from '../../../admin/productos/texto';
+import { crearProducto } from '../../../datos/consultas/productos-escribir';
+import { invalidarProducto } from '../../../admin/productos/cache';
+import '../../../styles/panel-productos.css';
+
+export const prerender = false;
+
+const FORMA_HANDLE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+let b: Borrador = {
+  titulo: '',
+  descripcion: '',
+  categoria: '',
+  destacado: false,
+  opcionNombre: '',
+  handle: '',
+  version: 0,
+  filas: [{ id: null, titulo: '', precioTexto: '', aLaVenta: true, quitar: false }],
+};
+let errores: Errores = {};
+let categorias: { id: string; nombre: string }[] = [];
+let sinBase = false;
+
+try {
+  const db = baseAdmin(Astro.locals);
+  categorias = await categoriasDeProducto(db);
+
+  if (Astro.request.method === 'POST') {
+    const forma = await Astro.request.formData();
+    b = leerFormulario(forma);
+    /* El alta tiene un solo precio, con nombres de campo propios. */
+    const fila = {
+      id: null,
+      titulo: '',
+      precioTexto: String(forma.get('precio') ?? '').trim(),
+      aLaVenta: forma.get('venta') === '1',
+      quitar: false,
+    };
+    b.filas = [fila];
+
+    errores = validarBasicos(b, categorias.map((c) => c.id));
+    const precio = leerPrecio(fila.precioTexto);
+    if (!precio.ok) errores.precio = precio.error;
+
+    /* La dirección: la escrita a mano si la hay (validada, nunca «arreglada»
+       en silencio), o la que sale del nombre. */
+    let handle = '';
+    if (b.handle) {
+      if (!FORMA_HANDLE.test(b.handle) || b.handle.length > 80) {
+        errores.handle =
+          'La dirección solo puede llevar letras minúsculas sin tildes, números y guiones, por ejemplo «chemex-6-tazas».';
+      } else if (!(await handleLibre(db, b.handle))) {
+        errores.handle = 'Ya hay un producto con esa dirección (puede que archivado). Elige otra.';
+      } else handle = b.handle;
+    } else if (b.titulo && !errores.titulo) {
+      const raiz = aHandle(b.titulo);
+      if (!raiz) errores.titulo = 'El nombre necesita al menos una letra o un número.';
+      else {
+        for (let n = 1; n <= 50 && !handle; n++) {
+          const intento = n === 1 ? raiz : `${raiz}-${n}`;
+          if (await handleLibre(db, intento)) handle = intento;
+        }
+        if (!handle) errores.handle = 'No se pudo generar una dirección libre. Escríbela a mano abajo.';
+      }
+    }
+
+    if (!Object.keys(errores).length && precio.ok) {
+      const desc = descripcionAGuardar(b.descripcion, null);
+      const r = await crearProducto(
+        baseEscritura(db),
+        handle,
+        {
+          titulo: b.titulo,
+          descripcionHtml: desc.html,
+          descripcionTexto: desc.texto,
+          categoria: b.categoria,
+          destacado: b.destacado,
+        },
+        { precio: precio.valor, disponible: fila.aLaVenta },
+      );
+      if (r.ok) {
+        await invalidarProducto(Astro.url.origin, handle);
+        return Astro.redirect(ruta(`/admin/productos/${r.id}?hecho=creado`), 303);
+      }
+      const repetido = r.motivo === 'handle-repetido';
+      errores.general = repetido
+        ? 'Alguien acaba de crear un producto con esa misma dirección. Vuelve a pulsar «Crear producto».'
+        : 'No se pudo crear en este momento. No se perdió nada de lo que escribiste: vuelve a intentarlo en un minuto.';
+      Astro.response.status = repetido ? 409 : 500;
+    } else {
+      Astro.response.status = 400;
+    }
+  }
+} catch (fallo) {
+  console.error('[admin] nuevo producto:', fallo instanceof Error ? fallo.message : fallo);
+  sinBase = true;
+  Astro.response.status = 503;
+}
+
+const fila = b.filas[0]!;
+---
+
+<Panel titulo="Añadir producto" seccion="productos">
+  <p class="pp-migas"><a href={ruta('/admin/productos')}>← Todos los productos</a></p>
+  <h1 class="p-titulo">Añadir un producto</h1>
+  <p class="p-entradilla">
+    Empieza por lo básico. Al crearlo podrás añadirle colores o tamaños. Las fotos llegan en la
+    siguiente entrega del panel.
+  </p>
+
+  {
+    sinBase ? (
+      <p class="p-error" role="alert">
+        No se pudo conectar con la tienda en este momento. Vuelve a intentarlo en un minuto.
+      </p>
+    ) : (
+      <>
+        {errores.general && <p class="p-error" role="alert">{errores.general}</p>}
+        {Object.keys(errores).length > 0 && !errores.general && (
+          <p class="p-error" role="alert">No se creó: hay algo que corregir. Lo verás marcado abajo.</p>
+        )}
+
+        <form method="post" action={ruta('/admin/productos/nuevo')} class="pp-forma" novalidate>
+          <section class="pp-bloque">
+            <CamposBasicos b={b} errores={errores} categorias={categorias} />
+
+            <div class="pp-campo pp-campo--precio">
+              <label class="p-campo__etiqueta" for="f-precio">Precio</label>
+              <span class="pp-precio">
+                <span aria-hidden="true">$</span>
+                <input
+                  id="f-precio"
+                  name="precio"
+                  type="text"
+                  inputmode="numeric"
+                  value={fila.precioTexto}
+                  placeholder="315.000"
+                  aria-invalid={errores.precio ? 'true' : undefined}
+                  aria-describedby={errores.precio ? 'e-precio' : undefined}
+                />
+              </span>
+              {errores.precio && <p class="pp-error-campo" id="e-precio">{errores.precio}</p>}
+            </div>
+
+            <label class="pp-casilla">
+              <input type="checkbox" name="venta" value="1" checked={fila.aLaVenta} />
+              <span>
+                <b>A la venta</b>
+                <small>Desmárcalo si quieres prepararlo sin que se pueda pedir todavía.</small>
+              </span>
+            </label>
+
+            <details class="pp-detalles" open={Boolean(errores.handle || b.handle)}>
+              <summary>Cambiar la dirección en la tienda</summary>
+              <div class="pp-campo">
+                <label class="p-campo__etiqueta" for="f-handle">Dirección</label>
+                <span class="pp-prefijo">
+                  <span aria-hidden="true">/producto/</span>
+                  <input
+                    id="f-handle"
+                    name="handle"
+                    type="text"
+                    value={b.handle}
+                    autocapitalize="none"
+                    spellcheck="false"
+                    placeholder="se genera sola desde el nombre"
+                    aria-invalid={errores.handle ? 'true' : undefined}
+                    aria-describedby={errores.handle ? 'e-handle a-handle' : 'a-handle'}
+                  />
+                </span>
+                <p class="pp-ayuda" id="a-handle">
+                  Déjala vacía y se crea sola. Después de crear el producto ya no se cambia, para no
+                  romper los enlaces compartidos.
+                </p>
+                {errores.handle && <p class="pp-error-campo" id="e-handle">{errores.handle}</p>}
+              </div>
+            </details>
+          </section>
+
+          <div class="pp-guardar">
+            <button type="submit" class="v-boton v-boton--oro">Crear producto</button>
+            <a href={ruta('/admin/productos')} class="pp-descartar">Cancelar</a>
+          </div>
+        </form>
+      </>
+    )
+  }
+</Panel>
