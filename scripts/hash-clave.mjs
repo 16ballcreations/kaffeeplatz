@@ -25,7 +25,16 @@
 
 import { webcrypto as crypto } from 'node:crypto';
 
-const ITERACIONES = 210_000;
+/* 100.000 y no más: Cloudflare Workers RECHAZA PBKDF2 por encima de ese
+   número ("iteration counts above 100000 are not supported"). Node no tiene
+   ese límite, así que un hash de 210.000 —el valor que recomienda OWASP—
+   verifica bien en local y falla SIEMPRE en el Worker desplegado, sin decir
+   por qué: `esLaClave` captura la excepción y devuelve false, que es lo
+   correcto para fallar cerrado pero indistinguible de una clave mala.
+   El tope de la plataforma manda sobre la recomendación.
+   Si algún día Workers lo sube, este número puede subir con él: el coste
+   viaja DENTRO del hash, así que los hashes viejos se siguen verificando. */
+const ITERACIONES = 100_000;
 const BITS = 256;
 
 /* El mismo alfabeto sin caracteres que se confundan al leerlos en voz alta o
