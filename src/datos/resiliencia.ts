@@ -101,6 +101,18 @@ export const SEGUNDOS_CACHE = 300;
 export const SEGUNDOS_RESPALDO = 86_400;
 
 /**
+ * La vida en el borde de una página que dice «Queda 1» (R15).
+ *
+ * Esa página afirma algo que caduca rápido: Andreina vende la última por
+ * WhatsApp y la ficha cacheada seguiría diciendo «Queda 1» cinco minutos. La
+ * verdad está en el `WHERE` de la reserva, así que nadie compra lo que no
+ * existe, pero un aviso de escasez que miente es justo lo que hace que se deje
+ * de creer en él. Un minuto acota ese desfase y sigue ahorrando casi todas las
+ * consultas: las fichas con 1 o 2 unidades son pocas, y solo esas lo pagan.
+ */
+export const SEGUNDOS_CACHE_CORTA = 60;
+
+/**
  * Cabeceras de una respuesta buena.
  *
  * `etiquetas` son las Cache Tags de Cloudflare: permiten purgar por etiqueta
@@ -111,10 +123,15 @@ export const SEGUNDOS_RESPALDO = 86_400;
  * día que se use. La invalidación real de la fase 4 se hará borrando de la
  * Cache API las claves afectadas, que sí funciona en cualquier plan.
  */
-export function cabecerasOk(etiquetas: string[]): Record<string, string> {
+export function cabecerasOk(etiquetas: string[], corta = false): Record<string, string> {
+  /* `corta`: la página pinta un «Queda 1» (ver `SEGUNDOS_CACHE_CORTA`). El
+     `stale-while-revalidate` baja con ella; dejarlo en 60 doblaría el minuto. */
+  const vida = corta
+    ? `s-maxage=${SEGUNDOS_CACHE_CORTA}, stale-while-revalidate=15`
+    : `s-maxage=${SEGUNDOS_CACHE}, stale-while-revalidate=60`;
   return {
     'Content-Type': 'text/html; charset=utf-8',
-    'Cache-Control': `public, max-age=0, s-maxage=${SEGUNDOS_CACHE}, stale-while-revalidate=60, stale-if-error=${SEGUNDOS_RESPALDO}`,
+    'Cache-Control': `public, max-age=0, ${vida}, stale-if-error=${SEGUNDOS_RESPALDO}`,
     'Cache-Tag': etiquetas.join(','),
   };
 }

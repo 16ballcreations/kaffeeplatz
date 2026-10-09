@@ -10,8 +10,16 @@
  * unico que se escribe dentro de cada producto. El nombre visible, el orden y
  * la descripcion se resuelven SIEMPRE a traves de este catalogo.
  *
- * Consecuencia practica: renombrar "Molinos" a "Molienda" es un cambio de una
- * linea aqui y no toca ni un solo producto ni una sola plantilla.
+ * Consecuencia practica: renombrar "Molinos" a "Molienda" no toca ni un solo
+ * producto ni una sola plantilla.
+ *
+ * DESDE EL PANEL, ESTA LISTA ES EL RESPALDO
+ * ---------------------------------------------------------------------------
+ * Las categorias de producto viven en la tabla `categorias` de D1 y la dueña
+ * las edita en /admin/categorias. La tienda las lee de ahi
+ * (`obtenerCategorias` en `catalogo.ts`); `CATEGORIAS` es lo que se uso para
+ * sembrar la base y lo que se pinta si esa lectura falla. Cambiar un nombre
+ * AQUI ya no cambia la tienda: se cambia en el panel.
  *
  * COMO SE MIGRA ESTO A UNA API EL DIA DE MANANA
  * ---------------------------------------------------------------------------
@@ -182,10 +190,18 @@ export const IDS_CATEGORIA = CATEGORIAS.map((c) => c.id);
 /** Los ids validos del diario. */
 export const IDS_CATEGORIA_DIARIO = CATEGORIAS_DIARIO.map((c) => c.id);
 
-/** Busca una categoria por id. Devuelve "otros" si el id no existe. */
-export function categoriaPorId(id: string | undefined): Categoria {
+/**
+ * Busca una categoria por id. Devuelve "otros" si el id no existe.
+ *
+ * `lista` es la que la tienda lee de D1 (`obtenerCategorias` en
+ * `catalogo.ts`), que es la que la dueña edita en el panel. Sin ella se usa
+ * esta de aqui. Si la de D1 no trajera "otros", se cae a la de aqui: la
+ * funcion promete devolver SIEMPRE una categoria.
+ */
+export function categoriaPorId(id: string | undefined, lista: Categoria[] = CATEGORIAS): Categoria {
   return (
-    CATEGORIAS.find((c) => c.id === id) ??
+    lista.find((c) => c.id === id) ??
+    lista.find((c) => c.id === 'otros') ??
     (CATEGORIAS.find((c) => c.id === 'otros') as Categoria)
   );
 }

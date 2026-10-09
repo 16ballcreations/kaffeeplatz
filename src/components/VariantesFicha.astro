@@ -9,8 +9,13 @@
  * este componente no trae script propio.
  *
  * Solo se pinta cuando hay de verdad entre qué elegir: la página decide.
+ *
+ * `data-queda` (el «Queda 1» de cada variante, vacío si no toca) solo sale con
+ * el inventario encendido: apagado no hay `stockDisponible`, el atributo se
+ * omite y el HTML es el de siempre.
  */
 import type { Producto } from '../datos/formas';
+import { textoQueda } from '../scripts/queda';
 
 interface Props {
   producto: Producto;
@@ -38,6 +43,7 @@ const { producto: d, inicial, nombreOpcion, hayRango } = Astro.props as Props;
           data-precio={v.precioFormateado}
           data-disponible={String(v.disponible)}
           data-variante-id={v.id}
+          data-queda={v.stockDisponible === undefined ? undefined : (textoQueda(v.stockDisponible) ?? '')}
         />
         <span class="v-variante__nombre">{v.titulo}</span>
         {hayRango && <span class="v-variante__precio v-num">{v.precioFormateado}</span>}

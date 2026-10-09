@@ -19,8 +19,12 @@ import TarjetaProducto from '../components/TarjetaProducto.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import Icono from '../components/Icono.astro';
 import { ruta, SITIO } from '../datos/sitio';
-import { CATEGORIAS } from '../datos/categorias';
-import { obtenerProductos, respuestaDeEmergencia, marcarEtiquetas } from '../datos/catalogo';
+import {
+  obtenerProductos,
+  obtenerCategorias,
+  respuestaDeEmergencia,
+  marcarEtiquetas,
+} from '../datos/catalogo';
 import { conStock } from '../datos/inventario';
 
 
@@ -42,7 +46,7 @@ if (lectura.estado !== 'ok' || !lectura.datos) {
 }
 
 /* Lo que esta pagina muestra, para poder purgar solo esto cuando cambie. */
-marcarEtiquetas(Astro.locals, ['catalogo']);
+marcarEtiquetas(Astro.locals, ['catalogo', 'categorias']);
 
 /* Orden recomendado: disponibles primero, luego destacados, luego alfabetico.
    El ultimo criterio es el `handle`, no el titulo: dos productos con el mismo
@@ -63,7 +67,9 @@ const productos = conTopes.slice().sort((a, b) => {
 const conteo = new Map<string, number>();
 for (const p of productos) conteo.set(p.categoria, (conteo.get(p.categoria) ?? 0) + 1);
 
-const categorias = CATEGORIAS.filter((c) => (conteo.get(c.id) ?? 0) > 0).sort(
+/* Las categorias salen de D1 (las edita la dueña en /admin/categorias), con
+   `CATEGORIAS` del codigo como respaldo si la lectura falla. */
+const categorias = (await obtenerCategorias(Astro.locals)).filter((c) => (conteo.get(c.id) ?? 0) > 0).sort(
   (a, b) => a.orden - b.orden,
 );
 const disponibles = productos.filter((p) => p.disponible).length;

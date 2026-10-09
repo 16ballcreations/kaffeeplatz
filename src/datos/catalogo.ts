@@ -38,6 +38,8 @@
 
 import type { Producto } from './formas';
 import type { BaseD1 } from './consultas/productos';
+import { categoriasDeProducto } from './consultas/categorias';
+import { CATEGORIAS, type Categoria } from './categorias';
 import {
   todosLosProductos,
   productoPorHandle,
@@ -111,6 +113,41 @@ export function obtenerDestinoDeArchivado(
   return leer(() => handleArchivado(base(locals), handle));
 }
 
+/* ----------------------------------------------------------------- categorías */
+
+/** Una lectura por petición: la página y cada tarjeta comparten la misma. */
+const categoriasDePeticion = new WeakMap<object, Promise<Categoria[]>>();
+
+/**
+ * Las categorías de producto, de D1: lo que la dueña edita en /admin/categorias.
+ *
+ * Antes la tienda leía `CATEGORIAS` del código, así que renombrar una categoría
+ * en el panel se guardaba en la base y la tienda seguía diciendo lo de antes.
+ *
+ * NUNCA LANZA Y NUNCA DEVUELVE VACÍO. Si la base falla (o no devuelve ninguna
+ * categoría, que sería un dato roto y no un catálogo sin categorías) se usa
+ * `CATEGORIAS`, que es exactamente lo que había en la base al sembrarla. Un
+ * nombre de categoría desactualizado es un adorno viejo; una página que no se
+ * pinta porque no pudo leerlo sería una tienda cerrada por un rótulo. Por eso
+ * no pasa por `respuestaDeEmergencia`: los productos sí son la página, esto no.
+ *
+ * UNA SOLA CONSULTA POR PETICIÓN. La pide la página y la pide cada
+ * `TarjetaProducto` (que pinta la categoría y se usa en cuatro páginas); en vez
+ * de pasar la lista por props a cada tarjeta, se recuerda la promesa colgada de
+ * `locals`, que es un objeto nuevo en cada petición. El `WeakMap` la suelta
+ * cuando la petición termina.
+ */
+export function obtenerCategorias(locals: unknown): Promise<Categoria[]> {
+  const clave = (locals && typeof locals === 'object' ? locals : null) as object | null;
+  const guardada = clave ? categoriasDePeticion.get(clave) : undefined;
+  if (guardada) return guardada;
+  const lectura = leer(() => categoriasDeProducto(base(locals))).then((r) =>
+    r.estado === 'ok' && r.datos?.length ? r.datos : CATEGORIAS,
+  );
+  if (clave) categoriasDePeticion.set(clave, lectura);
+  return lectura;
+}
+
 /* ------------------------------------------------------------ emergencia (R1) */
 
 /**
@@ -161,4 +198,20 @@ export async function respuestaDeEmergencia(
  */
 export function marcarEtiquetas(locals: unknown, etiquetas: string[]): void {
   (locals as { etiquetasCache?: string[] }).etiquetasCache = etiquetas;
+}
+
+/**
+ * Esta respuesta pinta un «Queda 1»: que el borde la guarde poco (R15).
+ *
+ * La llama QUIEN PINTA el aviso —la ficha, cada `TarjetaProducto`— y no la
+ * página, por la misma razón que la caché vive en el middleware: si dependiera
+ * de que cada página que usa tarjetas se acordara de mirar si alguna dice
+ * «Queda», la que se olvide cachearía cinco minutos un dato de escasez. Así
+ * da igual en qué página caiga la tarjeta.
+ *
+ * Solo ACORTA. No hace cacheable nada que no lo fuera: sin `marcarEtiquetas`
+ * el middleware sigue sin cachear, lleve esto o no.
+ */
+export function marcarCacheCorta(locals: unknown): void {
+  (locals as { cacheCorta?: boolean }).cacheCorta = true;
 }

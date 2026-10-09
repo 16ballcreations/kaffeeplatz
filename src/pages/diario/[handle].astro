@@ -56,7 +56,7 @@ const lecturaProductos = await obtenerProductos(Astro.locals);
 const productos =
   lecturaProductos.estado === 'ok' ? await conStock(Astro.locals, lecturaProductos.datos ?? []) : [];
 
-marcarEtiquetas(Astro.locals, [`articulo:${handle}`, 'diario']);
+marcarEtiquetas(Astro.locals, [`articulo:${handle}`, 'diario', 'categorias']);
 
 /* "Para este método": los productos cuya guia es este articulo (el mismo
    mapa que usa la ficha, leido al reves). Disponibles primero. */
