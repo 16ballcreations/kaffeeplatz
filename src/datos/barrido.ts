@@ -17,9 +17,8 @@
  * fichero exporta SOLO un `default` con `fetch`. No tiene `scheduled`, y no se
  * puede añadir ahí porque se regenera. Hace falta un envoltorio propio que
  * reexporte el `fetch` de Astro y añada el `scheduled`:
- * `src/worker/entrada.ts` de esta misma rama. El bloque de configuración está
- * en el informe de entrega, porque `wrangler.jsonc` no se toca en este
- * trabajo.
+ * `src/worker/entrada.ts`. Está enganchado en `wrangler.dev.jsonc` (canal de
+ * pruebas); para producción, el cambio está en CLOUDFLARE.md, sin aplicar.
  *
  * LO QUE EL CRON ESCRIBE, Y LO QUE NO
  * ---------------------------------------------------------------------------

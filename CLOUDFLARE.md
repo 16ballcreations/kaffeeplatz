@@ -142,6 +142,71 @@ Para distinguirlo desde fuera, las respuestas de emergencia llevan la cabecera
 `X-KP-Origen` (`cache-vencida` o `cortesia`). Si aparece en producción, algo
 pasa aunque la tienda se vea bien.
 
+## Cron de reservas (fase 9, inventario)
+
+Las reservas de un pago en curso duran 30 minutos (sección G.2 del plan del
+panel). Cada 5 minutos, un **Cron Trigger** las caduca y devuelve esas unidades
+al catálogo; una vez al día, a las 5:00 UTC (medianoche en Colombia), comprueba
+además que la cuenta de cada producto cuadra con su historial.
+
+El Worker que genera Astro (`dist/_worker.js/index.js`) solo exporta `fetch`, y
+se regenera en cada build: no se le puede añadir el `scheduled()` que invoca el
+cron. Por eso hay un envoltorio, **`src/worker/entrada.ts`**, que importa ese
+Worker, reexporta su `fetch` **intacto** y añade `scheduled()`.
+
+**Estado: enganchado SOLO en el canal de pruebas** (`wrangler.dev.jsonc`).
+Producción (`wrangler.jsonc`) no se ha tocado.
+
+### El cambio para producción (NO aplicado)
+
+En `wrangler.jsonc`, dos cosas — `main` y un bloque `triggers` nuevo. Nada más
+cambia: `assets`, `routes` y `d1_databases` se quedan como están.
+
+```jsonc
+  // antes:  "main": "./dist/_worker.js/index.js",
+  "main": "./src/worker/entrada.ts",
+
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+```
+
+**`npm run build` tiene que ir ANTES de desplegar** (ya lo hace `npm run
+deploy`): el envoltorio importa `dist/_worker.js/index.js`, y wrangler lo empaqueta
+junto con él. Sin build previo, el despliegue falla al no encontrar ese fichero
+(falla ruidosamente, no sube nada a medias).
+
+### Cómo se comprobó (y cómo repetirlo antes de producción)
+
+```bash
+npm run build
+npx wrangler dev --local --config wrangler.dev.jsonc --test-scheduled
+# en otra terminal:
+curl "http://localhost:8787/__scheduled?cron=*/5+*+*+*+*"   # → "Ran scheduled event"
+```
+
+Comprobado el 9 oct 2026 en local:
+
+- Una reserva vencida pasa a `caducada`, `stock_reservado` baja lo que tenía y
+  queda su movimiento `reserva_caducada` (quien = `cron`). Una segunda pasada
+  no hace nada (la condición va en el `WHERE`).
+- **El sitio se sirve igual**: las 40 páginas públicas (incluidas las
+  prerenderizadas `/contacto/`, `/nosotros/`, `/cafe/`, el sitemap y los
+  assets) salen idénticas byte a byte a las del `main` de Astro, y las
+  cabeceras (caché, `Cache-Tag`, 301 de Shopify, 404, la puerta de `/admin`)
+  también.
+
+Nota: en local, `/__scheduled` ignora `?time=` y usa la hora del reloj, así que
+el cuadre diario no se puede forzar desde ahí. Usa la misma consulta que el
+aviso de la pantalla de inventario del panel, que sí se probó.
+
+### Volver atrás
+
+Quitar el bloque `triggers` y devolver `main` a `./dist/_worker.js/index.js`, y
+desplegar. El inventario sigue funcionando sin cron: la lectura descuenta solo
+las reservas vigentes y el checkout caduca las de sus variantes antes de
+reservar (G.2); lo único que se pierde es que `stock_reservado` baje solo.
+
 ## Despliegue automático (opcional)
 
 Si se quiere que cada push a `main` publique también en Cloudflare, se puede
