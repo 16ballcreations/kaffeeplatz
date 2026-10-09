@@ -1,0 +1,248 @@
+---
+/**
+ * /admin/categorias — temas del diario, categorías de productos y tipos de
+ * foto, en una sola pantalla.
+ *
+ * UNA PANTALLA Y NO TRES
+ * ===========================================================================
+ * Son tres listas cortas (5, 7 y 5 filas) que se tocan muy de vez en cuando.
+ * Tres pantallas serían tres sitios que recordar; una, con tres apartados, se
+ * recorre con el pulgar. Cada fila es un `<details>` con su propio formulario:
+ * se guarda fila a fila, y un error en una no se lleva lo escrito en otra.
+ *
+ * Las palabras son las suyas: «Temas del diario», «Categorías de productos»,
+ * «Tipos de foto» (en el código, `roles_imagen`). Ningún id a la vista.
+ */
+import Panel from '../../../layouts/Panel.astro';
+import { ruta } from '../../../datos/sitio';
+import { baseAdmin } from '../../../admin/base';
+import { redirigir } from '../../../admin/diario-pagina';
+import {
+  procesarCategorias,
+  MENSAJES_OK,
+  TOPE_DESCRIPCION,
+  type Fallo,
+} from '../../../admin/diario-categorias';
+import {
+  categoriasDelPanel,
+  rolesDelPanel,
+  type FilaCategoria,
+  type FilaRol,
+} from '../../../datos/consultas/diario-categorias';
+import '../../../styles/panel-diario.css';
+
+export const prerender = false;
+
+const forma = Astro.request.method === 'POST' ? await Astro.request.formData() : null;
+
+let categorias: FilaCategoria[] = [];
+let roles: FilaRol[] = [];
+let fallo: Fallo | null = null;
+let sinBase = false;
+
+try {
+  const db = baseAdmin(Astro.locals);
+  if (forma) {
+    const d = await procesarCategorias(db, forma, Astro.url);
+    if (d.tipo === 'redirigir') return redirigir(d.a);
+    fallo = d.fallo;
+    Astro.response.status = d.estado;
+  }
+  [categorias, roles] = await Promise.all([categoriasDelPanel(db), rolesDelPanel(db)]);
+} catch (e) {
+  console.error('[admin] categorías:', e instanceof Error ? e.message : e);
+  sinBase = true;
+  Astro.response.status = 503;
+}
+
+const ok = MENSAJES_OK[Astro.url.searchParams.get('ok') ?? ''];
+const diario = categorias.filter((c) => c.ambito === 'diario');
+const catalogo = categorias.filter((c) => c.ambito === 'producto');
+
+/** Lo que va en los campos: lo escrito si esta fila falló, si no lo de la base. */
+const valoresDe = (fila: string, n: string, o: number, d: string | null) =>
+  fallo?.fila === fila ? fallo.escrito : { nombre: n, orden: o, descripcion: d ?? '' };
+const ordenTexto = (o: number) => (Number.isFinite(o) ? String(o) : '');
+
+const SECCIONES = [
+  {
+    id: 'temas',
+    titulo: 'Temas del diario',
+    ayuda: 'Los filtros de arriba en el diario de la tienda. El número de orden decide cuál sale primero.',
+    filas: diario,
+    palabraUso: 'artículo',
+  },
+  {
+    id: 'categorias',
+    titulo: 'Categorías de productos',
+    ayuda: 'Los grupos del catálogo. El número de orden decide cuál sale primero.',
+    filas: catalogo,
+    palabraUso: 'producto',
+  },
+];
+---
+
+<Panel titulo="Categorías" seccion="diario">
+  <p class="pd-migas"><a href={ruta('/admin/diario')}>← Diario</a></p>
+  <h1 class="p-titulo">Temas, categorías y tipos de foto</h1>
+  {ok && <p class="pd-ok" role="status">{ok}</p>}
+  {
+    sinBase && (
+      <p class="p-error" role="alert">
+        La tienda no responde en este momento{forma ? ' y no se guardó nada' : ''}. Vuelve a intentarlo en un minuto.
+      </p>
+    )
+  }
+
+  {
+    SECCIONES.map((s) => (
+      <section class="p-seccion" aria-labelledby={`t-${s.id}`}>
+        <h2 class="p-seccion__titulo" id={`t-${s.id}`}>{s.titulo}</h2>
+        <p class="pd-ayuda">{s.ayuda}</p>
+        {s.id === 'categorias' && (
+          <p class="pd-nota-estado">
+            Ojo: por ahora el catálogo de la tienda sigue mostrando los nombres de siempre. Lo que
+            cambies aquí queda guardado y se verá cuando se active en la próxima entrega.
+          </p>
+        )}
+        <ul class="pd-filas">
+          {s.filas.map((c) => {
+            const fila = `categoria:${c.id}`;
+            const val = valoresDe(fila, c.nombre, c.orden, c.descripcion);
+            const conError = fallo?.fila === fila;
+            return (
+              <li id={`cat-${c.id}`}>
+                <details class="pd-fila" open={conError}>
+                  <summary>
+                    <span class="pd-fila__orden">{c.orden}</span>
+                    <span class="pd-fila__nombre">{c.nombre}</span>
+                    <span class="pd-fila__uso">
+                      {c.uso} {c.uso === 1 ? s.palabraUso : `${s.palabraUso}s`}
+                    </span>
+                  </summary>
+                  <form method="post" action={ruta('/admin/categorias')}>
+                    {conError && <p class="p-error" role="alert">{fallo!.mensaje}</p>}
+                    <input type="hidden" name="accion" value="guardar-categoria" />
+                    <input type="hidden" name="id" value={c.id} />
+                    <input type="hidden" name="visto_nombre" value={c.nombre} />
+                    <input type="hidden" name="visto_orden" value={String(c.orden)} />
+                    <input type="hidden" name="visto_descripcion" value={c.descripcion ?? ''} />
+                    <div class="pd-doble">
+                      <label class="p-campo">
+                        <span class="p-campo__etiqueta">Nombre</span>
+                        <input type="text" name="nombre" value={val.nombre} required />
+                      </label>
+                      <label class="p-campo pd-corto">
+                        <span class="p-campo__etiqueta">Orden</span>
+                        <input type="number" name="orden" value={ordenTexto(val.orden)} min="0" max="999" step="1" inputmode="numeric" required />
+                      </label>
+                    </div>
+                    <label class="p-campo">
+                      <span class="p-campo__etiqueta">Descripción</span>
+                      <textarea name="descripcion" rows="2">{val.descripcion}</textarea>
+                      <span class="pd-ayuda">Opcional. Hasta {TOPE_DESCRIPCION} letras.</span>
+                    </label>
+                    <button class="v-boton v-boton--oro" type="submit">Guardar</button>
+                  </form>
+                </details>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+    ))
+  }
+
+  <section class="p-seccion" aria-labelledby="t-roles" id="roles">
+    <h2 class="p-seccion__titulo" id="t-roles">Tipos de foto</h2>
+    <p class="pd-ayuda">
+      Lo que muestra cada foto de un producto (armado, desarmado, en uso…). El orden es el que se
+      sugiere al ordenar las fotos de un color. Solo se puede borrar un tipo que ninguna foto use.
+    </p>
+    <ul class="pd-filas">
+      {
+        roles.map((r) => {
+          const fila = `rol:${r.id}`;
+          const val = valoresDe(fila, r.nombre, r.orden, null);
+          const conError = fallo?.fila === fila;
+          return (
+            <li id={`rol-${r.id}`}>
+              <details class="pd-fila" open={conError}>
+                <summary>
+                  <span class="pd-fila__orden">{r.orden}</span>
+                  <span class="pd-fila__nombre">{r.nombre}</span>
+                  <span class="pd-fila__uso">{r.uso} {r.uso === 1 ? 'foto' : 'fotos'}</span>
+                </summary>
+                {conError && <p class="p-error" role="alert">{fallo!.mensaje}</p>}
+                <form method="post" action={ruta('/admin/categorias')}>
+                  <input type="hidden" name="accion" value="guardar-rol" />
+                  <input type="hidden" name="id" value={r.id} />
+                  <input type="hidden" name="visto_nombre" value={r.nombre} />
+                  <input type="hidden" name="visto_orden" value={String(r.orden)} />
+                  <div class="pd-doble">
+                    <label class="p-campo">
+                      <span class="p-campo__etiqueta">Nombre</span>
+                      <input type="text" name="nombre" value={val.nombre} required />
+                    </label>
+                    <label class="p-campo pd-corto">
+                      <span class="p-campo__etiqueta">Orden</span>
+                      <input type="number" name="orden" value={ordenTexto(val.orden)} min="0" max="999" step="1" inputmode="numeric" required />
+                    </label>
+                  </div>
+                  <button class="v-boton v-boton--oro" type="submit">Guardar</button>
+                </form>
+                {
+                  r.uso === 0 ? (
+                    <form method="post" action={ruta('/admin/categorias')} class="pd-borrar">
+                      <input type="hidden" name="accion" value="borrar-rol" />
+                      <input type="hidden" name="id" value={r.id} />
+                      <input type="hidden" name="visto_nombre" value={r.nombre} />
+                      <input type="hidden" name="visto_orden" value={String(r.orden)} />
+                      <label class="pd-radio">
+                        <input type="checkbox" name="confirmar" value="si" required />
+                        <span>Sí, quiero borrar «{r.nombre}»</span>
+                      </label>
+                      <button class="v-boton v-boton--linea" type="submit">Borrar este tipo</button>
+                    </form>
+                  ) : (
+                    <p class="pd-ayuda">
+                      No se puede borrar: {r.uso === 1 ? 'una foto lo usa' : `${r.uso} fotos lo usan`}.
+                    </p>
+                  )
+                }
+              </details>
+            </li>
+          );
+        })
+      }
+    </ul>
+
+    <details class="pd-fila pd-fila--nueva" open={fallo?.fila === 'rol-nuevo'}>
+      <summary>Añadir un tipo de foto</summary>
+      <form method="post" action={ruta('/admin/categorias')}>
+        {fallo?.fila === 'rol-nuevo' && <p class="p-error" role="alert">{fallo.mensaje}</p>}
+        <input type="hidden" name="accion" value="crear-rol" />
+        <div class="pd-doble">
+          <label class="p-campo">
+            <span class="p-campo__etiqueta">Nombre</span>
+            <input type="text" name="nombre" value={fallo?.fila === 'rol-nuevo' ? fallo.escrito.nombre : ''} required placeholder="Por ejemplo: Despiece" />
+          </label>
+          <label class="p-campo pd-corto">
+            <span class="p-campo__etiqueta">Orden</span>
+            <input
+              type="number"
+              name="orden"
+              value={fallo?.fila === 'rol-nuevo' ? ordenTexto(fallo.escrito.orden) : String((roles.at(-1)?.orden ?? 0) + 1)}
+              min="0"
+              max="999"
+              step="1"
+              inputmode="numeric"
+              required
+            />
+          </label>
+        </div>
+        <button class="v-boton v-boton--oro" type="submit">Añadir</button>
+      </form>
+    </details>
+  </section>
+</Panel>

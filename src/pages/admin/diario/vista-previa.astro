@@ -1,0 +1,72 @@
+---
+/**
+ * POST /admin/diario/vista-previa — el artículo tal como saldría en la tienda,
+ * SIN guardar nada.
+ *
+ * EL MISMO RENDER, NO UNO PARECIDO
+ * ===========================================================================
+ * Usa el layout de la tienda (`Base.astro`), la misma pieza del artículo que
+ * `/diario/<handle>` (`_ArticuloCompleto.astro`) y la misma conversión del
+ * texto que el guardado (`cuerpoAHtml`, saneador incluido). Si la vista previa
+ * se ve bien, el artículo publicado se ve igual: no hay una segunda plantilla
+ * que pueda llevarle la contraria.
+ *
+ * Llega por el botón «Vista previa» del formulario (`formaction` +
+ * `formtarget="_blank"`), sin JavaScript. Es POST porque lleva el texto entero
+ * (un GET lo pondría en la URL y en el historial), y por ser POST pasa por la
+ * comprobación de `Origin` de la puerta igual que un guardado. No escribe en
+ * la base. Sigue siendo una ruta de /admin: exige sesión, sale con `no-store`
+ * y `noindex` (middleware), y no la ve nadie más que ella.
+ *
+ * NO VALIDA, COMPLETA
+ * ---------------------------------------------------------------------------
+ * Una vista previa sirve justo cuando el artículo está a medias. En vez de
+ * negarse por un resumen vacío, rellena lo mínimo para poder pintar (título
+ * provisional, fecha de hoy) y pinta. La portada solo si es una de las que se
+ * pueden elegir: lo que llega del formulario no se usa como ruta sin más.
+ */
+import Base from '../../../layouts/Base.astro';
+import ArticuloCompleto from '../../diario/_ArticuloCompleto.astro';
+import { aFecha } from '../../../datos/formas';
+import { leerFormulario, hoyEnColombia, AUTOR_POR_DEFECTO } from '../../../admin/diario-validar';
+import { cuerpoAHtml } from '../../../admin/diario-markdown';
+import { portadasDisponibles } from '../../../admin/diario-portadas';
+import { redirigir } from '../../../admin/diario-pagina';
+import '../../../styles/panel-diario.css';
+
+export const prerender = false;
+
+/* Un GET aquí (un marcador, recargar la pestaña) no tiene nada que enseñar. */
+if (Astro.request.method !== 'POST') return redirigir('/admin/diario');
+
+const v = leerFormulario(await Astro.request.formData());
+const fecha = /^\d{4}-\d{2}-\d{2}$/.test(v.fecha) && !Number.isNaN(aFecha(v.fecha).getTime())
+  ? v.fecha
+  : hoyEnColombia();
+const portadas = new Set(portadasDisponibles().map((p) => p.clave));
+
+const articulo = {
+  titulo: v.titulo || 'Sin título todavía',
+  fecha: aFecha(fecha),
+  autor: v.autor || AUTOR_POR_DEFECTO,
+  resumen: v.resumen,
+  ...(v.imagen && portadas.has(v.imagen) ? { imagen: v.imagen } : {}),
+  cuerpoHtml: cuerpoAHtml(v.cuerpoMd),
+};
+---
+
+<Base
+  titulo={`Vista previa: ${articulo.titulo}`}
+  descripcion={articulo.resumen.slice(0, 160) || articulo.titulo}
+  camino={`/diario/${v.handle || 'vista-previa'}`}
+  migas={[
+    { nombre: 'Diario', href: '/diario' },
+    { nombre: articulo.titulo, href: `/diario/${v.handle || 'vista-previa'}` },
+  ]}
+>
+  <div class="pd-previa" role="note">
+    <strong>Vista previa.</strong> Así se verá en la tienda. Todavía no está guardado: cierra esta
+    pestaña y pulsa «Guardar» en el panel.
+  </div>
+  <ArticuloCompleto articulo={articulo} />
+</Base>

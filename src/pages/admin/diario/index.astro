@@ -1,0 +1,115 @@
+---
+/**
+ * /admin/diario — los artículos, en tres pestañas: publicados, borradores y
+ * archivados.
+ *
+ * PESTAÑAS QUE SON ENLACES, NO JAVASCRIPT
+ * ===========================================================================
+ * Cada pestaña es `?estado=...` y la página consulta solo esa. Funciona sin
+ * JavaScript, el botón «atrás» del teléfono vuelve a la pestaña donde estaba,
+ * y no se traen los artículos de las tres listas para enseñar una.
+ *
+ * Los borradores van ordenados por último cambio, no por fecha del artículo:
+ * lo que se busca en esa pestaña es «lo que estaba escribiendo ayer».
+ */
+import Panel from '../../../layouts/Panel.astro';
+import { ruta } from '../../../datos/sitio';
+import { miniatura } from '../../../datos/imagenes';
+import { aFecha } from '../../../datos/formas';
+import { baseAdmin } from '../../../admin/base';
+import {
+  articulosDelPanel,
+  cuentasPorEstado,
+  temasDelDiario,
+  type EstadoLista,
+  type FilaLista,
+} from '../../../datos/consultas/diario-panel';
+import '../../../styles/panel-diario.css';
+
+export const prerender = false;
+
+const PESTANAS: { clave: EstadoLista; etiqueta: string; vacio: string }[] = [
+  { clave: 'publicados', etiqueta: 'Publicados', vacio: 'Todavía no hay artículos publicados.' },
+  { clave: 'borradores', etiqueta: 'Borradores', vacio: 'No hay borradores. Lo que empieces y no publiques aparecerá aquí.' },
+  { clave: 'archivados', etiqueta: 'Archivados', vacio: 'No hay artículos archivados.' },
+];
+
+const pedido = Astro.url.searchParams.get('estado');
+const estado: EstadoLista = PESTANAS.some((p) => p.clave === pedido) ? (pedido as EstadoLista) : 'publicados';
+
+let filas: FilaLista[] = [];
+let cuentas: Record<EstadoLista, number> | null = null;
+let nombreTema = new Map<string, string>();
+let fallo = false;
+
+try {
+  const db = baseAdmin(Astro.locals);
+  const [f, c, t] = await Promise.all([articulosDelPanel(db, estado), cuentasPorEstado(db), temasDelDiario(db)]);
+  filas = f;
+  cuentas = c;
+  nombreTema = new Map(t.map((x) => [x.id, x.nombre]));
+} catch (e) {
+  /* Nunca un 500 en blanco (hallazgo 3 de A.6): se dice en pantalla. */
+  console.error('[admin] lista del diario:', e instanceof Error ? e.message : e);
+  fallo = true;
+}
+
+const legible = (iso: string) =>
+  aFecha(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const pestana = PESTANAS.find((p) => p.clave === estado)!;
+---
+
+<Panel titulo="Diario" seccion="diario">
+  <div class="pd-cabeza">
+    <h1 class="p-titulo">Diario</h1>
+    <a class="v-boton v-boton--oro" href={ruta('/admin/diario/nuevo')}>Escribir un artículo</a>
+  </div>
+
+  <nav class="pd-pestanas" aria-label="Estado de los artículos">
+    {
+      PESTANAS.map((p) => (
+        <a
+          href={ruta(`/admin/diario?estado=${p.clave}`)}
+          aria-current={p.clave === estado ? 'page' : undefined}
+        >
+          {p.etiqueta}
+          {cuentas && <span class="pd-cuenta">{cuentas[p.clave]}</span>}
+        </a>
+      ))
+    }
+  </nav>
+
+  {
+    fallo ? (
+      <p class="p-error" role="alert">
+        No se pudieron cargar los artículos en este momento. Vuelve a intentarlo en un minuto.
+      </p>
+    ) : filas.length === 0 ? (
+      <p class="p-entradilla">{pestana.vacio}</p>
+    ) : (
+      <ul class="pd-lista">
+        {filas.map((a) => (
+          <li>
+            <a class="pd-item" href={ruta(`/admin/diario/${a.id}`)}>
+              {a.imagen ? (
+                <img src={miniatura(a.imagen)} alt="" width="64" height="64" loading="lazy" decoding="async" />
+              ) : (
+                <span class="pd-sin-foto" aria-hidden="true">Sin foto</span>
+              )}
+              <span class="pd-item__texto">
+                <span class="pd-item__titulo">{a.titulo || 'Sin título'}</span>
+                <span class="pd-item__meta">
+                  {legible(a.fecha)} · {nombreTema.get(a.categoria) ?? 'Sin tema'}
+                </span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <p class="pd-pie-enlace">
+    <a href={ruta('/admin/categorias')}>Temas del diario, categorías y tipos de foto</a>
+  </p>
+</Panel>

@@ -1,0 +1,82 @@
+---
+/**
+ * /admin/diario/nuevo — escribir un artículo.
+ *
+ * GET pinta el formulario vacío (como borrador, con la fecha de hoy en
+ * Colombia y el tema «Otros»). POST lo valida y, si está bien, crea y redirige
+ * con 303 a la página de edición del artículo nuevo: ahí ya tiene «Vista
+ * previa», «Archivar» y el enlace a la tienda, y recargar no lo crea dos veces.
+ *
+ * Nace como BORRADOR salvo que ella marque «Publicado»: equivocarse hacia el
+ * borrador no se ve en la tienda; equivocarse hacia publicado, sí.
+ */
+import Panel from '../../../layouts/Panel.astro';
+import { ruta } from '../../../datos/sitio';
+import { baseAdmin } from '../../../admin/base';
+import {
+  hoyEnColombia,
+  leerFormulario,
+  type ValoresArticulo,
+  type Errores,
+} from '../../../admin/diario-validar';
+import { portadasDisponibles } from '../../../admin/diario-portadas';
+import {
+  procesarAlta,
+  redirigir,
+  valoresNuevos,
+  temaPorDefecto,
+  ERROR_AL_GUARDAR,
+  ERROR_AL_CARGAR,
+} from '../../../admin/diario-pagina';
+import { temasDelDiario, type Tema } from '../../../datos/consultas/diario-panel';
+import { CATEGORIAS_DIARIO } from '../../../datos/categorias';
+import Formulario from '../../../admin/diario-formulario.astro';
+import '../../../styles/panel-diario.css';
+
+export const prerender = false;
+
+/* El formulario se lee ANTES de tocar la base: si D1 falla, lo escrito tiene
+   que poder volver a la pantalla. Perder un artículo entero por un mal rato de
+   la base es lo peor que puede hacer esta página. */
+const forma = Astro.request.method === 'POST' ? await Astro.request.formData() : null;
+
+/* Si no se pueden leer los temas de D1, los de categorias.ts: el formulario
+   se pinta igual y el texto no se pierde. */
+let temas: Tema[] = CATEGORIAS_DIARIO;
+let valores: ValoresArticulo = forma
+  ? leerFormulario(forma)
+  : valoresNuevos(hoyEnColombia(), temaPorDefecto(temas));
+let errores: Errores = {};
+
+try {
+  const db = baseAdmin(Astro.locals);
+  temas = await temasDelDiario(db);
+  if (!forma) valores = valoresNuevos(hoyEnColombia(), temaPorDefecto(temas));
+  else {
+    /* `Origin` ya lo comprobó la puerta (src/admin/puerta.ts): un POST que
+       llega aquí es de nuestro propio sitio. */
+    const d = await procesarAlta(db, forma, Astro.url);
+    if (d.tipo === 'redirigir') return redirigir(d.a);
+    valores = d.valores;
+    errores = d.errores;
+    Astro.response.status = d.estado;
+  }
+} catch (e) {
+  console.error('[admin] alta de artículo:', e instanceof Error ? e.message : e);
+  errores = { general: forma ? ERROR_AL_GUARDAR : ERROR_AL_CARGAR };
+  Astro.response.status = 503;
+}
+---
+
+<Panel titulo="Artículo nuevo" seccion="diario">
+  <p class="pd-migas"><a href={ruta('/admin/diario?estado=borradores')}>← Diario</a></p>
+  <h1 class="p-titulo">Artículo nuevo</h1>
+  <Formulario
+    accion="/admin/diario/nuevo"
+    valores={valores}
+    errores={errores}
+    temas={temas}
+    portadas={portadasDisponibles()}
+    handleBloqueado={false}
+  />
+</Panel>
