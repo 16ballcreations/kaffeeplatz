@@ -49,15 +49,34 @@
  * Ademas es el patron que ya usa FiltrosCategoria en esta misma propuesta:
  * un solo vocabulario de interaccion en todo el sitio.
  *
- * VINCULO IMAGEN <-> VARIANTE (preparado, no inventado)
+ * VINCULO IMAGEN <-> VARIANTE, Y EL FILTRO POR COLOR (fase 6, B.7)
  * ---------------------------------------------------------------------------
  * Cada miniatura emite `data-variante` si su imagen trae el campo `variante`
- * (ver el comentario largo en src/content.config.ts). Hoy NINGUN producto lo
- * trae, asi que el atributo no se imprime y el vinculo queda inerte.
- * El dia que se rellene, el script lo activa solo en las dos direcciones:
- * miniatura -> variante y variante -> foto grande.
+ * (el TITULO, que la capa de datos resuelve desde `imagenes.variante_id`).
  * Los vinculos que apunten a una variante inexistente se ignoran aqui mismo,
  * en el servidor: mas vale una galeria sin vinculo que un vinculo roto.
+ *
+ * El cliente lo pidio asi: «al elegir un color, las miniaturas pasan a ser las
+ * de ESE color». Se hace FILTRANDO, no reconstruyendo: el HTML trae TODAS las
+ * miniaturas de todos los colores y el script esconde las que no tocan. Asi:
+ *   - el marcado no cambia (la decision de arriba sigue en pie) y sin JS se
+ *     ven todas las fotos, que es un buen estado de reposo;
+ *   - `data-indice` sigue siendo la posicion fija de cada foto, de modo que
+ *     la seleccion por indice no se rompe al esconder unas cuantas.
+ * Que se ve con un color elegido: SUS fotos y las del producto en general (un
+ * detalle, el empaque: valen para cualquier color). Si ese color no tiene
+ * ninguna foto propia no se esconde nada: «una variante sin fotos muestra las
+ * del producto» (B.7), nunca un hueco.
+ *
+ * El detalle que se escapa si no se piensa antes: la miniatura ACTIVA puede
+ * quedar escondida al cambiar de color. Por eso filtrar siempre termina con
+ * una foto visible elegida, y `aria-pressed` y el «Foto N de M» del anuncio
+ * cuentan solo las visibles: nunca hay un boton pulsado que no se ve.
+ *
+ * Quien avisa del cambio de color es `src/scripts/ficha-producto.ts`, con el
+ * evento `kp:variante` en `document`. Un evento y no una llamada directa: el
+ * script de la ficha no conoce las entrañas de la galeria ni al reves; solo
+ * se dicen «ha cambiado el color».
  */
 import { fuentes, miniatura } from '../datos/imagenes';
 
@@ -185,7 +204,8 @@ const f0 = fuentes(principal?.src ?? '');
    *
    * Recorre todas las galerias de la pagina (hoy solo hay una por ficha, pero
    * el script no depende de ello) y no reconstruye DOM: cambia `src`/`alt` de
-   * la imagen grande y alterna `aria-pressed` en las miniaturas.
+   * la imagen grande, alterna `aria-pressed` en las miniaturas y, si hay fotos
+   * por color, esconde las que no son del color elegido (ver la cabecera).
    */
   for (const galeria of document.querySelectorAll<HTMLElement>('[data-kp-galeria]')) {
     const grande = galeria.querySelector<HTMLImageElement>('[data-kp-galeria-img]');
@@ -213,12 +233,10 @@ const f0 = fuentes(principal?.src ?? '');
       m.setAttribute('aria-pressed', i === 0 ? 'true' : 'false');
     });
 
-    /* La lista de variantes de la ficha. Puede no existir (producto sin
-       opciones) y hoy el vinculo esta inerte porque ninguna imagen trae
-       `data-variante`. Ver content.config.ts. */
-    const itemsVariante = Array.from(
-      document.querySelectorAll<HTMLElement>('[data-kp-variante]')
-    );
+    /* Las miniaturas que se ven ahora. Sin colores, o con un color sin fotos
+       propias, son todas. El anuncio «Foto N de M» cuenta SOLO estas: contar
+       las escondidas diria «foto 4 de 9» cuando en pantalla hay tres. */
+    let visibles: HTMLElement[] = minis;
 
     const seleccionar = (indice: number, anunciar: boolean) => {
       const mini = minis[indice];
@@ -241,18 +259,11 @@ const f0 = fuentes(principal?.src ?? '');
         m.setAttribute('aria-pressed', String(m === mini));
       }
 
-      /* VINCULO CON LA VARIANTE. Inerte mientras `data-variante` no exista. */
-      const variante = mini.dataset.variante;
-      if (variante && itemsVariante.length) {
-        for (const li of itemsVariante) {
-          li.setAttribute('data-kp-variante-activa', String(li.dataset.varianteTitulo === variante));
-        }
-      }
-
       /* El anuncio solo en interaccion real: en la carga inicial no ha
          cambiado nada que merezca interrumpir al lector. */
       if (anunciar && estado) {
-        estado.textContent = `Foto ${indice + 1} de ${minis.length}. ${alt || ''}`.trim();
+        const n = visibles.indexOf(mini) + 1 || indice + 1;
+        estado.textContent = `Foto ${n} de ${visibles.length}. ${alt || ''}`.trim();
       }
     };
 
@@ -276,28 +287,52 @@ const f0 = fuentes(principal?.src ?? '');
       seleccionar(Number(mini.dataset.indice), true);
     });
 
-    /* SENTIDO INVERSO: elegir variante -> cambiar la foto grande.
-       Tambien inerte hoy. Solo se engancha si ALGUNA imagen trae vinculo, para
-       no volver clicables unas variantes que no harian nada. */
-    const hayVinculo = minis.some((m) => m.dataset.variante);
-    if (hayVinculo) {
-      for (const li of itemsVariante) {
-        const titulo = li.dataset.varianteTitulo;
-        if (!titulo) continue;
-        const i = minis.findIndex((m) => m.dataset.variante === titulo);
-        if (i < 0) continue;
-        li.setAttribute('data-kp-variante-clicable', 'true');
-        li.tabIndex = 0;
-        li.setAttribute('role', 'button');
-        li.addEventListener('click', () => seleccionar(i, true));
-        li.addEventListener('keydown', (e) => {
-          if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
-          e.preventDefault();
-          seleccionar(i, true);
-        });
+    /* EL FILTRO POR COLOR. Inerte si ninguna foto trae vinculo: los 21
+       productos de una sola foto y los que no tienen fotos por color no
+       pasan nunca por aqui. */
+    if (!minis.some((m) => m.dataset.variante)) continue;
+
+    /**
+     * Deja visibles las miniaturas del color `titulo` (mas las del producto)
+     * y garantiza que la foto activa sea una de ellas.
+     *
+     * `cambio`: lo eligio la persona en el selector. Entonces se le enseña la
+     * primera foto PROPIA de ese color (la portada del color, que el panel
+     * pone primera), y se anuncia. En la carga, o cuando el cambio viene de
+     * pulsar una miniatura, se respeta la foto que ya esta a la vista si sigue
+     * visible: cambiarla seria mover la imagen grande sin que nadie lo pida.
+     */
+    const filtrar = (titulo: string | undefined, cambio: boolean) => {
+      const propias = minis.filter((m) => m.dataset.variante === titulo);
+      visibles = propias.length
+        ? minis.filter((m) => !m.dataset.variante || m.dataset.variante === titulo)
+        : minis;
+      for (const m of minis) {
+        (m.parentElement as HTMLElement).hidden = !visibles.includes(m);
       }
-      /* Estado inicial coherente de la lista de variantes. */
-      seleccionar(0, false);
-    }
+      /* Con una sola miniatura visible, la fila no es un indice de nada: se
+         esconde, igual que en un producto de una sola foto. `style` y no
+         `hidden` porque la hoja de estilos le da `display: flex` a la lista y
+         eso le gana al atributo. */
+      lista.style.display = visibles.length < 2 ? 'none' : '';
+
+      const activa = minis.find((m) => m.getAttribute('aria-pressed') === 'true');
+      const sigue = activa && visibles.includes(activa) ? activa : undefined;
+      const destino = cambio ? (propias[0] ?? sigue ?? visibles[0]) : (sigue ?? propias[0] ?? visibles[0]);
+      if (destino && destino !== activa) seleccionar(Number(destino.dataset.indice), cambio);
+    };
+
+    document.addEventListener('kp:variante', (e) => {
+      /* `origen`: 'selector' (la persona eligio el color), 'galeria' (pulso
+         una miniatura de otro color) o 'inicio' (la ficha arrancando). Solo
+         el primero cambia la foto por la del color y lo anuncia. */
+      const d = (e as CustomEvent<{ titulo?: string; origen?: string }>).detail ?? {};
+      filtrar(d.titulo, d.origen === 'selector');
+    });
+
+    /* Estado inicial: el color que ya viene marcado en el HTML. No depende de
+       que el script de la ficha haya corrido antes o despues que este. */
+    const marcado = document.querySelector<HTMLInputElement>('input[name="variante"]:checked');
+    filtrar(marcado?.value, false);
   }
 </script>

@@ -226,11 +226,15 @@ export async function todosLosProductos(db: BaseD1): Promise<Producto[]> {
       )
       .bind(...ids)
       .all<FilaOpcion>(),
+    /* `por_revisar = 0`: una foto recien subida cuya variante y rol solo
+       estan SUGERIDOS no sale en la tienda hasta que la duena los confirma
+       (migracion 0006). Ver planes/kaffeeplatz-panel-admin.md, convencion
+       de nombres: el panel propone, nunca decide solo. */
     db
       .prepare(
         `SELECT i.producto_id, i.clave, i.alt, v.titulo AS variante_titulo
            FROM imagenes i LEFT JOIN variantes v ON v.id = i.variante_id
-          WHERE i.producto_id IN (${marcas})
+          WHERE i.producto_id IN (${marcas}) AND i.por_revisar = 0
           ORDER BY i.producto_id, i.orden, i.id`,
       )
       .bind(...ids)
@@ -269,7 +273,7 @@ export async function productoPorHandle(db: BaseD1, handle: string): Promise<Pro
       .prepare(
         `SELECT i.producto_id, i.clave, i.alt, v.titulo AS variante_titulo
            FROM imagenes i LEFT JOIN variantes v ON v.id = i.variante_id
-          WHERE i.producto_id = ? ORDER BY i.orden, i.id`,
+          WHERE i.producto_id = ? AND i.por_revisar = 0 ORDER BY i.orden, i.id`,
       )
       .bind(fila.id)
       .all<FilaImagen>(),

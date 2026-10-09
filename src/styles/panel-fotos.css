@@ -1,0 +1,382 @@
+/**
+ * panel-fotos.css — las pantallas de fotos del panel (fase 6).
+ *
+ * Aparte de `panel-formas.css` por el mismo motivo que ese se separó de
+ * `panel.css`: cada fichero se lee entero sin los otros, y esto solo lo cargan
+ * las dos páginas de `/admin/fotos` (lo importan ellas, no el layout).
+ *
+ * Usa los tokens de `panel.css` y `v2.css`; no redefine ninguno.
+ *
+ * PENSADO PRIMERO A 375 PX: una tarjeta por fila, los controles a 44 px de
+ * alto (`--p-toque`) y nada que dependa de pasar el ratón por encima.
+ */
+
+/* --- Sin JS / con JS ------------------------------------------------------ */
+/* `f-con-js` lo pone fotos-cliente-subir.ts en <html> al arrancar. */
+.f-con-js [data-f-sin-js] {
+  display: none;
+}
+.f-aplicar {
+  display: none;
+}
+.f-con-js .f-aplicar {
+  display: flex;
+}
+
+.f-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- Comunes --------------------------------------------------------------- */
+.f-migas {
+  margin-bottom: 0.5rem;
+  font-size: var(--v-t-peq);
+}
+.f-migas a {
+  color: var(--v-tinta-2);
+}
+
+.f-ok {
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--v-linea-oro);
+  border-radius: var(--v-r-mini);
+  font-size: var(--v-t-peq);
+}
+
+.f-etiqueta {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-pildora);
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-2);
+  white-space: nowrap;
+}
+.f-etiqueta--oro {
+  border-color: var(--v-linea-oro);
+  color: var(--v-oro);
+}
+
+.f-nota {
+  margin: 0 0 0.75rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+  line-height: 1.5;
+}
+
+.f-boton {
+  min-height: var(--p-toque);
+  min-width: var(--p-toque);
+  padding: 0.4rem 0.8rem;
+  background: var(--p-tarjeta-2);
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta);
+  font: inherit;
+  font-size: var(--v-t-peq);
+  cursor: pointer;
+}
+.f-boton:hover,
+.f-boton:focus-visible {
+  border-color: var(--v-oro);
+}
+.f-boton:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 1px;
+}
+.f-boton:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.f-boton--peligro {
+  color: var(--p-aviso);
+}
+
+/* --- Lista de productos ---------------------------------------------------- */
+.f-lista {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0 0;
+}
+.f-lista__fila {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta);
+  text-decoration: none;
+}
+.f-lista__fila:hover,
+.f-lista__fila:focus-visible {
+  border-color: var(--v-linea-oro);
+}
+.f-lista__fila--pendiente {
+  border-left: 3px solid var(--v-oro);
+}
+.f-lista__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-weight: 500;
+}
+.f-lista__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+.f-lista__hueco {
+  font-size: var(--v-t-micro);
+  color: var(--v-oro);
+}
+
+/* --- Huecos y subida ------------------------------------------------------- */
+.f-huecos {
+  list-style: none;
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 1.25rem;
+  border: 1px solid var(--v-linea-oro);
+  border-radius: var(--v-r-mini);
+  font-size: var(--v-t-peq);
+  line-height: 1.6;
+}
+
+.f-subida {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.f-soltar {
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.5rem 1rem;
+  border: 1.5px dashed var(--v-linea-2);
+  border-radius: var(--v-r-sup);
+  text-align: center;
+  cursor: pointer;
+}
+.f-soltar[data-encima],
+.f-soltar:focus-within {
+  border-color: var(--v-oro);
+  background: var(--p-tarjeta);
+}
+.f-soltar__nota {
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+}
+/* El input ocupa la zona entera: tocarla en el celular abre la galería, y
+   sigue siendo el control real (foco, teclado, lector de pantalla). */
+.f-soltar input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.f-progreso {
+  display: grid;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+}
+.f-progreso__fila {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.75rem;
+  align-items: center;
+  font-size: var(--v-t-peq);
+}
+.f-progreso__nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.f-progreso progress {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 6px;
+  accent-color: var(--v-oro);
+}
+.f-progreso__estado {
+  color: var(--v-tinta-2);
+}
+.f-progreso__fila[data-estado='ok'] .f-progreso__estado {
+  color: var(--v-oro);
+}
+.f-progreso__fila[data-estado='error'] .f-progreso__estado {
+  color: var(--p-aviso);
+}
+
+.f-ayuda {
+  margin-top: 1rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+.f-ayuda summary {
+  min-height: var(--p-toque);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.f-ayuda code {
+  margin-right: 0.35rem;
+  word-break: break-all;
+}
+
+/* --- Rejilla de fotos ------------------------------------------------------ */
+.f-grupo {
+  margin-top: 2rem;
+}
+.f-cuenta {
+  margin-left: 0.35rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+}
+
+.f-fotos {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.f-foto {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 0.85rem;
+  padding: 0.85rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-mini);
+}
+.f-foto[draggable='true'] {
+  cursor: grab;
+}
+.f-foto__img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  background: var(--v-crema);
+  border-radius: var(--v-r-mini);
+}
+.f-foto__cuerpo {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.f-foto__marcas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin: 0;
+}
+.f-foto__marcas [hidden] {
+  display: none;
+}
+.f-foto__nombre {
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+  overflow-wrap: anywhere;
+}
+
+.f-foto__campos {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+.f-campo {
+  display: grid;
+  gap: 0.25rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-2);
+}
+.f-campo--ancho {
+  grid-column: 1 / -1;
+}
+.f-campo select,
+.f-campo input {
+  width: 100%;
+  min-width: 0;
+}
+.f-campo select,
+.f-campo input,
+.f-aplicar select,
+.f-aplicar input {
+  min-height: var(--p-toque);
+  padding: 0.4rem 0.6rem;
+  background: var(--p-tarjeta-2);
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta);
+  font: inherit;
+  /* 16 px: por debajo, Safari en iPhone hace zoom al enfocar. */
+  font-size: 1rem;
+}
+.f-campo :focus-visible,
+.f-aplicar :focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 1px;
+}
+
+.f-aplicar {
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+.f-aplicar input {
+  width: 4.5rem;
+}
+
+.f-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.f-nota--pie {
+  margin-top: 1.5rem;
+}
+.f-guardar {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  padding: 0.75rem 0;
+  background: var(--p-fondo);
+  border-top: 1px solid var(--p-linea);
+}
+.f-guardar .v-boton {
+  width: 100%;
+  justify-content: center;
+  min-height: var(--p-toque);
+}
+
+/* A 375 px la miniatura pasa arriba y el formulario usa todo el ancho. */
+@media (max-width: 30rem) {
+  .f-foto {
+    grid-template-columns: 1fr;
+  }
+  .f-foto__img {
+    width: 100%;
+    height: 120px;
+  }
+}
