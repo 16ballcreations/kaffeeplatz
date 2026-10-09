@@ -99,12 +99,6 @@ const SECCIONES = [
       <section class="p-seccion" aria-labelledby={`t-${s.id}`}>
         <h2 class="p-seccion__titulo" id={`t-${s.id}`}>{s.titulo}</h2>
         <p class="pd-ayuda">{s.ayuda}</p>
-        {s.id === 'categorias' && (
-          <p class="pd-nota-estado">
-            Ojo: por ahora el catálogo de la tienda sigue mostrando los nombres de siempre. Lo que
-            cambies aquí queda guardado y se verá cuando se active en la próxima entrega.
-          </p>
-        )}
         <ul class="pd-filas">
           {s.filas.map((c) => {
             const fila = `categoria:${c.id}`;

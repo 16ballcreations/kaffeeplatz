@@ -218,6 +218,19 @@
   .v-herramientas__ajustes {
     justify-content: space-between;
   }
+  /* El selector de orden NO puede imponer su ancho: con el texto mas largo
+     ("Precio: menor a mayor") medía 202px y, junto al interruptor, empujaba
+     la fila a 386px en una pantalla de 375. Se deja encoger; el texto
+     elegido se recorta con puntos suspensivos en vez de desbordar. */
+  .v-selector {
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  .v-selector select {
+    min-width: 0;
+    max-width: 100%;
+    text-overflow: ellipsis;
+  }
 }
 
 .v-rejilla {

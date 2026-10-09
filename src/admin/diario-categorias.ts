@@ -23,6 +23,14 @@
 import type { BaseAdmin } from './base';
 import { aHandle } from './diario-validar';
 import { invalidarRutas } from './diario-cache';
+
+/** Los articulos publicados, solo su handle: para invalidar sus copias. */
+async function handlesDelDiario(db: BaseAdmin): Promise<string[]> {
+  const r = await db
+    .prepare("SELECT handle FROM articulos WHERE publicado = 1 AND archivado_en IS NULL")
+    .all<{ handle: string }>();
+  return r.results.map((f) => f.handle);
+}
 import { PREFIJO_DIARIO } from '../datos/categorias';
 import {
   guardarCategoria,
@@ -108,7 +116,14 @@ export async function procesarCategorias(
          producto lo pintan en las migas, así que van también. */
       const caminos = id.startsWith(PREFIJO_DIARIO)
         ? ['/diario']
-        : ['/', '/catalogo', ...(await productosDeCategoria(db, id)).map((h) => `/producto/${h}`)];
+        : [
+            '/',
+            '/catalogo',
+            ...(await productosDeCategoria(db, id)).map((h) => `/producto/${h}`),
+            /* Los articulos del diario pintan tarjetas de producto con su
+               categoria ("Para este metodo"): tambien guardan el nombre. */
+            ...(await handlesDelDiario(db)).map((h) => `/diario/${h}`),
+          ];
       await invalidarRutas(origen, caminos);
     }
     return { tipo: 'redirigir', a: `${base}?ok=${esRol ? 'rol' : 'categoria'}#${esRol ? 'rol' : 'cat'}-${encodeURIComponent(id)}` };
