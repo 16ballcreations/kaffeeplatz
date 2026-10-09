@@ -197,7 +197,10 @@ Basic Auth: el porqué está en B.5 del plan y en la cabecera de
 
 ### La clave
 
-La clave **no se guarda en ningún sitio**; lo que se guarda es su hash PBKDF2.
+La clave **no se guarda en ningún sitio**; lo que se guarda es su hash PBKDF2
+(SHA-256, **100.000 iteraciones**). No más: Cloudflare Workers rechaza PBKDF2 por
+encima de 100.000, y un hash con más no se podría comprobar nunca en el Worker,
+aunque Node lo genere sin quejarse.
 
 ```bash
 npm run hash-clave               # genera una clave al azar y su hash
@@ -211,10 +214,23 @@ lo hace solo):
 npx wrangler secret put ADMIN_CLAVE_HASH
 ```
 
-En **local**, en `.dev.vars` (que está en `.gitignore` y nunca se versiona):
+En **local**, en `.dev.vars` (que está en `.gitignore` y nunca se versiona),
+con el hash **entre comillas simples**:
 
 ```bash
-echo 'ADMIN_CLAVE_HASH=pbkdf2$sha256$...' >> .dev.vars
+# .dev.vars
+ADMIN_CLAVE_HASH='pbkdf2$sha256$100000$<sal>$<hash>'
+```
+
+Las comillas simples no son decoración. Wrangler lee `.dev.vars` como un `.env`
+y **expande las variables** de los valores sin comillas o con comillas dobles:
+`$sha256`, `$100000`... se leen como variables vacías y el hash llega mutilado.
+El panel entonces rechaza la clave correcta, sin más pista. Con comillas
+simples el valor se toma literal. Para añadirlo desde la terminal sin pelearse
+con el escapado:
+
+```bash
+printf "ADMIN_CLAVE_HASH='%s'\n" 'pbkdf2$sha256$...' >> .dev.vars
 ```
 
 Sin ese secreto el panel **no se abre**: responde 503 con la instrucción en

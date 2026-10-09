@@ -36,6 +36,9 @@ export const SECCIONES: Seccion[] = [
   { clave: 'productos', etiqueta: 'Productos', href: '/admin/productos', listo: true, fase: 5 },
   { clave: 'fotos', etiqueta: 'Fotos', href: '/admin/fotos', listo: true, fase: 6 },
   { clave: 'diario', etiqueta: 'Diario', href: '/admin/diario', listo: true, fase: 7 },
+  /* Justo detrás de Diario porque es donde se piden: los temas del diario
+     viven ahí. Antes solo se llegaba por un enlace al pie del diario. */
+  { clave: 'categorias', etiqueta: 'Categorías', href: '/admin/categorias', listo: true, fase: 7 },
   { clave: 'inventario', etiqueta: 'Inventario', href: '/admin/inventario', listo: true, fase: 9 },
   { clave: 'despachos', etiqueta: 'Para despachar', href: '/admin/despachos', listo: true, fase: 9 },
 ];

@@ -18,12 +18,23 @@ import { PREFIJO_DIARIO } from '../categorias';
 
 export type EstadoLista = 'publicados' | 'borradores' | 'archivados';
 
+/**
+ * Lo que puede pedir la lista: una pestaña, o `sin-portada`, que NO es pestaña
+ * sino un recorte de «Publicados». Existe porque la tarjeta «Artículos sin foto
+ * de portada» de la portada del panel lleva aquí, y tiene que llegar a esos
+ * artículos y no a los dieciséis.
+ */
+export type FiltroLista = EstadoLista | 'sin-portada';
+
 /* Las tres pestañas son disjuntas y cubren todo: archivado manda sobre
    publicado (un artículo archivado no se ve, esté como esté marcado). */
-const FILTRO: Record<EstadoLista, string> = {
+const FILTRO: Record<FiltroLista, string> = {
   publicados: 'archivado_en IS NULL AND publicado = 1',
   borradores: 'archivado_en IS NULL AND publicado = 0',
   archivados: 'archivado_en IS NOT NULL',
+  /* La MISMA condición que cuenta `src/admin/atencion.ts`: si una cambia, la
+     cifra de la tarjeta y la lista a la que lleva dejarían de coincidir. */
+  'sin-portada': "archivado_en IS NULL AND publicado = 1 AND (imagen IS NULL OR imagen = '')",
 };
 
 export interface FilaLista {
@@ -41,7 +52,7 @@ export interface FilaLista {
  * público). Los borradores, por fecha de último cambio: lo que se está
  * escribiendo es lo que se busca. Los demás, por fecha del artículo.
  */
-export async function articulosDelPanel(db: BaseD1, estado: EstadoLista): Promise<FilaLista[]> {
+export async function articulosDelPanel(db: BaseD1, estado: FiltroLista): Promise<FilaLista[]> {
   const orden = estado === 'borradores' ? 'updated_at DESC, id DESC' : 'fecha DESC, handle';
   const { results } = await db
     .prepare(
