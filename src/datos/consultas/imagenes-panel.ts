@@ -122,7 +122,7 @@ export interface ResumenFotos {
   porRevisar: number;
   /** Títulos de las variantes reales que no tienen ni una foto propia. */
   sinFoto: string[];
-  /** ¿Tiene variantes reales (no «Default Title»)? */
+  /** ¿Tiene dos o más variantes reales (no «Default Title»)? */
   conVariantes: boolean;
 }
 
@@ -163,7 +163,11 @@ export async function resumenDeFotos(db: BaseAdmin): Promise<ResumenFotos[]> {
   }
 
   return productos.results.map((p) => {
-    const vs = porProducto.get(p.id) ?? [];
+    /* Una variante sola no es un color que elegir: es el producto (muchas
+       de la semilla se llaman como él, «NEGRO» o «32000»). La ficha tampoco
+       pinta selector con menos de dos, así que aquí no hay hueco que avisar. */
+    const todas = porProducto.get(p.id) ?? [];
+    const vs = todas.length > 1 ? todas : [];
     return {
       handle: p.handle,
       titulo: p.titulo,

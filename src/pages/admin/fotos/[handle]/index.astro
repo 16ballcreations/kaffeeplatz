@@ -47,9 +47,11 @@ const q = Astro.url.searchParams;
 const ok = q.get('ok') ?? (q.get('subidas') ? `Subidas ${q.get('subidas')} fotos. Revísalas abajo y guarda.` : '');
 const error = q.get('error') ?? '';
 
-/* «Default Title» es la variante única de un producto sin colores: no es un
-   color que elegir, y no se ofrece. */
-const variantes = p?.variantes.filter((v) => v.titulo !== 'Default Title') ?? [];
+/* Con menos de dos variantes no hay color que elegir (la ficha tampoco pinta
+   selector): la única variante ES el producto, se llame «Default Title»,
+   «NEGRO» o «32000» como en la semilla. Sus fotos son todas del producto. */
+const reales = p?.variantes.filter((v) => v.titulo !== 'Default Title') ?? [];
+const variantes = reales.length > 1 ? reales : [];
 const roles = p?.roles ?? [];
 const nombreVariante = new Map(variantes.map((v) => [v.id, v.titulo]));
 const nombreRol = new Map(roles.map((r) => [r.id, r.nombre]));
@@ -270,14 +272,18 @@ const ejemplo = variantes[0] ? `${handle}-${normalizar(variantes[0].titulo)}-arm
           ))}
 
           {p.fotos.length > 0 && (
-            <div class="f-guardar">
-              <button class="v-boton v-boton--oro" type="submit" name="accion" value="guardar">
-                Guardar colores, tomas y descripciones
-              </button>
-              <p class="f-nota">
+            <>
+              <p class="f-nota f-nota--pie">
                 La portada del catálogo es la primera foto; si es de un color, también es la primera de ese color.
               </p>
-            </div>
+              {/* Pegado abajo al desplazarse: con 9 fotos, el botón no puede
+                  quedar al final de una pantalla de celular muy larga. */}
+              <div class="f-guardar">
+                <button class="v-boton v-boton--oro" type="submit" name="accion" value="guardar">
+                  Guardar colores, tomas y descripciones
+                </button>
+              </div>
+            </>
           )}
         </form>
       </>

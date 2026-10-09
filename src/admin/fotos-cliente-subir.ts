@@ -3,7 +3,7 @@
  *
  * FOTO A FOTO, Y CADA UNA SE GUARDA EN CUANTO TERMINA
  * ===========================================================================
- * La dueña suelta las 9 fotos de golpe. Aquí se mandan de tres en tres, cada
+ * La dueña suelta las 9 fotos de golpe. Aquí se mandan una tras otra, cada
  * una en su propia petición y con su propia barra: si la novena falla o se va
  * el wifi, las ocho primeras ya están guardadas (prueba 11b del plan), y la que
  * falló se puede reintentar sola.
@@ -35,8 +35,16 @@ const entrada = form?.querySelector<HTMLInputElement>('[data-f-ficheros]');
 const zona = form?.querySelector<HTMLElement>('[data-f-soltar]');
 const progreso = document.querySelector<HTMLUListElement>('[data-f-progreso]');
 
-/** Cuántas a la vez. Más satura la subida de un celular sin ganar nada. */
-const A_LA_VEZ = 3;
+/**
+ * De una en una, y por orden de nombre. Se probó con tres a la vez y la
+ * rejilla quedaba en el orden en que TERMINABAN (la `-armado` antes que la
+ * `-desarmado`): el orden de la base es el de llegada, y «copiar a las
+ * siguientes N» depende de que las fotos estén en el orden en que se
+ * hicieron. Ordenadas por nombre, la convención (`<handle>-<color>-...`) las
+ * agrupa por color sola. Ya llegan achicadas (~300 KB), así que en serie
+ * apenas se nota.
+ */
+const A_LA_VEZ = 1;
 const CALIDAD = 0.85;
 
 interface Preparada {
@@ -154,7 +162,9 @@ async function subirUna(f: File): Promise<boolean> {
 }
 
 async function subirTodas(ficheros: File[]) {
-  const cola = ficheros.slice();
+  const cola = ficheros
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name, 'es', { numeric: true, sensitivity: 'base' }));
   let alguna = false;
   const trabajador = async () => {
     for (let f = cola.shift(); f; f = cola.shift()) {
