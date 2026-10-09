@@ -12,17 +12,12 @@
  */
 
 /**
- * ⚠️ PENDIENTE DE CONFIRMAR POR LA DUENA (Andreina Morales).
+ * Tarifa plana nacional, en COP. CONFIRMADA por el cliente el 9 oct 2026.
  *
- * Tarifa plana nacional, en COP. El valor de 15.000 es una ESTIMACION puesta
- * por encargo del cliente para poder construir la fase 1; NO sale del material
- * de `contenido-original/`. La politica de envios real dice que el costo "se
- * calcula al momento de la compra segun el destino y el peso del pedido", es
- * decir que hoy no hay tarifa publicada.
- *
- * Antes de cobrar de verdad (fase 2) hay que confirmar este numero con la
- * dueña. Es el UNICO sitio donde vive: cambiarlo aqui lo cambia en el carrito,
- * en el resumen y en el mensaje de WhatsApp.
+ * La politica de envios antigua decia que el costo "se calcula al momento de
+ * la compra segun el destino y el peso del pedido"; el cliente decidio
+ * sustituirla por esta tarifa unica. Es el UNICO sitio donde vive: cambiarlo
+ * aqui lo cambia en el carrito, en el resumen y en el mensaje de WhatsApp.
  */
 export const TARIFA_PLANA_ENVIO = 15000;
 
