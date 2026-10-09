@@ -3,7 +3,8 @@
  * / — Portada. Propuesta D "OBSIDIANA II".
  *
  * Recorrido pensado para convertir, de arriba abajo:
- *   1. Hero partido: promesa + accion, con un producto real como imagen.
+ *   1. Hero partido: promesa + accion, y el emblema de la marca hecho de
+ *      particulas (la rama crece y se cierra el logo).
  *   2. Franja de confianza: envio, atencion humana, asesoria, guias.
  *   3. "¿Cómo te gusta el café?": buscador de metodo que termina en una
  *      recomendacion concreta y un WhatsApp precargado.
@@ -24,7 +25,6 @@ import Imagen from '../components/Imagen.astro';
 import Precio from '../components/Precio.astro';
 import Icono from '../components/Icono.astro';
 import { SITIO, ruta, recurso } from '../datos/sitio';
-import { fuentes } from '../datos/imagenes';
 import { CATEGORIAS } from '../datos/categorias';
 import { METODOS } from '../datos/guias';
 
@@ -41,15 +41,12 @@ const articulos = (await getCollection('diario')).sort(
 const [principal, ...resto] = articulos.filter((a) => a.data.imagen);
 const lista = resto.slice(0, 4);
 
-const HERO = 'aeropress-clear';
-
 /* Mosaico de categorias: recuento real y, como foto, el primer producto
-   disponible de la categoria que tenga imagen. El del hero se salta para no
-   repetir la misma foto dos pantallas seguidas. */
+   disponible de la categoria que tenga imagen. */
 const categorias = CATEGORIAS.filter((c) => c.id !== 'otros')
   .map((c) => {
     const suyos = productos
-      .filter((p) => p.data.categoria === c.id && p.data.handle !== HERO)
+      .filter((p) => p.data.categoria === c.id)
       .sort((a, b) => Number(!!b.data.destacado) - Number(!!a.data.destacado));
     const muestra =
       suyos.find((p) => p.data.disponible && p.data.imagenes.length) ??
@@ -62,9 +59,6 @@ const categorias = CATEGORIAS.filter((c) => c.id !== 'otros')
 
 const fecha = (d: Date) =>
   d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-
-const heroProducto = porHandle.get(HERO);
-const heroFoto = heroProducto?.imagenes[0] ? fuentes(heroProducto.imagenes[0].src) : undefined;
 ---
 
 <Base
@@ -73,7 +67,8 @@ const heroFoto = heroProducto?.imagenes[0] ? fuentes(heroProducto.imagenes[0].sr
   camino="/"
 >
   {/* 1. HERO ------------------------------------------------------------ */}
-  <section data-kp-seccion="hero" class="v-hero v-lino-oscuro">
+  <section data-kp-seccion="hero" class="v-hero v-lino-oscuro" data-kp-emblema-hero>
+    <canvas class="v-hero__lienzo" data-kp-emblema-lienzo aria-hidden="true"></canvas>
     <div class="v-limite v-hero__rejilla">
       <div class="v-hero__texto">
         <p class="v-eyebrow v-entra" style="--d:0">Accesorios de café · {SITIO.ciudad}</p>
@@ -94,41 +89,20 @@ const heroFoto = heroProducto?.imagenes[0] ? fuentes(heroProducto.imagenes[0].sr
         </div>
       </div>
 
-      <div class="v-hero__visual v-entra" style="--d:2">
-        <div class="v-hero__arco">
-          {
-            heroProducto?.imagenes[0] && (
-              <img
-                src={heroFoto!.src}
-                srcset={heroFoto!.srcset}
-                sizes="(max-width: 520px) 76vw, (max-width: 860px) 340px, 460px"
-                alt={heroProducto.imagenes[0].alt}
-                width={heroFoto!.ancho}
-                height={heroFoto!.alto}
-                loading="eager"
-                decoding="sync"
-                fetchpriority="high"
-              />
-            )
-          }
-        </div>
-        <img
-          src={recurso('/img/marca/emblema-sm.webp')}
-          alt=""
-          class="v-hero__sello"
-          width="320"
-          height="320"
-          loading="eager"
-        />
-        {
-          heroProducto && (
-            <a href={ruta(`/producto/${heroProducto.handle}`)} class="v-hero__pie">
-              <span class="v-hero__pie-nombre">{heroProducto.titulo}</span>
-              <Precio precioFormateado={heroProducto.precioFormateado} precio={heroProducto.precio} clase="v-num" />
-              <Icono nombre="flechaDiagonal" tam={18} />
-            </a>
-          )
-        }
+      {/* El emblema vivo (scripts/emblema-vivo.ts): la rama crece y se cierra
+          el logo. Esta caja solo marca donde va; el lienzo cubre todo el hero
+          para que el polvo flote tambien detras del texto. */}
+      <div class="v-hero__visual v-hero__emblema" data-kp-emblema aria-hidden="true">
+        <noscript>
+          <img
+            src={recurso('/img/marca/emblema.webp')}
+            srcset={`${recurso('/img/marca/emblema.w640.webp')} 640w, ${recurso('/img/marca/emblema.w960.webp')} 960w`}
+            sizes="(max-width: 860px) 380px, 520px"
+            alt=""
+            width="960"
+            height="960"
+          />
+        </noscript>
       </div>
     </div>
   </section>
@@ -418,6 +392,8 @@ const heroFoto = heroProducto?.imagenes[0] ? fuentes(heroProducto.imagenes[0].sr
 </Base>
 
 <script>
+  import '../scripts/emblema-vivo';
+
   /* Buscador de metodo: patron de pestanas ARIA (flechas + Home/End).
      Sin JS la lista de pestanas no aparece y los cuatro paneles se ven
      apilados, que sigue siendo util. */
