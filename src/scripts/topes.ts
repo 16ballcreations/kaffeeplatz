@@ -26,27 +26,25 @@
  * ===========================================================================
  * EL ENGANCHE DEL INVENTARIO — AQUI, Y EN NINGUN OTRO SITIO
  * ===========================================================================
- * El inventario esta DISEÑADO y NO CONSTRUIDO: no existen `stock_fisico` ni
- * `stock_reservado` en ninguna migracion y `src/datos/formas.ts` no tiene
- * cantidades. Es la fase 9 del plan (`planes/kaffeeplatz-panel-admin.md`,
- * seccion G), 14-19 h, y el cliente decidio hacerla DESPUES.
+ * El inventario YA EXISTE (fase 9, `planes/kaffeeplatz-panel-admin.md`,
+ * seccion G) y entra por aqui, por una sola linea: el `return` de `topeDe()`.
  *
- * Asi que hoy el tope NO es una afirmacion sobre el stock: es un limite de
- * sensatez para que nadie pida 400 prensas por un teclazo. Quien pida mas de
- * lo que hay se entera igual que hoy: al confirmar por WhatsApp.
+ *   return Math.max(0, Math.min(TOPE_SENSATEZ, v.stockDisponible ?? TOPE_SENSATEZ));
  *
- * CUANDO EXISTA EL STOCK, SE CAMBIA UNA SOLA LINEA: el `return` de `topeDe()`,
- * mas abajo, marcado con `CAMBIAR AQUI`. Pasa a ser algo como:
+ * `stockDisponible` lo rellena `conStock()` de `src/datos/inventario.ts` en las
+ * paginas que leen de D1 (ficha y catalogo), y SOLO si el interruptor
+ * `inventario_activo` esta encendido. Con el interruptor apagado el campo no
+ * existe en la variante, el `?? TOPE_SENSATEZ` decide, y el tope es
+ * exactamente el de antes del inventario: es la promesa de R13 («apagarlo
+ * devuelve el sitio al comportamiento de hoy en un toque»).
  *
- *   return Math.max(0, Math.min(TOPE_SENSATEZ, v.stockDisponible));
+ * EL TOPE DE SENSATEZ NO DESAPARECE con el stock: se queda como techo. Tener
+ * 60 en bodega no es razon para ofrecer pedir 60 de una.
  *
- * ...donde `stockDisponible` es el `stock_fisico - stock_reservado` que la
- * seccion G.1 del plan calcula en `src/datos/catalogo.ts`. Para que ese dato
- * llegue hasta aqui hay que añadirlo al tipo `Variante` de
- * `src/datos/formas.ts` (hoy tiene id, titulo, precio, precioFormateado,
- * disponible y sku) y rellenarlo en la capa de datos. Nada mas de esta cadena
- * cambia: el selector ya imprime un tope POR VARIANTE, /carrito ya lo
- * serializa por variante y `carrito.ts` ya lo aplica por variante.
+ * Y EL TOPE SIGUE SIN SER LA GARANTIA. Una pagina cacheada cinco minutos puede
+ * ofrecer una unidad que ya se vendio; la verdad esta en el `WHERE` del
+ * `UPDATE` que reserva (G.4, caso 1). Esto evita pedir lo imposible, no lo
+ * impide.
  */
 
 /**
@@ -54,11 +52,12 @@
  *
  * No es `Variante` de src/datos/formas.ts a proposito: asi este modulo no
  * depende de la forma completa del catalogo, y /carrito puede pasarle lo poco
- * que serializa en la pagina. El dia que llegue el stock, aqui se añade
- * `stockDisponible?: number` y se lee en `topeDe()`.
+ * que serializa en la pagina.
  */
 export interface VarianteTopable {
   disponible: boolean;
+  /** Unidades vendibles ahora. Sin dato (inventario apagado) = sin limite de stock. */
+  stockDisponible?: number;
 }
 
 /**
@@ -68,7 +67,7 @@ export interface VarianteTopable {
  * vende por WhatsApp, y lo bastante poco para que un teclazo no genere un
  * pedido absurdo que haya que deshacer en la conversacion.
  *
- * Cuando exista el stock esta constante NO desaparece: se queda como techo por
+ * Con el stock activo esta constante NO desaparece: se queda como techo por
  * encima del stock (ver `topeDe()`). Tener 60 unidades en bodega no es razon
  * para que el selector ofrezca pedir 60 de una.
  */
@@ -90,12 +89,13 @@ export const MAX_POR_LINEA = 99;
  * Una variante agotada da 0: no se puede pedir nada de ella. Esa es la regla
  * de hoy y no cambia (el cliente la confirmo).
  *
- * CAMBIAR AQUI cuando `Variante` traiga su cantidad disponible. Ver la
- * cabecera de este fichero: es la unica linea que hay que tocar.
+ * Con stock, el tope es lo vendible, sin pasar del de sensatez. Sin dato de
+ * stock (inventario apagado, o /carrito, que no lee de D1), el de sensatez:
+ * el mismo numero que antes del inventario. Ver la cabecera.
  */
 export function topeDe(v: VarianteTopable): number {
   if (!v.disponible) return 0;
-  return TOPE_SENSATEZ;
+  return Math.max(0, Math.min(TOPE_SENSATEZ, v.stockDisponible ?? TOPE_SENSATEZ));
 }
 
 /**

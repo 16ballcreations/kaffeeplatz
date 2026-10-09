@@ -56,16 +56,33 @@ import {
   compromisosDeProducto,
 } from './consultas/inventario-leer';
 /* Los cambios. Llevan su condición en el `WHERE`. */
+import { reservar, confirmarPago, liberarReservas } from './consultas/inventario-escribir';
+import { caducarVencidas } from './consultas/inventario-caducar';
+/* Lo que hace Andreina a mano (todo en batch) y lo que leen sus pantallas. */
 import {
-  reservar,
-  confirmarPago,
-  liberarReservas,
-  caducarVencidas,
-  venderPorWhatsapp,
   ajustarFisico,
+  fijarFisico,
+  venderPorWhatsapp,
+  deshacerMovimiento,
   ponerALaVenta,
   cerrarDespacho,
-} from './consultas/inventario-escribir';
+  reabrirDespacho,
+  nombrarDespacho,
+  cambiarInterruptor,
+  MINUTOS_PARA_DESHACER,
+  type ResultadoAjuste,
+} from './consultas/inventario-panel';
+import {
+  paquetes,
+  paquete,
+  movimientoContado,
+  yaDeshecho,
+  varianteDelPanel,
+  ultimoCambioDelInterruptor,
+  type PaqueteDespacho,
+  type MovimientoContado,
+} from './consultas/inventario-panel-leer';
+import type { Producto } from './formas';
 import { leer, type Lectura } from './resiliencia';
 
 export type {
@@ -249,110 +266,142 @@ export function caducarReservasVencidas(locals: unknown, limite?: number): Promi
   return caducarVencidas(base(locals), limite);
 }
 
-/** Descontar por una venta hablada. `ok: false` ⇒ el panel PREGUNTA (G.4.2). */
-export function descontarPorWhatsapp(
-  locals: unknown,
-  entrada: {
-    varianteId: number;
-    cantidad?: number;
-    cliente?: string | null;
-    nota?: string | null;
-    precioUnitario?: number | null;
-    despachoIdExistente?: number | null;
-    forzar?: boolean;
-  },
-): Promise<ResultadoVentaWhatsapp> {
-  return venderPorWhatsapp(base(locals), entrada, 'panel');
+/* ------------------------------------------------------------ el panel (G.6) */
+
+/**
+ * Lo que usan las pantallas del panel, con el binding ya resuelto.
+ *
+ * UN OBJETO Y NO DIEZ FUNCIONES SUELTAS: cada acción del panel hace una o dos
+ * cosas sobre la misma base, y repetir `(locals, ...)` en cada envoltorio
+ * duplicaría esta fachada sin decir nada nuevo. Lanza si no hay binding (es
+ * configuración, ver `base()`); quien la llama ya tiene su try/catch.
+ *
+ * Las ESCRITURAS no se envuelven (ver la cabecera: quien descuenta necesita
+ * saber si se descontó). Las LECTURAS sí, con `leer()`: la pantalla se pinta
+ * aunque una consulta falle, y dice cuál.
+ */
+export function inventarioDelPanel(locals: unknown) {
+  const db = base(locals);
+  return {
+    /* escrituras: todas en un batch(), ver consultas/inventario-panel.ts */
+    ajustar: (e: Parameters<typeof ajustarFisico>[1]) => ajustarFisico(db, e),
+    fijar: (e: Parameters<typeof fijarFisico>[1]) => fijarFisico(db, e),
+    venderPorWhatsapp: (e: Parameters<typeof venderPorWhatsapp>[1]) => venderPorWhatsapp(db, e),
+    deshacer: (movimientoId: number) => deshacerMovimiento(db, movimientoId),
+    ponerALaVenta: (varianteId: number, si: boolean) => ponerALaVenta(db, varianteId, si),
+    cerrarDespacho: (id: number, accion: 'despachado' | 'anulado', nota?: string | null) =>
+      cerrarDespacho(db, id, accion, nota),
+    reabrirDespacho: (id: number) => reabrirDespacho(db, id),
+    nombrarDespacho: (id: number, cliente: string) => nombrarDespacho(db, id, cliente),
+    cambiarInterruptor: (activo: boolean) => cambiarInterruptor(db, activo),
+    /* lecturas */
+    activo: () => inventarioActivo(db),
+    todo: () => leer(() => stockDeTodo(db)),
+    cuadre: () => leer(() => cuadre(db)),
+    variante: (id: number) => leer(() => varianteDelPanel(db, id)),
+    movimientos: (id: number, limite?: number) => leer(() => movimientosDeVariante(db, id, limite)),
+    movimiento: (id: number) => leer(() => movimientoContado(db, id)),
+    yaDeshecho: (m: { id: number; varianteId: number }) => leer(() => yaDeshecho(db, m)),
+    paquetes: () => leer(() => paquetes(db)),
+    paquete: (id: number) => leer(() => paquete(db, id)),
+    ultimoCambioDelInterruptor: () => ultimoCambioDelInterruptor(db),
+  };
 }
 
-/** Cargar, devolver o corregir el físico. `ajuste` exige nota (G.6). */
-export function ajustarStock(
-  locals: unknown,
-  entrada: {
-    varianteId: number;
-    delta: number;
-    motivo: Extract<MotivoMovimiento, 'entrada' | 'devolucion' | 'ajuste'>;
-    nota?: string | null;
-  },
-): Promise<{ ok: boolean; error?: string; fisico?: number }> {
-  return ajustarFisico(base(locals), entrada, 'panel');
-}
-
-/** El interruptor manual "A la venta / Retirado". No toca el stock (G.1). */
-export function cambiarALaVenta(
-  locals: unknown,
-  varianteId: number,
-  aLaVenta: boolean,
-): Promise<boolean> {
-  return ponerALaVenta(base(locals), varianteId, aLaVenta);
-}
-
-/** «Ya salió» o «Anular». Anular devuelve el físico (G.4.3). */
-export function marcarDespacho(
-  locals: unknown,
-  despachoId: number,
-  accion: 'despachado' | 'anulado',
-  nota?: string,
-): Promise<boolean> {
-  return cerrarDespacho(base(locals), despachoId, accion, 'panel', nota);
-}
+export type InventarioDelPanel = ReturnType<typeof inventarioDelPanel>;
+export type { PaqueteDespacho, MovimientoContado, ResultadoAjuste };
+export { MINUTOS_PARA_DESHACER };
 
 /* ------------------------------------------------------- el tope de cantidad */
 
 /**
- * EL DATO QUE NECESITA EL TOPE DE CANTIDAD — y cómo se conecta.
+ * EL DATO QUE NECESITA EL TOPE DE CANTIDAD — conectado.
  * ===========================================================================
- * `src/scripts/topes.ts` (de otro trabajo en curso) ya dejó el enganche hecho
- * y documentado: su `topeDe()` es el ÚNICO sitio que decide cuántas unidades
- * se pueden pedir, y su interfaz `VarianteTopable` espera recibir el stock
- * disponible. Esta función es el lado de los datos de ese enganche.
+ * `src/scripts/topes.ts` es el ÚNICO sitio que decide cuántas unidades se
+ * pueden pedir, y su `topeDe()` lee `stockDisponible` de la variante. Esto es
+ * el lado de los datos: pone ese número en las variantes que ya trae la
+ * página.
  *
  * ESTE FICHERO NO IMPORTA `topes.ts` NI AL CONTRARIO, A PROPÓSITO. `topes.ts`
  * es TypeScript puro sin DOM para que lo puedan importar el frontmatter de un
  * `.astro` y el navegador; si importara de aquí, arrastraría la capa de datos
- * al navegador. El dato viaja como número, no como dependencia.
+ * al navegador. El dato viaja como número dentro de `Variante`, no como
+ * dependencia.
  *
- * CÓMO SE CONECTA (lo hace quien integre, no este trabajo):
+ * CON EL INVENTARIO APAGADO NO TOCA NADA, y eso es lo que mantiene la promesa
+ * del interruptor (R13): sin `stockDisponible`, `topeDe()` cae en su valor de
+ * siempre y el HTML sale idéntico, byte a byte (comprobado comparando las
+ * páginas antes y después de esta fase).
  *
- *   1. En la ficha, junto al producto que ya se lee:
- *        const stock = await obtenerStockDeProducto(Astro.locals, handle);
- *        const topes = await topesPorVariante(Astro.locals, handle);
- *   2. `topes` es un Map de `Variante.id` → unidades vendibles, con la MISMA
- *      clave que ya usa `Variante.id`, así que se cruza sin ids internos.
- *   3. `topes.ts` recibe ese número en `VarianteTopable.stockDisponible` y su
- *      `topeDe()` pasa a ser:
- *        return Math.max(0, Math.min(TOPE_SENSATEZ, v.stockDisponible ?? TOPE_SENSATEZ));
- *      El `?? TOPE_SENSATEZ` es lo que hace que, con el inventario APAGADO o
- *      sin dato, el tope sea exactamente el de hoy.
+ * El "Agotado" con stock 0 NO sale de aquí: ya lo resuelve el SQL de
+ * `consultas/productos.ts` (`sqlVendible`), que es la única fórmula de
+ * disponibilidad del sitio. Esto solo añade el CUÁNTO para el tope.
+ */
+
+/** Unidades pedibles de una variante: lo vendible, nunca negativo, 0 si está retirada. */
+function pedibles(s: StockVariante): number {
+  /* `aLaVenta` apagado ⇒ 0, igual que una variante no disponible da 0 en
+     `topeDe()`. Y nunca negativo: un stock en −1 es 0 unidades pedibles, no
+     "menos una". */
+  return s.aLaVenta ? Math.max(0, s.vendible) : 0;
+}
+
+/**
+ * Los productos de una página, con `stockDisponible` en cada variante.
  *
- * CON EL INVENTARIO APAGADO DEVUELVE UN MAPA VACÍO, y eso es lo que mantiene
- * la promesa del interruptor: sin dato de stock, `topeDe()` cae en su valor de
- * hoy y el selector se comporta igual que antes de esta fase.
+ * Una sola consulta para todas las variantes (las 30, con el descuento EXACTO
+ * de reservas vigentes de `stockDeTodo`), venga la página con un producto o
+ * con veinticinco: la ficha la necesita para sus relacionados y el catálogo
+ * para sus tarjetas.
+ *
+ * Inventario apagado, o cualquier fallo ⇒ devuelve EL MISMO ARRAY, sin copiar.
+ * Ante la duda, como hoy: un fallo aquí no puede dejar a nadie sin poder
+ * añadir al carrito, y la verdad la sigue diciendo el `WHERE` de la reserva.
+ */
+export async function conStock(locals: unknown, productos: Producto[]): Promise<Producto[]> {
+  try {
+    const db = base(locals);
+    if (!(await inventarioActivo(db))) return productos;
+    const stock = new Map<string, number>();
+    for (const s of await stockDeTodo(db)) {
+      stock.set(`${s.productoHandle}\u0000${s.idPublico}`, pedibles(s));
+    }
+    return productos.map((p) => ({
+      ...p,
+      variantes: p.variantes.map((v) => {
+        const n = stock.get(`${p.handle}\u0000${v.id}`);
+        return n === undefined ? v : { ...v, stockDisponible: n };
+      }),
+    }));
+  } catch (fallo) {
+    console.error(
+      '[inventario] no se pudo leer el stock para los topes; se usa el tope de hoy:',
+      fallo instanceof Error ? fallo.message : fallo,
+    );
+    return productos;
+  }
+}
+
+/**
+ * Los topes de UN producto, por id público de variante. Mapa vacío con el
+ * inventario apagado. Para quien solo tenga un handle (el checkout de la fase
+ * 2 del carrito); las páginas usan `conStock`, que deja el dato en su sitio.
  */
 export async function topesPorVariante(
   locals: unknown,
   handle: string,
 ): Promise<Map<string, number>> {
-  const vacio = new Map<string, number>();
+  const topes = new Map<string, number>();
   try {
     const db = base(locals);
-    if (!(await inventarioActivo(db))) return vacio;
-    const stock = await stockDeProducto(db, handle);
-    const topes = new Map<string, number>();
-    for (const [idPublico, s] of stock) {
-      /* `aLaVenta` apagado ⇒ 0, igual que hoy una variante no disponible da 0
-         en `topeDe()`. Y nunca negativo: un stock en −1 es 0 unidades
-         pedibles, no "menos una". */
-      topes.set(idPublico, s.aLaVenta ? Math.max(0, s.vendible) : 0);
-    }
+    if (!(await inventarioActivo(db))) return topes;
+    for (const [idPublico, s] of await stockDeProducto(db, handle)) topes.set(idPublico, pedibles(s));
     return topes;
   } catch (fallo) {
-    /* Igual que el interruptor: ante la duda, como hoy. Un fallo aquí NO puede
-       dejar la ficha sin poder añadir al carrito. */
     console.error(
       '[inventario] no se pudieron calcular los topes por variante; se usa el tope de hoy:',
       fallo instanceof Error ? fallo.message : fallo,
     );
-    return vacio;
+    return new Map();
   }
 }

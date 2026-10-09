@@ -30,7 +30,7 @@
  */
 
 import type { BaseD1Escritura } from './consultas/inventario-formas';
-import { caducarVencidas } from './consultas/inventario-escribir';
+import { caducarVencidas } from './consultas/inventario-caducar';
 import { cuadre } from './consultas/inventario-leer';
 
 /** Lo que el barrido hizo, para que el log diga algo útil. */
