@@ -65,13 +65,15 @@ import {
   venderPorWhatsapp,
   deshacerMovimiento,
   ponerALaVenta,
+  MINUTOS_PARA_DESHACER,
+  type ResultadoAjuste,
+} from './consultas/inventario-panel';
+import {
   cerrarDespacho,
   reabrirDespacho,
   nombrarDespacho,
   cambiarInterruptor,
-  MINUTOS_PARA_DESHACER,
-  type ResultadoAjuste,
-} from './consultas/inventario-panel';
+} from './consultas/inventario-despachos';
 import {
   paquetes,
   paquete,
