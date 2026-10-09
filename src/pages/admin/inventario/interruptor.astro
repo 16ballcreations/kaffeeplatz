@@ -44,8 +44,8 @@ const aLaVenta = filas.filter((f) => !f.productoArchivado && f.aLaVenta).length;
 const error = ERRORES[Astro.url.searchParams.get('error') ?? ''] ?? null;
 ---
 
-<Panel titulo="Encender o apagar el inventario" seccion="inventario">
-  <p class="pi-fila__pie"><a href={ruta('/admin/inventario')}>← Inventario</a></p>
+<Panel titulo="Encender o apagar el inventario" seccion="productos">
+  <p class="pi-fila__pie"><a href={ruta('/admin/productos')}>← Productos</a></p>
   <h1 class="p-titulo">{activo ? 'Apagar el inventario' : 'Encender el inventario'}</h1>
 
   {error && <p class="p-error" role="alert">{error}</p>}
@@ -57,7 +57,7 @@ const error = ERRORES[Astro.url.searchParams.get('error') ?? ''] ?? null;
       <>
         <p class="p-entradilla">
           Al apagarlo, la tienda vuelve a vender todo lo que tengas «a la venta», sin mirar cuántos hay. Las
-          cantidades <strong>no se pierden</strong>: siguen aquí y puedes seguir cargándolas. Es la forma de
+          cantidades <strong>no se pierden</strong>: siguen en cada producto y puedes seguir cargándolas. Es la forma de
           volver atrás si algo sale mal.
         </p>
         <form method="post" action={ruta('/admin/inventario/accion')}>
@@ -70,8 +70,8 @@ const error = ERRORES[Astro.url.searchParams.get('error') ?? ''] ?? null;
       <>
         <p class="p-entradilla">
           Al encenderlo, la tienda empieza a usar estas cantidades: lo que esté en 0 sale como
-          <strong>Agotado</strong> y nadie puede pedir más de lo que hay. Hazlo cuando hayas contado la bodega, a
-          primera hora de un día de trabajo.
+          <strong>Agotado</strong> y nadie puede pedir más de lo que hay. Hazlo cuando hayas contado la bodega
+          (en <a href={ruta('/admin/productos/contar')}>Contar la bodega</a>), a primera hora de un día de trabajo.
         </p>
         {saldrianAgotados.length > 0 ? (
           <ul class="pi-avisos">

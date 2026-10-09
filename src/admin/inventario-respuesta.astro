@@ -18,22 +18,7 @@
  */
 import { ruta } from '../datos/sitio';
 
-export interface Franja {
-  texto: string;
-  /** Movimiento que se puede deshacer, y la variante (para volver a su fila). */
-  deshacer?: { m: number; v: number };
-  /** Paquete de WhatsApp recién creado: «Añadir otra cosa» y «Ponerle nombre». */
-  paquete?: { d: number; cliente: string | null };
-}
-
-export interface Pregunta {
-  motivo: 'reservado' | 'sin-stock';
-  titulo: string;
-  v: number;
-  n: number;
-  fisico: number;
-  minutos: number | null;
-}
+import type { Franja, Pregunta } from './inventario-lectura';
 
 interface Props {
   franja: Franja | null;
@@ -41,6 +26,12 @@ interface Props {
   pregunta: Pregunta | null;
   /** El paquete abierto, para que los formularios lo arrastren. */
   paqueteAbierto: number | null;
+  /**
+   * La pantalla donde se pinta: '/admin/productos/12', '/admin/productos'…
+   * y su clave para `volver` (ver `volverA` en inventario-acciones.ts).
+   */
+  pantalla: string;
+  volver: string;
   /**
    * Qué parte pintar. La pregunta va ARRIBA (es lo primero que hay que
    * contestar); la franja y el error van al FINAL del contenido, porque una
@@ -54,12 +45,12 @@ interface Props {
   parte: 'pregunta' | 'franja';
 }
 
-const { franja: f, error: e, pregunta: p, paqueteAbierto, parte } = Astro.props as Props;
+const { franja: f, error: e, pregunta: p, paqueteAbierto, parte, pantalla, volver: clave } = Astro.props as Props;
 const pregunta = parte === 'pregunta' ? p : null;
 const franja = parte === 'franja' ? f : null;
 const error = parte === 'franja' ? e : null;
 const accion = ruta('/admin/inventario/accion');
-const volver = ruta(`/admin/inventario${paqueteAbierto ? `?paquete=${paqueteAbierto}` : ''}`);
+const volver = ruta(`${pantalla}${paqueteAbierto ? `?paquete=${paqueteAbierto}` : ''}`);
 ---
 
 {
@@ -81,14 +72,15 @@ const volver = ruta(`/admin/inventario${paqueteAbierto ? `?paquete=${paqueteAbie
         </p>
       )}
       <div class="pi-pregunta__botones">
-        <a class="pi-boton" href={`${volver}#v${pregunta.v}`}>
+        <a class="pi-boton" href={`${volver}#v${pregunta.v}`} data-inv-cerrar>
           {pregunta.motivo === 'reservado' ? 'Esperar' : 'No, dejarlo'}
         </a>
-        <form method="post" action={accion}>
+        <form method="post" action={accion} data-inv>
           <input type="hidden" name="accion" value="whatsapp" />
           <input type="hidden" name="v" value={pregunta.v} />
           <input type="hidden" name="n" value={pregunta.n} />
           <input type="hidden" name="forzar" value="1" />
+          <input type="hidden" name="volver" value={clave} />
           {paqueteAbierto && <input type="hidden" name="paquete" value={paqueteAbierto} />}
           <button class="pi-boton pi-boton--rojo pi-ancho" type="submit">
             Venderlo igual
@@ -118,25 +110,27 @@ const volver = ruta(`/admin/inventario${paqueteAbierto ? `?paquete=${paqueteAbie
       <p class="pi-franja__texto">{franja.texto}</p>
       {/* Cerrar es un enlace a la misma pantalla sin el aviso: sin JS la franja
           no se va sola, y tapa las filas de abajo. */}
-      <a class="pi-franja__cerrar" href={`${volver}${franja.deshacer ? `#v${franja.deshacer.v}` : ''}`} aria-label="Cerrar el aviso">×</a>
+      <a class="pi-franja__cerrar" data-inv-cerrar href={`${volver}${franja.deshacer ? `#v${franja.deshacer.v}` : ''}`} aria-label="Cerrar el aviso">×</a>
       {franja.deshacer && (
-        <form method="post" action={accion}>
+        <form method="post" action={accion} data-inv>
           <input type="hidden" name="accion" value="deshacer" />
           <input type="hidden" name="m" value={franja.deshacer.m} />
           <input type="hidden" name="v" value={franja.deshacer.v} />
+          <input type="hidden" name="volver" value={clave} />
           {paqueteAbierto && <input type="hidden" name="paquete" value={paqueteAbierto} />}
           <button class="pi-boton" type="submit">Deshacer</button>
         </form>
       )}
       {franja.paquete && !paqueteAbierto && (
-        <a class="pi-boton" href={ruta(`/admin/inventario?paquete=${franja.paquete.d}`)}>
+        <a class="pi-boton" href={ruta(`/admin/productos?paquete=${franja.paquete.d}`)}>
           Añadir otra cosa
         </a>
       )}
       {franja.paquete && (
-        <form method="post" action={accion} class="pi-franja__nombre">
+        <form method="post" action={accion} data-inv class="pi-franja__nombre">
           <input type="hidden" name="accion" value="nombrar" />
           <input type="hidden" name="d" value={franja.paquete.d} />
+          <input type="hidden" name="volver" value={clave} />
           {franja.deshacer && <input type="hidden" name="v" value={franja.deshacer.v} />}
           {paqueteAbierto && <input type="hidden" name="paquete" value={paqueteAbierto} />}
           <label class="sr-only" for="cliente-franja">Para quién es</label>

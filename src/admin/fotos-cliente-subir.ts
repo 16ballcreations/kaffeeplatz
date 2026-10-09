@@ -22,18 +22,17 @@
  * o WebP, contesta con un mensaje claro que se enseña en su fila.
  *
  * Sin JavaScript nada de esto corre y el formulario se envía entero (ver
- * src/pages/admin/fotos/[handle]/subir.ts). Lo primero que se hace aquí es
- * marcar la página como «con JS», que es lo que esconde el botón «Subir» y
- * enseña los atajos de la rejilla (panel-fotos.css).
+ * src/pages/admin/productos/[id]/subir.ts). Lo primero que se hace aquí es
+ * marcar la página como «con JS», que es lo que esconde el botón «Subir»
+ * (panel-fotos.css).
+ *
+ * La ficha tiene VARIAS zonas de carga (una por bloque y «Subir varias»):
+ * cada una sube a su destino y pinta su propio progreso.
  */
 import { LADO_MAX, ladoMini } from '../datos/imagenes';
 
 document.documentElement.classList.add('f-con-js');
 
-const form = document.querySelector<HTMLFormElement>('[data-f-subida]');
-const entrada = form?.querySelector<HTMLInputElement>('[data-f-ficheros]');
-const zona = form?.querySelector<HTMLElement>('[data-f-soltar]');
-const progreso = document.querySelector<HTMLUListElement>('[data-f-progreso]');
 
 /**
  * De una en una, y por orden de nombre. Se probó con tres a la vez y la
@@ -87,7 +86,7 @@ async function preparar(f: File): Promise<Preparada | null> {
   }
 }
 
-function fila(nombre: string) {
+function fila(progreso: HTMLElement, nombre: string) {
   const li = document.createElement('li');
   li.className = 'f-progreso__fila';
   const n = document.createElement('span');
@@ -101,15 +100,15 @@ function fila(nombre: string) {
   estado.className = 'f-progreso__estado';
   estado.textContent = 'En espera';
   li.append(n, barra, estado);
-  progreso?.append(li);
+  progreso.append(li);
   return { li, barra, estado };
 }
 
 /** Sube una. XHR y no fetch: fetch todavía no informa del progreso de subida. */
-function enviar(datos: FormData, barra: HTMLProgressElement): Promise<{ ok: boolean; error?: string }> {
+function enviar(form: HTMLFormElement, datos: FormData, barra: HTMLProgressElement): Promise<{ ok: boolean; error?: string }> {
   return new Promise((resolver) => {
     const x = new XMLHttpRequest();
-    x.open('POST', form!.action);
+    x.open('POST', form.action);
     x.setRequestHeader('Accept', 'application/json');
     x.upload.onprogress = (e) => {
       if (e.lengthComputable) barra.value = Math.round((e.loaded / e.total) * 100);
@@ -127,8 +126,8 @@ function enviar(datos: FormData, barra: HTMLProgressElement): Promise<{ ok: bool
   });
 }
 
-async function subirUna(f: File): Promise<boolean> {
-  const { li, barra, estado } = fila(f.name);
+async function subirUna(form: HTMLFormElement, f: File): Promise<boolean> {
+  const { li, barra, estado } = fila(form.querySelector<HTMLElement>('[data-f-progreso]')!, f.name);
   const intentar = async (): Promise<boolean> => {
     estado.textContent = 'Preparando…';
     li.dataset.estado = 'subiendo';
@@ -137,8 +136,9 @@ async function subirUna(f: File): Promise<boolean> {
     datos.append('foto', p?.foto ?? f, f.name);
     if (p?.mini) datos.append('mini', p.mini, `mini-${f.name}`);
     datos.append('nombre', f.name);
+    datos.append('destino', form.querySelector<HTMLInputElement>('[name="destino"]')?.value ?? 'nombre');
     estado.textContent = 'Subiendo…';
-    const r = await enviar(datos, barra);
+    const r = await enviar(form, datos, barra);
     if (r.ok) {
       barra.value = 100;
       estado.textContent = 'Guardada';
@@ -153,7 +153,7 @@ async function subirUna(f: File): Promise<boolean> {
     otra.textContent = 'Reintentar';
     otra.addEventListener('click', async () => {
       otra.remove();
-      if (await intentar()) await traerNuevas();
+      if (await intentar()) traerNuevas();
     });
     li.append(otra);
     return false;
@@ -161,79 +161,68 @@ async function subirUna(f: File): Promise<boolean> {
   return intentar();
 }
 
-async function subirTodas(ficheros: File[]) {
+async function subirTodas(form: HTMLFormElement, ficheros: File[]) {
   const cola = ficheros
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name, 'es', { numeric: true, sensitivity: 'base' }));
   let alguna = false;
+  /* Mientras sube, su bloque no se repinta (cliente-bloques.ts lo mira):
+     perdería las barras de progreso. */
+  form.dataset.subiendo = 'true';
   const trabajador = async () => {
     for (let f = cola.shift(); f; f = cola.shift()) {
-      if (await subirUna(f)) alguna = true;
+      if (await subirUna(form, f)) alguna = true;
     }
   };
   await Promise.all(Array.from({ length: Math.min(A_LA_VEZ, cola.length) }, trabajador));
-  if (alguna) await traerNuevas();
+  delete form.dataset.subiendo;
+  if (alguna) traerNuevas();
 }
 
 /**
- * Pinta las tarjetas nuevas SIN recargar la página.
+ * Pinta las fotos nuevas SIN recargar la página.
  *
- * Se pide la página otra vez y se copian solo las tarjetas que aquí no están
- * (todas caen en «Por revisar»). No se recarga entera para no perder lo que la
- * dueña estuviera cambiando más abajo mientras subían las fotos. La tarjeta la
- * pinta el servidor, con la sugerencia ya calculada: hay una sola plantilla.
+ * No se hace aquí: lo hace productos/cliente-bloques.ts, que es quien sabe
+ * qué bloques tienen cosas sin guardar. Pide la ficha otra vez y añade cada
+ * foto nueva a SU tarjeta (la que eligió el servidor), sin tocar lo que ella
+ * esté escribiendo. La tarjeta la pinta el servidor, con la toma ya
+ * sugerida: hay una sola plantilla.
  */
-async function traerNuevas() {
-  const rejilla = document.querySelector<HTMLFormElement>('[data-f-rejilla]');
-  try {
-    const html = await (await fetch(location.pathname, { headers: { Accept: 'text/html' } })).text();
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const remota = doc.querySelector<HTMLFormElement>('[data-f-rejilla]');
-    if (!rejilla || !remota) return location.reload();
-    const grupoRemoto = remota.querySelector('[data-f-grupo="revisar"]');
-    if (!grupoRemoto) return;
-    let grupo = rejilla.querySelector('[data-f-grupo="revisar"]');
-    if (!grupo) {
-      grupo = document.importNode(grupoRemoto, true);
-      grupo.querySelector('ol')!.replaceChildren();
-      rejilla.querySelector('[data-f-grupo]')?.before(grupo);
-    }
-    const lista = grupo.querySelector('ol')!;
-    for (const li of grupoRemoto.querySelectorAll<HTMLElement>('[data-f-foto]')) {
-      if (!document.getElementById(li.id)) lista.append(document.importNode(li, true));
-    }
-    /* Un producto que no tenía fotos tampoco tenía botón de guardar. */
-    if (!rejilla.querySelector('.f-guardar')) {
-      const g = remota.querySelector('.f-guardar');
-      if (g) rejilla.append(document.importNode(g, true));
-      rejilla.querySelector(':scope > p.p-entradilla')?.remove();
-    }
-    const cuenta = grupo.querySelector('.f-cuenta');
-    if (cuenta) cuenta.textContent = String(lista.children.length);
-    rejilla.dispatchEvent(new CustomEvent('f:nuevas'));
-  } catch {
-    location.reload();
-  }
+function traerNuevas() {
+  document.dispatchEvent(new CustomEvent('pb:sincronizar'));
 }
 
-if (form && entrada && progreso) {
-  entrada.addEventListener('change', () => {
-    const fs = Array.from(entrada.files ?? []);
-    entrada.value = '';
-    if (fs.length) void subirTodas(fs);
-  });
+/* Delegado en el documento: un guardado puede repintar el bloque entero, y su
+   zona de carga con él. Escuchando arriba, la zona nueva funciona sin
+   engancharle nada. */
+document.addEventListener('change', (e) => {
+  const entrada = (e.target as HTMLElement).closest<HTMLInputElement>('[data-f-ficheros]');
+  const form = entrada?.closest<HTMLFormElement>('[data-f-subida]');
+  if (!entrada || !form) return;
+  const fs = Array.from(entrada.files ?? []);
+  entrada.value = '';
+  if (fs.length) void subirTodas(form, fs);
+});
 
-  /* Arrastrar y soltar sobre la zona. El <input> sigue siendo el camino con
-     teclado y en el celular (abre la galería de fotos). */
-  zona?.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    zona.dataset.encima = 'true';
-  });
-  zona?.addEventListener('dragleave', () => delete zona.dataset.encima);
-  zona?.addEventListener('drop', (e) => {
-    e.preventDefault();
-    delete zona.dataset.encima;
-    const fs = Array.from(e.dataTransfer?.files ?? []);
-    if (fs.length) void subirTodas(fs);
-  });
-}
+/* Arrastrar y soltar sobre la zona. El <input> sigue siendo el camino con
+   teclado y en el celular (abre la galería de fotos). */
+const zonaDe = (e: Event) => (e.target as HTMLElement).closest<HTMLElement>('[data-f-soltar]');
+document.addEventListener('dragover', (e) => {
+  const zona = zonaDe(e);
+  if (!zona || !e.dataTransfer?.types.includes('Files')) return;
+  e.preventDefault();
+  zona.dataset.encima = 'true';
+});
+document.addEventListener('dragleave', (e) => {
+  const zona = zonaDe(e);
+  if (zona) delete zona.dataset.encima;
+});
+document.addEventListener('drop', (e) => {
+  const zona = zonaDe(e);
+  const form = zona?.closest<HTMLFormElement>('[data-f-subida]');
+  if (!zona || !form) return;
+  e.preventDefault();
+  delete zona.dataset.encima;
+  const fs = Array.from(e.dataTransfer?.files ?? []);
+  if (fs.length) void subirTodas(form, fs);
+});

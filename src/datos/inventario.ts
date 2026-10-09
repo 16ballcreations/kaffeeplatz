@@ -64,7 +64,6 @@ import {
   fijarFisico,
   venderPorWhatsapp,
   deshacerMovimiento,
-  ponerALaVenta,
   MINUTOS_PARA_DESHACER,
   type ResultadoAjuste,
 } from './consultas/inventario-panel';
@@ -291,7 +290,6 @@ export function inventarioDelPanel(locals: unknown) {
     fijar: (e: Parameters<typeof fijarFisico>[1]) => fijarFisico(db, e),
     venderPorWhatsapp: (e: Parameters<typeof venderPorWhatsapp>[1]) => venderPorWhatsapp(db, e),
     deshacer: (movimientoId: number) => deshacerMovimiento(db, movimientoId),
-    ponerALaVenta: (varianteId: number, si: boolean) => ponerALaVenta(db, varianteId, si),
     cerrarDespacho: (id: number, accion: 'despachado' | 'anulado', nota?: string | null) =>
       cerrarDespacho(db, id, accion, nota),
     reabrirDespacho: (id: number) => reabrirDespacho(db, id),

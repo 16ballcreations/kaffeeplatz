@@ -16,6 +16,7 @@
 import Panel from '../../../layouts/Panel.astro';
 import { ruta } from '../../../datos/sitio';
 import { inventarioDelPanel, type FilaMovimiento } from '../../../datos/inventario';
+import { baseAdmin } from '../../../admin/base';
 import {
   nombreCompleto,
   cuando,
@@ -47,11 +48,23 @@ try {
 }
 if (!fallo && !fila) return new Response(null, { status: 404 });
 if (fila) titulo = nombreCompleto(fila.productoTitulo, fila.varianteTitulo);
+/* Se vuelve a la tarjeta de esta versión en la ficha del producto, que es
+   donde vive su inventario desde que se integró en Productos. */
+let volver = '/admin/productos';
+try {
+  const p = await baseAdmin(Astro.locals)
+    .prepare('SELECT producto_id FROM variantes WHERE id = ?1')
+    .bind(id)
+    .first<{ producto_id: number }>();
+  if (p) volver = `/admin/productos/${p.producto_id}#v${id}`;
+} catch {
+  /* Sin base, la lista: el enlace de vuelta no puede tumbar la pantalla. */
+}
 const apartado = fila ? Math.max(0, fila.fisico - fila.vendible) : 0;
 ---
 
-<Panel titulo={titulo || 'Qué pasó'} seccion="inventario">
-  <p class="pi-fila__pie"><a href={ruta(`/admin/inventario#v${id}`)}>← Inventario</a></p>
+<Panel titulo={titulo || 'Qué pasó'} seccion="productos">
+  <p class="pi-fila__pie"><a href={ruta(volver)}>← Volver al producto</a></p>
   <h1 class="p-titulo">{titulo || 'Qué pasó'}</h1>
 
   {

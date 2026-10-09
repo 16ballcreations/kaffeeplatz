@@ -1,8 +1,8 @@
 /**
  * consultas/productos-escribir.ts — las escrituras del catálogo (fase 5).
  * ===========================================================================
- * Crear, guardar, archivar y restaurar productos, con sus variantes y su
- * auditoría. Solo lo usa el panel; el sitio público no importa este fichero
+ * Crear, guardar, archivar y restaurar productos, y su auditoría. Las
+ * escrituras de las versiones (variantes) viven en `variantes-escribir.ts`. Solo lo usa el panel; el sitio público no importa este fichero
  * (y su tipo `BaseD1` de solo lectura no le dejaría llamar a nada de aquí).
  *
  * Está separado de `consultas/productos.ts` por la misma razón que el
@@ -55,40 +55,26 @@ export interface DatosProducto {
   destacado: boolean;
 }
 
-/** Una variante tal como queda tras guardar. `id: null` = nueva. */
-export interface VarianteAGuardar {
-  id: number | null;
-  titulo: string;
-  precio: number;
-  disponible: boolean;
-}
-
-export interface Guardado {
+/** Lo que guarda el bloque «Producto» de la ficha. */
+export interface GuardadoProducto {
   productoId: number;
   versionEsperada: number;
   datos: DatosProducto;
-  /** En el orden final: el índice ES el `orden`. */
-  variantes: VarianteAGuardar[];
-  /** Ids de variantes a borrar. El panel ya comprobó que no tienen historial. */
-  quitar: { id: number; antes: unknown }[];
-  /** Ids de variantes cuyo título cambia (para el paso de títulos temporales). */
-  renombradas: number[];
-  /** Nombre de la opción ('Color', 'Tamaño') o `null` para no tener opción. */
-  opcionNombre: string | null;
+  /**
+   * Las sentencias de las fotos generales del bloque (versión, toma, alt y
+   * publicar), ya construidas por `sentenciasAsignaciones` en
+   * imagenes-escribir.ts. Van DETRÁS del cerrojo: si hay conflicto, tampoco
+   * se escriben.
+   */
+  fotos: unknown[];
   /** Foto del producto ANTES de guardar, para la auditoría. */
   antes: unknown;
-  /**
-   * Resumen legible del cambio: «precio de Morado: $315.000 → $300.000». Un
-   * reordenado va aquí también («orden de las opciones») y no en una fila
-   * `reordenar` aparte: es parte del mismo guardado, y dos filas para un solo
-   * botón pulsado harían el historial más largo sin decir más.
-   */
+  /** Resumen legible del cambio: «nombre: «A» → «B»; descripción». */
   nota: string;
 }
 
-export type ResultadoGuardar =
-  | { ok: true }
-  | { ok: false; motivo: 'conflicto' | 'con-historial' | 'nombre-repetido' | 'error' };
+export type MotivoFallo = 'conflicto' | 'con-historial' | 'nombre-repetido' | 'error';
+export type ResultadoGuardar = { ok: true } | { ok: false; motivo: MotivoFallo };
 
 /**
  * Precio y disponibilidad del PRODUCTO, derivados de sus variantes (B.1).
@@ -98,15 +84,20 @@ export type ResultadoGuardar =
  * sigue teniendo un precio que enseñar en el panel. Coincide con lo que traía
  * el respaldo de Shopify (la Chemex: 6 tazas a 320.000 y 3 tazas a 285.000 →
  * 285.000).
+ *
+ * En SQL y no en TypeScript desde que cada versión se guarda sola: quien
+ * guarda «Verde» no tiene en la mano el precio de «Rosa» que otra pestaña
+ * acaba de cambiar, y la base sí. NO sube `productos.version`: es una columna
+ * derivada, y subir el cerrojo del bloque «Producto» por ella daría un
+ * conflicto falso en la misma página (ver migrations/0009).
  */
-export function derivados(variantes: VarianteAGuardar[]): { precio: number; disponible: boolean } {
-  const aLaVenta = variantes.filter((v) => v.disponible);
-  const base = aLaVenta.length ? aLaVenta : variantes;
-  return {
-    precio: base.length ? Math.min(...base.map((v) => v.precio)) : 0,
-    disponible: aLaVenta.length > 0,
-  };
-}
+export const SQL_DERIVADOS = `UPDATE productos SET
+    disponible = EXISTS (SELECT 1 FROM variantes v WHERE v.producto_id = ?1 AND v.disponible = 1),
+    precio = COALESCE(
+      (SELECT MIN(v.precio) FROM variantes v WHERE v.producto_id = ?1 AND v.disponible = 1),
+      (SELECT MIN(v.precio) FROM variantes v WHERE v.producto_id = ?1), 0),
+    updated_at = datetime('now')
+  WHERE id = ?1`;
 
 /**
  * Las variantes nacidas en el panel reciben `id_externo = 'kp-<id>'`.
@@ -119,23 +110,37 @@ export function derivados(variantes: VarianteAGuardar[]): { precio: number; disp
  * las fotos (que van por `variante_id`). El prefijo `kp-` no choca con los
  * ids de Shopify, que son solo dígitos.
  */
-const ID_EXTERNO_PROPIO = `UPDATE variantes SET id_externo = 'kp-' || id
+export const ID_EXTERNO_PROPIO = `UPDATE variantes SET id_externo = 'kp-' || id
   WHERE producto_id = ?1 AND id_externo IS NULL`;
 
-/** Guarda un producto existente con sus variantes. Todo o nada. */
-export async function guardarProducto(
-  db: BaseD1Escritura,
-  g: Guardado,
-): Promise<ResultadoGuardar> {
-  const d = derivados(g.variantes);
-  const s: SentenciaPreparada[] = [];
+/**
+ * Los valores de la opción («Color» → Morado, Verde, Rosa) son los títulos de
+ * las variantes EN SU ORDEN, leídos de la base en el mismo batch. Lo usan el
+ * guardado de una versión (renombrar cambia un valor) y el de «Versiones»
+ * (reordenar cambia el orden). Si el producto no tiene opción, no toca nada.
+ */
+export const SQL_VALORES_OPCION = `UPDATE opciones SET valores =
+    (SELECT json_group_array(titulo) FROM
+       (SELECT titulo FROM variantes WHERE producto_id = ?1 ORDER BY orden, id))
+  WHERE producto_id = ?1`;
 
-  s.push(
+/**
+ * Guarda el bloque «Producto»: nombre, descripción, categoría, destacado y sus
+ * fotos generales. Todo o nada, con el cerrojo de `productos.version`.
+ *
+ * NO toca precio ni disponibilidad: desde la ficha por bloques esos los
+ * escriben las versiones (ver `SQL_DERIVADOS`).
+ */
+export async function guardarDatosProducto(
+  db: BaseD1Escritura,
+  g: GuardadoProducto,
+): Promise<ResultadoGuardar> {
+  const s: SentenciaPreparada[] = [
     db
       .prepare(
         `UPDATE productos
             SET titulo = ?3, descripcion_html = ?4, descripcion_texto = ?5,
-                categoria = ?6, destacado = ?7, precio = ?8, disponible = ?9,
+                categoria = ?6, destacado = ?7,
                 version = version + 1, updated_at = datetime('now')
           WHERE id = ?1 AND version = ?2`,
       )
@@ -147,104 +152,27 @@ export async function guardarProducto(
         g.datos.descripcionTexto,
         g.datos.categoria,
         g.datos.destacado ? 1 : 0,
-        d.precio,
-        d.disponible ? 1 : 0,
       ),
-  );
-  /* EL CERROJO. Ver la cabecera: si el UPDATE de arriba no tocó nada, esto
-     viola el CHECK de `auditoria.entidad` y el batch entero se deshace. Tiene
-     que ir INMEDIATAMENTE después: `changes()` habla de la última sentencia. */
-  s.push(
-    db
-      .prepare(
-        `INSERT INTO auditoria (entidad, entidad_id, accion, antes, nota)
-         VALUES (CASE WHEN changes() = 1 THEN 'producto' ELSE 'conflicto' END,
-                 ?1, 'editar', ?2, ?3)`,
-      )
-      .bind(String(g.productoId), JSON.stringify(g.antes), g.nota || null),
-  );
+    /* EL CERROJO. Ver la cabecera: si el UPDATE de arriba no tocó nada, esto
+       viola el CHECK de `auditoria.entidad` y el batch entero se deshace.
+       Tiene que ir INMEDIATAMENTE después: `changes()` habla de la última
+       sentencia. */
+    db.prepare(CERROJO).bind(String(g.productoId), JSON.stringify(g.antes), g.nota || null),
+    ...(g.fotos as SentenciaPreparada[]),
+  ];
+  return ejecutar(db, s);
+}
 
-  /* 1. Borrar. Primero, para que sus títulos queden libres por si una variante
-     nueva quiere llamarse igual. Las fotos de la variante borrada pasan al
-     producto (ON DELETE SET NULL de 0001): borrar un color no borra el
-     trabajo de fotografía. Si tuviera movimientos, reservas o paquetes, el
-     RESTRICT de 0004 haría fallar el batch entero — el panel lo comprueba
-     antes para poder explicarlo, y esto es la red. */
-  for (const q of g.quitar) {
-    s.push(
-      db.prepare('DELETE FROM variantes WHERE id = ?1 AND producto_id = ?2').bind(q.id, g.productoId),
-    );
-    s.push(
-      db
-        .prepare(
-          `INSERT INTO auditoria (entidad, entidad_id, accion, antes)
-           VALUES ('variante', ?1, 'borrar', ?2)`,
-        )
-        .bind(String(q.id), JSON.stringify(q.antes)),
-    );
-  }
+/**
+ * La fila de auditoría que hace de cerrojo (ver la cabecera). La usan los
+ * tres bloques de la ficha: todos auditan como `producto` con el id del
+ * producto, para que «Últimos cambios» los enseñe juntos.
+ */
+export const CERROJO = `INSERT INTO auditoria (entidad, entidad_id, accion, antes, nota)
+  VALUES (CASE WHEN changes() = 1 THEN 'producto' ELSE 'conflicto' END, ?1, 'editar', ?2, ?3)`;
 
-  /* 2. Títulos temporales para las que se renombran. Sin este paso, cambiar
-     «A»→«B» y «B»→«A» en el mismo guardado choca con UNIQUE (producto_id,
-     titulo) a mitad del batch. El temporal lleva un carácter de control que
-     nadie puede escribir desde un formulario, así que no puede chocar con un
-     título real. */
-  for (const id of g.renombradas) {
-    s.push(
-      db
-        .prepare(`UPDATE variantes SET titulo = char(1) || id WHERE id = ?1 AND producto_id = ?2`)
-        .bind(id, g.productoId),
-    );
-  }
-
-  /* 3. Las que quedan, con su orden final; 4. las nuevas. */
-  g.variantes.forEach((v, orden) => {
-    if (v.id !== null) {
-      s.push(
-        db
-          .prepare(
-            `UPDATE variantes SET titulo = ?3, precio = ?4, disponible = ?5, orden = ?6
-              WHERE id = ?1 AND producto_id = ?2`,
-          )
-          .bind(v.id, g.productoId, v.titulo, v.precio, v.disponible ? 1 : 0, orden),
-      );
-    } else {
-      s.push(
-        db
-          .prepare(
-            `INSERT INTO variantes (producto_id, titulo, precio, disponible, orden)
-             VALUES (?1, ?2, ?3, ?4, ?5)`,
-          )
-          .bind(g.productoId, v.titulo, v.precio, v.disponible ? 1 : 0, orden),
-      );
-      /* La auditoría de la nueva necesita su id, que no se conoce hasta aquí:
-         se busca por título, que es único dentro del producto. */
-      s.push(
-        db
-          .prepare(
-            `INSERT INTO auditoria (entidad, entidad_id, accion, nota)
-             SELECT 'variante', id, 'crear', ?3 FROM variantes
-              WHERE producto_id = ?1 AND titulo = ?2`,
-          )
-          .bind(g.productoId, v.titulo, `Nueva en el producto ${g.productoId}`),
-      );
-    }
-  });
-  s.push(db.prepare(ID_EXTERNO_PROPIO).bind(g.productoId));
-
-  /* 5. La opción. El panel maneja UNA ('Color' → Morado, Verde, Rosa), que es
-     lo que tienen los 25 productos del respaldo: ninguno combina dos. Sus
-     valores son los títulos de las variantes EN SU ORDEN, así que reordenar
-     variantes reordena la opción y la tarjeta dice «3 colores» sin más. */
-  s.push(db.prepare('DELETE FROM opciones WHERE producto_id = ?1').bind(g.productoId));
-  if (g.opcionNombre) {
-    s.push(
-      db
-        .prepare('INSERT INTO opciones (producto_id, nombre, valores, orden) VALUES (?1, ?2, ?3, 0)')
-        .bind(g.productoId, g.opcionNombre, JSON.stringify(g.variantes.map((v) => v.titulo))),
-    );
-  }
-
+/** Corre el batch y traduce el fallo a algo que el panel sabe explicar. */
+export async function ejecutar(db: BaseD1Escritura, s: SentenciaPreparada[]): Promise<ResultadoGuardar> {
   try {
     await db.batch(s);
     return { ok: true };
@@ -263,7 +191,7 @@ export async function guardarProducto(
  * panel explica como «no se pudo guardar, inténtalo otra vez»: degrada al
  * mensaje genérico, nunca a guardar mal.
  */
-function clasificar(fallo: unknown): 'conflicto' | 'con-historial' | 'nombre-repetido' | 'error' {
+function clasificar(fallo: unknown): MotivoFallo {
   const m = fallo instanceof Error ? fallo.message : String(fallo);
   if (/CHECK constraint failed/i.test(m) && /auditoria|entidad/i.test(m)) return 'conflicto';
   if (/FOREIGN KEY constraint failed/i.test(m)) return 'con-historial';

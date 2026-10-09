@@ -1,88 +1,64 @@
 /**
- * fotos-cliente-rejilla.ts — los atajos de la rejilla de asignación.
+ * fotos-cliente-rejilla.ts — las fotos de cada bloque de la ficha, en el
+ * navegador.
  *
- * Todo lo que hay aquí es una MEJORA sobre un formulario que ya funciona solo
- * (ver src/pages/admin/fotos/[handle]/cambios.ts):
+ * Todo lo que hay aquí es una MEJORA sobre formularios que ya funcionan solos
+ * (ver src/pages/admin/productos/[id]/fotos.ts y productos/bloques.ts):
  *
- *   - «Copiar a las siguientes N»: el atajo que convierte asignar 9 fotos en
- *     un minuto (B.7, punto 4). Solo cambia desplegables: no guarda nada hasta
- *     que ella pulse «Guardar», igual que si los hubiera cambiado a mano.
- *   - La descripción (alt) se rehace sola al cambiar color o toma, MIENTRAS
+ *   - La descripción (alt) se rehace sola al cambiar versión o toma, MIENTRAS
  *     ella no la haya escrito a mano. Si la tocó, es suya y no se pisa.
  *   - Subir, bajar, portada y quitar se hacen sin recargar: así no se pierde
- *     lo que esté sin guardar en otras tarjetas. Las estrellas de portada se
+ *     lo que esté sin guardar en ningún bloque. Las estrellas de portada se
  *     ponen con lo que DEVUELVE el servidor, no con lo que se supone aquí.
- *   - Arrastrar para ordenar dentro de un grupo, en escritorio. En el celular
- *     arrastrar es incómodo y no es el único camino: están ↑ y ↓ (B.7, punto 5).
+ *   - Arrastrar para ordenar dentro de un bloque, en escritorio. En el
+ *     celular arrastrar es incómodo y no es el único camino: están ↑ y ↓
+ *     (B.7, punto 5).
  *
- * Los eventos se escuchan DELEGADOS en el formulario: las tarjetas que añade la
- * subida (fotos-cliente-subir.ts) funcionan sin engancharles nada.
+ * «Copiar a las siguientes N» (la pantalla anterior de fotos) ya no está: su
+ * uso era poner el COLOR a una tanda, y ahora el color lo da la tarjeta donde
+ * se sube, o el nombre en «Subir varias». La toma la sigue proponiendo el
+ * nombre del fichero.
+ *
+ * Los eventos se escuchan DELEGADOS en el documento: las tarjetas que añade la
+ * subida o que repinta un guardado funcionan sin engancharles nada. El envío
+ * de los botones de foto lo decide productos/cliente-bloques.ts, que es quien
+ * escucha los `submit` de los bloques, y llama aquí a `accionFoto`.
  */
 
-const form = document.querySelector<HTMLFormElement>('[data-f-rejilla]');
-const mensajes = document.querySelector<HTMLElement>('[data-f-mensajes]');
-
-let sinGuardar = false;
-
-function avisar(texto: string, error = false) {
-  if (!mensajes) return;
-  const p = document.createElement('p');
-  p.className = error ? 'p-error' : 'f-ok';
-  p.setAttribute('role', error ? 'alert' : 'status');
-  p.textContent = texto;
-  mensajes.replaceChildren(p);
-}
-
-const tarjetas = () => Array.from(form!.querySelectorAll<HTMLLIElement>('[data-f-foto]'));
 const texto = (s: HTMLSelectElement | null) =>
   s && s.value ? (s.selectedOptions[0]?.textContent ?? '').trim() : '';
 
-/** El mismo alt automático que pinta el servidor: «Producto — Color, toma». */
+/** El mismo alt automático que pinta el servidor: «Producto — Versión, toma». */
 function rehacerAlt(li: HTMLElement) {
   const alt = li.querySelector<HTMLInputElement>('[data-f-alt]');
   if (!alt || alt.dataset.fAltAuto !== 'true') return;
+  const producto = document.querySelector<HTMLElement>('[data-producto-titulo]')?.dataset.productoTitulo ?? '';
   const color = texto(li.querySelector('[data-f-variante]'));
   const toma = texto(li.querySelector('[data-f-rol]')).toLowerCase();
   const partes = [color, toma].filter(Boolean).join(', ');
-  alt.value = partes ? `${form!.dataset.producto} — ${partes}` : (form!.dataset.producto ?? '');
+  alt.value = partes ? `${producto} — ${partes}` : producto;
 }
 
-function marcarSinGuardar() {
-  sinGuardar = true;
-}
-
-function copiarASiguientes(li: HTMLElement) {
-  const que = li.querySelector<HTMLSelectElement>('[data-f-aplicar-que]')?.value ?? 'variante';
-  const n = Math.max(1, Math.min(50, Number(li.querySelector<HTMLInputElement>('[data-f-aplicar-cuantas]')?.value) || 1));
-  const todas = tarjetas();
-  const desde = todas.indexOf(li as HTMLLIElement);
-  const destino = todas.slice(desde + 1, desde + 1 + n);
-  const color = li.querySelector<HTMLSelectElement>('[data-f-variante]')?.value;
-  const toma = li.querySelector<HTMLSelectElement>('[data-f-rol]')?.value;
-  for (const t of destino) {
-    const sv = t.querySelector<HTMLSelectElement>('[data-f-variante]');
-    const sr = t.querySelector<HTMLSelectElement>('[data-f-rol]');
-    if (sv && color !== undefined && que !== 'rol') sv.value = color;
-    if (sr && toma !== undefined && que !== 'variante') sr.value = toma;
-    rehacerAlt(t);
-  }
-  marcarSinGuardar();
-  avisar(
-    destino.length
-      ? `Copiado a ${destino.length} ${destino.length === 1 ? 'foto' : 'fotos'}. Falta pulsar «Guardar».`
-      : 'No hay fotos después de esta.',
-  );
+/** Un mensaje dentro del bloque de la foto. */
+function avisar(seccion: HTMLElement | null, mensaje: string, error = false) {
+  const zona = seccion?.querySelector<HTMLElement>('[data-bloque-estado]');
+  if (!zona) return;
+  const p = document.createElement('p');
+  p.className = error ? 'p-error' : 'pp-hecho';
+  p.setAttribute('role', error ? 'alert' : 'status');
+  p.textContent = mensaje;
+  zona.replaceChildren(p);
 }
 
 /** Pone las estrellas de portada según lo que respondió el servidor. */
 function pintarPortadas(portada: number | null, portadas: Record<string, number | null>) {
   const nombres = new Map<string, string>();
-  for (const o of form!.querySelectorAll<HTMLOptionElement>('[data-f-variante] option')) {
-    if (o.value) nombres.set(o.value, (o.textContent ?? '').trim());
+  for (const s of document.querySelectorAll<HTMLElement>('[data-bloque^="v"]')) {
+    nombres.set(s.dataset.bloque!.slice(1), s.dataset.nombre ?? '');
   }
   const deVariante = new Map<number, string>();
   for (const [v, id] of Object.entries(portadas)) if (id !== null) deVariante.set(id, nombres.get(v) ?? '');
-  for (const li of tarjetas()) {
+  for (const li of document.querySelectorAll<HTMLElement>('[data-f-foto]')) {
     const id = Number(li.dataset.fFoto);
     const mp = li.querySelector<HTMLElement>('[data-f-marca-producto]');
     const mv = li.querySelector<HTMLElement>('[data-f-marca-variante]');
@@ -94,16 +70,35 @@ function pintarPortadas(portada: number | null, portadas: Record<string, number 
   }
 }
 
-function contar() {
-  for (const g of form!.querySelectorAll<HTMLElement>('[data-f-grupo]')) {
-    const c = g.querySelector('.f-cuenta');
-    if (c) c.textContent = String(g.querySelectorAll('[data-f-foto]').length);
+/** Cuenta las fotos de cada bloque y enseña o esconde «sin fotos». */
+export function contarFotos() {
+  for (const s of document.querySelectorAll<HTMLElement>('[data-bloque]')) {
+    const lista = s.querySelector('[data-f-lista]');
+    if (!lista) continue;
+    const n = lista.querySelectorAll('[data-f-foto]').length;
+    const c = s.querySelector('[data-f-cuenta]');
+    if (c) c.textContent = String(n);
+    const vacio = s.querySelector<HTMLElement>('[data-f-vacio]');
+    if (vacio) vacio.hidden = n > 0;
+    const pend = s.querySelector<HTMLElement>('[data-f-pendientes]');
+    const np = lista.querySelectorAll('.f-foto--revisar').length;
+    if (pend) {
+      pend.hidden = np === 0;
+      pend.textContent = np === 1 ? '1 foto sin publicar' : `${np} fotos sin publicar`;
+    }
   }
 }
 
-async function enviar(datos: FormData): Promise<{ ok: boolean; mensaje: string; portada?: number | null; portadas?: Record<string, number | null> }> {
+interface RespuestaFoto {
+  ok: boolean;
+  mensaje: string;
+  portada?: number | null;
+  portadas?: Record<string, number | null>;
+}
+
+async function enviar(accion: string, datos: FormData): Promise<RespuestaFoto> {
   try {
-    const r = await fetch(form!.action, { method: 'POST', body: datos, headers: { Accept: 'application/json' } });
+    const r = await fetch(accion, { method: 'POST', body: datos, headers: { Accept: 'application/json' } });
     return await r.json();
   } catch {
     return { ok: false, mensaje: 'No se pudo guardar: revisa la conexión o recarga la página.' };
@@ -111,8 +106,9 @@ async function enviar(datos: FormData): Promise<{ ok: boolean; mensaje: string; 
 }
 
 /** Una acción de botón (subir, bajar, portada, quitar), sin recargar. */
-async function accion(boton: HTMLButtonElement) {
+export async function accionFoto(boton: HTMLButtonElement) {
   const li = boton.closest<HTMLLIElement>('[data-f-foto]');
+  const seccion = boton.closest<HTMLElement>('[data-bloque]');
   if (!li) return;
   const [tipo] = boton.value.split(':');
   if (tipo === 'quitar' && !confirm('¿Quitar esta foto del producto? Dejará de verse en la tienda.')) return;
@@ -120,9 +116,9 @@ async function accion(boton: HTMLButtonElement) {
   const datos = new FormData();
   datos.set('accion', boton.value);
   boton.disabled = true;
-  const r = await enviar(datos);
+  const r = await enviar(boton.formAction, datos);
   boton.disabled = false;
-  if (!r.ok) return avisar(r.mensaje, true);
+  if (!r.ok) return avisar(seccion, r.mensaje, true);
 
   const lista = li.parentElement!;
   if (tipo === 'subir' && li.previousElementSibling) lista.insertBefore(li, li.previousElementSibling);
@@ -134,101 +130,68 @@ async function accion(boton: HTMLButtonElement) {
   if (tipo !== 'quitar') boton.focus();
 
   pintarPortadas(r.portada ?? null, r.portadas ?? {});
-  contar();
-  avisar(r.mensaje);
+  contarFotos();
+  avisar(seccion, r.mensaje);
 }
 
-/* --- Arrastrar, dentro de un grupo -------------------------------------- */
+/* --- Arrastrar, dentro de un bloque ------------------------------------- */
 
 let arrastrada: HTMLLIElement | null = null;
 let ordenInicial = '';
 const ordenDe = (lista: HTMLElement) => Array.from(lista.children, (li) => (li as HTMLElement).dataset.fFoto).join(',');
 
-function prepararArrastre() {
-  for (const li of tarjetas()) {
-    /* «Por revisar» no se ordena: todavía no es de ningún grupo. */
-    li.draggable = li.closest('[data-f-grupo]')?.getAttribute('data-f-grupo') !== 'revisar';
-  }
+/** Marca las fotos como arrastrables. Se llama al cargar y tras cada repintado. */
+export function prepararArrastre() {
+  for (const li of document.querySelectorAll<HTMLLIElement>('[data-f-foto]')) li.draggable = true;
 }
 
 async function guardarArrastre(lista: HTMLElement) {
+  const seccion = lista.closest<HTMLElement>('[data-bloque]');
+  const ruta = lista.closest('form')?.querySelector<HTMLButtonElement>('[formaction]')?.formAction;
+  if (!ruta) return;
   const datos = new FormData();
   datos.set('accion', 'orden');
   datos.set('grupo', lista.dataset.fLista ?? '');
   datos.set('ids', ordenDe(lista));
-  const r = await enviar(datos);
-  if (!r.ok) {
-    avisar(r.mensaje, true);
-    return;
-  }
+  const r = await enviar(ruta, datos);
+  if (!r.ok) return avisar(seccion, r.mensaje, true);
   pintarPortadas(r.portada ?? null, r.portadas ?? {});
-  avisar(r.mensaje);
+  avisar(seccion, r.mensaje);
 }
 
-if (form) {
-  prepararArrastre();
-  form.addEventListener('f:nuevas', prepararArrastre);
+prepararArrastre();
 
-  form.addEventListener('change', (e) => {
-    const el = e.target as HTMLElement;
-    if (el.matches('[data-f-variante], [data-f-rol]')) {
-      rehacerAlt(el.closest('[data-f-foto]')!);
-      marcarSinGuardar();
-    }
-  });
+document.addEventListener('change', (e) => {
+  const el = e.target as HTMLElement;
+  if (el.matches('[data-f-variante], [data-f-rol]')) rehacerAlt(el.closest('[data-f-foto]')!);
+});
 
-  form.addEventListener('input', (e) => {
-    const el = e.target as HTMLElement;
-    if (el.matches('[data-f-alt]')) {
-      /* La escribió ella: desde ahora es suya y no se rehace sola. */
-      el.dataset.fAltAuto = 'false';
-      marcarSinGuardar();
-    }
-  });
+document.addEventListener('input', (e) => {
+  const el = e.target as HTMLElement;
+  /* La escribió ella: desde ahora es suya y no se rehace sola. */
+  if (el.matches('[data-f-alt]')) el.dataset.fAltAuto = 'false';
+});
 
-  form.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-f-aplicar-boton]');
-    if (b) copiarASiguientes(b.closest('[data-f-foto]')!);
-  });
-
-  form.addEventListener('submit', (e) => {
-    const b = (e as SubmitEvent).submitter as HTMLButtonElement | null;
-    /* Guardar va por el camino normal: el servidor guarda y la página vuelve
-       a pintarse con los grupos nuevos. */
-    if (!b || b.value === 'guardar') {
-      sinGuardar = false;
-      return;
-    }
-    e.preventDefault();
-    void accion(b);
-  });
-
-  form.addEventListener('dragstart', (e) => {
-    arrastrada = (e.target as HTMLElement).closest<HTMLLIElement>('[data-f-foto]');
-    if (!arrastrada) return;
-    ordenInicial = ordenDe(arrastrada.parentElement!);
-    e.dataTransfer?.setData('text/plain', arrastrada.dataset.fFoto ?? '');
-  });
-  form.addEventListener('dragover', (e) => {
-    const sobre = (e.target as HTMLElement).closest<HTMLLIElement>('[data-f-foto]');
-    if (!arrastrada || !sobre || sobre === arrastrada || sobre.parentElement !== arrastrada.parentElement) return;
-    e.preventDefault();
-    const caja = sobre.getBoundingClientRect();
-    const antes = e.clientY < caja.top + caja.height / 2;
-    sobre.parentElement!.insertBefore(arrastrada, antes ? sobre : sobre.nextElementSibling);
-  });
-  form.addEventListener('drop', (e) => e.preventDefault());
-  form.addEventListener('dragend', () => {
-    const lista = arrastrada?.parentElement;
-    arrastrada = null;
-    /* Solo si cambió algo: soltarla donde estaba no es una escritura. */
-    if (lista && ordenDe(lista) !== ordenInicial) void guardarArrastre(lista);
-  });
-
-  /* Salir con cambios sin guardar: el navegador pregunta. Con 9 fotos
-     asignadas a mano, perderlas por un toque en «atrás» es lo peor que puede
-     pasar en esta pantalla. */
-  window.addEventListener('beforeunload', (e) => {
-    if (sinGuardar) e.preventDefault();
-  });
-}
+document.addEventListener('dragstart', (e) => {
+  arrastrada = (e.target as HTMLElement).closest<HTMLLIElement>('[data-f-foto]');
+  if (!arrastrada) return;
+  ordenInicial = ordenDe(arrastrada.parentElement!);
+  e.dataTransfer?.setData('text/plain', arrastrada.dataset.fFoto ?? '');
+});
+document.addEventListener('dragover', (e) => {
+  const sobre = (e.target as HTMLElement).closest<HTMLLIElement>('[data-f-foto]');
+  if (!arrastrada || !sobre || sobre === arrastrada || sobre.parentElement !== arrastrada.parentElement) return;
+  e.preventDefault();
+  const caja = sobre.getBoundingClientRect();
+  const antes = e.clientY < caja.top + caja.height / 2;
+  sobre.parentElement!.insertBefore(arrastrada, antes ? sobre : sobre.nextElementSibling);
+});
+document.addEventListener('drop', (e) => {
+  if (arrastrada) e.preventDefault();
+});
+document.addEventListener('dragend', () => {
+  const lista = arrastrada?.parentElement;
+  arrastrada = null;
+  /* Solo si cambió algo: soltarla donde estaba no es una escritura. */
+  if (lista && ordenDe(lista) !== ordenInicial) void guardarArrastre(lista);
+});

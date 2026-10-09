@@ -1,0 +1,43 @@
+---
+/**
+ * SubirFotos — una zona de carga. La ficha tiene una por bloque («Agregar
+ * fotos» de Verde, del producto) y una general arriba, «Subir varias».
+ *
+ *   destino = '<id>'      las fotos van a ESA versión, sin sugerencia: se
+ *                         subieron en su tarjeta, la versión ya está decidida.
+ *   destino = 'producto'  van a las fotos generales.
+ *   destino = 'nombre'    «Subir varias»: cada foto va a la sección que dice
+ *                         su nombre (`<handle>-<versión>-<toma>.jpg`), y si
+ *                         no lo dice, a las generales.
+ *
+ * En los tres casos la TOMA se sugiere por el nombre, y la foto queda «sin
+ * publicar» hasta que se guarde su bloque. Es un `<form>` propio y no parte
+ * del formulario del bloque: un `<form>` no puede ir dentro de otro, y subir
+ * no es guardar.
+ *
+ * Sin JS es un formulario multipart normal (todas las fotos en una petición,
+ * 303 de vuelta a la ficha). Con JS: foto a foto, achicadas en el navegador y
+ * con progreso (fotos-cliente-subir.ts).
+ */
+interface Props {
+  accion: string;
+  destino: string;
+  /** El texto de la zona. */
+  texto: string;
+  /** Para los `id` de la página: único por zona. */
+  clave: string;
+}
+
+const { accion, destino, texto, clave } = Astro.props as Props;
+---
+
+<form class="f-subida" method="post" action={accion} enctype="multipart/form-data" data-f-subida={clave}>
+  <input type="hidden" name="destino" value={destino} />
+  <label class="f-soltar" data-f-soltar>
+    <span class="f-soltar__texto">{texto}</span>
+    <span class="f-soltar__nota">JPG, PNG o WebP, hasta 15 MB cada una. Puedes elegir varias.</span>
+    <input type="file" name="foto" multiple accept="image/jpeg,image/png,image/webp" data-f-ficheros />
+  </label>
+  <button class="v-boton v-boton--linea" type="submit" data-f-sin-js>Subir</button>
+  <ul class="f-progreso" data-f-progreso aria-live="polite"></ul>
+</form>

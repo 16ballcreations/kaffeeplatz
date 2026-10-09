@@ -1,0 +1,210 @@
+---
+/**
+ * BloqueVersion — la tarjeta de UNA versión («Verde»): nombre, precio, a la
+ * venta y SUS fotos, con su botón «Guardar esta versión». Debajo, su
+ * inventario.
+ *
+ * Con una sola versión (19 de los 25 productos del respaldo) la tarjeta se
+ * llama «Precio y venta», el nombre es opcional y no tiene fotos propias: no
+ * hay color que elegir y todas las fotos son del producto.
+ *
+ * EL INVENTARIO NO SE GUARDA CON EL BOTÓN DE LA TARJETA
+ * ===========================================================================
+ * Pedido del cliente (9 oct 2026): el inventario dentro de la ficha. Pero
+ * «Vendí 1 por WhatsApp» no es un dato a medio escribir: es algo que YA pasó,
+ * y se aplica al pulsar, con su propio deshacer (inventario-acciones.ts). Por
+ * eso va en un sub-bloque aparte, con sus propios formularios, después del
+ * botón de guardar: si fuera parte del formulario de la versión, «Guardar
+ * esta versión» volvería a vender.
+ *
+ * Y «A la venta» vive SOLO aquí arriba, como casilla de la versión, con su
+ * cerrojo. El inventario ya no tiene su propio «Retirar de la venta»: dos
+ * interruptores de lo mismo en la misma tarjeta acabarían diciendo cosas
+ * distintas.
+ */
+import { ruta } from '../../datos/sitio';
+import type { FilaInventario } from '../../datos/inventario';
+import FilaVariante from '../inventario-fila.astro';
+import FotosBloque from './FotosBloque.astro';
+import SubirFotos from './SubirFotos.astro';
+import EstadoBloque from './EstadoBloque.astro';
+import type { BorradorVersion } from './guardar';
+import type { Errores } from './forma';
+import type { FotoVista } from './ficha';
+
+interface Props {
+  productoId: number;
+  /** El nombre GUARDADO (el título de la tarjeta no cambia mientras escribe). */
+  titulo: string;
+  bv: BorradorVersion;
+  /** La única versión del producto: «Precio y venta», sin fotos propias. */
+  unica: boolean;
+  /** No es la primera tarjeta: lleva su número para orientarse. */
+  numero: number;
+  fotos: FotoVista[];
+  versiones: { id: number; titulo: string }[];
+  roles: { id: string; nombre: string }[];
+  errores: Errores;
+  hecho?: string;
+  conflicto?: string[] | null;
+  desaparecida?: boolean;
+  sucio: boolean;
+  inventario?: FilaInventario;
+  inventarioActivo: boolean;
+  paquete: number | null;
+  abrirInventario: boolean;
+}
+
+const p = Astro.props as Props;
+const { productoId, bv, unica, errores } = p;
+const clave = `v${bv.id}`;
+const idForm = `f-${clave}`;
+const titulo = unica ? 'Precio y venta' : p.titulo || `Versión ${p.numero}`;
+const hayErrores = Object.keys(errores).length > 0;
+const pendientes = p.fotos.filter((f) => f.porRevisar).length;
+const e = (k: string) => errores[k];
+---
+
+<section
+  class="pp-bloque pb-bloque pb-version"
+  id={`bloque-${clave}`}
+  data-bloque={clave}
+  data-nombre={p.titulo}
+  data-sucio={p.sucio ? '1' : undefined}
+  aria-labelledby={`t-${clave}`}
+>
+  <div class="pb-cabeza">
+    <h2 class="p-seccion__titulo" id={`t-${clave}`}>
+      {!unica && <span class="pb-numero">Versión {p.numero} ·</span>} {titulo}
+    </h2>
+    <span class="pb-sin-guardar" data-sin-guardar hidden={!p.sucio}>Sin guardar</span>
+  </div>
+
+  <form id={idForm} method="post" action={ruta(`/admin/productos/${productoId}`)} class="pp-forma" novalidate data-bloque-form>
+    <button type="submit" name="accion" value="guardar" class="pp-oculto" tabindex="-1" aria-hidden="true">
+      Guardar
+    </button>
+    <input type="hidden" name="bloque" value="variante" />
+    <input type="hidden" name="v" value={bv.id} />
+    <input type="hidden" name="version" value={bv.version} />
+
+    <div class="pp-fila__campos">
+      <div class="pp-campo pp-campo--nombre">
+        <label class="p-campo__etiqueta" for={`${idForm}-titulo`}>
+          {unica ? 'Nombre de la versión (opcional)' : 'Nombre'}
+        </label>
+        <input
+          id={`${idForm}-titulo`}
+          name="titulo"
+          type="text"
+          value={bv.titulo}
+          placeholder="Negro, 6 tazas…"
+          autocomplete="off"
+          aria-invalid={e('titulo') ? 'true' : undefined}
+          aria-describedby={e('titulo') ? `${idForm}-e-titulo` : undefined}
+        />
+        {e('titulo') && <p class="pp-error-campo" id={`${idForm}-e-titulo`}>{e('titulo')}</p>}
+      </div>
+
+      <div class="pp-campo pp-campo--precio">
+        <label class="p-campo__etiqueta" for={`${idForm}-precio`}>Precio</label>
+        <span class="pp-precio">
+          <span aria-hidden="true">$</span>
+          {/* `text` y no `number`: `number` no acepta «315.000» con el punto
+              de miles que se escribe en Colombia, y en algunos teléfonos lo
+              vacía en silencio. `inputmode` saca igual el teclado numérico. */}
+          <input
+            id={`${idForm}-precio`}
+            name="precio"
+            type="text"
+            inputmode="numeric"
+            value={bv.precioTexto}
+            placeholder="315.000"
+            aria-invalid={e('precio') ? 'true' : undefined}
+            aria-describedby={e('precio') ? `${idForm}-e-precio` : undefined}
+          />
+        </span>
+        {e('precio') && <p class="pp-error-campo" id={`${idForm}-e-precio`}>{e('precio')}</p>}
+      </div>
+    </div>
+
+    <label class="pp-casilla">
+      <input type="checkbox" name="venta" value="1" checked={bv.aLaVenta} />
+      <span>
+        <b>A la venta</b>
+        <small>Desmárcalo para que salga «Agotado» sin borrar nada.</small>
+      </span>
+    </label>
+
+    {
+      !unica && (
+        <>
+          <h3 class="pb-subtitulo">
+            Fotos de {titulo} <span class="f-cuenta" data-f-cuenta>{p.fotos.length}</span>
+          </h3>
+          <FotosBloque
+            fotos={p.fotos}
+            grupo={clave}
+            versiones={p.versiones}
+            roles={p.roles}
+            version={p.titulo}
+            rutaFotos={ruta(`/admin/productos/${productoId}/fotos`)}
+            errores={errores}
+          />
+        </>
+      )
+    }
+  </form>
+
+  {
+    !unica && !p.desaparecida && (
+      <SubirFotos
+        accion={ruta(`/admin/productos/${productoId}/subir`)}
+        destino={String(bv.id)}
+        texto={`Agregar fotos de ${titulo}`}
+        clave={clave}
+      />
+    )
+  }
+
+  {
+    !p.desaparecida && (
+      <div class="pp-guardar pb-guardar">
+        <button form={idForm} type="submit" name="accion" value="guardar" class="v-boton v-boton--oro">
+          {unica ? 'Guardar precio' : 'Guardar esta versión'}
+        </button>
+        <span class="pb-pendientes" data-f-pendientes hidden={!pendientes}>
+          {pendientes === 1 ? '1 foto sin publicar' : `${pendientes} fotos sin publicar`}
+        </span>
+      </div>
+    )
+  }
+  <EstadoBloque
+    hecho={p.hecho}
+    conflicto={p.conflicto}
+    desaparecida={p.desaparecida}
+    error={errores.general ?? hayErrores}
+    boton={unica ? 'Guardar precio' : 'Guardar esta versión'}
+    productoId={productoId}
+  />
+
+  {
+    p.inventario && (
+      <div class="pb-inventario" data-inv-bloque={bv.id}>
+        <h3 class="pb-subtitulo">Inventario{!unica && ` de ${titulo}`}</h3>
+        <p class="pp-ayuda">
+          Estos botones se aplican al pulsar; no hace falta «Guardar».
+          {!p.inventarioActivo && ' El inventario está apagado: la tienda todavía no usa estas cantidades.'}
+        </p>
+        <FilaVariante
+          fila={p.inventario}
+          paquete={p.paquete}
+          abierto={p.abrirInventario}
+          unica={true}
+          volver={`p${productoId}`}
+          como="div"
+        />
+      </div>
+    )
+  }
+</section>

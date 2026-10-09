@@ -5,8 +5,9 @@
  * LO MINIMO PARA EXISTIR, Y EL RESTO EN LA EDICION
  * ===========================================================================
  * El alta pide nombre, precio y categoría (y la descripción si la tiene a
- * mano). Los colores y tamaños se añaden después, en la pantalla de edición,
- * a la que se llega directamente al crear. Un formulario de alta con filas de
+ * mano). Las fotos, los colores y los tamaños se añaden después, en la ficha
+ * del producto (fotos, versiones e inventario en una pantalla), a la que se
+ * llega directamente al crear. Un formulario de alta con filas de
  * variantes sería el doble de largo en un teléfono para el caso que menos se
  * da: 19 de los 25 productos del respaldo tienen una sola.
  *
@@ -134,8 +135,8 @@ const fila = b.filas[0]!;
   <p class="pp-migas"><a href={ruta('/admin/productos')}>← Todos los productos</a></p>
   <h1 class="p-titulo">Añadir un producto</h1>
   <p class="p-entradilla">
-    Empieza por lo básico. Al crearlo podrás añadirle colores o tamaños, y
-    después subirle las fotos desde <a href={ruta('/admin/fotos')}>Fotos</a>.
+    Empieza por lo básico. Al crearlo pasas a su ficha, donde le subes las fotos y, si
+    viene en varios colores o tamaños, le añades sus versiones.
   </p>
 
   {

@@ -1,29 +1,44 @@
 ---
 /**
- * /admin/productos/<id> — editar un producto.
+ * /admin/productos/<id> — la ficha de un producto: datos, fotos, versiones e
+ * inventario en UNA pantalla.
  *
- * GET pinta lo guardado; POST guarda (o mueve filas sin guardar) y, si todo
- * va bien, redirige con 303 a esta misma página (PRG, patrón 4 de A.6): así
- * recargar después de guardar no vuelve a enviar nada. Si algo no vale, se
- * re-pinta con LO QUE ELLA ESCRIBIÓ y el error al lado, con estado 400.
+ * Pedido del cliente (9 oct 2026): «tenemos un apartado de productos y un
+ * apartado de fotos, los dos por aparte, se me hace confuso… producto →
+ * fotos de producto general / versión 1 → fotos propias / versión 2 → fotos
+ * propias, cada uno con su botón de guardado independiente». Y después, el
+ * inventario en la misma vista. Así que la ficha son bloques:
  *
- * DOS PESTAÑAS: AVISAR, NO PISAR (prueba obligatoria 12)
- * ===========================================================================
- * El formulario lleva la `version` con la que se pintó. Si al guardar la base
- * tiene otra, alguien guardó entretanto (otra pestaña, otro teléfono). No se
- * guarda nada: se responde 409 con lo que ella escribió intacto, la lista de
- * diferencias con lo guardado ahora y la `version` nueva, de modo que volver a
- * pulsar «Guardar» es una DECISIÓN informada de quedarse con lo suyo, no un
- * accidente. La carrera exacta (dos guardados en el mismo milisegundo) la
- * cubre el cerrojo dentro del batch: ver `productos-escribir.ts`.
+ *   «Subir varias»   la sesión de fotos entera; cada foto va a la tarjeta que
+ *                    dice su nombre (convención aprobada, fotos-nombre.ts)
+ *   «Producto»       nombre, descripción, categoría, destacado + fotos generales
+ *   una por versión  nombre, precio, a la venta + sus fotos + su inventario
+ *   «Versiones»      añadir, quitar, reordenar
+ *
+ * Cada bloque es su propio `<form>` con su botón y su cerrojo
+ * (migrations/0009). El POST lo atiende `productos/bloques.ts`: 303 aquí
+ * mismo si se guardó (PRG); si no, esta página se repinta con ESE bloque tal
+ * como ella lo dejó y los demás desde la base.
+ *
+ * CON JAVASCRIPT nada recarga la página (productos/cliente-bloques.ts): cada
+ * envío va por `fetch`, y de la respuesta —esta misma página— se toma el
+ * bloque enviado; lo que ella esté escribiendo en los otros no se toca. Un
+ * aviso del navegador frena la salida con bloques «Sin guardar».
  *
  * La puerta ya garantizó la sesión y el `Origin` de todo POST: no se repite.
  */
 import Panel from '../../../layouts/Panel.astro';
-import CamposBasicos from '../../../admin/productos/CamposBasicos.astro';
-import CamposVariantes from '../../../admin/productos/CamposVariantes.astro';
+import BloqueProducto from '../../../admin/productos/BloqueProducto.astro';
+import BloqueVersion from '../../../admin/productos/BloqueVersion.astro';
+import BloqueVersiones from '../../../admin/productos/BloqueVersiones.astro';
+import SubirFotos from '../../../admin/productos/SubirFotos.astro';
+import Respuesta from '../../../admin/inventario-respuesta.astro';
 import { ruta } from '../../../datos/sitio';
 import { baseAdmin } from '../../../admin/base';
+import { productoConFotos, type ProductoFotos } from '../../../datos/consultas/imagenes-panel';
+import { inventarioDelPanel, type FilaInventario } from '../../../datos/inventario';
+import { respuestaDeInventario, type RespuestaInventario } from '../../../admin/inventario-lectura';
+import { normalizar } from '../../../admin/fotos-nombre';
 import {
   productoParaEditar,
   categoriasDeProducto,
@@ -31,91 +46,103 @@ import {
   type ProductoPanel,
   type CambioReciente,
 } from '../../../admin/productos/leer';
-import { leerFormulario, aplicarAccion, type Borrador, type Errores } from '../../../admin/productos/forma';
-import {
-  borradorDesde,
-  guardarEdicion,
-  diferenciasConLoGuardado,
-  reconciliar,
-  baseEscritura,
-} from '../../../admin/productos/guardar';
-import { invalidarProducto, enlaceFicha } from '../../../admin/productos/cache';
+import { postBloque, type Repinte } from '../../../admin/productos/bloques';
+import { borradorProducto, borradorVersion, SIN_VARIANTES } from '../../../admin/productos/guardar';
+import { borradorVersiones } from '../../../admin/productos/guardar-versiones';
+import { versionesConFotos, fotosPorBloque, HECHO_BLOQUE, HECHO_FICHA } from '../../../admin/productos/ficha';
+import { enlaceFicha } from '../../../admin/productos/cache';
 import '../../../styles/panel-productos.css';
+import '../../../styles/panel-ficha.css';
+import '../../../styles/panel-fotos.css';
+import '../../../styles/panel-inventario.css';
+import '../../../styles/panel-inventario-avisos.css';
 
 /* Requisito de seguridad: ver la cabecera de Panel.astro. */
 export const prerender = false;
 
-const HECHO: Record<string, string> = {
-  guardado: 'Guardado. Ya se ve así en la tienda.',
-  'sin-cambios': 'No había nada que cambiar: todo estaba ya guardado así.',
-  creado: 'Producto creado. Revisa el precio y añade sus colores o tamaños si los tiene.',
-  restaurado: 'Restaurado: el producto vuelve a verse en la tienda.',
-  archivado: 'Archivado: ya no se ve en la tienda. Puedes restaurarlo cuando quieras.',
-  fallo: 'No se pudo completar en este momento. Vuelve a intentarlo en un minuto.',
-};
-
 const id = Number(Astro.params.id);
+const q = Astro.url.searchParams;
 let actual: ProductoPanel | null = null;
+let fotosP: ProductoFotos | null = null;
 let categorias: { id: string; nombre: string }[] = [];
 let historial: CambioReciente[] = [];
-let b: Borrador | null = null;
-let errores: Errores = {};
-let aviso = '';
-let conflicto: string[] | null = null;
+let repinte: Repinte | null = null;
 let sinBase = false;
+let inventario: FilaInventario[] = [];
+let inventarioActivo = false;
+let respuesta: RespuestaInventario = { franja: null, pregunta: null, error: null, paquete: null };
 
 try {
   const db = baseAdmin(Astro.locals);
   if (Number.isInteger(id) && id > 0) {
-    [actual, categorias] = await Promise.all([productoParaEditar(db, id), categoriasDeProducto(db)]);
+    [actual, fotosP, categorias] = await Promise.all([
+      productoParaEditar(db, id),
+      productoConFotos(db, id),
+      categoriasDeProducto(db),
+    ]);
   }
 
-  if (actual && Astro.request.method === 'POST') {
-    const forma = await Astro.request.formData();
-    b = leerFormulario(forma);
-    const accion = String(forma.get('accion') ?? 'guardar');
+  if (actual && fotosP && Astro.request.method === 'POST') {
+    const d = await postBloque(db, actual, fotosP, categorias.map((c) => c.id), await Astro.request.formData(), Astro.url.origin);
+    if (d.tipo === 'redirigir') return Astro.redirect(d.a, 303);
+    repinte = d.r;
+    actual = d.actual;
+    Astro.response.status = d.r.estado;
+    /* Tras un conflicto, las fotos también pueden haber cambiado. */
+    if (d.r.estado === 409) fotosP = (await productoConFotos(db, id)) ?? fotosP;
+  }
 
-    if (accion !== 'guardar') {
-      /* Subir, bajar, añadir: se re-pinta SIN guardar. Se dice, para que no
-         crea que ya está hecho. */
-      if (aplicarAccion(b, accion)) aviso = 'Todavía no se ha guardado: pulsa «Guardar cambios» cuando termines.';
-    } else {
-      const r = await guardarEdicion(baseEscritura(db), actual, b, categorias.map((c) => c.id));
-      if (r.ok) {
-        if (!r.sinCambios) await invalidarProducto(Astro.url.origin, actual.handle);
-        return Astro.redirect(
-          ruta(`/admin/productos/${id}?hecho=${r.sinCambios ? 'sin-cambios' : 'guardado'}`),
-          303,
-        );
-      }
-      if (r.estado === 409) {
-        /* Se relee: el `actual` de arriba puede ser ya viejo si la carrera fue
-           exacta. Lo que se le enseña tiene que ser lo de AHORA. */
-        const ahora = (await productoParaEditar(db, id)) ?? actual;
-        conflicto = diferenciasConLoGuardado(ahora, b);
-        reconciliar(b, ahora);
-        actual = ahora;
-      } else {
-        errores = r.errores;
-      }
-      Astro.response.status = r.estado;
+  if (actual) {
+    historial = await cambiosRecientes(db, id).catch(() => []);
+    /* El inventario nunca tumba la ficha: si no se puede leer, la ficha se
+       pinta sin él (y lo dice). */
+    try {
+      const inv = inventarioDelPanel(Astro.locals);
+      const [todo, activo] = await Promise.all([inv.todo(), inv.activo()]);
+      inventario = (todo.datos ?? []).filter((f) => f.productoHandle === actual!.handle);
+      inventarioActivo = activo;
+      respuesta = await respuestaDeInventario(inv, q, inventario);
+    } catch (fallo) {
+      console.error('[admin] ficha sin inventario:', fallo instanceof Error ? fallo.message : fallo);
     }
   }
-
-  if (actual) historial = await cambiosRecientes(db, id).catch(() => []);
 } catch (fallo) {
-  console.error('[admin] editar producto:', fallo instanceof Error ? fallo.message : fallo);
+  console.error('[admin] ficha de producto:', fallo instanceof Error ? fallo.message : fallo);
   sinBase = true;
   Astro.response.status = 503;
 }
 
 if (!sinBase && !actual) Astro.response.status = 404;
-if (actual && !b) b = borradorDesde(actual);
 
+const versiones = actual ? versionesConFotos(actual) : [];
+const fotos = fotosP ? fotosPorBloque(fotosP, versiones, repinte) : new Map();
+const roles = fotosP?.roles ?? [];
+const r = repinte;
+const de = (bloque: string) => (r && r.bloque === bloque ? r : null);
+const bloqueHecho = q.get('bloque') ?? '';
+const hechoDe = (bloque: string) =>
+  !r && bloqueHecho === bloque ? (HECHO_BLOQUE[q.get('hecho') ?? ''] ?? '') : '';
+const hechoFicha = !r ? (HECHO_FICHA[q.get('hecho') ?? ''] ?? '') : '';
+const fotosSubidas = !r && q.get('hecho') === 'fotos';
+/* Sin JS, subir y las acciones de foto vuelven con su resultado en la URL
+   (como hacía la antigua pantalla de fotos). Se pinta como TEXTO, escapado
+   por Astro: no puede inyectar nada. */
+const errorSubida = !r ? (q.get('error-fotos') ?? '').slice(0, 600) : '';
+const avisoFotos = !r ? (q.get('aviso-fotos') ?? '').slice(0, 200) : '';
+
+const porVersion = new Map(inventario.map((f) => [f.varianteId, f]));
+const abrir = Number(q.get('abrir')) || 0;
 const info = new Map(
-  (actual?.variantes ?? []).map((v) => [v.id, { fotos: v.fotos, conHistorial: v.conHistorial }] as const),
+  (actual?.variantes ?? []).map(
+    (v) => [v.id, { fotos: v.fotos, conHistorial: v.conHistorial, guardado: v.titulo === SIN_VARIANTES ? '' : v.titulo }] as const,
+  ),
 );
-const hecho = HECHO[Astro.url.searchParams.get('hecho') ?? ''] ?? '';
+/* La tarjeta que se intentó guardar y ya no existe se sigue pintando, con lo
+   escrito, para que no se pierda. */
+const desaparecida = r?.desaparecida && r.version ? r.version : null;
+const ejemplo = versiones[0]
+  ? `${actual?.handle}-${normalizar(versiones[0].titulo)}-armado.jpg`
+  : `${actual?.handle}-armado.jpg`;
 const fecha = (iso: string) =>
   new Date(iso.replace(' ', 'T') + 'Z').toLocaleString('es-CO', {
     timeZone: 'America/Bogota',
@@ -124,12 +151,8 @@ const fecha = (iso: string) =>
     hour: 'numeric',
     minute: '2-digit',
   });
-const ACCIONES: Record<string, string> = {
-  crear: 'Creado',
-  editar: 'Editado',
-  archivar: 'Archivado',
-  restaurar: 'Restaurado',
-};
+const ACCIONES: Record<string, string> = { crear: 'Creado', editar: 'Editado', archivar: 'Archivado', restaurar: 'Restaurado' };
+const pantalla = `/admin/productos/${id}`;
 ---
 
 <Panel titulo={actual?.titulo ?? 'Producto'} seccion="productos">
@@ -140,7 +163,7 @@ const ACCIONES: Record<string, string> = {
       <p class="p-error" role="alert">
         No se pudo conectar con la tienda en este momento. Vuelve a intentarlo en un minuto.
       </p>
-    ) : !actual || !b ? (
+    ) : !actual || !fotosP ? (
       <>
         <h1 class="p-titulo">No encontramos ese producto</h1>
         <p class="p-entradilla">
@@ -149,17 +172,21 @@ const ACCIONES: Record<string, string> = {
       </>
     ) : (
       <>
-        <h1 class="p-titulo">{actual.titulo}</h1>
+        <h1 class="p-titulo" data-producto-titulo={actual.titulo}>{actual.titulo}</h1>
 
-        {hecho && !conflicto && Astro.request.method === 'GET' && (
-          <p class="pp-hecho" role="status">{hecho}</p>
-        )}
+        <div data-region="avisos">
+          {hechoFicha && <p class="pp-hecho" role="status">{hechoFicha}</p>}
+          {fotosSubidas && <p class="pp-hecho" role="status">{HECHO_BLOQUE.fotos}</p>}
+          {errorSubida && <p class="p-error" role="alert">{errorSubida}</p>}
+          {avisoFotos && <p class="pp-hecho" role="status">{avisoFotos}</p>}
+          {r && !r.bloque && r.errores.general && <p class="p-error" role="alert">{r.errores.general}</p>}
+        </div>
 
         {actual.archivadoEn ? (
           <div class="pp-archivado">
             <p>
-              <b>Archivado.</b> No se ve en la tienda y su dirección lleva a su categoría. Puedes
-              seguir editándolo.
+              <b>Archivado.</b> No se ve en la tienda y su dirección lleva a su categoría. Puedes seguir
+              editándolo.
             </p>
             <form method="post" action={ruta(`/admin/productos/${actual.id}/restaurar`)}>
               <button class="v-boton v-boton--oro" type="submit">Restaurar en la tienda</button>
@@ -167,81 +194,132 @@ const ACCIONES: Record<string, string> = {
           </div>
         ) : (
           <p class="pp-ver">
-            <a href={enlaceFicha(actual.handle, actual.version)} target="_blank" rel="noopener">
+            <a href={enlaceFicha(actual.handle)} target="_blank" rel="noopener" data-ver-ficha>
               Ver cómo queda en la tienda ↗
             </a>
             <span>Se abre en otra pestaña.</span>
           </p>
         )}
 
-        {conflicto && (
-          <div class="p-error pp-conflicto" role="alert">
-            <div>
+        <div data-region="pregunta">
+          <Respuesta
+            parte="pregunta"
+            franja={respuesta.franja}
+            error={respuesta.error}
+            pregunta={respuesta.pregunta}
+            paqueteAbierto={respuesta.paquete?.id ?? null}
+            pantalla={pantalla}
+            volver={`p${id}`}
+          />
+          {respuesta.paquete && (
+            <div class="pi-paquete">
               <p>
-                <b>Alguien guardó este producto mientras lo editabas</b> (quizá en otra pestaña o
-                en otro teléfono). <b>No se guardó nada</b> y lo que escribiste sigue abajo.
+                {`Añadiendo al paquete ${respuesta.paquete.cliente ? `de ${respuesta.paquete.cliente}` : 'de esta venta'}: lleva `}
+                {respuesta.paquete.articulos.map((a) => `${a.cantidad} × ${a.titulo}`).join(', ') || 'nada todavía'}.
               </p>
-              {conflicto.length > 0 && (
-                <ul>
-                  {conflicto.map((d) => (
-                    <li>{d}</li>
-                  ))}
-                </ul>
-              )}
-              <p>
-                Si pulsas «Guardar cambios» otra vez, lo que ves en esta pantalla reemplazará lo
-                guardado. Si prefieres ver primero lo otro,
-                <a href={ruta(`/admin/productos/${actual.id}`)} target="_blank" rel="noopener">
-                  ábrelo en otra pestaña
-                </a>.
-              </p>
+              <a class="pi-enlace-boton" href={ruta('/admin/productos')}>Terminar</a>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {errores.general && (
-          <p class="p-error" role="alert">{errores.general}</p>
-        )}
-        {Object.keys(errores).length > 0 && !errores.general && (
-          <p class="p-error" role="alert">
-            No se guardó: hay algo que corregir. Lo verás marcado abajo.
+        <section class="pp-bloque pb-varias" aria-labelledby="t-varias">
+          <h2 class="p-seccion__titulo" id="t-varias">Subir varias fotos</h2>
+          <p class="pp-ayuda">
+            Para la sesión de fotos entera: cada foto va a la tarjeta que dice su nombre y queda sin publicar
+            hasta que guardes esa tarjeta. Para una versión concreta, usa «Agregar fotos» en su tarjeta.
           </p>
-        )}
-        {aviso && <p class="pp-aviso" role="status">{aviso}</p>}
+          <SubirFotos
+            accion={ruta(`/admin/productos/${actual.id}/subir`)}
+            destino="nombre"
+            texto="Arrastra aquí las fotos, o elígelas"
+            clave="varias"
+          />
+          <details class="f-ayuda">
+            <summary>Cómo nombrar las fotos para que lleguen solas a su sitio</summary>
+            <p>
+              <code>{actual.handle}-color-toma.jpg</code>, por ejemplo <code>{ejemplo}</code>. Sin color si es del
+              producto en general (<code>{actual.handle}-detalle.jpg</code>). Varias de la misma toma:
+              <code>-2</code>, <code>-3</code> al final.
+            </p>
+            {versiones.length > 0 && <p>Versiones: {versiones.map((v) => <code>{normalizar(v.titulo)}</code>)}</p>}
+            <p>Tomas: {roles.map((x) => <code>{normalizar(x.nombre).split('-')[0]}</code>)}</p>
+          </details>
+        </section>
 
-        <form method="post" action={ruta(`/admin/productos/${actual.id}`)} class="pp-forma" novalidate>
-          {/* El PRIMER botón submit del formulario es el que dispara Enter en
-              un campo. Sin este, Enter en un precio pulsaría «subir» de la
-              primera fila. Oculto a la vista y al lector: el visible está
-              abajo. */}
-          <button type="submit" name="accion" value="guardar" class="pp-oculto" tabindex="-1" aria-hidden="true">
-            Guardar
-          </button>
-          <input type="hidden" name="version" value={b.version} />
+        <div class="pb-bloques" data-bloques>
+          <BloqueProducto
+            productoId={actual.id}
+            b={de('producto')?.producto ?? borradorProducto(actual)}
+            errores={de('producto')?.errores ?? {}}
+            categorias={categorias}
+            fotos={fotos.get('producto') ?? []}
+            versiones={versiones}
+            roles={roles}
+            hecho={hechoDe('producto')}
+            conflicto={de('producto')?.conflicto}
+            sucio={Boolean(de('producto'))}
+          />
 
-          <section class="pp-bloque" aria-labelledby="t-basico">
-            <h2 class="p-seccion__titulo" id="t-basico">El producto</h2>
-            <CamposBasicos b={b} errores={errores} categorias={categorias} />
-          </section>
+          {actual.variantes.map((v, i) => {
+            const rv = de(`v${v.id}`);
+            return (
+              <BloqueVersion
+                productoId={actual!.id}
+                titulo={v.titulo === SIN_VARIANTES ? '' : v.titulo}
+                bv={rv?.version ?? borradorVersion(v)}
+                unica={actual!.variantes.length === 1}
+                numero={i + 1}
+                fotos={fotos.get(`v${v.id}`) ?? []}
+                versiones={versiones}
+                roles={roles}
+                errores={rv?.errores ?? {}}
+                hecho={hechoDe(`v${v.id}`)}
+                conflicto={rv?.conflicto}
+                sucio={Boolean(rv)}
+                inventario={porVersion.get(v.id)}
+                inventarioActivo={inventarioActivo}
+                paquete={respuesta.paquete?.id ?? null}
+                abrirInventario={abrir === v.id}
+              />
+            );
+          })}
 
-          <section class="pp-bloque" aria-labelledby="t-precio">
-            <h2 class="p-seccion__titulo" id="t-precio">Precio y opciones</h2>
-            <CamposVariantes b={b} errores={errores} info={info} />
-          </section>
+          {desaparecida && (
+            <BloqueVersion
+              productoId={actual.id}
+              titulo={desaparecida.titulo}
+              bv={desaparecida}
+              unica={false}
+              numero={actual.variantes.length + 1}
+              fotos={[]}
+              versiones={versiones}
+              roles={roles}
+              errores={{}}
+              desaparecida={true}
+              sucio={true}
+              inventarioActivo={inventarioActivo}
+              paquete={null}
+              abrirInventario={false}
+            />
+          )}
 
-          <div class="pp-guardar">
-            <button type="submit" name="accion" value="guardar" class="v-boton v-boton--oro">
-              Guardar cambios
-            </button>
-            <a href={ruta(`/admin/productos/${actual.id}`)} class="pp-descartar">Descartar lo que no guardé</a>
-          </div>
-        </form>
+          <BloqueVersiones
+            productoId={actual.id}
+            b={de('versiones')?.versiones ?? borradorVersiones(actual)}
+            errores={de('versiones')?.errores ?? {}}
+            info={info}
+            hecho={hechoDe('versiones')}
+            aviso={de('versiones')?.aviso}
+            conflicto={de('versiones')?.conflicto}
+            sucio={Boolean(de('versiones'))}
+          />
+        </div>
 
         <section class="pp-bloque" aria-labelledby="t-mas">
           <h2 class="p-seccion__titulo" id="t-mas">Más</h2>
           <p class="pp-ayuda">
-            Dirección en la tienda: <code>/producto/{actual.handle}</code>. No se cambia, para no
-            romper los enlaces que ya compartiste.
+            Dirección en la tienda: <code>/producto/{actual.handle}</code>. No se cambia, para no romper los enlaces
+            que ya compartiste.
           </p>
           {!actual.archivadoEn && (
             <a class="v-boton v-boton--linea" href={ruta(`/admin/productos/${actual.id}/archivar`)}>
@@ -251,7 +329,7 @@ const ACCIONES: Record<string, string> = {
         </section>
 
         {historial.length > 0 && (
-          <section class="pp-bloque" aria-labelledby="t-historial">
+          <section class="pp-bloque" aria-labelledby="t-historial" data-region="historial">
             <h2 class="p-seccion__titulo" id="t-historial">Últimos cambios</h2>
             <ul class="pp-historial">
               {historial.map((c) => (
@@ -263,7 +341,25 @@ const ACCIONES: Record<string, string> = {
             </ul>
           </section>
         )}
+
+        <div data-region="franja">
+          <Respuesta
+            parte="franja"
+            franja={respuesta.franja}
+            error={respuesta.error}
+            pregunta={respuesta.pregunta}
+            paqueteAbierto={respuesta.paquete?.id ?? null}
+            pantalla={pantalla}
+            volver={`p${id}`}
+          />
+        </div>
       </>
     )
   }
 </Panel>
+
+<script>
+  import '../../../admin/fotos-cliente-subir';
+  import '../../../admin/fotos-cliente-rejilla';
+  import '../../../admin/productos/cliente-bloques';
+</script>

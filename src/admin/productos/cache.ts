@@ -17,8 +17,11 @@
  *      (`SEGUNDOS_CACHE`), que es la red que R9 pide.
  *
  * Para que la dueña vea su cambio AL INSTANTE pese a (2), el enlace «Ver en la
- * tienda» del panel lleva `?v=<version>`: una URL nueva no está en ninguna
- * caché. Es la segunda mitad de R9 («que el panel enlace a la página pública
+ * tienda» del panel lleva `?v=<sello>`: una URL nueva no está en ninguna
+ * caché. El sello es la hora de pintar la ficha (y la ficha lo renueva con JS
+ * tras cada guardado sin recargar): desde que cada bloque tiene su cerrojo
+ * (migrations/0009), `productos.version` ya no cambia al guardar una versión,
+ * y no serviría. Es la segunda mitad de R9 («que el panel enlace a la página pública
  * con un parámetro que salte la caché»). El `?v=` no crea copias de respaldo
  * de más: `claveDeCache` ignora la query.
  *
@@ -58,6 +61,6 @@ export async function invalidarProducto(origen: string, handle: string): Promise
 }
 
 /** El enlace a la ficha pública que salta cualquier caché. */
-export function enlaceFicha(handle: string, version: number): string {
-  return ruta(`/producto/${handle}?v=${version}`);
+export function enlaceFicha(handle: string, sello: string = Date.now().toString(36)): string {
+  return ruta(`/producto/${handle}?v=${sello}`);
 }

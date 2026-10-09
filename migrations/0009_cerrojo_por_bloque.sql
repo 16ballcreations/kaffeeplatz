@@ -1,0 +1,43 @@
+-- 0009: un cerrojo por bloque en la ficha del panel.
+--
+-- QUÉ CAMBIA EN LA PANTALLA
+-- ===========================================================================
+-- El cliente pidió (9 oct 2026) juntar «Productos» y «Fotos» en una sola
+-- pantalla: el producto con sus fotos generales, y una tarjeta por versión
+-- (Verde, Rosa…) con sus propias fotos, «cada uno con su botón de guardado
+-- independiente». Hasta hoy el producto entero era UN formulario con UN
+-- cerrojo: `productos.version`.
+--
+-- Con un solo cerrojo, guardar la tarjeta «Verde» sube `productos.version` y
+-- el bloque «Producto» de la MISMA página —con la descripción a medio
+-- escribir— recibiría un 409 al guardarse, como si otra persona lo hubiera
+-- tocado. Eso es justo lo contrario de «guardado independiente».
+--
+-- TRES CERROJOS, UNO POR CLASE DE BLOQUE
+-- ---------------------------------------------------------------------------
+--   productos.version            el bloque «Producto» (nombre, descripción,
+--                                categoría, destacado y sus fotos generales).
+--                                Ya existía; archivar y restaurar lo siguen
+--                                subiendo, como antes.
+--   variantes.version            la tarjeta de UNA versión (nombre, precio,
+--                                a la venta y sus fotos). NUEVA.
+--   productos.version_variantes  el bloque «Versiones»: cuáles hay y en qué
+--                                orden, y cómo se llama lo que cambia entre
+--                                ellas («Color»). NUEVA.
+--
+-- Cada guardado sube SOLO el suyo, dentro del mismo `batch()` y con el mismo
+-- truco de `changes()` en la auditoría (ver consultas/productos-escribir.ts).
+-- Así dos pestañas que tocan la MISMA tarjeta se avisan, y dos que tocan
+-- tarjetas distintas guardan las dos.
+--
+-- Recalcular el precio «desde» y la disponibilidad del producto al guardar
+-- una versión NO sube `productos.version`: son columnas derivadas, nadie las
+-- escribe a mano, y subir el cerrojo por ellas volvería a crear el 409 falso.
+--
+-- DEFAULT 1 en las dos, igual que `productos.version` en 0001: las filas que
+-- ya existen arrancan en la misma versión que un formulario recién abierto.
+-- Mismo criterio de idempotencia que 0004/0006: `ADD COLUMN` no admite
+-- `IF NOT EXISTS`, y `wrangler d1 migrations apply` no reaplica un fichero.
+
+ALTER TABLE variantes ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE productos ADD COLUMN version_variantes INTEGER NOT NULL DEFAULT 1;

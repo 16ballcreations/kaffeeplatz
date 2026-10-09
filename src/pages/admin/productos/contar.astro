@@ -1,0 +1,142 @@
+---
+/**
+ * /admin/productos/contar — «Contar la bodega»: el día del conteo inicial
+ * (G.6, «el día del cambio»), y cada vez que haga falta recontar.
+ *
+ * PARA QUÉ EXISTE
+ * ===========================================================================
+ * Antes de encender el inventario, Andreina tiene que cargar cuántas hay de
+ * las 25 referencias (unas 30 versiones). Hacerlo entrando producto a
+ * producto son 30 fichas abiertas. Aquí está todo en una lista: un número por
+ * versión y un botón «Guardar» por fila. Cada fila se guarda sola: si se va
+ * el wifi en la fila 20, las 19 primeras ya están.
+ *
+ * EL MISMO CERROJO Y LA MISMA AUDITORÍA QUE «CORREGIR LA CUENTA»
+ * ---------------------------------------------------------------------------
+ * Cada fila es exactamente el formulario «Corregir la cuenta» de la ficha
+ * (`accion=corregir`): lleva oculto el número que había al pintar
+ * (`anterior`), y si cambió mientras tanto —una venta por Bold a mitad del
+ * conteo— no se pisa: vuelve con el error y el número nuevo
+ * (`fijarFisico` en consultas/inventario-panel.ts). Queda en `movimientos`
+ * como un ajuste con la nota «Conteo de la bodega», y se ve en «Qué pasó».
+ *
+ * Sin JavaScript: un formulario POST por fila, 303 de vuelta aquí (PRG). Con
+ * JavaScript: la fila se guarda sin recargar y solo se repinta ella, para no
+ * borrar los números que ya tecleó en las demás (cliente-inventario.ts).
+ */
+import Panel from '../../../layouts/Panel.astro';
+import Respuesta from '../../../admin/inventario-respuesta.astro';
+import { ruta } from '../../../datos/sitio';
+import { inventarioDelPanel, type FilaInventario } from '../../../datos/inventario';
+import { respuestaDeInventario, type RespuestaInventario } from '../../../admin/inventario-lectura';
+import { nombreVariante } from '../../../admin/inventario-textos';
+import '../../../styles/panel-productos.css';
+import '../../../styles/panel-inventario.css';
+import '../../../styles/panel-inventario-avisos.css';
+
+export const prerender = false;
+
+/** La nota de cada ajuste del conteo. «Corregir» la exige; aquí la pone el botón. */
+const NOTA = 'Conteo de la bodega';
+
+let filas: FilaInventario[] = [];
+let activo = false;
+let fallo = false;
+let respuesta: RespuestaInventario = { franja: null, pregunta: null, error: null, paquete: null };
+try {
+  const inv = inventarioDelPanel(Astro.locals);
+  const [todo, a] = await Promise.all([inv.todo(), inv.activo()]);
+  filas = (todo.datos ?? []).filter((f) => !f.productoArchivado);
+  activo = a;
+  fallo = todo.estado !== 'ok';
+  respuesta = await respuestaDeInventario(inv, Astro.url.searchParams, filas);
+} catch (e) {
+  console.error('[admin] contar sin base:', e instanceof Error ? e.message : e);
+  fallo = true;
+}
+
+const grupos = new Map<string, { titulo: string; filas: FilaInventario[] }>();
+for (const f of filas) {
+  const g = grupos.get(f.productoHandle) ?? { titulo: f.productoTitulo, filas: [] };
+  g.filas.push(f);
+  grupos.set(f.productoHandle, g);
+}
+const accion = ruta('/admin/inventario/accion');
+---
+
+<Panel titulo="Contar la bodega" seccion="productos">
+  <p class="pp-migas"><a href={ruta('/admin/productos')}>← Productos</a></p>
+  <h1 class="p-titulo">Contar la bodega</h1>
+  <p class="p-entradilla">
+    Escribe cuántas hay de verdad en la estantería y pulsa «Guardar» en esa fila. Cada fila se guarda sola.
+    {
+      activo
+        ? ' El inventario está encendido: lo que guardes aquí la tienda lo usa al momento.'
+        : ' El inventario está apagado: puedes contar con calma, la tienda todavía no usa estos números.'
+    }
+  </p>
+
+  <div data-region="pregunta"></div>
+
+  {
+    fallo ? (
+      <p class="p-error" role="alert">No se pudo leer el inventario ahora mismo. Inténtalo en un momento.</p>
+    ) : (
+      [...grupos.values()].map((g) => (
+        <section class="pi-producto">
+          <h2 class="pi-producto__titulo">{g.titulo}</h2>
+          <ul class="pi-filas pl-contar">
+            {g.filas.map((f) => {
+              const nombre = (g.filas.length > 1 && nombreVariante(f.varianteTitulo)) || 'Cuántas hay';
+              return (
+                <li class="pi-fila" id={`v${f.varianteId}`} data-inv-fila={f.varianteId}>
+                  <form method="post" action={accion} data-inv class="pl-contar__fila">
+                    <input type="hidden" name="accion" value="corregir" />
+                    <input type="hidden" name="v" value={f.varianteId} />
+                    <input type="hidden" name="anterior" value={f.fisico} />
+                    <input type="hidden" name="nota" value={NOTA} />
+                    <input type="hidden" name="volver" value="contar" />
+                    <label for={`c${f.varianteId}`} class="pl-contar__nombre">
+                      {nombre}
+                      <small>{`Ahora dice ${f.fisico}`}</small>
+                    </label>
+                    <input
+                      class="pi-num"
+                      id={`c${f.varianteId}`}
+                      name="nuevo"
+                      type="number"
+                      inputmode="numeric"
+                      min="0"
+                      max="9999"
+                      value={Math.max(0, f.fisico)}
+                      required
+                    />
+                    <button class="pi-boton" type="submit">
+                      Guardar<span class="sr-only">{` ${g.titulo} ${nombre}`}</span>
+                    </button>
+                  </form>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))
+    )
+  }
+
+  <div data-region="franja">
+    <Respuesta
+      parte="franja"
+      franja={respuesta.franja}
+      error={respuesta.error}
+      pregunta={null}
+      paqueteAbierto={null}
+      pantalla="/admin/productos/contar"
+      volver="contar"
+    />
+  </div>
+</Panel>
+
+<script>
+  import '../../../admin/cliente-inventario';
+</script>

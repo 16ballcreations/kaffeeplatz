@@ -28,6 +28,15 @@ export interface FilaListado {
   archivado: boolean;
   variantes: number;
   fotos: number;
+  /** Fotos subidas que esperan a que se guarde su bloque para publicarse. */
+  porRevisar: number;
+  /**
+   * Versiones (con dos o más) que no tienen ni una foto propia publicada. Era
+   * el aviso de la antigua lista de /admin/fotos (B.7, punto 8): «Verde no
+   * tiene fotos» escrito junto al producto, para que el hueco se vea sin
+   * contar.
+   */
+  sinFotoPropia: string[];
 }
 
 /**
@@ -49,11 +58,18 @@ export async function listarProductos(db: BaseAdmin): Promise<FilaListado[]> {
       `SELECT p.id, p.handle, p.titulo, p.categoria, p.precio, p.disponible, p.destacado,
               p.archivado_en IS NOT NULL AS archivado,
               (SELECT COUNT(*) FROM variantes v WHERE v.producto_id = p.id) AS variantes,
-              (SELECT COUNT(*) FROM imagenes i WHERE i.producto_id = p.id) AS fotos
+              (SELECT COUNT(*) FROM imagenes i WHERE i.producto_id = p.id AND i.por_revisar = 0) AS fotos,
+              (SELECT COUNT(*) FROM imagenes i WHERE i.producto_id = p.id AND i.por_revisar = 1) AS por_revisar,
+              (SELECT json_group_array(v.titulo) FROM variantes v
+                WHERE v.producto_id = p.id
+                  AND NOT EXISTS (SELECT 1 FROM imagenes i WHERE i.variante_id = v.id AND i.por_revisar = 0)
+              ) AS sin_foto
          FROM productos p
         ORDER BY p.titulo COLLATE NOCASE, p.id`,
     )
     .all<{
+      por_revisar: number;
+      sin_foto: string;
       id: number;
       handle: string;
       titulo: string;
@@ -65,8 +81,12 @@ export async function listarProductos(db: BaseAdmin): Promise<FilaListado[]> {
       variantes: number;
       fotos: number;
     }>();
-  return r.results.map((f) => ({
+  return r.results.map(({ por_revisar, sin_foto, ...f }) => ({
     ...f,
+    porRevisar: por_revisar,
+    /* Con una sola versión no hay color que elegir (la ficha tampoco pinta
+       selector): no hay hueco que avisar. */
+    sinFotoPropia: f.variantes > 1 ? (JSON.parse(sin_foto || '[]') as string[]) : [],
     disponible: f.disponible === 1,
     destacado: f.destacado === 1,
     archivado: f.archivado === 1,
@@ -80,6 +100,8 @@ export interface VariantePanel {
   precio: number;
   disponible: boolean;
   orden: number;
+  /** El cerrojo de su tarjeta (migrations/0009). */
+  version: number;
   /** Fotos vinculadas a ESTA variante. Al quitarla pasan al producto. */
   fotos: number;
   /**
@@ -102,6 +124,8 @@ export interface ProductoPanel {
   disponible: boolean;
   archivadoEn: string | null;
   version: number;
+  /** El cerrojo del bloque «Versiones» (migrations/0009). */
+  versionVariantes: number;
   updatedAt: string;
   variantes: VariantePanel[];
   /** El nombre de la opción ('Color'), o '' si no tiene. */
@@ -114,7 +138,7 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
   const p = await db
     .prepare(
       `SELECT id, handle, titulo, descripcion_html, categoria, destacado, precio, disponible,
-              archivado_en, version, updated_at,
+              archivado_en, version, version_variantes, updated_at,
               (SELECT COUNT(*) FROM imagenes i WHERE i.producto_id = productos.id) AS fotos
          FROM productos WHERE id = ?1`,
     )
@@ -130,6 +154,7 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
       disponible: number;
       archivado_en: string | null;
       version: number;
+      version_variantes: number;
       updated_at: string;
       fotos: number;
     }>();
@@ -138,7 +163,7 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
   const [vs, op] = await Promise.all([
     db
       .prepare(
-        `SELECT v.id, v.titulo, v.precio, v.disponible, v.orden,
+        `SELECT v.id, v.titulo, v.precio, v.disponible, v.orden, v.version,
                 (SELECT COUNT(*) FROM imagenes i WHERE i.variante_id = v.id) AS fotos,
                 (EXISTS (SELECT 1 FROM movimientos m WHERE m.variante_id = v.id)
                  OR EXISTS (SELECT 1 FROM reservas r WHERE r.variante_id = v.id)
@@ -153,6 +178,7 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
         precio: number;
         disponible: number;
         orden: number;
+        version: number;
         fotos: number;
         con_historial: number;
       }>(),
@@ -173,6 +199,7 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
     disponible: p.disponible === 1,
     archivadoEn: p.archivado_en,
     version: p.version,
+    versionVariantes: p.version_variantes,
     updatedAt: p.updated_at,
     fotos: p.fotos,
     opcionNombre: op?.nombre ?? '',
@@ -182,6 +209,7 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
       precio: v.precio,
       disponible: v.disponible === 1,
       orden: v.orden,
+      version: v.version,
       fotos: v.fotos,
       conHistorial: v.con_historial === 1,
     })),

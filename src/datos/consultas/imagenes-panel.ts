@@ -68,11 +68,16 @@ interface FilaFoto {
   por_revisar: number;
 }
 
-/** Un producto con sus variantes, sus fotos y los roles. `null` si no existe. */
-export async function productoConFotos(db: BaseAdmin, handle: string): Promise<ProductoFotos | null> {
+/**
+ * Un producto con sus variantes, sus fotos y los roles. `null` si no existe.
+ *
+ * Por id y no por handle desde que las fotos viven en la ficha del producto
+ * (`/admin/productos/<id>`): es la misma clave que usa el resto de la ficha.
+ */
+export async function productoConFotos(db: BaseAdmin, id: number): Promise<ProductoFotos | null> {
   const p = await db
-    .prepare('SELECT id, handle, titulo, archivado_en, portada_id FROM productos WHERE handle = ?')
-    .bind(handle)
+    .prepare('SELECT id, handle, titulo, archivado_en, portada_id FROM productos WHERE id = ?')
+    .bind(id)
     .first<{ id: number; handle: string; titulo: string; archivado_en: string | null; portada_id: number | null }>();
   if (!p) return null;
 
@@ -112,70 +117,4 @@ export async function productoConFotos(db: BaseAdmin, handle: string): Promise<P
       porRevisar: f.por_revisar === 1,
     })),
   };
-}
-
-export interface ResumenFotos {
-  handle: string;
-  titulo: string;
-  archivado: boolean;
-  fotos: number;
-  porRevisar: number;
-  /** Títulos de las variantes reales que no tienen ni una foto propia. */
-  sinFoto: string[];
-  /** ¿Tiene dos o más variantes reales (no «Default Title»)? */
-  conVariantes: boolean;
-}
-
-/**
- * La lista de `/admin/fotos`: cada producto con lo que le falta.
- *
- * Dos consultas planas y un cosido en memoria, el mismo criterio que
- * `consultas/productos.ts` (filas leídas se pagan, R4): 25 productos y 30
- * variantes, no una subconsulta por variante.
- */
-export async function resumenDeFotos(db: BaseAdmin): Promise<ResumenFotos[]> {
-  const [productos, variantes] = await Promise.all([
-    db
-      .prepare(
-        `SELECT p.id, p.handle, p.titulo, p.archivado_en,
-                (SELECT COUNT(*) FROM imagenes i WHERE i.producto_id = p.id) AS fotos,
-                (SELECT COUNT(*) FROM imagenes i WHERE i.producto_id = p.id AND i.por_revisar = 1) AS por_revisar
-           FROM productos p
-          ORDER BY (p.archivado_en IS NOT NULL), p.titulo, p.id`,
-      )
-      .all<{ id: number; handle: string; titulo: string; archivado_en: string | null; fotos: number; por_revisar: number }>(),
-    db
-      .prepare(
-        `SELECT v.producto_id, v.titulo,
-                EXISTS (SELECT 1 FROM imagenes i WHERE i.variante_id = v.id) AS con_foto
-           FROM variantes v
-          WHERE v.titulo <> 'Default Title'
-          ORDER BY v.producto_id, v.orden, v.id`,
-      )
-      .all<{ producto_id: number; titulo: string; con_foto: number }>(),
-  ]);
-
-  const porProducto = new Map<number, { titulo: string; con_foto: number }[]>();
-  for (const v of variantes.results) {
-    const l = porProducto.get(v.producto_id) ?? [];
-    l.push(v);
-    porProducto.set(v.producto_id, l);
-  }
-
-  return productos.results.map((p) => {
-    /* Una variante sola no es un color que elegir: es el producto (muchas
-       de la semilla se llaman como él, «NEGRO» o «32000»). La ficha tampoco
-       pinta selector con menos de dos, así que aquí no hay hueco que avisar. */
-    const todas = porProducto.get(p.id) ?? [];
-    const vs = todas.length > 1 ? todas : [];
-    return {
-      handle: p.handle,
-      titulo: p.titulo,
-      archivado: p.archivado_en !== null,
-      fotos: p.fotos,
-      porRevisar: p.por_revisar,
-      sinFoto: vs.filter((v) => v.con_foto !== 1).map((v) => v.titulo),
-      conVariantes: vs.length > 0,
-    };
-  });
 }

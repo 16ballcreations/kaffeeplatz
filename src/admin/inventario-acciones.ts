@@ -48,14 +48,30 @@ function destino(base: string, params: Record<string, string | number | null | u
   return `${base}${s ? `?${s}` : ''}${ancla ? `#${ancla}` : ''}`;
 }
 
-const INV = '/admin/inventario';
 const DESP = '/admin/despachos';
+
+/**
+ * A dónde vuelve un toque de inventario. Desde que el inventario vive dentro
+ * de Productos (pedido del cliente, 9 oct 2026), los mismos botones están en
+ * la tarjeta de cada versión, en la lista y en «Contar la bodega», y cada uno
+ * tiene que volver a SU pantalla. El campo `volver` es una CLAVE, no una URL:
+ * con una URL libre, cualquier formulario podría mandar a la dueña fuera del
+ * panel (redirección abierta). Lo que no se reconoce vuelve a la lista.
+ */
+function volverA(form: FormData): string {
+  const v = texto(form, 'volver', 20);
+  const p = /^p(\d{1,9})$/.exec(v);
+  if (p) return `/admin/productos/${p[1]}`;
+  if (v === 'contar') return '/admin/productos/contar';
+  return '/admin/productos';
+}
 
 /**
  * Un POST de /admin/inventario/accion → la URL a la que volver.
  * Nunca lanza: un fallo vuelve con `?error=fallo` y el log dice qué pasó.
  */
 export async function accionInventario(form: FormData, locals: unknown): Promise<string> {
+  const INV = volverA(form);
   const accion = texto(form, 'accion', 20);
   const v = entero(form, 'v', 1, 1e6);
   const paquete = entero(form, 'paquete', 1, 1e6);
@@ -64,13 +80,13 @@ export async function accionInventario(form: FormData, locals: unknown): Promise
     const inv = inventarioDelPanel(locals);
     switch (accion) {
       case 'whatsapp':
-        return await vender(inv, form, v, paquete, entero(form, 'n', 1, 999) ?? 1);
+        return await vender(inv, INV, form, v, paquete, entero(form, 'n', 1, 999) ?? 1);
 
       case 'sumar': {
         const n = entero(form, 'n', 1, 999);
         if (!v || !n) return destino(INV, { error: 'cantidad', paquete }, ancla);
         const motivo = texto(form, 'motivo', 20);
-        if (motivo === 'whatsapp') return await vender(inv, form, v, paquete, n);
+        if (motivo === 'whatsapp') return await vender(inv, INV, form, v, paquete, n);
         const r =
           motivo === 'rotura'
             ? await inv.ajustar({ varianteId: v, delta: -n, motivo: 'ajuste', nota: NOTA_ROTURA })
@@ -91,13 +107,6 @@ export async function accionInventario(form: FormData, locals: unknown): Promise
         return r.ok
           ? destino(INV, { paquete, hecho: 'm', m: r.movimientoId }, ancla)
           : destino(INV, { paquete, error: r.error, abrir: v }, ancla);
-      }
-
-      case 'alaventa': {
-        if (!v) return destino(INV, { error: 'no-existe' });
-        const si = texto(form, 'si', 1) === '1';
-        await inv.ponerALaVenta(v, si);
-        return destino(INV, { paquete, hecho: si ? 'a-la-venta' : 'retirado', v }, ancla);
       }
 
       case 'deshacer': {
@@ -122,7 +131,7 @@ export async function accionInventario(form: FormData, locals: unknown): Promise
            viejo ignora. Apagar no la pide: es la vuelta atrás (R13) y tiene
            que costar un toque. */
         if (activo && texto(form, 'confirmo', 2) !== 'si') {
-          return destino(`${INV}/interruptor`, { error: 'confirmar' });
+          return destino('/admin/inventario/interruptor', { error: 'confirmar' });
         }
         await inv.cambiarInterruptor(activo);
         return destino(INV, { hecho: activo ? 'encendido' : 'apagado' });
@@ -143,6 +152,7 @@ export async function accionInventario(form: FormData, locals: unknown): Promise
 /** «Vendí por WhatsApp»: o descuenta, o vuelve PREGUNTANDO (G.4.2). */
 async function vender(
   inv: InventarioDelPanel,
+  INV: string,
   form: FormData,
   v: number | null,
   paquete: number | null,

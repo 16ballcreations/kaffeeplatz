@@ -1,0 +1,103 @@
+---
+/**
+ * BloqueProducto — el primer bloque de la ficha: nombre, descripción,
+ * categoría, destacado y las FOTOS GENERALES (las que se ven con cualquier
+ * versión). Su botón, «Guardar producto», guarda solo esto y publica las
+ * fotos de este bloque que esperaban (ver guardar.ts).
+ *
+ * El `<form>` es solo el de los datos y las fotos; la zona de carga va fuera
+ * (un form no puede ir dentro de otro) y el botón se asocia con `form=`.
+ */
+import { ruta } from '../../datos/sitio';
+import CamposBasicos from './CamposBasicos.astro';
+import FotosBloque from './FotosBloque.astro';
+import SubirFotos from './SubirFotos.astro';
+import EstadoBloque from './EstadoBloque.astro';
+import type { Borrador, Errores } from './forma';
+import type { FotoVista } from './ficha';
+
+interface Props {
+  productoId: number;
+  b: Borrador;
+  errores: Errores;
+  categorias: { id: string; nombre: string }[];
+  fotos: FotoVista[];
+  versiones: { id: number; titulo: string }[];
+  roles: { id: string; nombre: string }[];
+  hecho?: string;
+  conflicto?: string[] | null;
+  /** Repintado con lo que ella escribió y sin guardar. */
+  sucio: boolean;
+}
+
+const { productoId, b, errores, categorias, fotos, versiones, roles, hecho, conflicto, sucio } = Astro.props as Props;
+const accion = ruta(`/admin/productos/${productoId}`);
+const hayErrores = Object.keys(errores).length > 0;
+const pendientes = fotos.filter((f) => f.porRevisar).length;
+---
+
+<section
+  class="pp-bloque pb-bloque"
+  id="bloque-producto"
+  data-bloque="producto"
+  data-sucio={sucio ? '1' : undefined}
+  aria-labelledby="t-producto"
+>
+  <div class="pb-cabeza">
+    <h2 class="p-seccion__titulo" id="t-producto">Producto</h2>
+    <span class="pb-sin-guardar" data-sin-guardar hidden={!sucio}>Sin guardar</span>
+  </div>
+
+  <form id="f-producto" method="post" action={accion} class="pp-forma" novalidate data-bloque-form>
+    {/* El PRIMER botón submit del formulario es el que dispara Enter en un
+        campo. Sin este, Enter en el nombre pulsaría «↑» de la primera foto.
+        Oculto a la vista y al lector: el visible está abajo. */}
+    <button type="submit" name="accion" value="guardar" class="pp-oculto" tabindex="-1" aria-hidden="true">
+      Guardar
+    </button>
+    <input type="hidden" name="bloque" value="producto" />
+    <input type="hidden" name="version" value={b.version} />
+    <CamposBasicos b={b} errores={errores} categorias={categorias} />
+
+    <h3 class="pb-subtitulo">
+      Fotos generales <span class="f-cuenta" data-f-cuenta>{fotos.length}</span>
+    </h3>
+    <p class="pp-ayuda">
+      {versiones.length
+        ? 'Se ven con cualquier versión. Las de cada color van en su tarjeta, más abajo.'
+        : 'La primera es la del catálogo.'}
+    </p>
+    <FotosBloque
+      fotos={fotos}
+      grupo="producto"
+      versiones={versiones}
+      roles={roles}
+      version={null}
+      rutaFotos={ruta(`/admin/productos/${productoId}/fotos`)}
+      errores={errores}
+    />
+  </form>
+
+  <SubirFotos
+    accion={ruta(`/admin/productos/${productoId}/subir`)}
+    destino="producto"
+    texto="Agregar fotos generales"
+    clave="producto"
+  />
+
+  <div class="pp-guardar pb-guardar">
+    <button form="f-producto" type="submit" name="accion" value="guardar" class="v-boton v-boton--oro">
+      Guardar producto
+    </button>
+    <span class="pb-pendientes" data-f-pendientes hidden={!pendientes}>
+      {pendientes === 1 ? '1 foto sin publicar' : `${pendientes} fotos sin publicar`}
+    </span>
+  </div>
+  <EstadoBloque
+    hecho={hecho}
+    conflicto={conflicto}
+    error={errores.general ?? hayErrores}
+    boton="Guardar producto"
+    productoId={productoId}
+  />
+</section>
