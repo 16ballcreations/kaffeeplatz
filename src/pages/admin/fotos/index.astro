@@ -1,0 +1,82 @@
+---
+/**
+ * /admin/fotos — qué producto tiene fotos y a cuál le faltan.
+ *
+ * Es la puerta de entrada a la pantalla de cada producto, y por eso enseña lo
+ * que hace falta para decidir a cuál entrar: cuántas fotos tiene, cuántas
+ * esperan que la dueña confirme su color, y QUÉ COLORES NO TIENEN NINGUNA
+ * (B.7, punto 8). «Verde no tiene fotos» escrito al lado del producto es el
+ * aviso que hace que los huecos se arreglen solos con el tiempo, sin que nadie
+ * tenga que contar.
+ *
+ * Lo que no tiene nada pendiente va igual en la lista, pero sin resaltar: la
+ * lista es para encontrar un producto, no solo para ver errores.
+ */
+import Panel from '../../../layouts/Panel.astro';
+import { ruta } from '../../../datos/sitio';
+import { baseAdmin } from '../../../admin/base';
+import { resumenDeFotos, type ResumenFotos } from '../../../datos/consultas/imagenes-panel';
+import '../../../styles/panel-fotos.css';
+
+export const prerender = false;
+
+let productos: ResumenFotos[] = [];
+let fallo = false;
+try {
+  productos = await resumenDeFotos(baseAdmin(Astro.locals));
+} catch (e) {
+  console.error('[fotos] lista:', e instanceof Error ? e.message : e);
+  fallo = true;
+}
+
+const conHuecos = productos.filter((p) => !p.archivado && (p.sinFoto.length || p.fotos === 0 || p.porRevisar));
+---
+
+<Panel titulo="Fotos" seccion="fotos">
+  <h1 class="p-titulo">Fotos</h1>
+  <p class="p-entradilla">
+    {
+      fallo
+        ? 'No se pudo leer el catálogo ahora mismo.'
+        : conHuecos.length
+          ? `${conHuecos.length} ${conHuecos.length === 1 ? 'producto necesita' : 'productos necesitan'} fotos o una revisión.`
+          : 'Todos los productos tienen sus fotos.'
+    }
+  </p>
+
+  {
+    fallo ? (
+      <p class="p-error" role="alert">
+        La base de datos no responde. Si estás en local, corre <code>npm run d1:migrar</code>.
+      </p>
+    ) : (
+      <ul class="f-lista">
+        {productos.map((p) => {
+          const pendiente = !p.archivado && (p.sinFoto.length > 0 || p.fotos === 0 || p.porRevisar > 0);
+          return (
+            <li>
+              <a
+                class:list={['f-lista__fila', { 'f-lista__fila--pendiente': pendiente }]}
+                href={ruta(`/admin/fotos/${p.handle}`)}
+              >
+                <span class="f-lista__titulo">
+                  {p.titulo}
+                  {p.archivado && <span class="f-etiqueta">Archivado</span>}
+                </span>
+                <span class="f-lista__datos">
+                  {p.fotos === 0 ? 'Sin fotos' : `${p.fotos} ${p.fotos === 1 ? 'foto' : 'fotos'}`}
+                  {p.porRevisar > 0 && <span class="f-etiqueta f-etiqueta--oro">{p.porRevisar} por revisar</span>}
+                </span>
+                {p.sinFoto.length > 0 && (
+                  <span class="f-lista__hueco">
+                    Sin fotos propias: {p.sinFoto.join(', ')}
+                  </span>
+                )}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    )
+  }
+</Panel>

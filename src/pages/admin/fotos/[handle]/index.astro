@@ -1,0 +1,291 @@
+---
+/**
+ * /admin/fotos/<handle> — cargar las fotos de un producto y decir de qué color
+ * y de qué toma es cada una.
+ *
+ * ES LA PANTALLA DE B.7 «cargar 9 fotos de un producto de 3 colores sin que
+ * sea un suplicio», y su diseño son dos atajos:
+ *
+ *   1. El NOMBRE DEL FICHERO propone color y toma (convención aprobada por el
+ *      cliente, src/admin/fotos-nombre.ts). Las fotos recién subidas aparecen
+ *      arriba, «Por revisar», con la propuesta ya puesta en los desplegables.
+ *      Guardar es confirmar. Nunca se publica un color que ella no confirmó.
+ *   2. «Copiar a las siguientes N»: marca Morado en la primera y las
+ *      siguientes se ponen en Morado. Las sesiones de fotos se hacen por color.
+ *
+ * Lo demás —subir/bajar, portadas, quitar— son botones de UN formulario, así
+ * que todo funciona sin JavaScript (ver cambios.ts). Con JS: subida con
+ * progreso foto a foto, arrastrar para ordenar, y las acciones sin recargar.
+ *
+ * TODO A 375 PX. La dueña edita desde el teléfono (prueba 16 del plan): las
+ * tarjetas son una columna, los controles miden 44 px, y arrastrar NO es el
+ * único camino para ordenar.
+ */
+import Panel from '../../../../layouts/Panel.astro';
+import { ruta } from '../../../../datos/sitio';
+import { miniatura } from '../../../../datos/imagenes';
+import { baseAdmin } from '../../../../admin/base';
+import { productoConFotos, type ProductoFotos, type FotoPanel } from '../../../../datos/consultas/imagenes-panel';
+import { sugerir, normalizar } from '../../../../admin/fotos-nombre';
+import { grupoDe } from '../../../../admin/fotos-orden';
+import '../../../../styles/panel-fotos.css';
+
+export const prerender = false;
+
+const handle = String(Astro.params.handle ?? '');
+let p: ProductoFotos | null = null;
+let fallo = false;
+try {
+  p = await productoConFotos(baseAdmin(Astro.locals), handle);
+} catch (e) {
+  console.error('[fotos] producto:', e instanceof Error ? e.message : e);
+  fallo = true;
+}
+if (!p && !fallo) return Astro.redirect(ruta('/admin/fotos'), 303);
+
+const q = Astro.url.searchParams;
+const ok = q.get('ok') ?? (q.get('subidas') ? `Subidas ${q.get('subidas')} fotos. Revísalas abajo y guarda.` : '');
+const error = q.get('error') ?? '';
+
+/* «Default Title» es la variante única de un producto sin colores: no es un
+   color que elegir, y no se ofrece. */
+const variantes = p?.variantes.filter((v) => v.titulo !== 'Default Title') ?? [];
+const roles = p?.roles ?? [];
+const nombreVariante = new Map(variantes.map((v) => [v.id, v.titulo]));
+const nombreRol = new Map(roles.map((r) => [r.id, r.nombre]));
+
+/** El alt prerrellenado de B.7: «Aeropress Clear — Morado, armado». */
+const altAuto = (varianteId: number | null, rol: string | null) => {
+  const partes = [varianteId !== null ? nombreVariante.get(varianteId) : '', rol ? nombreRol.get(rol)?.toLowerCase() : '']
+    .filter(Boolean)
+    .join(', ');
+  return partes ? `${p!.titulo} — ${partes}` : p!.titulo;
+};
+
+/** Lo que se pinta en cada tarjeta: lo guardado, o la sugerencia si está por revisar. */
+const tarjeta = (f: FotoPanel) => {
+  const s = f.porRevisar ? sugerir(f.nombreOriginal ?? '', handle, variantes, roles) : null;
+  const varianteId = s ? (s.varianteId ?? null) : f.varianteId;
+  const rol = s ? (s.rol ?? null) : f.rol;
+  const alt = s ? altAuto(varianteId, rol) : f.alt;
+  return { ...f, s, varianteId, rol, alt, auto: alt === altAuto(varianteId, rol) };
+};
+
+const fotos = (p?.fotos ?? []).map(tarjeta);
+const grupos = [
+  { clave: 'revisar', titulo: 'Por revisar', nota: 'Recién subidas. Confirma el color y la toma, y guarda.' },
+  { clave: 'producto', titulo: 'Fotos del producto', nota: variantes.length ? 'Se ven con cualquier color.' : '' },
+  ...variantes.map((v) => ({ clave: `v${v.id}`, titulo: v.titulo, nota: '' })),
+]
+  .map((g) => ({ ...g, fotos: fotos.filter((f) => grupoDe(p!.fotos.find((x) => x.id === f.id)!) === g.clave) }))
+  .filter((g) => g.clave !== 'revisar' || g.fotos.length);
+const sinFoto = variantes.filter((v) => !p!.fotos.some((f) => f.varianteId === v.id && !f.porRevisar));
+/* Las portadas se DERIVAN del orden, igual que las recalcula cada escritura
+   (src/admin/fotos-orden.ts). No se lee `portada_id` porque en las fotos de la
+   semilla todavía es NULL, y lo que importa es lo que se ve en la tienda: la
+   primera. */
+const portadaProducto = p?.fotos[0]?.id ?? null;
+const portadaDe = new Map(
+  variantes.map((v) => [p!.fotos.find((f) => f.varianteId === v.id && !f.porRevisar)?.id, v.titulo]),
+);
+const ejemplo = variantes[0] ? `${handle}-${normalizar(variantes[0].titulo)}-armado.jpg` : `${handle}-armado.jpg`;
+---
+
+<Panel titulo={p ? `Fotos · ${p.titulo}` : 'Fotos'} seccion="fotos">
+  <p class="f-migas"><a href={ruta('/admin/fotos')}>← Todos los productos</a></p>
+  <h1 class="p-titulo">{p ? `Fotos de ${p.titulo}` : 'Fotos'}</h1>
+
+  <div data-f-mensajes>
+    {ok && <p class="f-ok" role="status">{ok}</p>}
+    {error && <p class="p-error" role="alert">{error}</p>}
+  </div>
+
+  {fallo && <p class="p-error" role="alert">La base de datos no responde. Inténtalo en un momento.</p>}
+
+  {
+    p && (
+      <>
+        {sinFoto.length > 0 && (
+          <ul class="f-huecos" aria-label="Colores sin fotos">
+            {sinFoto.map((v) => (
+              <li>
+                <b>{v.titulo}</b> no tiene fotos: en la tienda se ven las del producto.
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <section class="p-seccion" aria-labelledby="t-subir">
+          <h2 class="p-seccion__titulo" id="t-subir">Subir fotos</h2>
+          <form
+            class="f-subida"
+            method="post"
+            action={ruta(`/admin/fotos/${handle}/subir`)}
+            enctype="multipart/form-data"
+            data-f-subida
+          >
+            <label class="f-soltar" data-f-soltar>
+              <span class="f-soltar__texto">
+                Arrastra aquí las fotos, o <u>elígelas</u>. Puedes elegir varias a la vez.
+              </span>
+              <span class="f-soltar__nota">JPG, PNG o WebP, hasta 15 MB cada una.</span>
+              <input type="file" name="foto" multiple accept="image/jpeg,image/png,image/webp" data-f-ficheros />
+            </label>
+            <button class="v-boton v-boton--oro" type="submit" data-f-sin-js>Subir</button>
+          </form>
+          <ul class="f-progreso" data-f-progreso aria-live="polite"></ul>
+          <details class="f-ayuda">
+            <summary>Cómo nombrar las fotos para que se asignen solas</summary>
+            <p>
+              <code>{handle}-color-toma.jpg</code>, por ejemplo <code>{ejemplo}</code>. Sin color si
+              es del producto en general (<code>{handle}-detalle.jpg</code>). Varias de la misma toma:
+              <code>-2</code>, <code>-3</code> al final.
+            </p>
+            {variantes.length > 0 && (
+              <p>Colores: {variantes.map((v) => <code>{normalizar(v.titulo)}</code>)}</p>
+            )}
+            <p>Tomas: {roles.map((r) => <code>{normalizar(r.nombre).split('-')[0]}</code>)}</p>
+          </details>
+        </section>
+
+        <form
+          class="f-rejilla"
+          method="post"
+          action={ruta(`/admin/fotos/${handle}/cambios`)}
+          data-f-rejilla
+          data-producto={p.titulo}
+        >
+          {/* Botón por defecto: Enter dentro de una descripción GUARDA. Sin él,
+              el navegador usaría el primer botón del formulario, que sería
+              «subir» de la primera foto. */}
+          <button class="f-oculto" type="submit" name="accion" value="guardar" tabindex="-1" aria-hidden="true">
+            Guardar
+          </button>
+
+          {p.fotos.length === 0 && <p class="p-entradilla">Este producto todavía no tiene fotos.</p>}
+
+          {grupos.map((g) => (
+            <section class="f-grupo" data-f-grupo={g.clave} aria-labelledby={`g-${g.clave}`}>
+              <h2 class="p-seccion__titulo" id={`g-${g.clave}`}>
+                {g.titulo} <span class="f-cuenta">{g.fotos.length}</span>
+              </h2>
+              {g.nota && <p class="f-nota">{g.nota}</p>}
+              {g.fotos.length === 0 && g.clave !== 'producto' && (
+                <p class="f-nota">Sin fotos todavía: en la tienda se ven las del producto.</p>
+              )}
+              <ol class="f-fotos" data-f-lista={g.clave}>
+                {g.fotos.map((f) => (
+                  <li class="f-foto" data-f-foto={f.id} id={`foto-${f.id}`}>
+                    <img class="f-foto__img" src={miniatura(f.clave)} alt="" loading="lazy" width="96" height="96" />
+                    <div class="f-foto__cuerpo">
+                      <p class="f-foto__marcas">
+                        <span class="f-etiqueta f-etiqueta--oro" data-f-marca-producto hidden={f.id !== portadaProducto}>
+                          ★ Portada del catálogo
+                        </span>
+                        <span class="f-etiqueta f-etiqueta--oro" data-f-marca-variante hidden={!portadaDe.has(f.id)}>
+                          ★ Portada de {portadaDe.get(f.id) ?? ''}
+                        </span>
+                        {f.s && (
+                          <span class="f-etiqueta">
+                            {f.s.encaja ? 'Sugerido por el nombre: revisa y guarda' : 'Asígnala a mano'}
+                          </span>
+                        )}
+                        {f.nombreOriginal && <span class="f-foto__nombre">{f.nombreOriginal}</span>}
+                      </p>
+                      <input type="hidden" name="foto" value={f.id} />
+                      <div class="f-foto__campos">
+                        {variantes.length > 0 && (
+                          <label class="f-campo">
+                            <span>Color</span>
+                            <select name={`variante-${f.id}`} data-f-variante>
+                              <option value="">Del producto (todos)</option>
+                              {variantes.map((v) => (
+                                <option value={v.id} selected={f.varianteId === v.id}>{v.titulo}</option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+                        <label class="f-campo">
+                          <span>Toma</span>
+                          <select name={`rol-${f.id}`} data-f-rol>
+                            <option value="">Sin clasificar</option>
+                            {roles.map((r) => (
+                              <option value={r.id} selected={f.rol === r.id}>{r.nombre}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label class="f-campo f-campo--ancho">
+                          <span>Descripción</span>
+                          <input
+                            name={`alt-${f.id}`}
+                            value={f.alt}
+                            required
+                            maxlength="200"
+                            data-f-alt
+                            data-f-alt-auto={String(f.auto)}
+                          />
+                        </label>
+                      </div>
+                      {/* Solo con JS (lo enseña panel-fotos.css con `.f-con-js`):
+                          sin JS sería un botón que no hace nada. */}
+                      <div class="f-aplicar" data-f-aplicar>
+                        <button class="f-boton" type="button" data-f-aplicar-boton>Copiar</button>
+                        <select aria-label="Qué copiar" data-f-aplicar-que>
+                          {variantes.length > 0 && <option value="variante">el color</option>}
+                          <option value="rol">la toma</option>
+                          {variantes.length > 0 && <option value="ambos">color y toma</option>}
+                        </select>
+                        <span>a las</span>
+                        <input type="number" min="1" max="50" value="2" aria-label="Cuántas fotos siguientes" data-f-aplicar-cuantas />
+                        <span>siguientes</span>
+                      </div>
+                      <div class="f-acciones">
+                        {g.clave !== 'revisar' && (
+                          <>
+                            <button class="f-boton" type="submit" name="accion" value={`subir:${f.id}`} data-f-mover="-1">
+                              ↑<span class="f-oculto"> Subir</span>
+                            </button>
+                            <button class="f-boton" type="submit" name="accion" value={`bajar:${f.id}`} data-f-mover="1">
+                              ↓<span class="f-oculto"> Bajar</span>
+                            </button>
+                          </>
+                        )}
+                        <button class="f-boton" type="submit" name="accion" value={`portada:${f.id}`}>
+                          Portada del catálogo
+                        </button>
+                        {f.varianteId !== null && !f.porRevisar && (
+                          <button class="f-boton" type="submit" name="accion" value={`portada-variante:${f.id}`}>
+                            Portada de {nombreVariante.get(f.varianteId)}
+                          </button>
+                        )}
+                        <button class="f-boton f-boton--peligro" type="submit" name="accion" value={`quitar:${f.id}`} data-f-quitar>
+                          Quitar
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          ))}
+
+          {p.fotos.length > 0 && (
+            <div class="f-guardar">
+              <button class="v-boton v-boton--oro" type="submit" name="accion" value="guardar">
+                Guardar colores, tomas y descripciones
+              </button>
+              <p class="f-nota">
+                La portada del catálogo es la primera foto; si es de un color, también es la primera de ese color.
+              </p>
+            </div>
+          )}
+        </form>
+      </>
+    )
+  }
+</Panel>
+
+<script>
+  import '../../../../admin/fotos-cliente-subir';
+  import '../../../../admin/fotos-cliente-rejilla';
+</script>
