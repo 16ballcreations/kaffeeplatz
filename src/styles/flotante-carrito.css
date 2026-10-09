@@ -188,17 +188,16 @@
 
    POR QUE `:has()` Y NO LA CLASE DEL <body>
    ---------------------------------------------------------------------------
-   Lo natural seria colgar esto de `.v-con-barra`, la clase que la ficha pasa
-   al layout en `claseCuerpo`. No se puede: esa clase NO LLEGA al navegador.
-   El <body> servido sale sin atributos (comprobado con curl y en el DOM, y
-   pasa IGUAL sin estos cambios: es anterior a ellos), asi que `.v-con-barra`
-   no casa con nada. La regla `.v-con-barra .v-pie` que ya existia en v2.css
-   para el relleno del pie tampoco esta aplicando hoy por lo mismo; queda
-   anotado abajo porque es un fallo aparte de este encargo.
+   La ficha pasa `claseCuerpo="v-con-barra"` al layout y esa clase SI llega
+   al <body> (la usa `.v-con-barra .v-pie` en v2/ficha-producto.css para que
+   la barra no tape el pie). Durante un tiempo no llego: un comentario de
+   plantilla entre `<!doctype html>` y `<html>` en Base.astro hacia que Astro
+   descartara <html>, <head> y <body> con sus atributos. Ya esta corregido.
 
-   `:root:has(.v-barra-compra)` se apoya en algo que SI esta en el DOM: la
-   propia barra. Es ademas mas honesto —"si hay barra, apartate"— y no depende
-   de que ninguna pagina se acuerde de pasar una clase.
+   Aun asi esto se queda con `:root:has(.v-barra-compra)`, a proposito: se
+   apoya en la propia barra, que es lo que de verdad estorba. Es mas honesto
+   —"si hay barra, apartate"— y no depende de que ninguna pagina se acuerde
+   de pasar una clase.
 
    El corte es 860px, el mismo en el que v2.css enciende .v-barra-compra. Por
    encima la barra es `display:none` y el anclaje normal vale.
