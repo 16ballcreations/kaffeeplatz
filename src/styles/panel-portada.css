@@ -1,0 +1,132 @@
+/**
+ * panel-portada.css — las tarjetas de «lo que necesita atención» y el resumen.
+ *
+ * Es el CSS de UNA pantalla, `/admin`, y por eso está aparte del armazón: la
+ * barra y el menú de `panel.css` los usan todas las pantallas del panel, estas
+ * tarjetas solo la portada.
+ *
+ * La decisión visual que importa, y por qué
+ * ---------------------------------------------------------------------------
+ * Una tarjeta en CERO se apaga (`.p-aviso--cero`) y una cuya consulta FALLO se
+ * pinta en el rojo de aviso con un guión en vez de una cifra
+ * (`.p-aviso--fallo`). Son tres estados distintos a propósito: «hay 6 cosas que
+ * mirar», «no hay ninguna» y «no he podido contarlo» no pueden verse igual,
+ * porque la última no es una buena noticia y un 0 lo parecería.
+ *
+ * Los tokens los define `panel.css`, que se carga antes.
+ */
+
+/* --- Tarjetas de atención -------------------------------------------------- */
+.p-avisos {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 34rem) {
+  .p-avisos {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 60rem) {
+  .p-avisos {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.p-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  min-height: var(--p-toque);
+  padding: 1rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-img);
+  color: inherit;
+  text-decoration: none;
+}
+
+.p-aviso:hover,
+.p-aviso:focus-visible {
+  border-color: var(--v-linea-oro);
+}
+
+/* La cifra. Tabular para que no baile entre tarjetas. */
+.p-aviso__cifra {
+  font-family: var(--v-serif);
+  font-size: 2rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--v-oro);
+  flex-shrink: 0;
+  min-width: 2ch;
+}
+
+/* Cero no es un problema: se apaga para que lo que sí importa resalte. */
+.p-aviso--cero .p-aviso__cifra {
+  color: var(--v-tinta-3);
+}
+
+.p-aviso--cero {
+  opacity: 0.7;
+}
+
+/* La consulta falló: se dice, no se pinta un 0. */
+.p-aviso--fallo .p-aviso__cifra {
+  color: var(--p-aviso);
+  font-size: 1.25rem;
+}
+
+.p-aviso__texto {
+  min-width: 0;
+}
+
+.p-aviso__titulo {
+  display: block;
+  font-size: var(--v-t-peq);
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.p-aviso__detalle {
+  display: block;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-2);
+  line-height: 1.4;
+}
+
+/* --- Resumen --------------------------------------------------------------- */
+.p-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.p-resumen li {
+  flex: 1 1 10rem;
+  padding: 0.85rem 1rem;
+  background: var(--p-tarjeta-2);
+  border-radius: var(--v-r-mini);
+  border: 1px solid var(--p-linea);
+}
+
+.p-resumen b {
+  display: block;
+  font-family: var(--v-serif);
+  font-size: 1.5rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.p-resumen span {
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-2);
+}

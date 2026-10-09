@@ -25,3 +25,9 @@ propuestas/*/marca/
 # Estado local de wrangler
 .wrangler/
 tmp/
+
+# Secretos de desarrollo local (wrangler los carga solo con --local).
+# NUNCA se versiona: la clave del panel vive aqui en local y en
+# `wrangler secret put` en produccion. Ver src/admin/sesion.ts.
+.dev.vars
+.dev.vars.*

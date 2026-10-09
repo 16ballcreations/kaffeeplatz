@@ -1,0 +1,96 @@
+/**
+ * panel-formas.css — la pantalla de entrar, los campos y los avisos de error.
+ *
+ * SEPARADO DE `panel.css` POR EL LIMITE DE 300 LINEAS DEL ENCARGO, pero la
+ * frontera es la natural: `panel.css` es el ARMAZON (barra, menú, tarjetas,
+ * pie) que envuelve a todas las pantallas del panel; esto son los CONTROLES
+ * con los que se escribe algo.
+ *
+ * Y la división va a envejecer bien: las fases 5-7 añaden formularios de
+ * producto, de foto y de artículo, y sus campos, errores y botones se parecen
+ * mucho más a lo que hay en este fichero que al armazón. Lo que crezca,
+ * crecerá aquí.
+ *
+ * Los tokens (`--p-toque`, los colores) los define `panel.css`, que se carga
+ * siempre antes: este fichero NO redefine ninguno.
+ */
+
+/* --- Entrar ---------------------------------------------------------------- */
+.p-entrar {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+.p-entrar__caja {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.p-entrar__emblema {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin-bottom: 1.25rem;
+}
+
+.p-campo {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.p-campo__etiqueta {
+  display: block;
+  font-size: var(--v-t-peq);
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+
+.p-campo input {
+  width: 100%;
+  min-height: var(--p-toque);
+  padding: 0.6rem 0.8rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta);
+  font: inherit;
+  /* 16px reales: por debajo, Safari en iPhone hace zoom al enfocar el campo y
+     la pantalla se descoloca. */
+  font-size: 1rem;
+}
+
+.p-campo input:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 1px;
+  border-color: var(--v-oro);
+}
+
+.p-entrar .v-boton {
+  width: 100%;
+  justify-content: center;
+  min-height: var(--p-toque);
+}
+
+/* El error del formulario. `role="alert"` lo anuncia; esto lo hace visible. */
+.p-error {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-aviso);
+  border-radius: var(--v-r-mini);
+  color: var(--p-aviso);
+  font-size: var(--v-t-peq);
+  line-height: 1.45;
+}
+
+.p-nota {
+  margin-top: 1.25rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+  line-height: 1.5;
+}
