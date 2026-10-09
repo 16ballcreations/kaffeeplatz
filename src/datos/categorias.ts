@@ -10,8 +10,16 @@
  * unico que se escribe dentro de cada producto. El nombre visible, el orden y
  * la descripcion se resuelven SIEMPRE a traves de este catalogo.
  *
- * Consecuencia practica: renombrar "Molinos" a "Molienda" es un cambio de una
- * linea aqui y no toca ni un solo producto ni una sola plantilla.
+ * Consecuencia practica: renombrar "Molinos" a "Molienda" no toca ni un solo
+ * producto ni una sola plantilla.
+ *
+ * DESDE EL PANEL, ESTA LISTA ES EL RESPALDO
+ * ---------------------------------------------------------------------------
+ * Las categorias de producto viven en la tabla `categorias` de D1 y la dueña
+ * las edita en /admin/categorias. La tienda las lee de ahi
+ * (`obtenerCategorias` en `catalogo.ts`); `CATEGORIAS` es lo que se uso para
+ * sembrar la base y lo que se pinta si esa lectura falla. Cambiar un nombre
+ * AQUI ya no cambia la tienda: se cambia en el panel.
  *
  * COMO SE MIGRA ESTO A UNA API EL DIA DE MANANA
  * ---------------------------------------------------------------------------
