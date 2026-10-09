@@ -1,0 +1,297 @@
+/**
+ * panel.css — el CSS del panel, en su propio fichero.
+ *
+ * POR QUE NO VA EN v2.css
+ * ===========================================================================
+ * `v2.css` tiene 3.931 líneas y es el CSS del SITIO PUBLICO. El encargo lo dice
+ * explícitamente: no engordarlo. Pero el motivo de fondo es mejor que el
+ * tamaño: el panel y la tienda cambian por razones distintas y en momentos
+ * distintos. Un retoque del panel no debería poder romper la ficha de producto,
+ * y cada kilobyte de CSS del panel que viaje a un cliente que viene a comprar
+ * es peso que no le sirve de nada.
+ *
+ * QUE SI REUTILIZA
+ * ---------------------------------------------------------------------------
+ * **Los tokens**, que es lo que de verdad importa para que el panel se sienta
+ * del mismo sitio: `--v-canvas`, `--v-oro`, `--v-tinta`, la tipografía, los
+ * radios. Están en `:root` de `v2.css`, que el layout del panel también carga,
+ * así que aquí no se redefine ni un color. Si mañana cambia el oro de la marca,
+ * cambia en los dos sitios a la vez.
+ *
+ * Y reutiliza las CLASES de `v2.css` donde son exactamente lo que hace falta:
+ * `.v-boton`, `.v-boton--oro`. No se recrean versiones del panel de botones que
+ * ya existen.
+ *
+ * LOS COLORES NUEVOS: NINGUNO SIN COMPROBAR
+ * ---------------------------------------------------------------------------
+ * El panel introduce un color propio: el rojo de aviso de las tarjetas de
+ * atención y de los errores del formulario. Está medido en
+ * `scripts/contraste.mjs` contra los dos fondos reales sobre los que aparece.
+ * Lo demás son tokens ya verificados.
+ *
+ * A 375 px
+ * ---------------------------------------------------------------------------
+ * Se diseña para el móvil primero y el escritorio es el caso ancho, no al
+ * revés. La dueña va a editar desde el teléfono (nota de C y prueba obligatoria
+ * 16), así que el menú es una fila que se desliza arriba, no una barra lateral
+ * que haya que esconder.
+ */
+
+/* --- Color propio del panel ------------------------------------------------ */
+:root {
+  /* Rojo de aviso. Verificado en scripts/contraste.mjs contra --v-canvas y
+     --v-elevado: 4.5:1 en los dos. */
+  --p-aviso: #ff9b8a;
+  /* Fondos del panel. Son los tokens del sitio, con nombre propio para que se
+     lea de qué nivel es cada superficie sin recordar la escala de negros. */
+  --p-fondo: var(--v-canvas);
+  --p-barra: var(--v-abismo);
+  --p-tarjeta: var(--v-superficie);
+  --p-tarjeta-2: var(--v-elevado);
+  --p-linea: var(--v-linea);
+  /* Alto mínimo de todo lo que se toca. 44 px es el mínimo de WCAG 2.5.8 y el
+     que recomienda Apple: por debajo, en un teléfono se falla el toque. */
+  --p-toque: 44px;
+}
+
+/* --- Armazón --------------------------------------------------------------- */
+.p-cuerpo {
+  min-height: 100vh;
+  background: var(--p-fondo);
+  color: var(--v-tinta);
+  font-family: var(--v-sans);
+  /* Sin scroll horizontal a ningún ancho: lo que se desborda se recorta o se
+     envuelve, nunca empuja la página. */
+  overflow-x: hidden;
+}
+
+.p-limite {
+  width: 100%;
+  max-width: 1100px;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 48rem) {
+  .p-limite {
+    padding-inline: 2rem;
+  }
+}
+
+/* --- Barra superior -------------------------------------------------------- */
+.p-barra {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--p-barra);
+  border-bottom: 1px solid var(--p-linea);
+}
+
+.p-barra__fila {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 56px;
+}
+
+.p-barra__marca {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: auto;
+  color: var(--v-tinta);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: var(--v-t-peq);
+  letter-spacing: 0.02em;
+}
+
+.p-barra__marca img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+
+.p-barra__marca span {
+  /* "Panel" en oro: dice de un vistazo que esto no es la tienda. */
+  color: var(--v-oro);
+}
+
+/* Enlace de salir: un botón de verdad, porque es un POST.
+
+   `--p-toque` (44 px) y no un valor más compacto: estos dos botones se pulsan
+   con el pulgar en un teléfono, y 44 px es el mínimo de WCAG 2.5.8. Una
+   primera versión los dejó en 36 px porque "son secundarios"; que se usen poco
+   no los hace más fáciles de acertar. */
+.p-salir {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--p-toque);
+  padding: 0 0.85rem;
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-pildora);
+  background: none;
+  color: var(--v-tinta-2);
+  font: inherit;
+  font-size: var(--v-t-micro);
+  cursor: pointer;
+}
+
+.p-salir:hover,
+.p-salir:focus-visible {
+  color: var(--v-tinta);
+  border-color: var(--v-linea-2);
+}
+
+/* --- Menú: fila deslizable en móvil, fila normal en escritorio ------------- */
+.p-menu {
+  background: var(--p-barra);
+  border-bottom: 1px solid var(--p-linea);
+}
+
+.p-menu ul {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  /* Sin barra visible, pero deslizable con el dedo. */
+  scrollbar-width: none;
+}
+
+.p-menu ul::-webkit-scrollbar {
+  display: none;
+}
+
+.p-menu a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--p-toque);
+  padding: 0 0.75rem;
+  color: var(--v-tinta-2);
+  text-decoration: none;
+  font-size: var(--v-t-peq);
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.p-menu a:hover,
+.p-menu a:focus-visible {
+  color: var(--v-tinta);
+}
+
+.p-menu a[aria-current='page'] {
+  color: var(--v-oro);
+  border-bottom-color: var(--v-oro);
+}
+
+/* Una sección del menú que todavía no existe (fases 5-7). Se ve apagada y no
+   es un enlace: enseñar el mapa completo del panel ayuda a situarse, y un
+   enlace a una página que no existe sería un 404 en la cara. */
+.p-menu span.p-menu__pronto {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--p-toque);
+  padding: 0 0.75rem;
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-peq);
+  white-space: nowrap;
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* --- Contenido ------------------------------------------------------------- */
+.p-principal {
+  padding-block: 1.5rem 3rem;
+}
+
+.p-titulo {
+  font-family: var(--v-serif);
+  font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+  font-weight: 500;
+  line-height: 1.1;
+  margin: 0 0 0.35rem;
+}
+
+.p-entradilla {
+  color: var(--v-tinta-2);
+  font-size: var(--v-t-peq);
+  margin: 0 0 1.75rem;
+  max-width: 48ch;
+}
+
+.p-seccion {
+  margin-block: 2.5rem 0;
+}
+
+.p-seccion__titulo {
+  font-size: var(--v-t-cuerpo);
+  font-weight: 600;
+  margin: 0 0 0.9rem;
+  color: var(--v-tinta);
+}
+
+/**
+ * panel.css — el CSS del panel, en su propio fichero.
+ *
+ * POR QUE NO VA EN v2.css
+ * ===========================================================================
+ * `v2.css` tiene 3.931 líneas y es el CSS del SITIO PUBLICO. El encargo lo dice
+ * explícitamente: no engordarlo. Pero el motivo de fondo es mejor que el
+ * tamaño: el panel y la tienda cambian por razones distintas y en momentos
+ * distintos. Un retoque del panel no debería poder romper la ficha de producto,
+ * y cada kilobyte de CSS del panel que viaje a un cliente que viene a comprar
+ * es peso que no le sirve de nada.
+ *
+ * QUE SI REUTILIZA
+ * ---------------------------------------------------------------------------
+ * **Los tokens**, que es lo que de verdad importa para que el panel se sienta
+ * del mismo sitio: `--v-canvas`, `--v-oro`, `--v-tinta`, la tipografía, los
+ * radios. Están en `:root` de `v2.css`, que el layout del panel también carga,
+ * así que aquí no se redefine ni un color. Si mañana cambia el oro de la marca,
+ * cambia en los dos sitios a la vez.
+ *
+ * Y reutiliza las CLASES de `v2.css` donde son exactamente lo que hace falta:
+ * `.v-boton`, `.v-boton--oro`. No se recrean versiones del panel de botones que
+ * ya existen.
+ *
+ * LOS COLORES NUEVOS: NINGUNO SIN COMPROBAR
+ * ---------------------------------------------------------------------------
+ * El panel introduce un color propio: el rojo de aviso de las tarjetas de
+ * atención y de los errores del formulario. Está medido en
+ * `scripts/contraste.mjs` contra los dos fondos reales sobre los que aparece.
+ * Lo demás son tokens ya verificados.
+ *
+ * A 375 px
+ * ---------------------------------------------------------------------------
+ * Se diseña para el móvil primero y el escritorio es el caso ancho, no al
+ * revés. La dueña va a editar desde el teléfono (nota de C y prueba obligatoria
+ * 16), así que el menú es una fila que se desliza arriba, no una barra lateral
+ * que haya que esconder.
+ */
+
+/* --- Pie del panel --------------------------------------------------------- */
+.p-pie {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--p-linea);
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+
+.p-pie a {
+  color: var(--v-tinta-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

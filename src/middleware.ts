@@ -34,13 +34,46 @@
  *
  * No toca las páginas prerenderizadas: esas salen como ficheros del build y las
  * sirve el borde como assets. `context.isPrerendered` las identifica.
+ *
+ * Y DESDE LA FASE 4, LA PUERTA DEL PANEL
+ * ===========================================================================
+ * Este fichero es el único sitio por el que pasa TODA petición antes de que se
+ * resuelva la ruta, así que es donde tiene que estar la autenticación del panel
+ * (patrón 1 de A.6: una sola puerta, lo más arriba posible). Está ANTES de
+ * `next()`: si la puerta no deja pasar, la página del panel no se renderiza
+ * siquiera. Ver `src/admin/puerta.ts`, que explica cómo se demuestra que no se
+ * puede saltar.
  */
 
 import { defineMiddleware } from 'astro:middleware';
 import { cabecerasOk, guardarCopia } from './datos/resiliencia';
+import { pasarPuerta, esRutaDelPanel, cabecerasPanel } from './admin/puerta';
 
 export const onRequest = defineMiddleware(async (context, next) => {
+  /* LA PUERTA DEL PANEL, lo primero de todo y antes de `next()`.
+     Para cualquier ruta que no empiece por /admin devuelve `null` al instante
+     y no cuesta nada. */
+  const corte = await pasarPuerta(context.request, context.url, context.locals);
+  if (corte) return corte;
+
   const respuesta = await next();
+
+  /* Las respuestas del panel: nunca se cachean, siempre `noindex`, y aquí se
+     entrega la cookie si la puerta decidió renovar la sesión. Se hace sobre la
+     respuesta ya hecha para que ninguna página del panel tenga que acordarse
+     de ponerlo — el mismo motivo por el que la caché pública se gobierna aquí
+     y no en cada página. */
+  if (esRutaDelPanel(context.url.pathname)) {
+    const cabeceras = new Headers(respuesta.headers);
+    for (const [k, v] of Object.entries(cabecerasPanel())) cabeceras.set(k, v);
+    const renovada = (context.locals as { cookieRenovada?: string }).cookieRenovada;
+    if (renovada) cabeceras.append('Set-Cookie', renovada);
+    return new Response(respuesta.body, {
+      status: respuesta.status,
+      statusText: respuesta.statusText,
+      headers: cabeceras,
+    });
+  }
 
   /* Lo prerenderizado se sirve como asset: ni cabeceras ni copia. */
   if (context.isPrerendered) return respuesta;

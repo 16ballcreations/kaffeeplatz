@@ -189,6 +189,63 @@ también pasa como texto. La prohibición es relativa al fondo, no al color.
 
 ---
 
+## Panel de administración (`/admin`)
+
+Fase 4 del plan `planes/kaffeeplatz-panel-admin.md`. Sesiones con cookie, no
+Basic Auth: el porqué está en B.5 del plan y en la cabecera de
+`src/admin/sesion.ts`.
+
+### La clave
+
+La clave **no se guarda en ningún sitio**; lo que se guarda es su hash PBKDF2.
+
+```bash
+npm run hash-clave               # genera una clave al azar y su hash
+npm run hash-clave 'mi clave'    # o usa una concreta
+```
+
+En **producción** (lo ejecuta una persona con la cuenta delante; ningún script
+lo hace solo):
+
+```bash
+npx wrangler secret put ADMIN_CLAVE_HASH
+```
+
+En **local**, en `.dev.vars` (que está en `.gitignore` y nunca se versiona):
+
+```bash
+echo 'ADMIN_CLAVE_HASH=pbkdf2$sha256$...' >> .dev.vars
+```
+
+Sin ese secreto el panel **no se abre**: responde 503 con la instrucción en
+pantalla. Falla cerrado, a propósito.
+
+### La puerta
+
+Toda ruta que empiece por `/admin` pasa por `src/admin/puerta.ts`, llamada desde
+`src/middleware.ts` **antes** de `next()`. No hay comprobación por página: una
+pantalla nueva de las fases 5–7 queda protegida el día que se crea.
+
+`npm run verificar:puerta` (que corre solo en cada `npm run build`) comprueba las
+cuatro propiedades de las que depende eso, incluida la que falla en silencio: que
+no haya HTML de `/admin` en `dist/`, porque un asset estático lo serviría el
+borde **sin ejecutar el Worker**.
+
+### Pruebas propias
+
+```bash
+npm run probar:saneador    # 45 casos: XSS, el <br> de 16bc, Markdown
+npm run verificar:puerta   # las 4 propiedades de la puerta
+npm run contraste          # incluye los colores del panel
+```
+
+El saneador de HTML (`src/admin/escapar.ts`, `sanear.ts`, `markdown.ts`) está
+escrito de cero: **no** se reutiliza el de 16bc, que des-escapa `<br>` después de
+escapar (hallazgo 2 de A.6 del plan). Regla: `set:html` solo con `cuerpo_html` y
+`descripcion_html`, que ya pasaron por ahí.
+
+---
+
 ## Estado de validación
 
 Las tres propuestas pasan:

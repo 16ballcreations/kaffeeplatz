@@ -1,0 +1,155 @@
+---
+/**
+ * /admin — la portada del panel: lo que necesita atención.
+ *
+ * QUE ENSEÑA Y POR QUE SOLO ESO
+ * ===========================================================================
+ * Lo primero que la dueña ve cada mañana no debería ser un menú, debería ser
+ * **la lista de lo que puede arreglar hoy**: productos agotados, productos sin
+ * foto, artículos sin portada, borradores sin publicar. Todo contado con un
+ * `COUNT` sobre D1, nada estimado.
+ *
+ * **No hay métricas inventadas.** Ni visitas, ni conversión, ni «ventas del
+ * mes»: ninguno de esos datos existe en la base, y ponerlos con un número
+ * plausible sería peor que no ponerlos, porque alguien decidiría con ellos. El
+ * razonamiento completo está en `src/admin/atencion.ts`.
+ *
+ * SI D1 FALLA, LA PAGINA SE PINTA IGUAL
+ * ---------------------------------------------------------------------------
+ * Es el patrón 7 de A.6, y aquí está llevado un paso más allá: cada cifra tiene
+ * su propio try/catch, así que si una consulta falla, las otras cuatro se
+ * siguen viendo y la que falló lo dice. «Un panel que se cae porque no pudo
+ * contar es un panel inútil» — y uno que enseña un 0 cuando no pudo contar es
+ * peor, porque miente.
+ *
+ * Esta página NO lleva `marcarEtiquetas`: el panel no se cachea nunca (lo pone
+ * el middleware con `no-store`). Una pantalla de administración cacheada
+ * enseñaría cifras viejas justo después de arreglarlas.
+ */
+import Panel from '../../layouts/Panel.astro';
+import { SITIO, ruta } from '../../datos/sitio';
+import { baseAdmin } from '../../admin/base';
+import { loQueNecesitaAtencion, resumenDeLaTienda, type Aviso } from '../../admin/atencion';
+
+export const prerender = false;
+
+/* La puerta ya garantizó la sesión: si no hubiera, el middleware habría
+   cortado la petición y esto no se estaría ejecutando. No se vuelve a
+   comprobar aquí, a propósito — dos sitios que comprueban lo mismo son dos
+   sitios que pueden divergir, y el segundo invita a pensar que el primero es
+   opcional. */
+
+let avisos: Aviso[] = [];
+let resumen: { productos: number | null; articulos: number | null } = {
+  productos: null,
+  articulos: null,
+};
+let sinBase = false;
+
+try {
+  const db = baseAdmin(Astro.locals);
+  [avisos, resumen] = await Promise.all([loQueNecesitaAtencion(db), resumenDeLaTienda(db)]);
+} catch (fallo) {
+  /* Ni binding. No es un fallo de consulta, es configuración: se dice en
+     pantalla con lo que hay que hacer, en vez de un 500 en blanco. */
+  console.error('[admin] portada sin base:', fallo instanceof Error ? fallo.message : fallo);
+  sinBase = true;
+}
+
+/* Primero lo que tiene algo pendiente, y dentro de eso lo más numeroso. Los
+   fallos van arriba del todo: que una cifra no se pueda consultar es más
+   urgente que cualquier cifra. */
+const ordenados = avisos.slice().sort((a, b) => {
+  if (a.fallo !== b.fallo) return a.fallo ? -1 : 1;
+  const ca = a.cuenta ?? 0;
+  const cb = b.cuenta ?? 0;
+  if ((ca > 0) !== (cb > 0)) return ca > 0 ? -1 : 1;
+  return cb - ca;
+});
+
+const pendientes = ordenados.filter((a) => !a.fallo && (a.cuenta ?? 0) > 0).length;
+const hora = new Date().getHours();
+const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+/* Solo el nombre de pila: es su panel, no un cliente. */
+const nombre = SITIO.dueña.split(' ')[0];
+---
+
+<Panel titulo="Inicio" seccion="inicio">
+  <h1 class="p-titulo">{saludo}, {nombre}</h1>
+  <p class="p-entradilla">
+    {
+      sinBase
+        ? 'No se pudo conectar con la base de datos de la tienda.'
+        : pendientes === 0
+          ? 'No hay nada pendiente ahora mismo.'
+          : `Hay ${pendientes} ${pendientes === 1 ? 'cosa' : 'cosas'} que puedes revisar.`
+    }
+  </p>
+
+  {
+    sinBase ? (
+      <p class="p-error" role="alert">
+        La tienda no responde en este momento. Si estás trabajando en local, corre
+        <code> npm run d1:migrar </code> y <code> npm run d1:sembrar</code>.
+      </p>
+    ) : (
+      <>
+        <section class="p-seccion" aria-labelledby="t-atencion">
+          <h2 class="p-seccion__titulo" id="t-atencion">Lo que necesita atención</h2>
+          <ul class="p-avisos">
+            {ordenados.map((a) => {
+              const clases = [
+                'p-aviso',
+                a.fallo ? 'p-aviso--fallo' : (a.cuenta ?? 0) === 0 ? 'p-aviso--cero' : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
+
+              /* Un aviso con 0 o con fallo NO es un enlace: no hay nada que ir
+                 a ver, y las pantallas de destino son de las fases 5-7 y
+                 todavía no existen. Cuando existan, basta con poner `listo` en
+                 el menú y quitar esta condición. */
+              const contenido = (
+                <>
+                  <span class="p-aviso__cifra">{a.fallo ? '—' : a.cuenta}</span>
+                  <span class="p-aviso__texto">
+                    <span class="p-aviso__titulo">{a.titulo}</span>
+                    <span class="p-aviso__detalle">
+                      {a.fallo ? 'No se pudo consultar ahora mismo.' : a.detalle}
+                    </span>
+                  </span>
+                </>
+              );
+
+              return <li><div class={clases}>{contenido}</div></li>;
+            })}
+          </ul>
+        </section>
+
+        <section class="p-seccion" aria-labelledby="t-resumen">
+          <h2 class="p-seccion__titulo" id="t-resumen">La tienda hoy</h2>
+          <ul class="p-resumen">
+            <li>
+              <b>{resumen.productos ?? '—'}</b>
+              <span>productos en el catálogo</span>
+            </li>
+            <li>
+              <b>{resumen.articulos ?? '—'}</b>
+              <span>artículos publicados</span>
+            </li>
+          </ul>
+        </section>
+
+        <section class="p-seccion" aria-labelledby="t-pronto">
+          <h2 class="p-seccion__titulo" id="t-pronto">Todavía no está listo</h2>
+          <p class="p-entradilla">
+            Editar productos, cargar fotos y escribir en el diario llegan en las
+            siguientes entregas. Mientras tanto puedes
+            <a href={ruta('/catalogo')} target="_blank" rel="noopener"> ver la tienda</a> tal como la
+            ve un cliente.
+          </p>
+        </section>
+      </>
+    )
+  }
+</Panel>

@@ -46,5 +46,23 @@ declare namespace App {
      * cachear algo que podía.
      */
     etiquetasCache?: string[];
+
+    /**
+     * FASE 4. La sesión del panel, puesta por la puerta (`src/admin/puerta.ts`).
+     *
+     * Una página de `/admin` puede dar por hecho que esto EXISTE: si no hubiera
+     * sesión, la puerta habría cortado la petición en el middleware y la página
+     * no se estaría renderizando. Es opcional en el tipo porque en las rutas
+     * públicas no está, no porque una página del panel deba comprobarlo.
+     */
+    panel?: {
+      sesion: { id: string; expira: Date };
+    };
+
+    /**
+     * La cookie de sesión renovada, si la puerta decidió estirar la caducidad
+     * en esta petición. La entrega el middleware; ninguna página la toca.
+     */
+    cookieRenovada?: string;
   }
 }

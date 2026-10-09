@@ -1,0 +1,188 @@
+---
+/**
+ * /admin/entrar — la única puerta de entrada al panel.
+ *
+ * GET pinta el formulario, POST lo comprueba. El mismo path para los dos, como
+ * el patrón de A.5 que el plan dice conservar.
+ *
+ * EL ORDEN DEL POST, Y POR QUE ESTE ORDEN
+ * ===========================================================================
+ *   1. `Origin`          ← ya lo comprobó la puerta, antes de llegar aquí.
+ *   2. Límite de intentos ← ANTES de derivar el hash.
+ *   3. El hash de la clave (PBKDF2, decenas de ms a propósito).
+ *   4. Anotar el intento.
+ *   5. Abrir sesión y redirigir con 303.
+ *
+ * Que el límite vaya antes del hash es lo que impide usar el coste de PBKDF2
+ * como ataque de agotamiento: diez intentos y ya no se deriva nada más.
+ *
+ * NO SE DICE QUE FALLO, Y ES DELIBERADO
+ * ---------------------------------------------------------------------------
+ * El mensaje de clave incorrecta es siempre el mismo. No hay «usuario no
+ * existe» ni «esa clave era la de antes»: no hay nada que distinguir porque no
+ * hay identidad (es una clave compartida, hallazgo 10 de A.6). Lo que SI se
+ * dice es cuántos intentos quedan, porque eso no le sirve de nada a quien
+ * prueba a ciegas y le sirve mucho a la dueña, que es la que escribe mal la
+ * clave en el teclado del teléfono.
+ *
+ * POST-REDIRECT-GET CON 303
+ * ---------------------------------------------------------------------------
+ * Al entrar bien se redirige (patrón 4 de A.6): así, recargar la página de
+ * destino no reenvía la clave, y el formulario no queda en el historial con el
+ * campo relleno.
+ */
+import Panel from '../../layouts/Panel.astro';
+import { SITIO, ruta, recurso } from '../../datos/sitio';
+import { baseAdmin, secreto } from '../../admin/base';
+import { SECRETO, PREFIJO } from '../../admin/puerta';
+import { esLaClave } from '../../admin/clave';
+import { abrirSesion, idDeLaPeticion, sesionValida } from '../../admin/sesion';
+import { ipDe, revisarIntentos, anotarIntento, MAX_FALLOS, MINUTOS_VENTANA } from '../../admin/intentos';
+
+/* Requisito de SEGURIDAD, no de rendimiento: una página del panel que se
+   prerenderizara saldría como fichero en dist/ y el borde la serviría sin
+   ejecutar el Worker. Ver la cabecera de Panel.astro. */
+export const prerender = false;
+
+/**
+ * A dónde ir tras entrar. Validado contra REDIRECCION ABIERTA.
+ *
+ * Es la línea 268 de 16bc, que A.5 señala como «alguien pensó en esto»: se
+ * exige que empiece por `/admin` y, además, que no empiece por `//` —que sería
+ * `//otro-sitio.com`, una URL absoluta disfrazada de ruta relativa—. Sin esa
+ * segunda condición, `?volver=//malo.com` mandaría a la dueña fuera del sitio
+ * justo después de autenticarse, que es el momento en que más confía en lo que
+ * ve.
+ */
+function destinoSeguro(crudo: string | null): string {
+  if (!crudo || !crudo.startsWith(PREFIJO) || crudo.startsWith('//')) return PREFIJO;
+  if (crudo === `${PREFIJO}/entrar` || crudo.startsWith(`${PREFIJO}/entrar?`)) return PREFIJO;
+  return crudo;
+}
+
+const volver = destinoSeguro(Astro.url.searchParams.get('volver'));
+
+let error = '';
+let restantes = MAX_FALLOS;
+
+/* Si ya hay sesión, no se pinta el formulario: se va al panel. Evita el
+   desconcierto de ver la pantalla de entrar estando dentro (p. ej. al pulsar
+   «atrás» después de entrar). */
+try {
+  const yaDentro = await sesionValida(baseAdmin(Astro.locals), idDeLaPeticion(Astro.request));
+  if (yaDentro && Astro.request.method === 'GET') return Astro.redirect(volver, 303);
+} catch {
+  /* Sin base no se puede comprobar: se sigue y se pinta el formulario. */
+}
+
+if (Astro.request.method === 'POST') {
+  /* `Origin` ya lo validó la puerta: si no cuadrara, esta página no se estaría
+     ejecutando. No se repite aquí para que haya UN solo sitio donde se
+     comprueba y no dos que puedan divergir. */
+  const hash = secreto(Astro.locals, SECRETO);
+  const ip = ipDe(Astro.request);
+
+  try {
+    const db = baseAdmin(Astro.locals);
+    const estado = await revisarIntentos(db, ip);
+    restantes = estado.restantes;
+
+    if (estado.bloqueado) {
+      error = `Demasiados intentos. Espera ${MINUTOS_VENTANA} minutos y vuelve a probar.`;
+    } else {
+      const forma = await Astro.request.formData();
+      const clave = String(forma.get('clave') ?? '');
+
+      /* `esLaClave` falla cerrado: sin hash declarado devuelve false. (La
+         puerta ya habría respondido 503 antes de llegar aquí, pero esta
+         función no depende de eso para ser correcta.) */
+      const correcta = await esLaClave(clave, hash);
+      await anotarIntento(db, ip, correcta);
+
+      if (correcta) {
+        const { cookie } = await abrirSesion(
+          db,
+          ip,
+          Astro.request.headers.get('User-Agent') ?? '',
+        );
+        /* La cookie va en la respuesta de la REDIRECCION. El navegador la
+           guarda y la manda ya en el GET de destino. */
+        return new Response(null, {
+          status: 303,
+          headers: {
+            Location: ruta(volver),
+            'Set-Cookie': cookie,
+            'Cache-Control': 'no-store',
+          },
+        });
+      }
+
+      restantes = Math.max(0, restantes - 1);
+      error =
+        restantes > 0
+          ? `Esa clave no es. Te quedan ${restantes} ${restantes === 1 ? 'intento' : 'intentos'}.`
+          : `Esa clave no es. Espera ${MINUTOS_VENTANA} minutos antes de volver a probar.`;
+    }
+  } catch (fallo) {
+    /* Hallazgo 3 de A.6: NUNCA un 500 sin cuerpo. Se repinta el formulario con
+       un mensaje que la dueña entiende y el motivo real va al log. */
+    console.error('[admin] fallo al entrar:', fallo instanceof Error ? fallo.message : fallo);
+    error = 'No se pudo comprobar la clave en este momento. Inténtalo otra vez en un minuto.';
+  }
+}
+
+/* Un POST fallido responde 400, no 200: es el patrón de A.5 (re-pintar con
+   estado de error) y hace que la prueba con curl se vea sin ambigüedad. */
+const estadoHttp = Astro.request.method === 'POST' && error ? 400 : 200;
+Astro.response.status = estadoHttp;
+---
+
+<Panel titulo="Entrar" desnudo>
+  <div class="p-entrar">
+    <div class="p-entrar__caja">
+      <img
+        class="p-entrar__emblema"
+        src={recurso('/img/marca/emblema-sm.webp')}
+        alt=""
+        width="56"
+        height="56"
+      />
+      <h1 class="p-titulo">Panel de {SITIO.nombre}</h1>
+      <p class="p-entradilla">Escribe la clave para administrar la tienda.</p>
+
+      {
+        error && (
+          /* `role="alert"` para que un lector de pantalla lo anuncie al
+             repintarse, sin que la persona tenga que ir a buscarlo. */
+          <p class="p-error" role="alert">{error}</p>
+        )
+      }
+
+      {/* `action` apunta a esta misma ruta CONSERVANDO `?volver=`: si la sesión
+          caducó a media edición, al entrar se vuelve a donde estaba y no a la
+          portada. */}
+      <form method="post" action={ruta(`/admin/entrar${volver !== PREFIJO ? `?volver=${encodeURIComponent(volver)}` : ''}`)}>
+        <label class="p-campo">
+          <span class="p-campo__etiqueta">Clave</span>
+          {/* `autocomplete="current-password"` deja que el gestor de claves del
+              teléfono la rellene, que es como la dueña va a entrar de verdad.
+              `autofocus` para no tener que tocar el campo. */}
+          <input
+            type="password"
+            name="clave"
+            autocomplete="current-password"
+            required
+            autofocus
+            enterkeyhint="go"
+          />
+        </label>
+        <button class="v-boton v-boton--oro" type="submit">Entrar</button>
+      </form>
+
+      <p class="p-nota">
+        Esta página no aparece en buscadores. Si no recuerdas la clave, escribe a
+        quien administra el sitio: no se puede recuperar, solo cambiar.
+      </p>
+    </div>
+  </div>
+</Panel>

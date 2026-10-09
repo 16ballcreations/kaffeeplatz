@@ -170,6 +170,34 @@ pares.push(
   ['oro / elevado (cuenta de unidades del flotante)', ORO, ELEVADO, 4.5],
 );
 
+// --- PANEL DE ADMINISTRACION (fase 4) ---------------------------------------
+// El panel reutiliza los tokens del sitio, asi que casi todos sus pares ya
+// estan medidos arriba. Introduce UN color propio: el rojo de aviso de los
+// errores del formulario de entrada y de las tarjetas cuya consulta fallo.
+// Se mide contra los DOS fondos reales sobre los que aparece.
+const P_AVISO = '#ff9b8a';
+
+pares.push(
+  // El mensaje de error de /admin/entrar vive en una caja sobre --v-superficie.
+  ['panel: aviso / superficie (error al entrar)', P_AVISO, SUPERFICIE, 4.5],
+  // La misma caja sobre el canvas, por si el error se pinta fuera de tarjeta.
+  ['panel: aviso / canvas', P_AVISO, CANVAS, 4.5],
+  // La cifra "—" de una tarjeta cuya consulta no respondio.
+  ['panel: aviso / elevado (cifra no disponible)', P_AVISO, ELEVADO, 4.5],
+  // Texto y cifras del panel sobre las superficies que usa: la barra superior
+  // y el menu van sobre --v-abismo, las tarjetas sobre --v-superficie y el
+  // resumen sobre --v-elevado. Son pares ya cubiertos arriba, pero se repiten
+  // nombrados por el panel para que al tocar sus colores se vea que fallan.
+  ['panel: tinta-2 / abismo (menu en reposo)', TINTA_2, ABISMO, 4.5],
+  ['panel: oro / abismo (seccion activa del menu)', ORO, ABISMO, 4.5],
+  ['panel: tinta-3 / abismo (seccion no disponible)', TINTA_3, ABISMO, 4.5],
+  ['panel: oro / superficie (cifra de una tarjeta)', ORO, SUPERFICIE, 4.5],
+  ['panel: tinta-2 / superficie (detalle de una tarjeta)', TINTA_2, SUPERFICIE, 4.5],
+  ['panel: tinta-3 / superficie (cifra en cero)', TINTA_3, SUPERFICIE, 4.5],
+  ['panel: tinta-2 / elevado (etiqueta del resumen)', TINTA_2, ELEVADO, 4.5],
+  ['panel: tinta / superficie (campo de la clave)', TINTA, SUPERFICIE, 4.5],
+);
+
 let fallos = 0;
 console.log(`crema+lino compuesto: ${CREMA_LINO}\n`);
 for (const [nombre, t, f, min] of pares) {
