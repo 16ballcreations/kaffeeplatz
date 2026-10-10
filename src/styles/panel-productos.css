@@ -347,6 +347,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  /* Aire entre el titulo con su boton dorado y el primer bloque de debajo
+     (el estado del inventario): sin esto el boton quedaba montado encima. */
+  margin-bottom: 1.5rem;
 }
 
 .pp-buscador {
