@@ -93,6 +93,10 @@ r('/policies/refund-policy', '/contacto/');
 r('/policies/privacy-policy', '/contacto/');
 r('/policies/terms-of-service', '/contacto/');
 
+lineas.push('', '# Secciones despublicadas del sitio nuevo (302: es temporal)');
+/* /cafe sigue en construccion: la pagina vive en src/pages/_cafe.astro. */
+lineas.push('/cafe / 302', '/cafe/ / 302');
+
 lineas.push('', '# Dinamicas (al final: las estaticas tienen prioridad)');
 /* Producto visto dentro de una coleccion: /collections/metodos/products/x */
 lineas.push(

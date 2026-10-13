@@ -9,7 +9,7 @@ import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { ruta } from '../datos/sitio';
 
-const FIJAS = ['/', '/catalogo/', '/diario/', '/nosotros/', '/contacto/', '/cafe/'];
+const FIJAS = ['/', '/catalogo/', '/diario/', '/nosotros/', '/contacto/'];
 
 export const GET: APIRoute = async ({ site }) => {
   const productos = await getCollection('productos');

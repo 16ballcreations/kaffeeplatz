@@ -29,7 +29,6 @@ export const SITIO = {
 export const NAVEGACION = [
   { href: '/', etiqueta: 'Inicio' },
   { href: '/catalogo', etiqueta: 'Catálogo' },
-  { href: '/cafe', etiqueta: 'Café' },
   { href: '/diario', etiqueta: 'Diario' },
   { href: '/nosotros', etiqueta: 'Nosotros' },
   { href: '/contacto', etiqueta: 'Contacto' },

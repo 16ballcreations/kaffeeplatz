@@ -71,6 +71,10 @@
 /policies/privacy-policy /contacto/ 301
 /policies/terms-of-service /contacto/ 301
 
+# Secciones despublicadas del sitio nuevo (302: es temporal)
+/cafe / 302
+/cafe/ / 302
+
 # Dinamicas (al final: las estaticas tienen prioridad)
 /collections/*/products/fitro-de-acero-chemex-3-tazas /producto/filtro-de-acero-chemex-3-tazas/ 301
 /collections/*/products/sin-nombre-2jul_23-46 /producto/hario-v60-mugen/ 301

@@ -2,6 +2,14 @@
 /**
  * /cafe — Linea futura de cafe en grano.
  *
+ * DESPUBLICADA (2026-10-13): el guion bajo del nombre hace que Astro no la
+ * construya. Mientras tanto /cafe redirige a la portada (302, en
+ * scripts/redirecciones.mjs). Para volver a publicarla:
+ *   1. Renombrar a cafe.astro.
+ *   2. Devolver { href: '/cafe', etiqueta: 'Café' } a NAVEGACION (datos/sitio.ts).
+ *   3. Devolver '/cafe/' a FIJAS en pages/sitemap.xml.ts.
+ *   4. Quitar la redireccion temporal y correr npm run redirecciones.
+ *
  * ======================== AVISO PARA QUIEN EDITE ==========================
  * El modelo de esta linea NO ESTA DEFINIDO todavia. No se sabe si KaffeePlatz
  * sera curador de tostadores terceros o si tendra marca propia de tostion.
