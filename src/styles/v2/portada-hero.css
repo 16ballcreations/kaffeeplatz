@@ -14,6 +14,8 @@
 }
 
 .v-hero__rejilla {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   align-items: center;
@@ -52,69 +54,25 @@
   width: min(100%, 520px);
 }
 
-/* El arco: una ventana de capilla sobre crema. Recoge la curva del emblema. */
-.v-hero__arco {
-  position: relative;
-  aspect-ratio: 4 / 5;
-  border-radius: 999px 999px var(--v-r-sup) var(--v-r-sup);
-  background: var(--v-crema);
-  overflow: hidden;
-  box-shadow:
-    0 0 0 1px var(--v-linea-oro),
-    0 0 0 10px rgb(222 193 133 / 0.04),
-    0 40px 80px -30px rgb(0 0 0 / 0.8);
+/* El emblema vivo: el lienzo cubre todo el hero (el polvo flota tambien
+   detras del texto) y la caja cuadrada marca donde se dibuja el logo. El
+   contenido (la rejilla, con z-index) va por encima del lienzo. */
+.v-hero__lienzo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
 }
 
-.v-hero__arco img {
-  position: absolute;
-  inset: 8% 6% 4%;
-  width: 88%;
-  height: 88%;
-  object-fit: contain;
-  mix-blend-mode: multiply;
+.v-hero__emblema {
+  aspect-ratio: 1;
 }
 
-.v-hero__sello {
-  position: absolute;
-  left: -8%;
-  bottom: 14%;
-  width: clamp(96px, 7vw + 40px, 140px);
+.v-hero__emblema img {
+  width: 100%;
   height: auto;
-  border-radius: 50%;
-  box-shadow: 0 20px 40px -12px rgb(0 0 0 / 0.75);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .v-hero__sello {
-    animation: v-aparece 1.1s var(--v-curva) 0.6s both;
-  }
-}
-
-.v-hero__pie {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-  padding: 0.875rem 1.25rem;
-  border-radius: var(--v-r-pildora);
-  border: 1px solid var(--v-linea);
-  background: rgb(253 247 231 / 0.03);
-  text-decoration: none;
-  font-size: var(--v-t-peq);
-  transition: border-color 0.3s var(--v-curva);
-}
-
-.v-hero__pie:hover {
-  border-color: var(--v-linea-oro);
-}
-
-.v-hero__pie-nombre {
-  margin-right: auto;
-  color: var(--v-tinta);
-}
-
-.v-hero__pie [data-kp-precio] {
-  color: var(--v-oro);
 }
 
 @media (max-width: 860px) {
@@ -126,9 +84,6 @@
   .v-hero__visual {
     justify-self: center;
     width: min(100%, 380px);
-  }
-  .v-hero__sello {
-    left: -4%;
   }
 }
 
