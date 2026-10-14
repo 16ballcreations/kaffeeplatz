@@ -229,8 +229,8 @@ function iniciar(hero: HTMLElement, lienzo: HTMLCanvasElement, zona: HTMLElement
   }
   /* verde, luego oro, luego rojo; el umbral de cada punto es distinto para
      que el cambio se vea granulado y no de golpe */
-  const madurez = (p: Punto, T: number) => {
-    const f = (T - p.b - 0.3) / 1.6;
+  const madurez = (p: Punto, E: number) => {
+    const f = (E - p.b - 0.3) / 1.6;
     if (f < p.r * 0.5) return 7;
     if (f < 0.5 + p.r * 0.5) return 2;
     return p.r < 0.3 ? 6 : 5;
@@ -240,6 +240,11 @@ function iniciar(hero: HTMLElement, lienzo: HTMLCanvasElement, zona: HTMLElement
      EL RESTO DEL EMBLEMA, cuando las cerezas ya están rojas
      ====================================================================== */
   const LOGO = 7.4, BANDA = 300; // el logo se cierra con las bayas ya rojas
+  /* Las marcas de tiempo de la escena (CREC, LOGO, la maduración) están
+     escritas a velocidad 1; VELOCIDAD las acelera todas a la vez. A 1,4 el
+     emblema queda completo en unos 7 s en lugar de 10, para que el cliente
+     lo vea entero antes de bajar. */
+  const VELOCIDAD = 1.4;
   function genEmblema(st: number) {
     const L: Marca[] = [];
     // el anillo doble, trazado desde abajo hacia los dos lados
@@ -311,16 +316,19 @@ function iniciar(hero: HTMLElement, lienzo: HTMLCanvasElement, zona: HTMLElement
 
   const cuadro = (dt: number) => {
     T += dt;
+    // reloj de la escena: crecimiento, maduración y cierre del logo van a
+    // VELOCIDAD; el bamboleo y el polvo siguen con el reloj real
+    const E = T * VELOCIDAD;
     const { s, ox, oy } = encajar();
     const mx = (ptr.x - ox) / s, my = (ptr.y - oy) / s, rr = 64 / s;
     const sw = Math.sin(T * 0.7) * 0.03 + Math.sin(T * 1.9 + 1) * 0.007;
     const am = Math.exp(-7 * dt), z = tam(), n = rama.length;
     // la banda del nombre tapa el tallo, como en el emblema
-    const tapa = 1 - 0.85 * suave((T - LOGO - 0.7) / 1.2);
+    const tapa = 1 - 0.85 * suave((E - LOGO - 0.7) / 1.2);
 
     for (let i = 0; i < n; i++) {
       const p = rama[i];
-      if (T < p.b) {
+      if (E < p.b) {
         if (vis[i]) {
           px[i] += Math.sin(T * 0.5 + i) * 5 * dt; py[i] -= (3 + (i % 5)) * dt;
           put(3, 0.18, ox + px[i] * s, oy + py[i] * s, z * 0.75);
@@ -335,16 +343,16 @@ function iniciar(hero: HTMLElement, lienzo: HTMLCanvasElement, zona: HTMLElement
       const tx = 300 + rx * c - ry * sn;
       const ty = pivoteY + rx * sn + ry * c + Math.sin(T * 2.1 + p.x * 0.05) * 1.3 * Math.min(1, Math.abs(rx) / 120);
       resorte(i, tx, ty, 60, am, dt, mx, my, rr);
-      const a = Math.min(1, (T - p.b) * 2.2) * p.a * (p.banda ? tapa : 1);
-      put(p.k === KC ? madurez(p, T) : p.c, a, ox + px[i] * s, oy + py[i] * s, p.k === KC ? z * 1.15 : z);
+      const a = Math.min(1, (E - p.b) * 2.2) * p.a * (p.banda ? tapa : 1);
+      put(p.k === KC ? madurez(p, E) : p.c, a, ox + px[i] * s, oy + py[i] * s, p.k === KC ? z * 1.15 : z);
     }
     // el anillo y el nombre quedan quietos mientras la rama se mece
     for (let j = 0; j < logo.length; j++) {
       const p = logo[j], i = n + j;
-      if (T < p.b) continue;
+      if (E < p.b) continue;
       if (!nac[i]) { nac[i] = 1; px[i] = p.ox; py[i] = p.oy; }
       resorte(i, p.x, p.y, 40, am, dt, mx, my, rr);
-      put(p.c, Math.min(1, (T - p.b) * 2) * p.a, ox + px[i] * s, oy + py[i] * s, z);
+      put(p.c, Math.min(1, (E - p.b) * 2) * p.a, ox + px[i] * s, oy + py[i] * s, z);
     }
   };
 
