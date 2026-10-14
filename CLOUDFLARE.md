@@ -25,6 +25,15 @@ Construye con `astro build` y sube `dist/` con `wrangler deploy` al dominio.
 Hace falta haber iniciado sesión una vez con `npx wrangler login` en la
 cuenta de 16ballcreations.
 
+**Solo se publica lo que está en GitHub** (`scripts/publicar.mjs`): si hay
+cambios sin commit (también ficheros nuevos sin añadir) o el commit no se ha
+subido a `origin`, el despliegue se niega antes de construir. Cada versión
+lleva el commit como mensaje, visible en Workers & Pages → kaffeeplatz →
+Deployments. Así producción siempre se puede reconstruir desde el repo, desde
+cualquier equipo. Para una emergencia está `KP_PUBLICAR_SIN_GIT=1 npm run
+deploy`, que lo deja marcado como `[SIN GIT]`; para volver atrás basta el
+Rollback del panel.
+
 `SITE_URL` vale `https://kaffeeplatz.co` por defecto (`astro.config.mjs`):
 canonical, Open Graph, datos estructurados y sitemap apuntan al dominio sin
 www. `BASE_PATH` no hace falta: en Cloudflare el sitio va en la raíz.

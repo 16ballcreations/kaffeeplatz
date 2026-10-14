@@ -10,7 +10,7 @@
     "astro": "astro",
     "normalizar": "node scripts/normalizar.mjs",
     "contraste": "node scripts/contraste.mjs",
-    "deploy": "astro build && wrangler deploy",
+    "deploy": "node scripts/publicar.mjs",
     "imagenes": "node scripts/optimizar-imagenes.mjs",
     "redirecciones": "node scripts/redirecciones.mjs",
     "imagen-social": "node scripts/imagen-social.mjs"
