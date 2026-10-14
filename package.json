@@ -13,7 +13,7 @@
     "probar:saneador": "node scripts/probar-saneador.mjs && node scripts/probar-saneador-markdown.mjs && node scripts/probar-diario.mjs",
     "verificar:puerta": "node scripts/verificar-puerta.mjs",
     "hash-clave": "node scripts/hash-clave.mjs",
-    "deploy": "astro build && wrangler deploy",
+    "deploy": "node scripts/publicar.mjs",
     "imagenes": "node scripts/optimizar-imagenes.mjs",
     "redirecciones": "node scripts/redirecciones.mjs",
     "imagen-social": "node scripts/imagen-social.mjs",
