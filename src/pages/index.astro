@@ -17,7 +17,7 @@
  * Nada de contenido de negocio inventado: los textos salen de la base, del
  * diario (ver datos/guias.ts) o de las politicas de envio.
  */
-import { getCollection } from 'astro:content';
+import { coleccion } from '../datos/colecciones';
 import Base from '../layouts/Base.astro';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
@@ -28,14 +28,14 @@ import { SITIO, ruta, recurso } from '../datos/sitio';
 import { CATEGORIAS } from '../datos/categorias';
 import { METODOS } from '../datos/guias';
 
-const productos = await getCollection('productos');
+const productos = await coleccion('productos');
 const porHandle = new Map(productos.map((p) => [p.data.handle, p.data]));
 
 const destacados = productos
   .filter((p) => p.data.destacado)
   .sort((a, b) => b.data.precio - a.data.precio);
 
-const articulos = (await getCollection('diario')).sort(
+const articulos = (await coleccion('diario')).sort(
   (a, b) => b.data.fecha.getTime() - a.data.fecha.getTime(),
 );
 const [principal, ...resto] = articulos.filter((a) => a.data.imagen);

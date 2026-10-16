@@ -6,14 +6,14 @@
  * Las URL llevan barra final: es la forma que sirve Cloudflare sin redirigir.
  */
 import type { APIRoute } from 'astro';
-import { getCollection } from 'astro:content';
+import { coleccion } from '../datos/colecciones';
 import { ruta } from '../datos/sitio';
 
 const FIJAS = ['/', '/catalogo/', '/diario/', '/nosotros/', '/contacto/'];
 
 export const GET: APIRoute = async ({ site }) => {
-  const productos = await getCollection('productos');
-  const articulos = await getCollection('diario');
+  const productos = await coleccion('productos');
+  const articulos = await coleccion('diario');
 
   const abs = (camino: string) => new URL(ruta(camino), site).toString();
   const entradas = [

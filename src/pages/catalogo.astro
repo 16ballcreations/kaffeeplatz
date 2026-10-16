@@ -14,7 +14,7 @@
  * ocultan los <li> existentes, no se reconstruye nada. Sin JS la barra no
  * aparece y la rejilla muestra los 25 productos en el orden recomendado.
  */
-import { getCollection } from 'astro:content';
+import { coleccion } from '../datos/colecciones';
 import Base from '../layouts/Base.astro';
 import TarjetaProducto from '../components/TarjetaProducto.astro';
 import BotonWhatsApp from '../components/BotonWhatsApp.astro';
@@ -23,7 +23,7 @@ import { ruta, SITIO } from '../datos/sitio';
 import { CATEGORIAS } from '../datos/categorias';
 
 /* Orden recomendado: disponibles primero, luego destacados, luego alfabetico. */
-const productos = (await getCollection('productos')).sort((a, b) => {
+const productos = (await coleccion('productos')).sort((a, b) => {
   if (a.data.disponible !== b.data.disponible) return a.data.disponible ? -1 : 1;
   if (!!a.data.destacado !== !!b.data.destacado) return a.data.destacado ? -1 : 1;
   return a.data.titulo.localeCompare(b.data.titulo, 'es');

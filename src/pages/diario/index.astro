@@ -5,14 +5,14 @@
  * Los recuentos salen SIEMPRE del dato (articulos.length, conteo por
  * categoria): anadir o retirar articulos no desactualiza ningun texto.
  */
-import { getCollection } from 'astro:content';
+import { coleccion } from '../../datos/colecciones';
 import Base from '../../layouts/Base.astro';
 import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
 import { ruta } from '../../datos/sitio';
 import { CATEGORIAS_DIARIO } from '../../datos/categorias';
 import FiltrosCategoria from '../../components/FiltrosCategoria.astro';
 
-const articulos = (await getCollection('diario')).sort(
+const articulos = (await coleccion('diario')).sort(
   (a, b) => b.data.fecha.getTime() - a.data.fecha.getTime()
 );
 

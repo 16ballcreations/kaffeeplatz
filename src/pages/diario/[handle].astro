@@ -3,7 +3,8 @@
  * /diario/[handle] — Articulo del diario. 16 paginas.
  */
 import type { GetStaticPaths } from 'astro';
-import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { render, type CollectionEntry } from 'astro:content';
+import { coleccion } from '../../datos/colecciones';
 import Base from '../../layouts/Base.astro';
 import Imagen from '../../components/Imagen.astro';
 import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
@@ -13,8 +14,8 @@ import { SITIO, ruta } from '../../datos/sitio';
 import { GUIA_DE_PRODUCTO } from '../../datos/guias';
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const articulos = await getCollection('diario');
-  const productos = await getCollection('productos');
+  const articulos = await coleccion('diario');
+  const productos = await coleccion('productos');
   return articulos.map((a) => ({
     params: { handle: a.data.handle },
     props: { articulo: a, todos: articulos, productos },

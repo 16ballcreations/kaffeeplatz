@@ -13,7 +13,8 @@
  *   - "Cómo prepararlo": enlace a la guia del diario que aplica.
  */
 import type { GetStaticPaths } from 'astro';
-import { getCollection, type CollectionEntry } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { coleccion } from '../../datos/colecciones';
 import Base from '../../layouts/Base.astro';
 import GaleriaProducto from '../../components/GaleriaProducto.astro';
 import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
@@ -25,8 +26,8 @@ import { categoriaPorId } from '../../datos/categorias';
 import { GUIA_DE_PRODUCTO, ENVIOS } from '../../datos/guias';
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const productos = await getCollection('productos');
-  const articulos = await getCollection('diario');
+  const productos = await coleccion('productos');
+  const articulos = await coleccion('diario');
   return productos.map((p) => ({
     params: { handle: p.data.handle },
     props: { producto: p, todos: productos, articulos },
