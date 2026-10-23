@@ -95,15 +95,16 @@ const ERRATAS = [
 /**
  * Rutas heredadas de Shopify que ya no existen en el sitio nuevo.
  * El enlace "Regresar al blog" venia al final de los 16 articulos apuntando a
- * /blogs/noticias, que era la ruta de Shopify. Aqui el diario vive en /diario.
+ * /blogs/noticias, que era la ruta de Shopify. Aqui el diario vive en /diario/
+ * (con barra final: es la URL que sirve Cloudflare sin redirigir).
  * Se deja como ruta RELATIVA A LA RAIZ DEL SITIO: cada propuesta la resuelve
  * con su propio `base`, asi que no se codifica el prefijo aqui.
  */
 const RUTAS_HEREDADAS = [
   {
     buscar: /\]\(\/blogs\/noticias\/?\)/g,
-    sustituir: '](/diario)',
-    etiqueta: '"/blogs/noticias" -> "/diario"',
+    sustituir: '](/diario/)',
+    etiqueta: '"/blogs/noticias" -> "/diario/"',
   },
 ];
 

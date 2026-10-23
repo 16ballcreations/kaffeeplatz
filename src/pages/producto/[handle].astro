@@ -24,6 +24,7 @@ import Icono from '../../components/Icono.astro';
 import { SITIO, ruta } from '../../datos/sitio';
 import { categoriaPorId } from '../../datos/categorias';
 import { GUIA_DE_PRODUCTO, ENVIOS } from '../../datos/guias';
+import { TITULO_PRODUCTO, MARCA_PRODUCTO, recortar } from '../../datos/seo';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const productos = await coleccion('productos');
@@ -81,7 +82,7 @@ const jsonLd = {
   name: d.titulo,
   description: d.descripcionTexto,
   sku: d.handle,
-  brand: { '@type': 'Brand', name: d.vendor },
+  ...(MARCA_PRODUCTO[d.handle] && { brand: { '@type': 'Brand', name: MARCA_PRODUCTO[d.handle] } }),
   image: d.imagenes.map((i) => new URL(ruta(i.src), Astro.site).toString()),
   url,
   offers:
@@ -112,8 +113,8 @@ const jsonLd = {
 ---
 
 <Base
-  titulo={d.titulo}
-  descripcion={d.descripcionTexto.slice(0, 160)}
+  titulo={TITULO_PRODUCTO[d.handle] ?? d.titulo}
+  descripcion={recortar(d.descripcionTexto)}
   camino={`/producto/${d.handle}`}
   imagen={portada?.src}
   migas={[

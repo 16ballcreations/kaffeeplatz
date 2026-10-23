@@ -58,9 +58,13 @@ const imagenOg = imagen ? absoluta(imagen) : undefined;
 /* ---- Organization: identidad de la marca ---- */
 const organizacion = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
+  /* OnlineStore (subtipo de Organization): tienda sin punto fisico. Le dice
+     a Google que es un comercio, desde donde opera y a donde vende. */
+  '@type': 'OnlineStore',
   name: SITIO.nombre,
   url: absoluta('/'),
+  logo: absoluta('/img/marca/emblema.png'),
+  areaServed: { '@type': 'Country', name: 'Colombia' },
   email: SITIO.email,
   slogan: SITIO.lema,
   description: SITIO.descripcion,

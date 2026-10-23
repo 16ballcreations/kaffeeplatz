@@ -12,6 +12,7 @@ import BotonWhatsApp from '../../components/BotonWhatsApp.astro';
 import TarjetaProducto from '../../components/TarjetaProducto.astro';
 import { SITIO, ruta } from '../../datos/sitio';
 import { GUIA_DE_PRODUCTO } from '../../datos/guias';
+import { recortar } from '../../datos/seo';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const articulos = await coleccion('diario');
@@ -76,7 +77,7 @@ const jsonLd = {
 
 <Base
   titulo={d.titulo}
-  descripcion={d.resumen.slice(0, 160)}
+  descripcion={recortar(d.resumen)}
   camino={`/diario/${d.handle}`}
   imagen={d.imagen}
   tipoOg="article"

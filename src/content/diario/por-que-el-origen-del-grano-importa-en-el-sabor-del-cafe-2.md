@@ -107,4 +107,4 @@ Cerrar compartición
 
 Copiar enlace
 
-[Regresar al blog](/diario)
+[Regresar al blog](/diario/)
