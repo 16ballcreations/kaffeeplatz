@@ -214,6 +214,14 @@ body:has(.v-menu[open]) {
   .v-menu {
     display: block;
   }
+  /* En la cabecera movil sobra el WhatsApp: el flotante ya esta siempre a la
+     vista y es el que mejor se ve (pedido del cliente, 24 oct 2026). Quitarlo
+     deja aire al acceso al carrito. Nadie se queda sin WhatsApp: las paginas
+     que apagan el flotante (ficha y contacto) llevan el suyo en el cuerpo, y
+     el menu desplegable tambien tiene uno. */
+  .v-cabecera__cta {
+    display: none;
+  }
 }
 
 @media (max-width: 520px) {
