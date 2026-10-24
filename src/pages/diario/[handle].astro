@@ -15,6 +15,7 @@ import {
   respuestaDeEmergencia,
   marcarEtiquetas,
 } from '../../datos/catalogo';
+import { recortar } from '../../datos/seo';
 
 
 /* FASE 3: los 16 articulos pasan a servirse desde D1. Las URLs NO cambian
@@ -108,7 +109,7 @@ const jsonLd = {
 
 <Base
   titulo={d.titulo}
-  descripcion={d.resumen.slice(0, 160)}
+  descripcion={recortar(d.resumen)}
   camino={`/diario/${d.handle}`}
   imagen={d.imagen}
   tipoOg="article"

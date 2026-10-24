@@ -188,9 +188,16 @@ function cacheDelBorde(): Cache | null {
  * todas las categorías y JavaScript oculta los `<li>`). Así que se guarda una
  * sola copia por ruta y el parámetro se ignora. Si algún día el filtrado pasara
  * al servidor, esto es lo que habría que cambiar.
+ *
+ * Y la barra final tampoco cuenta: desde la fase 1 de SEO los enlaces llevan
+ * `/catalogo/`, pero quien llega por un enlace viejo pide `/catalogo` y el
+ * Worker sirve las dos. Sin normalizar habria DOS copias de la misma pagina y
+ * el panel, al invalidar, solo borraria una: la otra quedaria vieja y seria la
+ * que se sirviera el dia que D1 fallase.
  */
 export function claveDeCache(url: URL): Request {
-  const limpia = new URL(url.pathname, url.origin);
+  const camino = url.pathname.replace(/\/+$/, '') || '/';
+  const limpia = new URL(camino, url.origin);
   return new Request(limpia.toString(), { method: 'GET' });
 }
 

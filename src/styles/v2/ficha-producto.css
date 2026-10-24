@@ -421,6 +421,9 @@
     color: var(--v-tinta);
   }
   .v-con-barra .v-pie {
-    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+    /* La barra de compra mide ~75 px y en algunos moviles queda por encima
+       del borde (barra del navegador): con 10rem la ultima linea del pie
+       (copyright y credito) siempre queda visible encima. */
+    padding-bottom: calc(10rem + env(safe-area-inset-bottom));
   }
 }

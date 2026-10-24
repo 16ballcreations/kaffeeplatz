@@ -109,8 +109,8 @@ const fecha = (d: Date) =>
 ---
 
 <Base
-  titulo={SITIO.nombre}
-  descripcion={SITIO.descripcion}
+  titulo="Accesorios de café de especialidad en Medellín"
+  descripcion="Métodos de preparación, filtros, molinos y utensilios para café de especialidad. Desde Medellín, con envíos a toda Colombia y asesoría por WhatsApp."
   camino="/"
 >
   {/* 1. HERO ------------------------------------------------------------ */}
@@ -118,8 +118,13 @@ const fecha = (d: Date) =>
     <canvas class="v-hero__lienzo" data-kp-emblema-lienzo aria-hidden="true"></canvas>
     <div class="v-limite v-hero__rejilla">
       <div class="v-hero__texto">
-        <p class="v-eyebrow v-entra" style="--d:0">Accesorios de café · {SITIO.ciudad}</p>
-        <h1 class="v-entra" style="--d:1">Eleva tu experiencia <em>cafetera</em></h1>
+        {/* SEO: el h1 es la linea pequena, que dice lo que se vende y donde
+            ("accesorios de cafe ... Medellin"). El lema grande sigue igual a la
+            vista, pero como parrafo: sus estilos viven en .v-hero__lema. */}
+        <h1 class="v-eyebrow v-hero__titulo v-entra" style="--d:0">
+          Accesorios de café · {SITIO.ciudad}
+        </h1>
+        <p class="v-hero__lema v-entra" style="--d:1">Eleva tu experiencia <em>cafetera</em></p>
         <p class="v-hero__entradilla v-entra" style="--d:2">
           Métodos, filtros y utensilios de café de especialidad, elegidos por cómo se comportan en
           la taza.

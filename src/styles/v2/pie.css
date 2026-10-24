@@ -8,7 +8,9 @@
 .v-pie {
   margin-top: 0;
   padding-top: var(--v-seccion);
-  padding-bottom: 2rem;
+  /* Hueco para el boton flotante de WhatsApp (3.5rem + 1rem de margen): sin
+     el, al llegar al final tapaba la ultima linea del pie. */
+  padding-bottom: calc(2rem + 4.5rem + env(safe-area-inset-bottom));
   background: var(--v-abismo);
   border-top: 1px solid var(--v-linea);
 }
@@ -96,6 +98,31 @@
 .v-pie__legal p {
   font-size: var(--v-t-micro);
   color: var(--v-tinta-3);
+}
+
+/* Firma de quien hizo el sitio: discreta, en la linea final del pie. La bola
+   de 16 Ball Creations es negra y sobre el abismo se perderia, asi que va
+   sobre un circulo crema. */
+.v-pie .v-pie__credito {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--v-t-micro);
+  color: var(--v-tinta-3);
+  text-decoration: none;
+  transition: color 0.25s var(--v-curva);
+}
+
+.v-pie .v-pie__credito:hover {
+  color: var(--v-oro);
+}
+
+.v-pie__credito img {
+  width: 20px;
+  height: 20px;
+  padding: 1px;
+  border-radius: 50%;
+  background: var(--v-crema);
 }
 
 @media (max-width: 860px) {

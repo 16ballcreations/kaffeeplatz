@@ -41,6 +41,7 @@ import { textoQueda } from '../../scripts/queda';
 import '../../styles/queda.css';
 import { obtenerArticulos } from '../../datos/diario';
 import { conStock } from '../../datos/inventario';
+import { TITULO_PRODUCTO, recortar } from '../../datos/seo';
 import { nombreDeOpcionFicha, mensajesFicha, relacionadosDe, jsonLdFicha } from './_ficha';
 
 
@@ -126,8 +127,8 @@ const jsonLd = jsonLdFicha(d, url, Astro.site);
 ---
 
 <Base
-  titulo={d.titulo}
-  descripcion={d.descripcionTexto.slice(0, 160)}
+  titulo={TITULO_PRODUCTO[d.handle] ?? d.titulo}
+  descripcion={recortar(d.descripcionTexto)}
   camino={`/producto/${d.handle}`}
   imagen={portada?.src}
   migas={[

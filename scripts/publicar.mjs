@@ -24,6 +24,8 @@
  * (y lo deja dicho en el mensaje del despliegue).
  */
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 
 const git = (...args) => execFileSync('git', args, { encoding: 'utf8' }).trim();
 const fallar = (motivo, ayuda) => {
@@ -65,7 +67,24 @@ if (!forzado) {
   console.warn(`\nATENCIÓN: KP_PUBLICAR_SIN_GIT=1, se publica sin comprobar GitHub (${commit}).\n`);
 }
 
-const correr = (cmd, args) => execFileSync(cmd, args, { stdio: 'inherit' });
-correr('npm', ['run', 'build']);
+/* Astro y Wrangler se lanzan con el mismo node que corre este script, por su
+   fichero de entrada. Lanzar `npm`/`npx` directamente falla en Windows
+   (son .cmd y Node ya no los ejecuta sin shell), y con shell el mensaje del
+   commit, que lleva espacios, habria que escaparlo a mano. Asi funciona
+   igual en cualquier sistema. */
+const require = createRequire(import.meta.url);
+const bin = (paquete, ruta) => join(dirname(require.resolve(`${paquete}/package.json`)), ruta);
+const correr = (entrada, args) =>
+  execFileSync(process.execPath, [entrada, ...args], { stdio: 'inherit' });
+
+correr(bin('astro', 'astro.js'), ['build']);
+/* La misma comprobacion que `npm run build`: ningun HTML de /admin en dist/
+   y toda ruta del panel detras de la puerta. Si falla, no se publica. */
+execFileSync(process.execPath, ['scripts/verificar-puerta.mjs'], { stdio: 'inherit' });
 const mensaje = (forzado ? '[SIN GIT] ' : '') + commit;
-correr('npx', ['wrangler', 'deploy', '--message', mensaje.slice(0, 100), ...process.argv.slice(2)]);
+correr(bin('wrangler', 'bin/wrangler.js'), [
+  'deploy',
+  '--message',
+  mensaje.slice(0, 100),
+  ...process.argv.slice(2),
+]);

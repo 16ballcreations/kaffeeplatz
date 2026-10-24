@@ -29,7 +29,6 @@ export const SITIO = {
 export const NAVEGACION = [
   { href: '/', etiqueta: 'Inicio' },
   { href: '/catalogo', etiqueta: 'Catálogo' },
-  { href: '/cafe', etiqueta: 'Café' },
   { href: '/diario', etiqueta: 'Diario' },
   { href: '/nosotros', etiqueta: 'Nosotros' },
   { href: '/contacto', etiqueta: 'Contacto' },
@@ -42,7 +41,17 @@ export const NAVEGACION = [
 export function ruta(camino: string): string {
   const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   const limpio = camino.startsWith('/') ? camino : `/${camino}`;
-  return `${base}${limpio}` || '/';
+  /* Las PAGINAS llevan barra final: /catalogo/ es la URL que sirve
+     Cloudflare (sin barra responde con una redireccion) y la que lista el
+     sitemap. Canonical, enlaces y datos estructurados tienen que coincidir
+     con ella, o Google recibe senales contradictorias. Los ficheros
+     (/img/x.webp, /sitemap.xml) no llevan barra. */
+  const corte = limpio.search(/[?#]/);
+  let pagina = corte === -1 ? limpio : limpio.slice(0, corte);
+  const resto = corte === -1 ? '' : limpio.slice(corte);
+  const ultimo = pagina.split('/').pop() ?? '';
+  if (!pagina.endsWith('/') && !/\.[a-z0-9]+$/i.test(ultimo)) pagina += '/';
+  return `${base}${pagina}${resto}` || '/';
 }
 
 /** Igual que `ruta`, para recursos de public/ (imágenes, iconos). */

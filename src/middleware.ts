@@ -49,7 +49,36 @@ import { defineMiddleware } from 'astro:middleware';
 import { cabecerasOk, guardarCopia } from './datos/resiliencia';
 import { pasarPuerta, esRutaDelPanel, cabecerasPanel } from './admin/puerta';
 
+/**
+ * ¿Hay que mandar esta petición a su versión con barra final?
+ *
+ * Desde la fase 1 de SEO la URL canónica de una página lleva barra
+ * (`/catalogo/`): es la que sirve Cloudflare para las páginas estáticas, la que
+ * lista el sitemap y la que ponen `ruta()` y el canonical. Las estáticas ya
+ * redirigen solas; las que renderiza el Worker respondían 200 en las dos
+ * formas, y eso son dos URL con el mismo contenido para Google.
+ *
+ * Fuera quedan: el panel (sus formularios hacen POST y no deben rebotar), lo
+ * que no es GET/HEAD, la raíz y todo lo que parece un fichero (`/sitemap.xml`,
+ * `/medios/...jpg`), que no lleva barra nunca.
+ */
+function sinBarraFinal(request: Request, url: URL): string | null {
+  if (request.method !== 'GET' && request.method !== 'HEAD') return null;
+  const p = url.pathname;
+  if (p === '/' || p.endsWith('/') || esRutaDelPanel(p)) return null;
+  if (/\.[a-z0-9]+$/i.test(p.split('/').pop() ?? '')) return null;
+  if (p.startsWith('/__')) return null;
+  return `${p}/${url.search}`;
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
+  /* En el build las páginas prerenderizadas pasan por aquí con su ruta sin
+     barra: redirigirlas dejaría un HTML vacío en dist/. */
+  const conBarra = context.isPrerendered ? null : sinBarraFinal(context.request, context.url);
+  if (conBarra) {
+    return new Response(null, { status: 301, headers: { Location: conBarra } });
+  }
+
   /* LA PUERTA DEL PANEL, lo primero de todo y antes de `next()`.
      Para cualquier ruta que no empiece por /admin devuelve `null` al instante
      y no cuesta nada. */

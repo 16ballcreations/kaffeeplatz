@@ -24,16 +24,33 @@
   padding-block: clamp(3rem, 2rem + 4vw, 5.5rem);
 }
 
-.v-hero h1 {
+/* El h1 del hero es la linea pequena (eyebrow): se ve igual que cuando era
+   parrafo. Solo hay que devolverle el interlineado y el ajuste de linea de
+   parrafo, que las reglas generales de h1 le cambiarian. */
+.v-hero__titulo {
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+/* El lema grande, ahora parrafo: todo lo que antes le daban las reglas de h1. */
+.v-hero__lema {
+  font-family: var(--v-serif);
+  font-weight: 500;
   font-size: var(--v-t-display);
   line-height: 1;
   letter-spacing: -0.025em;
+  color: var(--v-tinta);
+  text-wrap: balance;
   max-width: 11ch;
 }
 
-.v-hero h1 em {
+.v-hero__lema em {
   display: inline-block;
   padding-bottom: 0.08em;
+  padding-right: 0.04em;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--v-oro);
 }
 
 .v-hero__entradilla {

@@ -41,7 +41,7 @@ import { SEGUNDOS_CACHE } from '../datos/resiliencia';
 
 export const prerender = false;
 
-const FIJAS = ['/', '/catalogo/', '/diario/', '/nosotros/', '/contacto/', '/cafe/'];
+const FIJAS = ['/', '/catalogo/', '/diario/', '/nosotros/', '/contacto/'];
 
 export const GET: APIRoute = async ({ site, locals }) => {
   const [productos, articulos] = await Promise.all([

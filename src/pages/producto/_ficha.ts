@@ -12,6 +12,7 @@
  */
 import type { Producto } from '../../datos/formas';
 import { SITIO, ruta } from '../../datos/sitio';
+import { MARCA_PRODUCTO } from '../../datos/seo';
 
 /** El nombre de la opción en mayúscula inicial: «Color», «Tamaño», o «Opción». */
 export function nombreDeOpcionFicha(d: Producto): string {
@@ -61,7 +62,9 @@ export function jsonLdFicha(d: Producto, url: string, site: URL | undefined) {
     name: d.titulo,
     description: d.descripcionTexto,
     sku: d.handle,
-    brand: { '@type': 'Brand', name: d.vendor },
+    /* La marca solo cuando se conoce de verdad (SEO fase 1): `vendor` era la
+       tienda de Shopify, no el fabricante, y Google lo leia como marca. */
+    ...(MARCA_PRODUCTO[d.handle] && { brand: { '@type': 'Brand', name: MARCA_PRODUCTO[d.handle] } }),
     image: d.imagenes.map((i) => new URL(ruta(i.src), site).toString()),
     url,
     offers:
