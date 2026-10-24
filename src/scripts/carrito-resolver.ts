@@ -4,7 +4,7 @@
  * Salio de `carrito.ts` al partirlo (iba por 661 lineas). Cruza las lineas
  * guardadas con el catalogo de la pagina (precio y titulo SIEMPRE de ahi, ver
  * la cabecera de `carrito.ts`) y arma el mensaje de WhatsApp del pedido. Solo
- * lo usa /carrito.
+ * lo usan /carrito y el mini carrito (a traves de `carrito-vista.ts`).
  */
 
 import { escribir } from './carrito-almacen';
@@ -57,7 +57,9 @@ export function resolver(guardadas: LineaGuardada[], catalogo: Catalogo): Carrit
       subtotalFormateado: pesos(subtotal),
       disponible: p.disponible && v.disponible,
       imagen: p.imagen,
-      url: conBase(`/producto/${l.handle}`),
+      /* Con barra final, la URL canonica de la ficha (SEO fase 1): sin ella
+         cada clic en una linea pagaba un 301 del middleware. */
+      url: conBase(`/producto/${l.handle}/`),
     });
   }
 

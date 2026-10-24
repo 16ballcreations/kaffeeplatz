@@ -1,0 +1,385 @@
+/* ===========================================================================
+   MINI CARRITO — el panel del boton flotante (src/components/MiniCarrito.astro)
+
+   DOS FORMAS
+   ---------------------------------------------------------------------------
+   - ESCRITORIO (>= 640px): una tarjeta de ~400px que crece desde el boton
+     flotante, anclada a su misma esquina y justo encima. Se mide desde
+     --v-flotante-base (flotante-carrito.css), asi que en la ficha, donde ese
+     anclaje sube para no taparse con la barra de compra, el panel sube con el.
+   - MOVIL (< 640px): una hoja inferior a todo el ancho. 640px es el mismo
+     corte en el que el flotante de WhatsApp se queda en solo icono.
+
+   Lo que se desplaza es la LISTA, no el panel: cabecera y total quedan
+   siempre a la vista, que es lo que se consulta mientras se edita.
+
+   Hoja propia y fuera de v2/: el manifiesto de v2.css es la cascada del
+   sitio y esto solo lo carga quien monta el panel. Reutiliza las piezas de
+   v2 que ya existen (.v-paso, .v-quitar, .v-boton, .v-enlace) en vez de
+   copiarlas.
+   =========================================================================== */
+
+:root {
+  /* Donde termina el boton flotante del carrito por arriba: su anclaje, mas
+     el WhatsApp de debajo, mas el propio boton, con sus separaciones. */
+  --v-mini-bajo: calc(
+    var(--v-flotante-base, 1rem) + 2 * var(--v-flotante-alto, 3.5rem) + 2 * var(--v-flotante-sep, 0.75rem)
+  );
+}
+
+/* --- El fondo: atrapa el «clic fuera» -------------------------------------
+   En escritorio es transparente (la pagina se sigue viendo entera); en movil
+   oscurece, porque la hoja tapa media pantalla y tiene que leerse como capa. */
+.v-mini-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-menu);
+  background: transparent;
+}
+
+.v-mini-fondo[hidden] {
+  display: none;
+}
+
+/* --- El panel --------------------------------------------------------------- */
+.v-mini {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: var(--v-mini-bajo);
+  /* Por encima del fondo y de la cabecera fija: es un dialogo. */
+  z-index: calc(var(--z-menu) + 1);
+
+  display: flex;
+  flex-direction: column;
+  width: min(25rem, calc(100vw - 2rem));
+  /* Hasta el 80% del alto, sin pasar del borde de arriba de la ventana. Con
+     menos (70vh) en un portatil de 800px la lista se quedaba en una linea a
+     medias: cabecera y pie se comen ~350px fijos. */
+  max-height: min(80vh, calc(100dvh - var(--v-mini-bajo) - 1rem));
+  overflow: hidden; /* las esquinas redondas recortan el fondo del pie */
+
+  border-radius: var(--v-r-sup);
+  background: var(--v-elevado);
+  color: var(--v-tinta);
+  box-shadow:
+    var(--v-brillo),
+    0 0 0 1px var(--v-linea),
+    0 30px 60px -20px rgb(0 0 0 / 0.8);
+
+  /* CRECE DESDE EL BOTON: el origen es su esquina inferior derecha. Solo
+     `transform` y `opacity`: nada de alto animado, que obligaria a recalcular
+     la pagina en cada fotograma. */
+  transform-origin: calc(100% - 1.75rem) 100%;
+  opacity: 0;
+  transform: translateY(0.5rem) scale(0.96);
+  transition:
+    opacity 0.2s var(--v-curva),
+    transform 0.2s var(--v-curva);
+}
+
+.v-mini[data-abierto] {
+  opacity: 1;
+  transform: none;
+  transition-duration: 0.35s;
+}
+
+.v-mini[hidden] {
+  display: none;
+}
+
+/* --- Cabecera ------------------------------------------------------------- */
+.v-mini__cabeza {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--v-linea);
+}
+
+.v-mini__titulo {
+  font-family: var(--v-serif);
+  font-size: 1.625rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.v-mini__titulo em {
+  color: var(--v-oro);
+}
+
+.v-mini__cuenta {
+  margin-top: 0.25rem;
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-peq);
+}
+
+.v-mini__cuenta:empty {
+  display: none;
+}
+
+.v-mini__cerrar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: -0.375rem -0.5rem 0 0;
+  border: 0;
+  border-radius: var(--v-r-pildora);
+  background: transparent;
+  color: var(--v-tinta-2);
+  cursor: pointer;
+  transition: color 0.25s var(--v-curva), background-color 0.25s var(--v-curva);
+}
+
+.v-mini__cerrar:hover {
+  color: var(--v-tinta);
+  background: rgb(253 247 231 / 0.06);
+}
+
+.v-mini :focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 2px;
+}
+
+/* --- Estados: cargando, error, vacio ---------------------------------------- */
+.v-mini__estado {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+  padding: 1.5rem 1.25rem;
+  color: var(--v-tinta-2);
+  font-size: 0.9375rem;
+}
+
+.v-mini__estado[hidden] {
+  display: none;
+}
+
+.v-mini__aviso {
+  margin: 0.875rem 1.25rem 0;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--v-r-mini);
+  background: rgb(222 193 133 / 0.1);
+  color: var(--v-tinta);
+  font-size: var(--v-t-peq);
+}
+
+.v-mini__aviso[hidden] {
+  display: none;
+}
+
+/* --- Cuerpo: la lista se desplaza, el pie no ------------------------------- */
+.v-mini__cuerpo {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.v-mini__cuerpo[hidden] {
+  display: none;
+}
+
+.v-mini__lineas {
+  list-style: none;
+  /* Al menos una linea entera a la vista, aunque la ventana sea baja. */
+  min-height: min(8.5rem, 30vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 1.25rem;
+}
+
+/* Una linea: foto, datos y control, subtotal a la derecha. */
+.v-mini-linea {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr) auto;
+  gap: 0.875rem;
+  align-items: start;
+  padding: 1rem 0;
+}
+
+.v-mini-linea + .v-mini-linea {
+  border-top: 1px solid var(--v-linea);
+}
+
+.v-mini-linea__foto {
+  display: block;
+  border-radius: var(--v-r-mini);
+  overflow: hidden;
+  background: var(--v-crema); /* el passe-partout crema de la marca */
+}
+
+.v-mini-linea__foto img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.v-mini-linea__info {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.v-mini-linea__titulo {
+  font-family: var(--v-serif);
+  font-size: 1.125rem;
+  line-height: 1.2;
+  color: var(--v-tinta);
+  text-decoration: none;
+}
+
+.v-mini-linea__titulo:hover {
+  color: var(--v-oro);
+}
+
+.v-mini-linea__variante,
+.v-mini-linea__unitario {
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-peq);
+}
+
+.v-mini-linea__agotado {
+  color: var(--v-oro);
+  font-size: var(--v-t-micro);
+}
+
+.v-mini-linea__variante[hidden],
+.v-mini-linea__agotado[hidden] {
+  display: none;
+}
+
+.v-mini-linea__control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-top: 0.375rem;
+}
+
+/* El motivo del tope, alineado con la linea y no centrado bajo la pildora
+   como en /carrito: aqui va a todo el ancho de la columna. */
+.v-mini-linea .v-linea__tope {
+  max-width: none;
+  text-align: left;
+  font-size: var(--v-t-micro);
+}
+
+.v-mini-linea__subtotal {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* --- Pie: totales y cierre --------------------------------------------------- */
+.v-mini__pie {
+  padding: 1rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--v-linea);
+  background: var(--v-elevado);
+}
+
+.v-mini__filas > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0;
+  font-size: 0.9375rem;
+}
+
+.v-mini__filas dt {
+  color: var(--v-tinta-2);
+}
+
+.v-mini__filas dd {
+  margin: 0;
+}
+
+.v-mini__total {
+  margin-top: 0.375rem;
+  padding-top: 0.5rem !important;
+  border-top: 1px solid var(--v-linea);
+}
+
+.v-mini__total dt {
+  color: var(--v-tinta);
+}
+
+.v-mini__total dd {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+/* Lo que falta para el envio gratis: oro, es un incentivo, no un error. */
+.v-mini__falta {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--v-r-mini);
+  background: rgb(222 193 133 / 0.1);
+  color: var(--v-oro);
+  font-size: var(--v-t-peq);
+}
+
+.v-mini__falta[hidden] {
+  display: none;
+}
+
+.v-mini__pie .v-boton {
+  margin-top: 0.875rem;
+}
+
+.v-mini__pie .v-mini__completo {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+/* ===========================================================================
+   MOVIL: HOJA INFERIOR
+   =========================================================================== */
+@media (max-width: 639.98px) {
+  .v-mini-fondo {
+    background: rgb(15 14 13 / 0.6);
+    opacity: 0;
+    transition: opacity 0.2s var(--v-curva);
+  }
+
+  .v-mini-fondo[data-abierto] {
+    opacity: 1;
+  }
+
+  .v-mini {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 85dvh;
+    border-radius: var(--v-r-sup) var(--v-r-sup) 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    transform-origin: 50% 100%;
+    transform: translateY(100%);
+    opacity: 1;
+  }
+
+  .v-mini[data-abierto] {
+    transform: none;
+  }
+
+  /* El fondo no se desplaza debajo de la hoja (lo pone mini-carrito.ts). */
+  :root[data-mini-bloqueo],
+  :root[data-mini-bloqueo] body {
+    overflow: hidden;
+  }
+}
+
+/* Movimiento reducido: aparece y desaparece, sin crecer ni deslizarse. */
+@media (prefers-reduced-motion: reduce) {
+  .v-mini,
+  .v-mini[data-abierto],
+  .v-mini-fondo {
+    transition: none;
+    transform: none;
+  }
+}
