@@ -232,10 +232,15 @@ export function montarVista(p: PiezasVista): (catalogo: Catalogo) => CarritoResu
       `[data-linea][data-handle="${CSS.escape(m.handle)}"][data-variante="${CSS.escape(m.variante)}"]`,
     );
     const destino = li?.querySelector<HTMLButtonElement>(`[${m.papel}]`);
-    /* Un boton desactivado ("−" al llegar a 1) no acepta el foco: se cae al
-       otro control de la misma linea antes que al body. */
+    /* Un boton desactivado ("−" al llegar a 1, "+" al llegar al tope) no
+       acepta el foco: se cae a la cantidad de la misma linea antes que al
+       body. A la cantidad y no al otro boton: con Enter repetido, saltar al
+       "−" haria que el siguiente Enter BAJARA lo que se estaba subiendo. */
+    const otro =
+      li?.querySelector<HTMLElement>('[data-linea-cantidad]') ??
+      li?.querySelector<HTMLElement>('[data-linea-mas]:not(:disabled), [data-linea-menos]:not(:disabled)');
     if (destino && !destino.disabled) destino.focus();
-    else if (li) li.querySelector<HTMLButtonElement>('[data-linea-mas]')?.focus();
+    else if (otro) otro.focus();
     else p.focoDeReserva(vacio)?.focus();
   };
 
@@ -299,6 +304,10 @@ export function montarVista(p: PiezasVista): (catalogo: Catalogo) => CarritoResu
     /* Vacio o basura: se vuelve a 1, no se borra la linea por un teclazo.
        El tope lo aplica `cambiarCantidad()`: teclear 69 tampoco pasa. */
     const res = cambiarCantidad(handle, varianteId, Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1);
+    /* Si la linea YA estaba en el tope, `cambiarCantidad()` no escribe ni
+       emite el evento (no cambio nada), asi que no hay repintado y el input
+       se quedaba enseñando el 9 tecleado con 3 guardadas. Se corrige aqui. */
+    if (res.total > 0) input.value = String(res.total);
     decir(
       res.recortado
         ? `Máximo ${res.tope} por pedido: la cantidad queda en ${res.total}.`

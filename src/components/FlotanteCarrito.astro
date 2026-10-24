@@ -18,12 +18,18 @@
  * la del flotante de WhatsApp: estuvieron unidos por error y en la ficha
  * desaparecian los dos, justo donde mas se usa este, que es donde se agrega.
  *
+ * NO NAVEGA: ABRE EL MINI CARRITO (MiniCarrito.astro). El `href` a /carrito/
+ * se queda para quien no tiene JavaScript; con JS, `mini-carrito.ts` lo
+ * convierte en el boton que abre el panel. En /carrito no se monta
+ * (`sinFlotanteCarrito`): ahi el panel seria la misma vista dos veces.
+ *
  * Al CAMBIAR el carrito pulsa tres veces un anillo de oro y para. El porque
  * de tres y no infinito, y el porque de que lo dispare el cambio y no la
  * carga, estan en flotante-carrito.css, junto a la animacion.
  */
 import { ruta } from '../datos/sitio';
 import Icono from './Icono.astro';
+import MiniCarrito from './MiniCarrito.astro';
 import '../styles/flotante-carrito.css';
 ---
 
@@ -37,6 +43,8 @@ import '../styles/flotante-carrito.css';
   <Icono nombre="bolsa" tam={24} />
   <span class="v-flotante-carrito__cuenta v-num" data-kp-flotante-cuenta aria-hidden="true"></span>
 </a>
+
+<MiniCarrito />
 
 <script>
   import { suscribir, unidades } from '../scripts/carrito';

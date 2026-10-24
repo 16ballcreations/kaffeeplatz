@@ -1,0 +1,184 @@
+---
+/**
+ * MiniCarrito — el panel que abre el boton flotante del carrito.
+ * ===========================================================================
+ *
+ * POR QUE EXISTE
+ * ---------------------------------------------------------------------------
+ * Peticion del cliente: «reducir la navegacion entre paginas». Antes el
+ * flotante llevaba a /carrito; ahora abre aqui mismo las lineas, el resumen y
+ * el cierre del pedido, y la persona sigue en la pagina en la que estaba. En
+ * escritorio es una tarjeta que crece desde el boton; en movil, una hoja
+ * inferior a todo el ancho (mini-carrito.css).
+ *
+ * MEJORA PROGRESIVA
+ * ---------------------------------------------------------------------------
+ * El boton sigue siendo un `<a href="/carrito/">` en el HTML: sin JavaScript
+ * (o si este script no llega a correr) lleva a la pagina del carrito como
+ * siempre. Es `mini-carrito.ts` quien intercepta el clic y abre esto.
+ *
+ * LA MISMA VISTA QUE /carrito
+ * ---------------------------------------------------------------------------
+ * Las lineas y el resumen los pinta `src/scripts/carrito-vista.ts`, el mismo
+ * modulo que la pagina del carrito: mismos topes, mismos avisos, misma regla
+ * de envio y el mismo destino del pedido (`carrito-destino.ts`). Aqui solo va
+ * el MARCADO del panel; los atributos de linea (`data-linea-*`) son los que
+ * ese modulo rellena. Los del panel van prefijados `data-mini-` para no
+ * cruzarse con nada de la pagina que lo aloja (ver la cabecera de
+ * carrito.astro: un `[data-vacio]` a secas ya encontro el nodo equivocado).
+ *
+ * EL CATALOGO NO VIAJA EN LA PAGINA
+ * ---------------------------------------------------------------------------
+ * Se pide a /api/carrito/catalogo.json la primera vez que se abre (o al pasar
+ * el raton por el boton). Hasta entonces el panel no pesa mas que este HTML.
+ */
+import Icono from './Icono.astro';
+import { SITIO, ruta } from '../datos/sitio';
+import '../styles/topes.css';
+import '../styles/mini-carrito.css';
+---
+
+{/* El fondo: atrapa el «clic fuera» y en movil oscurece la pagina. */}
+<div class="v-mini-fondo" data-mini-fondo hidden></div>
+
+<div
+  class="v-mini"
+  id="kp-mini-carrito"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="kp-mini-titulo"
+  data-mini
+  hidden
+>
+  <header class="v-mini__cabeza">
+    <div>
+      <h2 class="v-mini__titulo" id="kp-mini-titulo">Tu <em>carrito</em></h2>
+      <p class="v-mini__cuenta v-num" data-mini-cuenta></p>
+    </div>
+    <button type="button" class="v-mini__cerrar" data-mini-cerrar>
+      <Icono nombre="cerrar" tam={22} etiqueta="Cerrar el carrito" />
+    </button>
+  </header>
+
+  {/* CARGANDO: solo la primera apertura, mientras llega el catalogo. */}
+  <p class="v-mini__estado" data-mini-cargando>Cargando tu carrito…</p>
+
+  {/* SIN CATALOGO: D1 no respondio. La pagina del carrito tiene su propia
+      cortesia, asi que se ofrece ella en vez de un panel roto. */}
+  <div class="v-mini__estado" data-mini-error hidden>
+    <p>No pudimos cargar tu carrito ahora mismo. Tu pedido sigue guardado.</p>
+    <a href={ruta('/carrito')} class="v-enlace">
+      Ver carrito completo <Icono nombre="flecha" tam={16} />
+    </a>
+  </div>
+
+  {/* VACIO: se vacio con el panel abierto (el boton no se muestra si no hay
+      nada, asi que no se puede ABRIR vacio). */}
+  <div class="v-mini__estado" data-mini-vacio hidden>
+    <p>Tu carrito está vacío</p>
+    <a href={ruta('/catalogo')} class="v-enlace">
+      Ver el catálogo <Icono nombre="flecha" tam={16} />
+    </a>
+  </div>
+
+  {/* Recorte de cantidades guardadas por encima del tope. Siempre en el DOM,
+      solo `hidden`, por lo mismo que en /carrito. */}
+  <p class="v-mini__aviso" data-mini-recorte role="status" hidden></p>
+
+  <div class="v-mini__cuerpo" data-mini-lleno hidden>
+    <ul class="v-mini__lineas" data-mini-lineas></ul>
+
+    <div class="v-mini__pie">
+      <dl class="v-mini__filas">
+        <div>
+          <dt>Subtotal</dt>
+          <dd class="v-num" data-mini-subtotal></dd>
+        </div>
+        <div>
+          <dt>Envío</dt>
+          <dd class="v-num" data-mini-envio></dd>
+        </div>
+        <div class="v-mini__total">
+          <dt>Total</dt>
+          <dd class="v-num" data-mini-total></dd>
+        </div>
+      </dl>
+      <p class="v-mini__falta" data-mini-falta hidden></p>
+
+      {/* EL CIERRE DEL PEDIDO. Su destino NO se decide aqui: lo pone
+          `carrito-vista.ts` con `destinoDelPedido()` de carrito-destino.ts,
+          el unico punto a cambiar cuando llegue MercadoLibre. El href de
+          serie (wa.me/<numero>) es de donde se lee el numero. */}
+      <a
+        class="v-boton v-boton--oro v-boton--ancho"
+        data-mini-finalizar
+        href={`https://wa.me/${SITIO.whatsappNumero}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Icono nombre="whatsapp" tam={20} />
+        <span>Finalizar pedido</span>
+      </a>
+      {/* Sin nota debajo: el icono de WhatsApp del boton ya dice por donde se
+          cierra, y en escritorio cada linea del pie le quita alto a la
+          lista. La explicacion larga esta en /carrito. */}
+      <a href={ruta('/carrito')} class="v-enlace v-mini__completo">
+        Ver carrito completo <Icono nombre="flecha" tam={16} />
+      </a>
+    </div>
+  </div>
+
+  {/* Region viva del panel: cantidades, lineas quitadas. */}
+  <p class="sr-only" role="status" aria-live="polite" data-mini-anuncio></p>
+</div>
+
+{/*
+  Una linea del panel. Mas compacta que la de /carrito, con los MISMOS
+  atributos `data-linea-*`, que son lo que `pintarLinea()` rellena.
+*/}
+<template data-mini-plantilla>
+  <li class="v-mini-linea" data-linea>
+    <a class="v-mini-linea__foto" data-linea-enlace-foto>
+      <img data-linea-img alt="" width="64" height="64" loading="lazy" decoding="async" />
+    </a>
+    <div class="v-mini-linea__info">
+      <a class="v-mini-linea__titulo" data-linea-enlace></a>
+      <p class="v-mini-linea__variante" data-linea-variante hidden></p>
+      <p class="v-mini-linea__unitario">
+        <span class="v-num" data-linea-unitario></span> c/u
+      </p>
+      <p class="v-mini-linea__agotado" data-linea-agotado hidden>
+        Agotado por ahora: lo confirmamos por WhatsApp.
+      </p>
+      <div class="v-mini-linea__control">
+        <div class="v-linea__cantidad">
+          <button type="button" data-linea-menos class="v-paso">
+            <span class="sr-only" data-linea-menos-etiqueta></span>
+          </button>
+          <input
+            type="number"
+            min="1"
+            max="99"
+            step="1"
+            inputmode="numeric"
+            class="v-paso__valor v-num"
+            data-linea-cantidad
+          />
+          <button type="button" data-linea-mas class="v-paso">
+            <span class="sr-only" data-linea-mas-etiqueta></span>
+          </button>
+        </div>
+        <button type="button" class="v-quitar" data-linea-quitar>
+          <span class="sr-only" data-linea-quitar-etiqueta></span>
+          <span aria-hidden="true">Quitar</span>
+        </button>
+      </div>
+      <p class="v-linea__tope" data-linea-tope hidden></p>
+    </div>
+    <p class="v-mini-linea__subtotal v-num" data-linea-subtotal></p>
+  </li>
+</template>
+
+<script>
+  import '../scripts/mini-carrito';
+</script>
