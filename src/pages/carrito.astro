@@ -47,11 +47,21 @@
  * punto 3 de la seccion D del plan («`resolver()` del carrito tendra que leer
  * de D1»), que pedia cambiar el origen y no la logica.
  *
+ * SIN BOTON FLOTANTE NI MINI CARRITO AQUI (`sinFlotanteCarrito`)
+ * ---------------------------------------------------------------------------
+ * En el resto del sitio el boton flotante abre el mini carrito, un panel con
+ * esta misma vista (src/scripts/carrito-vista.ts). Aqui ya estas en el
+ * carrito: el panel duplicaria la pagina con dos vistas vivas del mismo
+ * estado, y un enlace a la pagina en la que ya estas es una parada muerta.
+ * Asi que no se monta, ni se pide su JSON. El contador de la cabecera sigue.
+ *
  * AUN NO HAY PAGO
  * ---------------------------------------------------------------------------
  * La fase 2 (checkout con Bold) pondra aqui su boton. Hasta entonces, el sitio
  * NO promete un pago que no existe: el hueco esta preparado (`v-resumen__pago`)
- * con una nota honesta, no con un boton muerto.
+ * con una nota honesta, no con un boton muerto. A donde lleva el boton de
+ * cierre lo decide UN sitio, src/scripts/carrito-destino.ts, que comparte
+ * con el «Finalizar pedido» del mini carrito.
  */
 import Base from '../layouts/Base.astro';
 import Icono from '../components/Icono.astro';
@@ -59,9 +69,8 @@ import BotonWhatsApp from '../components/BotonWhatsApp.astro';
 import { SITIO, ruta } from '../datos/sitio';
 import { ENVIOS } from '../datos/guias';
 import { ENVIO_GRATIS_DESDE, TARIFA_PLANA_ENVIO, formatearPesos } from '../datos/envio';
-import { obtenerProductos, respuestaDeEmergencia, marcarEtiquetas } from '../datos/catalogo';
-import { conStock } from '../datos/inventario';
-import type { Catalogo } from '../scripts/carrito';
+import { respuestaDeEmergencia, marcarEtiquetas } from '../datos/catalogo';
+import { leerCatalogoCarrito } from '../datos/catalogo-carrito';
 /* Lo que el tope necesita decir (motivo bajo la cantidad, aviso de recorte).
    Hoja propia: v2.css ya pasa de 3.900 lineas y no se engorda. */
 import '../styles/topes.css';
@@ -74,53 +83,18 @@ export const prerender = false;
 /* R1, el mismo patron que /catalogo: la lectura nunca lanza, y si D1 no
    responde se sirve la copia de cache o la pagina de cortesia con 503. Un
    carrito con el catalogo VACIO no es una opcion: `resolver()` descartaria
-   todas las lineas y la persona veria su pedido borrado sin motivo. */
-const lectura = await obtenerProductos(Astro.locals);
-if (lectura.estado !== 'ok' || !lectura.datos) {
-  return respuestaDeEmergencia(Astro.url, lectura);
-}
+   todas las lineas y la persona veria su pedido borrado sin motivo.
+
+   El catalogo reducido (y sus topes por stock, si el inventario esta
+   encendido) sale de `leerCatalogoCarrito`, el MISMO que sirve
+   /api/carrito/catalogo.json al mini carrito: la pagina y el panel no pueden
+   enseñar precios ni topes distintos del mismo carrito. */
+const { lectura, datos } = await leerCatalogoCarrito(Astro.locals);
+if (!datos) return respuestaDeEmergencia(Astro.url, lectura);
 
 /* Depende del catalogo entero: cualquier producto puede estar en un carrito. */
 marcarEtiquetas(Astro.locals, ['catalogo']);
-
-/* El catalogo reducido a lo que el carrito necesita pintar. Nada mas: esto
-   viaja en el HTML de la pagina. La capa de datos ya devuelve la forma que
-   devolvia `getCollection` en `.data`, asi que el mapeo es el de siempre. */
-/* Con el inventario APAGADO `conStock` devuelve el mismo array y nada cambia.
-   Encendido, cada variante lleva su `stockDisponible` y el `+` de una linea
-   no pasa de lo que hay: es la tercera via de agregar, junto a la ficha y la
-   tarjeta del catalogo, y las tres topan con el mismo numero. */
-const conTopes = await conStock(Astro.locals, lectura.datos);
-
-const catalogo: Catalogo = Object.fromEntries(
-  conTopes.map((d) => {
-    const img = d.imagenes[0];
-    return [
-      d.handle,
-      {
-        handle: d.handle,
-        titulo: d.titulo,
-        disponible: d.disponible,
-        conVariantes: d.variantes.length > 1,
-        variantes: d.variantes.map((v) => ({
-          id: v.id,
-          titulo: v.titulo,
-          precio: v.precio,
-          precioFormateado: v.precioFormateado,
-          disponible: v.disponible,
-          ...(v.stockDisponible !== undefined ? { stockDisponible: v.stockDisponible } : {}),
-        })),
-        ...(img ? { imagen: { src: img.src, alt: img.alt } } : {}),
-      },
-    ];
-  }),
-);
-
-/* Reglas de envio que el script necesita en el navegador. */
-const reglasEnvio = {
-  tarifaPlana: TARIFA_PLANA_ENVIO,
-  gratisDesde: ENVIO_GRATIS_DESDE,
-};
+const { catalogo } = datos;
 
 const principales = ENVIOS[0];
 const otras = ENVIOS[1];
@@ -131,6 +105,7 @@ const otras = ENVIOS[1];
   descripcion="Revisa tu pedido de accesorios de café de especialidad y cerramos la compra por WhatsApp."
   camino="/carrito"
   migas={[{ nombre: 'Carrito', href: '/carrito' }]}
+  sinFlotanteCarrito
 >
   <section class="v-seccion v-limite v-carrito">
     <header class="v-carrito__cabeza">
@@ -359,341 +334,77 @@ const otras = ENVIOS[1];
     </li>
   </template>
 
-  {/* Los datos del build que el script necesita, como JSON inerte. */}
+  {/* El catalogo que el script necesita, como JSON inerte. Las reglas de
+      envio ya no viajan aqui: el script importa src/datos/envio.ts. */}
   <script type="application/json" data-carrito-catalogo set:html={JSON.stringify(catalogo)} />
-  <script type="application/json" data-carrito-envio-reglas set:html={JSON.stringify(reglasEnvio)} />
 </Base>
 
 <script>
-  import {
-    cambiarCantidad,
-    enlaceWhatsApp,
-    leerGuardado,
-    mensajePedido,
-    pesos,
-    quitar,
-    recortarGuardado,
-    registrarTopes,
-    resolver,
-    suscribir,
-    tope,
-    vaciar,
-    type Catalogo,
-    type LineaResuelta,
-  } from '../scripts/carrito';
-  import { topeDe } from '../scripts/topes';
+  /* La vista de lineas y resumen es la misma que la del mini carrito y vive
+     en src/scripts/carrito-vista.ts. Aqui queda solo lo propio de esta
+     pagina: sus tres estados, la frase de cabecera, vaciar y el recorte. */
+  import { recortarGuardado, suscribir, vaciar, type Catalogo } from '../scripts/carrito';
+  import { montarVista, registrarTopesDeCatalogo, textoRecorte } from '../scripts/carrito-vista';
 
-  /* --- Datos del build ------------------------------------------------- */
-  const leerJson = <T,>(selector: string): T | null => {
-    const el = document.querySelector<HTMLScriptElement>(selector);
-    if (!el?.textContent) return null;
+  const leerCatalogo = (): Catalogo | null => {
+    const el = document.querySelector<HTMLScriptElement>('[data-carrito-catalogo]');
     try {
-      return JSON.parse(el.textContent) as T;
+      return el?.textContent ? (JSON.parse(el.textContent) as Catalogo) : null;
     } catch {
       return null;
     }
   };
 
-  const catalogo = leerJson<Catalogo>('[data-carrito-catalogo]');
-  const reglas = leerJson<{ tarifaPlana: number; gratisDesde: number }>(
-    '[data-carrito-envio-reglas]',
-  );
-
-  const sinJs = document.querySelector<HTMLElement>('[data-carrito-sin-js]');
-  const vacio = document.querySelector<HTMLElement>('[data-carrito-vacio]');
-  const lleno = document.querySelector<HTMLElement>('[data-carrito-lleno]');
-  const lista = document.querySelector<HTMLUListElement>('[data-carrito-lineas]');
+  const catalogo = leerCatalogo();
+  const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s);
+  const sinJs = $('[data-carrito-sin-js]');
+  const vacio = $('[data-carrito-vacio]');
+  const lleno = $('[data-carrito-lleno]');
+  const lista = $<HTMLUListElement>('[data-carrito-lineas]');
   const plantilla = document.querySelector<HTMLTemplateElement>('[data-carrito-plantilla]');
-  const anuncio = document.querySelector<HTMLElement>('[data-carrito-anuncio]');
+  const anuncio = $('[data-carrito-anuncio]');
 
   /* Si falta cualquier pieza se deja el bloque "sin JavaScript": es un
      estado honesto y util, no una pagina a medias. */
-  if (catalogo && reglas && sinJs && vacio && lleno && lista && plantilla) {
+  if (catalogo && sinJs && vacio && lleno && lista && plantilla) {
     sinJs.remove();
 
     /* LOS TOPES, del catalogo que ya viaja en esta pagina. `carrito.ts` no
-       conoce el catalogo, asi que se los damos: una entrada por variante,
-       porque el tope es POR VARIANTE y dos colores del mismo producto no lo
-       comparten. `topeDe()` es el unico sitio que lo decide. */
-    registrarTopes(
-      Object.values(catalogo).flatMap((p) =>
-        p.variantes.map((v) => ({
-          handle: p.handle,
-          varianteId: v.id,
-          tope: topeDe({ disponible: p.disponible && v.disponible, stockDisponible: v.stockDisponible }),
-        })),
-      ),
-    );
+       conoce el catalogo, asi que se los damos. */
+    registrarTopesDeCatalogo(catalogo);
 
-    const elSubtotal = document.querySelector<HTMLElement>('[data-carrito-subtotal]');
-    const elEnvio = document.querySelector<HTMLElement>('[data-carrito-envio]');
-    const elTotal = document.querySelector<HTMLElement>('[data-carrito-total]');
-    const elFalta = document.querySelector<HTMLElement>('[data-carrito-falta]');
-    const elWa = document.querySelector<HTMLAnchorElement>('[data-carrito-whatsapp]');
-    const elCorto = document.querySelector<HTMLElement>('[data-carrito-resumen-corto]');
-    const btnVaciar = document.querySelector<HTMLButtonElement>('[data-carrito-vaciar]');
-
+    const elCorto = $('[data-carrito-resumen-corto]');
+    const btnVaciar = $<HTMLButtonElement>('[data-carrito-vaciar]');
     const decir = (texto: string) => {
       if (anuncio) anuncio.textContent = texto;
     };
 
-    /* La misma regla que src/datos/envio.ts, con los valores del build. */
-    const calcularEnvio = (subtotal: number) => {
-      if (subtotal <= 0) return { costo: 0, gratis: false, falta: reglas.gratisDesde };
-      const gratis = subtotal >= reglas.gratisDesde;
-      return {
-        costo: gratis ? 0 : reglas.tarifaPlana,
-        gratis,
-        falta: gratis ? 0 : reglas.gratisDesde - subtotal,
-      };
-    };
-
-    const nombreLinea = (l: LineaResuelta) =>
-      l.varianteTitulo ? `${l.titulo} (${l.varianteTitulo})` : l.titulo;
-
-    /** Rellena un <li> clonado de la plantilla con los datos de una linea. */
-    const pintarLinea = (l: LineaResuelta): DocumentFragment => {
-      const frag = plantilla.content.cloneNode(true) as DocumentFragment;
-      const q = <T extends Element>(s: string) => frag.querySelector<T>(s);
-      const nombre = nombreLinea(l);
-
-      const li = q<HTMLLIElement>('[data-linea]');
-      li?.setAttribute('data-handle', l.handle);
-      li?.setAttribute('data-variante', l.varianteId);
-
-      const foto = q<HTMLAnchorElement>('[data-linea-enlace-foto]');
-      if (foto) {
-        foto.href = l.url;
-        /* La foto y el titulo llevan al mismo sitio. En vez de dos enlaces
-           que anuncian lo mismo, la foto sale del recorrido de tabulacion y
-           queda oculta al lector de pantalla: el titulo, justo al lado, ya
-           hace de enlace con nombre. Un enlace sin nombre accesible seria un
-           fallo de WCAG (2.4.4) y ademas una parada inutil al tabular. */
-        foto.tabIndex = -1;
-        foto.setAttribute('aria-hidden', 'true');
-      }
-      const img = q<HTMLImageElement>('[data-linea-img]');
-      if (img) {
-        if (l.imagen) {
-          /* WebP, igual que el resto del sitio (ver `optimizada` en
-             src/datos/sitio.ts). El original queda de reserva por si la
-             variante WebP no existiera. */
-          img.src = l.imagen.src.replace(/\.(png|jpe?g)$/i, '.webp');
-          img.alt = '';
-        } else {
-          img.remove();
+    const pintar = montarVista({
+      lista,
+      plantilla,
+      subtotal: $('[data-carrito-subtotal]'),
+      envio: $('[data-carrito-envio]'),
+      total: $('[data-carrito-total]'),
+      falta: $('[data-carrito-falta]'),
+      cierre: $<HTMLAnchorElement>('[data-carrito-whatsapp]'),
+      decir,
+      alResolver: (carrito) => {
+        const hay = carrito.lineas.length > 0;
+        vacio.hidden = hay;
+        lleno.hidden = !hay;
+        if (elCorto) {
+          elCorto.textContent = !hay
+            ? 'Revisa el pedido antes de escribirnos.'
+            : carrito.unidades === 1
+              ? '1 unidad en tu pedido. Revísalo antes de escribirnos.'
+              : `${carrito.unidades} unidades en tu pedido. Revísalo antes de escribirnos.`;
         }
-      }
-
-      const enlace = q<HTMLAnchorElement>('[data-linea-enlace]');
-      if (enlace) {
-        enlace.href = l.url;
-        enlace.textContent = l.titulo;
-      }
-
-      const variante = q<HTMLElement>('[data-linea-variante]');
-      if (variante && l.varianteTitulo) {
-        variante.textContent = l.varianteTitulo;
-        variante.hidden = false;
-      }
-
-      const unitario = q<HTMLElement>('[data-linea-unitario]');
-      if (unitario) unitario.textContent = l.precioUnitarioFormateado;
-
-      const agotado = q<HTMLElement>('[data-linea-agotado]');
-      if (agotado && !l.disponible) agotado.hidden = false;
-
-      const cantidad = q<HTMLInputElement>('[data-linea-cantidad]');
-      if (cantidad) {
-        cantidad.value = String(l.cantidad);
-        cantidad.setAttribute('aria-label', `Cantidad de ${nombre}`);
-      }
-
-      /* Etiquetas accesibles: cada boton dice QUE producto toca, porque un
-         lector de pantalla los recorre fuera de contexto. El signo visible
-         va aparte, en aria-hidden. */
-      const menos = q<HTMLButtonElement>('[data-linea-menos]');
-      const masBtn = q<HTMLButtonElement>('[data-linea-mas]');
-      const etMenos = q<HTMLElement>('[data-linea-menos-etiqueta]');
-      const etMas = q<HTMLElement>('[data-linea-mas-etiqueta]');
-      if (etMenos) etMenos.textContent = `Quitar una unidad de ${nombre}`;
-      if (etMas) etMas.textContent = `Agregar una unidad de ${nombre}`;
-      menos?.setAttribute('data-signo', '−');
-      masBtn?.setAttribute('data-signo', '+');
-      /* EL `+` SE DETIENE EN EL TOPE. Era el segundo agujero: aqui no habia
-         tope ninguno (solo el techo de almacenamiento de 99) y el cliente
-         llego a 69 unidades pulsando. El limite lo aplica `cambiarCantidad()`
-         pase lo que pase; esto es para que se VEA antes de pulsar. */
-      const max = tope(l.handle, l.varianteId);
-      if (menos) menos.disabled = l.cantidad <= 1;
-      if (masBtn) masBtn.disabled = l.cantidad >= max;
-      if (cantidad) cantidad.max = String(max);
-
-      /* POR QUE no se puede subir mas. Un boton apagado dice que no se puede,
-         no por que, y el motivo no se adivina mirando. El texto va junto a la
-         cantidad y se anuncia al pulsar (la region viva de la pagina). */
-      const elTope = q<HTMLElement>('[data-linea-tope]');
-      if (elTope && l.cantidad >= max) {
-        elTope.textContent = `Máximo ${max} por pedido`;
-        elTope.hidden = false;
-      }
-
-      const subtotal = q<HTMLElement>('[data-linea-subtotal]');
-      if (subtotal) subtotal.textContent = l.subtotalFormateado;
-
-      const etQuitar = q<HTMLElement>('[data-linea-quitar-etiqueta]');
-      if (etQuitar) etQuitar.textContent = `Quitar ${nombre} del carrito`;
-
-      return frag;
-    };
-
-    /**
-     * Devuelve el foco al control equivalente tras repintar.
-     *
-     * La lista se reconstruye entera en cada cambio, asi que el <button> que
-     * la persona acababa de pulsar deja de existir y el foco cae al <body>:
-     * quien navega con teclado se queda sin sitio desde el que seguir
-     * pulsando "+". Se anota que control tenia el foco (su linea y su papel)
-     * y se recupera el mismo despues.
-     *
-     * Si la linea entera desaparecio (cantidad a 0, o "Quitar"), no hay a
-     * donde volver: el foco va al boton de vaciar, que sigue existiendo.
-     */
-    const recordarFoco = () => {
-      const a = document.activeElement as HTMLElement | null;
-      const li = a?.closest<HTMLElement>('[data-linea]');
-      if (!li || !a) return null;
-      const papel = ['data-linea-mas', 'data-linea-menos', 'data-linea-quitar'].find((p) =>
-        a.hasAttribute(p),
-      );
-      if (!papel) return null;
-      return { handle: li.dataset.handle, variante: li.dataset.variante, papel };
-    };
-
-    const restaurarFoco = (m: ReturnType<typeof recordarFoco>) => {
-      if (!m) return;
-      const li = lista.querySelector<HTMLElement>(
-        `[data-linea][data-handle="${CSS.escape(m.handle ?? '')}"][data-variante="${CSS.escape(m.variante ?? '')}"]`,
-      );
-      const destino = li?.querySelector<HTMLButtonElement>(`[${m.papel}]`);
-      /* Un boton desactivado (p. ej. "−" al llegar a 1) no acepta el foco:
-         se cae al otro control de la misma linea antes que al body. */
-      if (destino && !destino.disabled) destino.focus();
-      else if (li) li.querySelector<HTMLButtonElement>('[data-linea-mas]')?.focus();
-      else btnVaciar?.focus();
-    };
-
-    /** Pinta todo: lista, resumen y enlace de WhatsApp. */
-    const pintar = () => {
-      const foco = recordarFoco();
-      const carrito = resolver(leerGuardado(), catalogo);
-      const hay = carrito.lineas.length > 0;
-
-      vacio.hidden = hay;
-      lleno.hidden = !hay;
-
-      if (elCorto) {
-        elCorto.textContent = hay
-          ? carrito.unidades === 1
-            ? '1 unidad en tu pedido. Revísalo antes de escribirnos.'
-            : `${carrito.unidades} unidades en tu pedido. Revísalo antes de escribirnos.`
-          : 'Revisa el pedido antes de escribirnos.';
-      }
-
-      if (!hay) {
-        lista.replaceChildren();
-        /* El carrito se quedo sin lineas: el foco no puede volver a una que
-           ya no existe, asi que se lleva al enlace del catalogo, que es la
-           unica accion que queda. */
-        if (foco) document.querySelector<HTMLAnchorElement>('[data-carrito-vacio] a')?.focus();
-        return;
-      }
-
-      const frag = document.createDocumentFragment();
-      for (const l of carrito.lineas) frag.append(pintarLinea(l));
-      lista.replaceChildren(frag);
-      restaurarFoco(foco);
-
-      const envio = calcularEnvio(carrito.subtotal);
-      if (elSubtotal) elSubtotal.textContent = pesos(carrito.subtotal);
-      if (elEnvio) elEnvio.textContent = envio.gratis ? 'Gratis' : pesos(envio.costo);
-      if (elTotal) elTotal.textContent = pesos(carrito.subtotal + envio.costo);
-
-      if (elFalta) {
-        if (envio.falta > 0) {
-          elFalta.textContent = `Te faltan ${pesos(envio.falta)} para el envío gratis.`;
-          elFalta.hidden = false;
-        } else {
-          elFalta.textContent = '';
-          elFalta.hidden = true;
-        }
-      }
-
-      if (elWa) {
-        elWa.href = enlaceWhatsApp(
-          /* El numero sale del enlace que ya trae el HTML del build. */
-          (elWa.dataset.numero ??= (elWa.href.match(/wa\.me\/(\d+)/)?.[1] ?? '')),
-          mensajePedido(carrito, envio),
-        );
-      }
-    };
-
-    /* --- Interaccion, delegada en la lista --------------------------- */
-    lista.addEventListener('click', (e) => {
-      const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
-      if (!b) return;
-      const li = b.closest<HTMLElement>('[data-linea]');
-      const handle = li?.dataset.handle;
-      const varianteId = li?.dataset.variante;
-      if (!handle || !varianteId) return;
-
-      const input = li?.querySelector<HTMLInputElement>('[data-linea-cantidad]');
-      const actual = Number(input?.value ?? '1');
-
-      if (b.hasAttribute('data-linea-quitar')) {
-        const nombre = li?.querySelector('[data-linea-enlace]')?.textContent ?? 'El producto';
-        quitar(handle, varianteId);
-        decir(`${nombre} quitado del carrito.`);
-        return;
-      }
-      if (b.hasAttribute('data-linea-mas')) {
-        const res = cambiarCantidad(handle, varianteId, actual + 1);
-        /* Si el `+` ya no sube, se dice POR QUE: un "Cantidad: 10." repetido
-           cuando nada cambio es peor que el silencio, porque afirma que algo
-           paso. Es el agujero que el cliente reporto desde aqui. */
-        decir(
-          res.recortado
-            ? `Máximo ${res.tope} por pedido. Para más, escríbenos por WhatsApp.`
-            : `Cantidad: ${res.total}.`,
-        );
-        return;
-      }
-      if (b.hasAttribute('data-linea-menos')) {
-        const res = cambiarCantidad(handle, varianteId, actual - 1);
-        decir(`Cantidad: ${res.total}.`);
-      }
-    });
-
-    /* Escribir la cantidad a mano. `change` y no `input`: no se repinta en
-       cada tecla, que haria perder el foco a media cifra. */
-    lista.addEventListener('change', (e) => {
-      const input = e.target as HTMLInputElement;
-      if (!input.matches('[data-linea-cantidad]')) return;
-      const li = input.closest<HTMLElement>('[data-linea]');
-      const handle = li?.dataset.handle;
-      const varianteId = li?.dataset.variante;
-      if (!handle || !varianteId) return;
-      const n = Number(input.value);
-      /* Vacio o basura: se vuelve a 1, no se borra la linea por un teclazo.
-         Para quitarla esta el boton de quitar. El tope lo aplica
-         `cambiarCantidad()`, asi que teclear 69 a mano tampoco pasa. */
-      const limpio = Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
-      const res = cambiarCantidad(handle, varianteId, limpio);
-      decir(
-        res.recortado
-          ? `Máximo ${res.tope} por pedido: la cantidad queda en ${res.total}.`
-          : `Cantidad: ${res.total}.`,
-      );
+      },
+      /* Si la linea con el foco desaparece, al boton de vaciar; si el carrito
+         se quedo sin lineas, al enlace del catalogo, la unica accion que
+         queda. */
+      focoDeReserva: (sinLineas) =>
+        sinLineas ? vacio.querySelector<HTMLAnchorElement>('a') : btnVaciar,
     });
 
     btnVaciar?.addEventListener('click', () => {
@@ -703,47 +414,29 @@ const otras = ENVIOS[1];
 
     /* Un solo sitio donde se repinta: cada cambio del carrito, venga de esta
        pagina o de otra pestana. */
-    suscribir(() => pintar());
-    pintar();
+    suscribir(() => pintar(catalogo));
+    pintar(catalogo);
 
     /* ---------------------------------------------------------------------
        CARRITOS GUARDADOS QUE YA SE PASABAN DEL TOPE
 
-       Existen de verdad: hasta este arreglo el `+` de esta pagina no tenia
-       tope, asi que hay navegadores (el del cliente incluido) con 69 unidades
-       guardadas. Se RECORTAN y se DICE, que es el criterio del encargo y el
-       correcto: un carrito que el sitio no puede cumplir enseña un subtotal,
-       un envio y un total de un pedido que al confirmarse por WhatsApp habria
-       que corregir a la baja. El recorte se ve una vez; el numero falso
-       viajaria hasta la conversacion.
+       Existen de verdad: hasta que el tope se aplico, el `+` de esta pagina
+       no tenia techo y hay navegadores con 69 unidades guardadas. Se
+       RECORTAN y se DICE: un carrito que el sitio no puede cumplir enseña un
+       total que al confirmarse por WhatsApp habria que corregir a la baja.
 
        El aviso NO es la region viva `[data-carrito-anuncio]` ni un `alert`:
        es un bloque visible que se queda, porque es un cambio que la persona
-       NO pidio y tiene que poder leerlo con calma. Lleva `role="status"` para
-       que tambien se anuncie, y se pinta DESPUES del primer `pintar()` para
-       que la cantidad ya recortada este en pantalla cuando se lea.
+       NO pidio. Lleva `role="status"` y se pinta DESPUES del primer
+       `pintar()` para que la cantidad ya recortada este en pantalla.
        --------------------------------------------------------------------- */
-    const recortes = recortarGuardado();
-    if (recortes.length) {
-      const elRecorte = document.querySelector<HTMLElement>('[data-carrito-recorte]');
-      const elRecorteTexto = document.querySelector<HTMLElement>('[data-carrito-recorte-texto]');
-      if (elRecorte && elRecorteTexto) {
-        const nombres = recortes.map((c) => {
-          const p = catalogo[c.handle];
-          const v = p?.variantes.find((x) => x.id === c.varianteId);
-          const nombre = p
-            ? p.conVariantes && v
-              ? `${p.titulo} (${v.titulo})`
-              : p.titulo
-            : 'Un producto';
-          return `${nombre}: de ${c.antes} a ${c.ahora}`;
-        });
-        elRecorteTexto.textContent =
-          recortes.length === 1
-            ? `Ajustamos la cantidad al máximo por pedido. ${nombres[0]}.`
-            : `Ajustamos ${recortes.length} cantidades al máximo por pedido. ${nombres.join('; ')}.`;
-        elRecorte.hidden = false;
-      }
+    const texto = textoRecorte(recortarGuardado(), catalogo);
+    const elRecorte = $('[data-carrito-recorte]');
+    const elRecorteTexto = $('[data-carrito-recorte-texto]');
+    if (texto && elRecorte && elRecorteTexto) {
+      elRecorteTexto.textContent = texto;
+      elRecorte.hidden = false;
     }
   }
 </script>
+

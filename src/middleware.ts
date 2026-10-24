@@ -135,5 +135,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const corta = (context.locals as { cacheCorta?: boolean }).cacheCorta === true;
   const cabeceras = new Headers(respuesta.headers);
   for (const [k, v] of Object.entries(cabecerasOk(etiquetas, corta))) cabeceras.set(k, v);
+  /* `cabecerasOk` dice text/html porque hasta el mini carrito solo se
+     cacheaban paginas. /api/carrito/catalogo.json es JSON y tiene que seguir
+     diciendolo: se respeta el tipo que trajo la respuesta. */
+  const tipo = respuesta.headers.get('Content-Type');
+  if (tipo) cabeceras.set('Content-Type', tipo);
   return new Response(html, { status: 200, headers: cabeceras });
 });

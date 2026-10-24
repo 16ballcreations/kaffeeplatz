@@ -55,9 +55,11 @@ interface Props {
    * `sinFlotante` de la ficha apagaba los dos y el carrito desaparecia justo
    * donde mas se usa.
    *
-   * Hoy NINGUNA pagina la activa. Es una valvula para el dia que alguna
-   * pagina necesite la esquina libre (p. ej. un visor a pantalla completa),
-   * no un ajuste que haya que recordar poner.
+   * La activa SOLO /carrito: desde el mini carrito el boton abre un panel
+   * con la vista del carrito, y en la pagina del carrito eso seria la misma
+   * vista dos veces (ver la cabecera de carrito.astro). Fuera de ahi es una
+   * valvula para el dia que alguna pagina necesite la esquina libre, no un
+   * ajuste que haya que recordar poner.
    */
   sinFlotanteCarrito?: boolean;
 }
