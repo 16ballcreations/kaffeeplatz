@@ -151,17 +151,15 @@
 
 .p-menu ul {
   display: flex;
-  gap: 0.25rem;
+  /* Las pestañas pasan a una segunda línea en vez de deslizarse de lado.
+     Antes era una tira deslizable: con cinco secciones, en un móvil
+     «Categorías» quedaba fuera de la pantalla y el panel tenía scroll
+     horizontal (pedido del cliente, 2 nov 2026: «no debería estar»). */
+  flex-wrap: wrap;
+  column-gap: 0.25rem;
   margin: 0;
   padding: 0;
   list-style: none;
-  overflow-x: auto;
-  /* Sin barra visible, pero deslizable con el dedo. */
-  scrollbar-width: none;
-}
-
-.p-menu ul::-webkit-scrollbar {
-  display: none;
 }
 
 .p-menu a {
