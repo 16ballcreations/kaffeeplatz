@@ -6,6 +6,7 @@
 import type { ProductoFotos } from '../../datos/consultas/imagenes-panel';
 import { sugerir } from '../fotos-nombre';
 import { altAutomatico } from '../fotos-asignar';
+import { yaCuadrada } from '../fotos-cuadrar';
 import type { Repinte } from './bloques';
 import { SIN_VARIANTES } from './guardar';
 import type { ProductoPanel } from './leer';
@@ -24,6 +25,12 @@ export interface FotoVista {
   portada: boolean;
   /** Nombre de la versión de la que es portada, si lo es. */
   portadaDe: string | null;
+  /**
+   * ¿Se verá entera en el hueco cuadrado de la tienda? Falso solo si se
+   * subió sin JS (sin cuadrar) y no lo es. Sin medidas guardadas se da por
+   * buena: avisar de algo que no se sabe asustaría sin motivo.
+   */
+  cuadrada: boolean;
 }
 
 /** Mensajes de `?hecho=` que hablan de UN bloque (van dentro de él). */
@@ -106,6 +113,7 @@ export function fotosPorBloque(
       auto: alt === auto(varianteId, r),
       portada: f.id === portada,
       portadaDe: portadaDe.get(f.id) ?? null,
+      cuadrada: f.ancho === null || f.alto === null || yaCuadrada(f.ancho, f.alto),
     });
   }
   return salida;

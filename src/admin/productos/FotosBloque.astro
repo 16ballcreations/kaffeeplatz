@@ -20,6 +20,10 @@
  * «Subir varias»: una foto con el nombre mal puesto cae en la sección
  * equivocada (o en la del producto) y desde aquí se manda a la buena.
  *
+ * AVISO DE FOTO NO CUADRADA: con JS el navegador las cuadra al subir
+ * (fotos-cuadrar.ts); sin JS llegan tal cual. Se avisa en suave, sin bloquear
+ * nada: la foto sirve, solo que se verá peor.
+ *
  * TODO A 375 PX: una columna, controles de 44 px, y ↑↓ además de arrastrar
  * (B.7, punto 5).
  */
@@ -75,6 +79,11 @@ const { fotos, grupo, versiones, roles, version, rutaFotos, errores } = Astro.pr
               )}
               {f.nombreOriginal && <span class="f-foto__nombre">{f.nombreOriginal}</span>}
             </p>
+            {!f.cuadrada && (
+              <p class="f-foto__aviso">
+                Esta foto no es cuadrada: se verá recortada en la tienda. Si la vuelves a subir, se ajusta sola.
+              </p>
+            )}
             <input type="hidden" name="foto" value={f.id} />
             <div class="f-foto__campos">
               {versiones.length > 0 && (
