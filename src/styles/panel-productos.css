@@ -383,43 +383,6 @@
   margin-bottom: 0.75rem;
 }
 
-.pp-lista {
-  display: grid;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.pp-producto {
-  display: grid;
-  gap: 0.3rem;
-  min-height: var(--p-toque);
-  padding: 0.85rem 1rem;
-  background: var(--p-tarjeta);
-  border: 1px solid var(--p-linea);
-  border-radius: var(--v-r-mini);
-  color: var(--v-tinta);
-  text-decoration: none;
-}
-
-.pp-producto:hover,
-.pp-producto:focus-visible {
-  border-color: var(--v-linea-oro);
-}
-
-.pp-producto__titulo {
-  font-weight: 500;
-}
-
-.pp-producto__datos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 0.9rem;
-  color: var(--v-tinta-2);
-  font-size: var(--v-t-peq);
-}
-
 .pp-etiquetas {
   display: flex;
   flex-wrap: wrap;

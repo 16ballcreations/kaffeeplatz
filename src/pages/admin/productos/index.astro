@@ -19,14 +19,25 @@
  * Lo que enseñaba la antigua lista de fotos va en cada fila: fotos sin
  * publicar y versiones sin foto propia.
  *
+ * TARJETAS POR CATEGORIA (nov 2026)
+ * ---------------------------------------------------------------------------
+ * Petición de la dueña: la lista larga de filas pasa a tarjetas como las del
+ * catálogo (ver `TarjetaListado.astro`), agrupadas en una sección por
+ * categoría, en el orden de la tienda. Cada título lleva su «Agregar
+ * producto», que abre el alta con esa categoría ya elegida: un paso menos al
+ * subir algo nuevo. Sin filtros salen TODAS las categorías, también las
+ * vacías, para poder añadir el primero; buscando o filtrando por estado,
+ * solo las que tienen algo que enseñar. Lo de una categoría que ya no existe
+ * va a «Otros», la última, como hace la tienda (`categoriaPorId`).
+ *
  * El filtrado es en memoria sobre todas las filas (ver `listarProductos`):
  * así «termometro» encuentra «Termómetro», que es como se escribe en el
  * teléfono.
  */
 import Panel from '../../../layouts/Panel.astro';
 import Respuesta from '../../../admin/inventario-respuesta.astro';
+import TarjetaListado from '../../../admin/productos/TarjetaListado.astro';
 import { ruta } from '../../../datos/sitio';
-import { formatearPrecio } from '../../../datos/formas';
 import { baseAdmin } from '../../../admin/base';
 import { listarProductos, categoriasDeProducto, type FilaListado } from '../../../admin/productos/leer';
 import { normalizarBusqueda } from '../../../admin/productos/texto';
@@ -34,6 +45,7 @@ import { inventarioDelPanel, type FilaInventario } from '../../../datos/inventar
 import { respuestaDeInventario, type RespuestaInventario } from '../../../admin/inventario-lectura';
 import { nombreVariante, cuando } from '../../../admin/inventario-textos';
 import '../../../styles/panel-productos.css';
+import '../../../styles/panel-productos-tarjetas.css';
 import '../../../styles/panel-inventario.css';
 import '../../../styles/panel-inventario-avisos.css';
 
@@ -103,7 +115,6 @@ try {
   Astro.response.status = 503;
 }
 
-const nombreCategoria = new Map(categorias.map((c) => [c.id, c.nombre]));
 const buscado = normalizarBusqueda(q);
 const vistas = filas.filter(
   (p) =>
@@ -112,6 +123,33 @@ const vistas = filas.filter(
     (!buscado || normalizarBusqueda(`${p.titulo} ${p.handle}`).includes(buscado)),
 );
 const filtrando = Boolean(q || categoria || estado.id !== 'tienda');
+
+/* --- Las secciones --------------------------------------------------------
+   «Otros» siempre al final aunque alguien le cambie el orden en la base: es
+   el cajón de lo que no encaja. Si la base no la trajera, se crea una sección
+   «Otros» solo para enseñar lo huérfano, sin botón (no hay categoría a la que
+   cargarlo). */
+const conocidas = new Set(categorias.map((c) => c.id));
+const OTROS = 'otros';
+const huerfanos = conocidas.has(OTROS) ? OTROS : '_otros';
+const secciones = [
+  ...categorias.filter((c) => c.id !== OTROS),
+  ...categorias.filter((c) => c.id === OTROS),
+  ...(conocidas.has(OTROS) ? [] : [{ id: huerfanos, nombre: 'Otros' }]),
+].map((c) => ({
+  ...c,
+  alta: conocidas.has(c.id),
+  productos: vistas.filter((p) => (conocidas.has(p.categoria) ? p.categoria : huerfanos) === c.id),
+}));
+/* Las vacías se enseñan solo mirando «lo que está en la tienda» sin buscar
+   (con la categoría elegida, solo esa): ahí un hueco invita a añadir el
+   primero. Buscando, una sección vacía sería ruido. Con un paquete abierto
+   se está vendiendo, no dando de alta: ni vacías ni botones de alta. */
+const conVacias = !q && estado.id === 'tienda' && !paquete;
+const visibles = secciones.filter(
+  (s) => s.productos.length > 0 || (conVacias && s.alta && (!categoria || s.id === categoria)),
+);
+const altaEn = (id: string) => ruta(`/admin/productos/nuevo?categoria=${encodeURIComponent(id)}`);
 
 /* Los enlaces a la ficha arrastran el paquete abierto: «Añadir otra cosa»
    elige aquí el producto y allí la versión. */
@@ -221,56 +259,43 @@ const cifras = (p: FilaListado) =>
           {filtrando ? ' con estos filtros' : ' en la tienda'}
         </p>
 
-        {vistas.length === 0 ? (
+        {visibles.length === 0 ? (
           <p class="p-entradilla">
             No hay productos que coincidan. {filtrando && <a href={ruta('/admin/productos')}>Ver todos</a>}
           </p>
         ) : (
-          <ul class="pp-lista">
-            {vistas.map((p) => (
-              <li>
-                <a class="pp-producto" href={aFicha(p.id)}>
-                  <span class="pp-producto__titulo">{p.titulo}</span>
-                  <span class="pp-producto__datos">
-                    <span>{nombreCategoria.get(p.categoria) ?? p.categoria}</span>
-                    <span class="v-num">
-                      {p.variantes > 1 ? 'desde ' : ''}
-                      {formatearPrecio(p.precio)}
-                    </span>
-                    {p.variantes > 1 && <span>{p.variantes} versiones</span>}
-                  </span>
-                  {activo && cifras(p).length > 0 && (
-                    <span class="pl-stock">
-                      <span>Para vender:</span>
-                      {cifras(p).map((c) => (
-                        <span class={`pl-n ${c.clase}`}>
-                          {c.nombre && `${c.nombre} `}
-                          <b class="v-num">{c.n}</b>
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                  <span class="pp-etiquetas">
-                    {p.archivado && <span class="pp-etiqueta pp-etiqueta--archivado">Archivado</span>}
-                    {!p.archivado && !p.disponible && <span class="pp-etiqueta pp-etiqueta--agotado">Agotado</span>}
-                    {activo && de(p).some((v) => v.fisico < 0) && (
-                      <span class="pp-etiqueta pp-etiqueta--agotado">Stock en negativo</span>
-                    )}
-                    {p.fotos === 0 && <span class="pp-etiqueta">Sin foto</span>}
-                    {p.porRevisar > 0 && (
-                      <span class="pp-etiqueta pp-etiqueta--destacado">
-                        {p.porRevisar === 1 ? '1 foto sin publicar' : `${p.porRevisar} fotos sin publicar`}
-                      </span>
-                    )}
-                    {!p.archivado && p.sinFotoPropia.length > 0 && (
-                      <span class="pp-etiqueta">{`Sin fotos propias: ${p.sinFotoPropia.join(', ')}`}</span>
-                    )}
-                    {p.destacado && <span class="pp-etiqueta pp-etiqueta--destacado">Destacado</span>}
-                  </span>
-                </a>
-              </li>
-            ))}
-          </ul>
+          visibles.map((s) => (
+            <section class="pt-seccion" aria-labelledby={`cat-${s.id}`}>
+              <div class="pt-seccion__cabeza">
+                <h2 class="pt-seccion__titulo" id={`cat-${s.id}`}>
+                  {s.nombre} <span class="pt-seccion__cuenta v-num">{s.productos.length}</span>
+                  <span class="sr-only">{s.productos.length === 1 ? 'producto' : 'productos'}</span>
+                </h2>
+                {s.alta && !paquete && (
+                  <a class="pi-enlace-boton pt-seccion__alta" href={altaEn(s.id)} aria-label={`Agregar producto en ${s.nombre}`}>
+                    <span aria-hidden="true">+</span> Agregar producto
+                  </a>
+                )}
+              </div>
+              {s.productos.length === 0 ? (
+                <p class="pt-seccion__vacia">Todavía no hay productos aquí.</p>
+              ) : (
+                <ul class="pt-rejilla">
+                  {s.productos.map((p) => (
+                    <li>
+                      <TarjetaListado
+                        p={p}
+                        enlace={aFicha(p.id)}
+                        activo={activo}
+                        cifras={cifras(p)}
+                        negativo={de(p).some((v) => v.fisico < 0)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ))
         )}
       </>
     )

@@ -1,0 +1,189 @@
+/**
+ * La lista de productos del panel en tarjetas, por categoría (nov 2026).
+ *
+ * Hoja propia y no dentro de `panel-productos.css`: aquella ya rozaba el
+ * límite de ~500 líneas por fichero, y esto solo lo usa
+ * /admin/productos (la página y `TarjetaListado.astro`).
+ *
+ * El aire de la tarjeta copia el del catálogo (foto cuadrada contenida sobre
+ * crema, ver `v2/tarjeta-producto.css`) para que la dueña reconozca cada
+ * producto como lo ve quien compra; pero con clases `pt-` propias, para que
+ * un cambio en la tienda no descoloque el panel ni al revés.
+ *
+ * COLUMNAS: SE MIDE EL HUECO, NO LA VENTANA
+ * ---------------------------------------------------------------------------
+ * La rejilla decide por el ancho de su sección (`@container`), no por el de
+ * la pantalla: el panel tiene márgenes y un tope de 1100 px, y lo que importa
+ * es cuánto mide cada tarjeta. 2 columnas hasta 40rem de hueco (un teléfono
+ * de 375 px deja ~163 px por tarjeta: el nombre cabe en dos o tres líneas y
+ * la foto sigue reconociéndose, como en el catálogo móvil, que también va a
+ * 2), 3 hasta 60rem (tableta) y 4 a partir de ahí (escritorio, ~245 px).
+ * Sin soporte de `@container` se queda en 2, que funciona en todos los
+ * anchos.
+ */
+
+.pt-seccion {
+  container-type: inline-size;
+  margin-top: 2rem;
+}
+
+.pt-seccion__cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding-bottom: 0.6rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--p-linea);
+}
+
+.pt-seccion__titulo {
+  font-family: var(--v-serif);
+  font-size: clamp(1.35rem, 1.15rem + 0.8vw, 1.75rem);
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 0;
+  /* Un nombre largo («Métodos de preparación») baja de línea; el botón se
+     va debajo si no cabe al lado, nunca se monta. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pt-seccion__cuenta {
+  margin-left: 0.25rem;
+  color: var(--v-tinta-3);
+  font-family: var(--v-sans);
+  font-size: var(--v-t-peq);
+}
+
+/* Botón pequeño de aspecto, pero con los 44 px de alto de todo lo que se
+   toca en el panel (los pone `.pi-enlace-boton`). */
+.pt-seccion__alta {
+  gap: 0.35rem;
+  padding: 0 0.85rem;
+  font-size: var(--v-t-peq);
+}
+
+.pt-seccion__alta span {
+  color: var(--v-oro);
+  font-size: 1.1em;
+}
+
+.pt-seccion__vacia {
+  color: var(--v-tinta-3);
+  font-size: var(--v-t-peq);
+  margin: 0;
+}
+
+.pt-rejilla {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@container (min-width: 40rem) {
+  .pt-rejilla {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+@container (min-width: 60rem) {
+  .pt-rejilla {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.pt-rejilla > li {
+  display: flex;
+  min-width: 0;
+}
+
+/* --- La tarjeta ------------------------------------------------------------ */
+.pt-tarjeta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding: 0.5rem;
+  background: var(--p-tarjeta);
+  border: 1px solid var(--p-linea);
+  border-radius: var(--v-r-img);
+  color: var(--v-tinta);
+  text-decoration: none;
+}
+
+.pt-tarjeta:hover,
+.pt-tarjeta:focus-visible {
+  border-color: var(--v-linea-oro);
+}
+
+/* Un archivado no está en la tienda: se atenúa para distinguirlo de un
+   vistazo cuando el filtro los mezcla («Todos»). */
+.pt-tarjeta[data-archivado] .pt-tarjeta__media {
+  opacity: 0.55;
+}
+
+.pt-tarjeta__media {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--v-r-mini);
+  background: var(--v-crema);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.pt-tarjeta__img {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  /* El blanco de los recortes se funde con la crema, como en la tienda. */
+  mix-blend-mode: multiply;
+}
+
+.pt-tarjeta__img[data-foto] {
+  width: 90%;
+  height: 90%;
+  border-radius: var(--v-r-mini);
+}
+
+.pt-tarjeta__sin-foto {
+  color: #6b604a;
+  font-size: var(--v-t-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pt-tarjeta__cuerpo {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  padding: 0.65rem 0.25rem 0.25rem;
+  min-width: 0;
+}
+
+.pt-tarjeta__titulo {
+  font-weight: 500;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.pt-tarjeta__datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.75rem;
+  color: var(--v-tinta-2);
+  font-size: var(--v-t-peq);
+}
+
+/* En la tarjeta las etiquetas y el stock pueden ser largos («Sin fotos
+   propias: Verde, Rosa, Negro»): se parten donde haga falta antes que
+   ensanchar la columna. */
+.pt-tarjeta .pp-etiqueta,
+.pt-tarjeta .pl-stock {
+  overflow-wrap: anywhere;
+}

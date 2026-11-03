@@ -1,0 +1,109 @@
+---
+/**
+ * TarjetaListado — un producto en la lista del panel, con la forma de la
+ * tarjeta del catálogo: foto cuadrada arriba y los datos debajo.
+ *
+ * POR QUE NO SE REUTILIZA `TarjetaProducto`
+ * ---------------------------------------------------------------------------
+ * La de la tienda vende: lleva las acciones de compra y WhatsApp, el «Queda
+ * 1», la segunda foto al pasar el cursor y el tipo `Producto` completo, que
+ * el panel no lee (aquí llega una `FilaListado`, una consulta por visita).
+ * Esta enseña lo que la dueña necesita para decidir a qué producto entrar:
+ * precio, versiones, cuántas quedan y qué le falta. Del catálogo copia solo
+ * lo que hace que se reconozca a simple vista: la foto cuadrada contenida
+ * sobre el fondo crema, pedida con `fuentes()` (el mismo `srcset` que la
+ * tienda, así el navegador baja la miniatura `-mini` o la `.w320`).
+ *
+ * Toda la tarjeta es UN enlace a la ficha: en el teléfono se toca en
+ * cualquier parte, y sin JavaScript funciona igual.
+ */
+import { fuentes } from '../../datos/imagenes';
+import { formatearPrecio } from '../../datos/formas';
+import type { FilaListado } from './leer';
+
+interface Props {
+  p: FilaListado;
+  /** La ficha, con el paquete abierto si lo hay (lo arma la página). */
+  enlace: string;
+  /** Con el inventario apagado no se pinta la línea «Para vender». */
+  activo: boolean;
+  /** «Verde 3 · Rosa 0», ya con su clase de color (la calcula la página). */
+  cifras: { nombre: string | null; n: number; clase: string }[];
+  negativo: boolean;
+}
+
+const { p, enlace, activo, cifras, negativo } = Astro.props as Props;
+
+/* Ancho en pantalla de la foto: 2 columnas en el teléfono, 3 en tableta, 4
+   de ~250 px en escritorio (el panel no pasa de 1100 px). */
+const TAMANOS = '(max-width: 40rem) 46vw, (max-width: 64rem) 30vw, 250px';
+const foto = p.portada ? fuentes(p.portada) : null;
+/* Fotos con fondo propio (JPG en origen) frente a recortes sobre blanco: la
+   misma marca que pone la tarjeta de la tienda. */
+const esFoto = p.portada && /\.jpe?g$/i.test(p.portada) ? 'true' : undefined;
+---
+
+<a class="pt-tarjeta" href={enlace} data-archivado={p.archivado ? 'true' : undefined}>
+  <span class="pt-tarjeta__media">
+    {
+      foto ? (
+        <img
+          class="pt-tarjeta__img"
+          src={foto.src}
+          srcset={foto.srcset}
+          sizes={foto.srcset ? TAMANOS : undefined}
+          width={foto.ancho}
+          height={foto.alto}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          data-foto={esFoto}
+        />
+      ) : (
+        <span class="pt-tarjeta__sin-foto" aria-hidden="true">Sin foto</span>
+      )
+    }
+  </span>
+  <span class="pt-tarjeta__cuerpo">
+    <span class="pt-tarjeta__titulo">{p.titulo}</span>
+    <span class="pt-tarjeta__datos">
+      <span class="v-num">
+        {p.variantes > 1 ? 'desde ' : ''}
+        {formatearPrecio(p.precio)}
+      </span>
+      {p.variantes > 1 && <span>{p.variantes} versiones</span>}
+    </span>
+    {
+      activo && cifras.length > 0 && (
+        <span class="pl-stock">
+          <span>Para vender:</span>
+          {cifras.map((c) => (
+            <span class={`pl-n ${c.clase}`}>
+              {c.nombre && `${c.nombre} `}
+              <b class="v-num">{c.n}</b>
+            </span>
+          ))}
+        </span>
+      )
+    }
+    <span class="pp-etiquetas">
+      {p.archivado && <span class="pp-etiqueta pp-etiqueta--archivado">Archivado</span>}
+      {!p.archivado && !p.disponible && <span class="pp-etiqueta pp-etiqueta--agotado">Agotado</span>}
+      {activo && negativo && <span class="pp-etiqueta pp-etiqueta--agotado">Stock en negativo</span>}
+      {p.fotos === 0 && <span class="pp-etiqueta">Sin foto</span>}
+      {
+        p.porRevisar > 0 && (
+          <span class="pp-etiqueta pp-etiqueta--destacado">
+            {p.porRevisar === 1 ? '1 foto sin publicar' : `${p.porRevisar} fotos sin publicar`}
+          </span>
+        )
+      }
+      {
+        !p.archivado && p.sinFotoPropia.length > 0 && (
+          <span class="pp-etiqueta">{`Sin fotos propias: ${p.sinFotoPropia.join(', ')}`}</span>
+        )
+      }
+      {p.destacado && <span class="pp-etiqueta pp-etiqueta--destacado">Destacado</span>}
+    </span>
+  </span>
+</a>
