@@ -37,6 +37,13 @@ export interface FilaListado {
    * contar.
    */
   sinFotoPropia: string[];
+  /**
+   * La foto de portada (la `clave`, misma ruta que `ImagenProducto.src`), o
+   * `null` si no tiene ninguna publicada. Es la que pinta la tarjeta de la
+   * tienda: la primera por `orden` de las publicadas, así la lista del panel
+   * enseña lo mismo que ve quien compra.
+   */
+  portada: string | null;
 }
 
 /**
@@ -63,7 +70,9 @@ export async function listarProductos(db: BaseAdmin): Promise<FilaListado[]> {
               (SELECT json_group_array(v.titulo) FROM variantes v
                 WHERE v.producto_id = p.id
                   AND NOT EXISTS (SELECT 1 FROM imagenes i WHERE i.variante_id = v.id AND i.por_revisar = 0)
-              ) AS sin_foto
+              ) AS sin_foto,
+              (SELECT i.clave FROM imagenes i WHERE i.producto_id = p.id AND i.por_revisar = 0
+                ORDER BY i.orden, i.id LIMIT 1) AS portada
          FROM productos p
         ORDER BY p.titulo COLLATE NOCASE, p.id`,
     )
@@ -80,6 +89,7 @@ export async function listarProductos(db: BaseAdmin): Promise<FilaListado[]> {
       archivado: number;
       variantes: number;
       fotos: number;
+      portada: string | null;
     }>();
   return r.results.map(({ por_revisar, sin_foto, ...f }) => ({
     ...f,
