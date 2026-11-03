@@ -75,14 +75,20 @@ const esFoto = p.portada && /\.jpe?g$/i.test(p.portada) ? 'true' : undefined;
     </span>
     {
       activo && cifras.length > 0 && (
-        <span class="pl-stock">
-          <span>Para vender:</span>
-          {cifras.map((c) => (
-            <span class={`pl-n ${c.clase}`}>
-              {c.nombre && `${c.nombre} `}
-              <b class="v-num">{c.n}</b>
-            </span>
-          ))}
+        /* Un titulito y una lista, una versión por fila con su cifra a la
+           derecha: en línea («6 tazas 3 3 tazas 1») se leía como un texto
+           más y los números se confundían con los nombres (pedido del
+           cliente, nov 2026). Sin versiones, una sola fila. */
+        <span class="pt-stock">
+          <span class="pt-stock__titulo">Para vender</span>
+          <ul class="pt-stock__lista">
+            {cifras.map((c) => (
+              <li class={`pl-n ${c.clase}`}>
+                <span>{c.nombre ?? 'Unidades'}</span>
+                <b class="v-num">{c.n}</b>
+              </li>
+            ))}
+          </ul>
         </span>
       )
     }

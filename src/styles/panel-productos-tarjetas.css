@@ -184,6 +184,45 @@
    propias: Verde, Rosa, Negro»): se parten donde haga falta antes que
    ensanchar la columna. */
 .pt-tarjeta .pp-etiqueta,
-.pt-tarjeta .pl-stock {
+.pt-tarjeta .pt-stock {
+  overflow-wrap: anywhere;
+}
+
+/* «Para vender»: titulito pequeño y una lista de versiones, cada una en su
+   fila con la cifra alineada a la derecha. */
+.pt-stock {
+  display: block;
+  margin-top: 0.15rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--p-linea, var(--v-linea));
+}
+
+.pt-stock__titulo {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: var(--v-t-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--v-tinta-3);
+}
+
+.pt-stock__lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.pt-stock__lista li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.1rem 0;
+}
+
+.pt-stock__lista li span {
+  min-width: 0;
   overflow-wrap: anywhere;
 }
