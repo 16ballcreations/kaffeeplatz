@@ -7,9 +7,11 @@ name: Publicar sitio
 # Por eso este workflow tambien se puede lanzar a mano sobre cualquier rama:
 # Actions -> Publicar sitio -> Run workflow -> elegir la rama. Asi se prueba
 # una rama de trabajo sin mezclarla en main.
+# DESACTIVADO EN PUSH (2 nov 2026): desde que el sitio lee de D1, GitHub Pages
+# no puede servirlo (solo ficheros). El entorno de pruebas es el Worker
+# kaffeeplatz-dev (`npm run deploy:dev`) y produccion se publica con
+# `npm run deploy`. Se deja solo el lanzamiento manual por si hiciera falta.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       rama:

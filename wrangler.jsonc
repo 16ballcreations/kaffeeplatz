@@ -6,48 +6,54 @@
   // el renderizador de Astro. Sin esto el Worker no arranca.
   "compatibility_flags": ["nodejs_compat"],
 
-  // FASE 1 del plan del panel: el sitio pasa de assets puros a Worker.
-  // `main` es el punto de entrada que genera el adaptador en cada build.
+  // PRODUCCION. Misma forma que wrangler.dev.jsonc, que es donde todo esto se
+  // probo antes (oct-nov 2026). Lo unico distinto es el nombre, las rutas al
+  // dominio, la base y el bucket.
   //
-  // El reparto no cambia respecto a hoy: TODAS las paginas siguen
-  // prerenderizadas, salen a dist/ como HTML y se sirven como assets desde el
-  // borde. `run_worker_first` queda en false (el valor por defecto) para que
-  // el asset gane siempre que exista, y el Worker solo atienda lo que no esta
-  // en disco. Cuando la fase 3 haga dinamicas /catalogo y las fichas, esas
-  // rutas dejaran de existir como fichero y caeran solas en el Worker.
-  "main": "./dist/_worker.js/index.js",
+  // El envoltorio que añade `scheduled()` (el cron de reservas, G.2) al Worker
+  // que genera Astro. Reexporta su `fetch` intacto: el sitio se sirve igual.
+  // Requiere `npm run build` antes: importa `dist/_worker.js/index.js`.
+  "main": "./src/worker/entrada.ts",
   "assets": {
     "directory": "./dist",
-    // El Worker necesita el binding para poder delegar en el asset estatico.
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // El Worker del adaptador NO delega en ASSETS por su cuenta: esta pensado
+    // para Cloudflare Pages. En Workers hay que decir que el asset gana cuando
+    // existe, o las paginas prerenderizadas dan 404 aunque esten subidas.
+    "not_found_handling": "none",
+    "run_worker_first": false
   },
-  // Dirección de pruebas: https://kaffeeplatz.16ballcreations.workers.dev
-  // Se mantiene aunque llegue el dominio, para revisar sin tocarlo.
+  // Dirección de respaldo: https://kaffeeplatz.16ballcreations.workers.dev
   "workers_dev": true,
-  // Dominio propio. Cloudflare crea solo los registros DNS de estas rutas;
-  // el canonical de cada pagina apunta al dominio sin www (SITE_URL), asi que
-  // en buscadores no compiten.
+  // Dominio propio. El canonical de cada pagina apunta al dominio sin www
+  // (SITE_URL), asi que en buscadores no compiten.
   "routes": [
     { "pattern": "kaffeeplatz.co", "custom_domain": true },
     { "pattern": "www.kaffeeplatz.co", "custom_domain": true }
   ],
-  // FASE 2 del plan del panel: la base de datos del catalogo y el diario.
-  //
-  // `database_id` es un PLACEHOLDER a proposito. La fase 2 trabaja SOLO en
-  // local (`wrangler d1 ... --local`), que guarda la base en .wrangler/state/
-  // y NO necesita que exista nada en Cloudflare. Crear la base remota es de la
-  // fase 0/8 y lo hace una persona con la cuenta delante, no un script: ese
-  // comando (`wrangler d1 create kaffeeplatz`) imprime el id real, que se pega
-  // aqui sustituyendo esta linea. Dejarlo asi hace que un despliegue accidental
-  // falle en vez de escribir en una base equivocada.
+
+  // Base de produccion, creada el 2 nov 2026 en ENAM (la misma region que la
+  // de pruebas; desde Colombia se sirve por Miami). Arranco como copia de la
+  // base de pruebas, que es donde la duena preparo el catalogo.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "kaffeeplatz",
-      "database_id": "PENDIENTE-crear-con-wrangler-d1-create",
+      "database_id": "8c106766-b69e-4f97-8c93-85dbe6cdcedc",
       "migrations_dir": "migrations"
     }
   ],
+
+  // Cada 5 minutos: caduca las reservas vencidas y, una vez al dia, el cuadre.
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+
+  // Fotos subidas desde el panel. Bucket de produccion, aparte del de pruebas.
+  "r2_buckets": [
+    { "binding": "MEDIOS", "bucket_name": "kaffeeplatz-medios" }
+  ],
+
   "observability": {
     "enabled": true
   }
