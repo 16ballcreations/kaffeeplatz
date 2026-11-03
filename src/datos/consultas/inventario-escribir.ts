@@ -49,6 +49,7 @@ import { stockExacto } from './inventario-leer';
 /* La tercera red de G.2 (caducar lo vencido de ESAS variantes antes de
    reservar) vive con el barrido, que es quien sabe caducar. */
 import { caducarVencidasDe } from './inventario-caducar';
+import { sentenciasAgotado } from './inventario-agotado';
 
 /* ----------------------------------------------------------------- escrituras */
 
@@ -316,6 +317,19 @@ export async function confirmarPago(
           reservadoCerrado ? null : 'reserva caducada, había stock',
         )
         .run();
+      /* Si era la última, sale sola de la venta (migrations/0010). Aparte y
+         no en un batch con el UPDATE, como todo este flujo (ver `reservar`):
+         si esto fallara, el retiro lo hace el próximo movimiento, y mientras
+         tanto la tienda ya lo enseña «Agotado» porque `vendible` exige
+         stock > 0. Nunca se vende de más por ello. */
+      try {
+        await db.batch(sentenciasAgotado(db, { variante: linea.varianteId }));
+      } catch (fallo) {
+        console.error(
+          `[inventario] no se pudo retirar de la venta la variante ${linea.varianteId} al agotarse:`,
+          fallo instanceof Error ? fallo.message : fallo,
+        );
+      }
     } else {
       /* CASO 5: cobrado y sin unidad. No se deja negativo a propósito. */
       sinStock.push({ varianteId: linea.varianteId, cantidad });

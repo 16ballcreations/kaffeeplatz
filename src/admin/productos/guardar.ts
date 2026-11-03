@@ -167,6 +167,15 @@ export interface BorradorVersion {
   titulo: string;
   precioTexto: string;
   aLaVenta: boolean;
+  /**
+   * Cómo estaba la casilla «A la venta» al pintarse la tarjeta (`venta_antes`).
+   * El inventario la cambia solo al agotarse SIN subir el cerrojo de la
+   * tarjeta (consultas/inventario-agotado.ts), así que una tarjeta abierta
+   * puede llevarla vieja: solo se escribe si ella la cambió. `null` si el
+   * formulario no lo trae (uno pintado antes de esto): se compara con la base,
+   * como antes.
+   */
+  aLaVentaAntes: boolean | null;
 }
 
 export function borradorVersion(v: VariantePanel): BorradorVersion {
@@ -177,6 +186,7 @@ export function borradorVersion(v: VariantePanel): BorradorVersion {
     titulo: v.titulo === SIN_VARIANTES ? '' : v.titulo,
     precioTexto: v.precio.toLocaleString('es-CO'),
     aLaVenta: v.disponible,
+    aLaVentaAntes: v.disponible,
   };
 }
 
@@ -188,7 +198,19 @@ export function leerVersion(f: FormData): BorradorVersion {
     titulo: t('titulo').trim(),
     precioTexto: t('precio').trim(),
     aLaVenta: f.get('venta') === '1',
+    aLaVentaAntes: f.get('venta_antes') === '1' ? true : f.get('venta_antes') === '0' ? false : null,
   };
+}
+
+/**
+ * ¿Escribe este guardado «A la venta»? Solo si ella tocó la casilla (ver
+ * `aLaVentaAntes`). Y aunque el valor coincida con el de la base, si la
+ * versión estaba retirada SOLA y ella la desmarca, se escribe: pasa a ser
+ * «retirada por ti», que una carga ya no deshace.
+ */
+export function tocaLaVenta(v: VariantePanel, bv: BorradorVersion): boolean {
+  const toco = bv.aLaVentaAntes === null ? v.disponible !== bv.aLaVenta : bv.aLaVenta !== bv.aLaVentaAntes;
+  return toco && (v.disponible !== bv.aLaVenta || v.agotadaAuto);
 }
 
 const largo = (s: string) => [...s].length;
@@ -224,7 +246,8 @@ export async function guardarBloqueVersion(
   const c: string[] = [];
   if (v.titulo !== titulo) c.push(`${nombreVersion(v.titulo)} ahora se llama ${nombreVersion(titulo)}`);
   if (v.precio !== p.valor) c.push(`precio de ${nombreVersion(titulo)}: ${formatearPrecio(v.precio)} → ${formatearPrecio(p.valor)}`);
-  if (v.disponible !== bv.aLaVenta) c.push(`${nombreVersion(titulo)} ${bv.aLaVenta ? 'a la venta' : 'retirado de la venta'}`);
+  const venta = tocaLaVenta(v, bv);
+  if (venta) c.push(`${nombreVersion(titulo)} ${bv.aLaVenta ? 'a la venta' : 'retirado de la venta'}`);
   const f = notaFotos(fotos);
   if (f.length) c.push(`${f.join(', ')} en ${nombreVersion(titulo)}`);
   if (!c.length) return { ok: true, sinCambios: true };
@@ -236,8 +259,18 @@ export async function guardarBloqueVersion(
     titulo,
     precio: p.valor,
     disponible: bv.aLaVenta,
+    tocaVenta: venta,
     fotos: fotos.sentencias,
-    antes: { variante: { id: v.id, titulo: v.titulo, precio: v.precio, disponible: v.disponible, version: v.version } },
+    antes: {
+      variante: {
+        id: v.id,
+        titulo: v.titulo,
+        precio: v.precio,
+        disponible: v.disponible,
+        agotadaAuto: v.agotadaAuto,
+        version: v.version,
+      },
+    },
     nota: c.join('; '),
   });
   return r.ok ? { ok: true, sinCambios: false } : fallo(r.motivo);
@@ -250,8 +283,18 @@ export function diferenciasVersion(ahora: VariantePanel, bv: BorradorVersion): s
   if (ahora.titulo !== titulo) d.push(`El nombre guardado es ${nombreVersion(ahora.titulo)}.`);
   const p = leerPrecio(bv.precioTexto);
   if (!p.ok || p.valor !== ahora.precio) d.push(`El precio guardado es ${formatearPrecio(ahora.precio)}.`);
-  if (ahora.disponible !== bv.aLaVenta) d.push(`Está guardado como ${ahora.disponible ? 'a la venta' : 'retirado'}.`);
+  if (tocaLaVenta(ahora, bv)) d.push(`Está guardado como ${ahora.disponible ? 'a la venta' : 'retirado'}.`);
   return d;
+}
+
+/**
+ * Tras un conflicto, la casilla: si ella no la tocó, pasa a decir lo que hay
+ * AHORA (puede que el inventario la acabe de retirar); si la tocó, se respeta
+ * lo que eligió, comparado ya con lo de ahora.
+ */
+export function reconciliarVenta(bv: BorradorVersion, ahora: VariantePanel): void {
+  if (bv.aLaVentaAntes === null || bv.aLaVenta === bv.aLaVentaAntes) bv.aLaVenta = ahora.disponible;
+  bv.aLaVentaAntes = ahora.disponible;
 }
 
 /* ------------------------------------------------------------- comunes */

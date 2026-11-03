@@ -278,6 +278,7 @@ const pantalla = `/admin/productos/${id}`;
                 sucio={Boolean(rv)}
                 inventario={porVersion.get(v.id)}
                 inventarioActivo={inventarioActivo}
+                agotadaAuto={v.agotadaAuto}
                 paquete={respuesta.paquete?.id ?? null}
                 abrirInventario={abrir === v.id}
               />

@@ -10,7 +10,8 @@
  *   2. LA PREGUNTA, cuando «Vendí 1» no pudo descontar porque alguien lo está
  *      pagando o porque la cuenta dice 0 (G.4.2). El panel PREGUNTA, no falla:
  *      «Esperar» no cambia nada; «Venderlo igual» deja la cuenta en negativo,
- *      anotado para revisar.
+ *      anotado para revisar. Y cuando «No me queda ninguno» dejaría sin
+ *      unidad a quien lo está pagando: «Sí, no me queda ninguno» lo pone en 0.
  *   3. UN ERROR LEGIBLE, si lo hubo: la frase sale de `ERRORES`, nunca de la URL.
  *
  * La página decide QUÉ decir (relee el movimiento de la base); esto solo lo
@@ -54,7 +55,37 @@ const volver = ruta(`${pantalla}${paqueteAbierto ? `?paquete=${paqueteAbierto}` 
 ---
 
 {
-  pregunta && (
+  pregunta && pregunta.motivo === 'agotado' && (
+    <section class="pi-pregunta" id="pregunta" aria-labelledby="t-pregunta">
+      <h2 id="t-pregunta">Alguien lo está pagando ahora mismo</h2>
+      <p>
+        {`La cuenta dice que tienes ${pregunta.fisico} ${pregunta.titulo}, y `}
+        <strong>alguien lo está pagando en la tienda</strong>{pregunta.minutos !== null ? ` (le quedan ${pregunta.minutos} minutos)` : ''}.
+        Si de verdad no te queda ninguno, ponlo en 0 igual: sale de la venta.
+      </p>
+      <div class="pi-pregunta__botones">
+        <a class="pi-boton" href={`${volver}#v${pregunta.v}`} data-inv-cerrar>No, dejarlo</a>
+        <form method="post" action={accion} data-inv>
+          <input type="hidden" name="accion" value="agotado" />
+          <input type="hidden" name="v" value={pregunta.v} />
+          <input type="hidden" name="anterior" value={pregunta.fisico} />
+          <input type="hidden" name="forzar" value="1" />
+          <input type="hidden" name="volver" value={clave} />
+          {paqueteAbierto && <input type="hidden" name="paquete" value={paqueteAbierto} />}
+          <button class="pi-boton pi-boton--rojo pi-ancho" type="submit">
+            Sí, no me queda ninguno
+          </button>
+        </form>
+      </div>
+      <p class="pi-pregunta__nota">
+        Si la otra persona termina de pagar, tendrás que devolverle el dinero desde Bold.
+      </p>
+    </section>
+  )
+}
+
+{
+  pregunta && pregunta.motivo !== 'agotado' && (
     <section class="pi-pregunta" id="pregunta" aria-labelledby="t-pregunta">
       <h2 id="t-pregunta">
         {pregunta.motivo === 'reservado' ? 'No puedo descontarlo todavía' : 'La cuenta dice que no te queda'}

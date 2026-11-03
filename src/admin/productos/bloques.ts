@@ -37,6 +37,7 @@ import {
   guardarBloqueVersion,
   diferenciasProducto,
   diferenciasVersion,
+  reconciliarVenta,
   leerVersion,
   type BorradorVersion,
   type FotosDelBloque,
@@ -151,7 +152,9 @@ export async function postBloque(
       const v = ahora.variantes.find((x) => x.id === bv.id);
       if (!v) return [];
       bv.version = v.version;
-      return diferenciasVersion(v, bv);
+      const d = diferenciasVersion(v, bv);
+      reconciliarVenta(bv, v);
+      return d;
     });
   }
 

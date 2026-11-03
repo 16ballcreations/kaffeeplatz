@@ -488,3 +488,11 @@
   display: block;
   color: var(--v-tinta-3);
 }
+
+/* «No queda ninguno» de cada fila: debajo, pequeño, a la derecha. Escribir 0
+   y «Guardar» hace lo mismo; esto ahorra teclear. */
+.pl-contar__agotado {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}

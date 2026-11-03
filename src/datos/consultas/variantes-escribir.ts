@@ -48,6 +48,13 @@ export interface GuardadoVariante {
   titulo: string;
   precio: number;
   disponible: boolean;
+  /**
+   * ¿Escribe «A la venta»? Solo si ella tocó la casilla: el inventario la
+   * cambia al agotarse SIN subir `version` (consultas/inventario-agotado.ts),
+   * y un guardado de precio no puede pisarla con el valor viejo de la
+   * tarjeta. Si la escribe, `agotada_auto` vuelve a 0: ahora lo decidió ella.
+   */
+  tocaVenta: boolean;
   /** Sentencias de sus fotos (ver `sentenciasAsignaciones`), detrás del cerrojo. */
   fotos: unknown[];
   antes: unknown;
@@ -59,10 +66,21 @@ export async function guardarVariante(db: BaseD1Escritura, g: GuardadoVariante):
   const s: SentenciaPreparada[] = [
     db
       .prepare(
-        `UPDATE variantes SET titulo = ?4, precio = ?5, disponible = ?6, version = version + 1
+        `UPDATE variantes SET titulo = ?4, precio = ?5,
+                disponible = CASE WHEN ?7 = 1 THEN ?6 ELSE disponible END,
+                agotada_auto = CASE WHEN ?7 = 1 THEN 0 ELSE agotada_auto END,
+                version = version + 1
           WHERE id = ?1 AND producto_id = ?2 AND version = ?3`,
       )
-      .bind(g.varianteId, g.productoId, g.versionEsperada, g.titulo, g.precio, g.disponible ? 1 : 0),
+      .bind(
+        g.varianteId,
+        g.productoId,
+        g.versionEsperada,
+        g.titulo,
+        g.precio,
+        g.disponible ? 1 : 0,
+        g.tocaVenta ? 1 : 0,
+      ),
     /* EL CERROJO: inmediatamente detrás, `changes()` habla del UPDATE. */
     db.prepare(CERROJO).bind(String(g.productoId), JSON.stringify(g.antes), g.nota || null),
     ...(g.fotos as SentenciaPreparada[]),

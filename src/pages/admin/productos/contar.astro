@@ -20,6 +20,9 @@
  * (`fijarFisico` en consultas/inventario-panel.ts). Queda en `movimientos`
  * como un ajuste con la nota «Conteo de la bodega», y se ve en «Qué pasó».
  *
+ * Escribir 0 vale (y «No queda ninguno» lo hace en un toque, con la nota «Se
+ * agotó»). Escribir el número que ya había no es un error: «Sin cambios».
+ *
  * Sin JavaScript: un formulario POST por fila, 303 de vuelta aquí (PRG). Con
  * JavaScript: la fila se guarda sin recargar y solo se repinta ella, para no
  * borrar los números que ya tecleó en las demás (cliente-inventario.ts).
@@ -76,7 +79,18 @@ const accion = ruta('/admin/inventario/accion');
     }
   </p>
 
-  <div data-region="pregunta"></div>
+  {/* «No queda ninguno» con unidades que alguien está pagando pregunta antes. */}
+  <div data-region="pregunta">
+    <Respuesta
+      parte="pregunta"
+      franja={null}
+      error={null}
+      pregunta={respuesta.pregunta}
+      paqueteAbierto={null}
+      pantalla="/admin/productos/contar"
+      volver="contar"
+    />
+  </div>
 
   {
     fallo ? (
@@ -115,6 +129,17 @@ const accion = ruta('/admin/inventario/accion');
                       Guardar<span class="sr-only">{` ${g.titulo} ${nombre}`}</span>
                     </button>
                   </form>
+                  {f.fisico !== 0 && (
+                    <form method="post" action={accion} data-inv class="pl-contar__agotado">
+                      <input type="hidden" name="accion" value="agotado" />
+                      <input type="hidden" name="v" value={f.varianteId} />
+                      <input type="hidden" name="anterior" value={f.fisico} />
+                      <input type="hidden" name="volver" value="contar" />
+                      <button class="pi-boton pi-boton--rojo" type="submit">
+                        No queda ninguno<span class="sr-only">{` de ${g.titulo} ${nombre}`}</span>
+                      </button>
+                    </form>
+                  )}
                 </li>
               );
             })}

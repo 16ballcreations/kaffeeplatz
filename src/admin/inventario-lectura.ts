@@ -27,7 +27,8 @@ export interface Franja {
 }
 
 export interface Pregunta {
-  motivo: 'reservado' | 'sin-stock';
+  /** `agotado`: «No me queda ninguno» con unidades que alguien está pagando. */
+  motivo: 'reservado' | 'sin-stock' | 'agotado';
   titulo: string;
   v: number;
   n: number;
@@ -51,6 +52,7 @@ const HECHOS: Record<string, string> = {
   nombrado: 'Listo: el paquete ya lleva el nombre en «Para despachar».',
   encendido: 'Inventario encendido: la tienda ya usa estas cantidades.',
   apagado: 'Inventario apagado: la tienda vende como antes. Las cantidades se conservan.',
+  igual: 'Sin cambios: la cuenta ya decía ese número.',
 };
 
 const id = (q: URLSearchParams, k: string) => {
@@ -99,10 +101,10 @@ export async function respuestaDeInventario(
   /* LA PREGUNTA de G.4.2, con los números de AHORA (no los de la URL). */
   let pregunta: Pregunta | null = null;
   const motivo = q.get('pregunta');
-  if ((motivo === 'reservado' || motivo === 'sin-stock') && id(q, 'v')) {
+  if ((motivo === 'reservado' || motivo === 'sin-stock' || motivo === 'agotado') && id(q, 'v')) {
     const f = filas.find((x) => x.varianteId === id(q, 'v'));
     if (f) {
-      const vence = motivo === 'reservado' ? (await inv.proximaReserva(f.varianteId)).datos : null;
+      const vence = motivo !== 'sin-stock' ? (await inv.proximaReserva(f.varianteId)).datos : null;
       pregunta = {
         motivo,
         titulo: nombreCompleto(f.productoTitulo, f.varianteTitulo),

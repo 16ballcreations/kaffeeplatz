@@ -29,11 +29,19 @@
  *
  * Y SIN `LIKE` NI `GLOB`: D1 remoto ya rompió reservas una vez con patrones.
  * Las comparaciones de texto de este fichero son de igualdad exacta.
+ *
+ * AL FINAL DE CADA BATCH, «A LA VENTA» SE PONE DE ACUERDO CON EL FÍSICO
+ * ---------------------------------------------------------------------------
+ * Con el inventario encendido, lo que se queda en 0 sale solo de la venta y
+ * vuelve solo si salió así (`sentenciasAgotado`, migrations/0010). Van
+ * DETRÁS del `SELECT` que lee lo escrito: cambian `changes()` y
+ * `last_insert_rowid()`, y ese `SELECT` los necesita intactos.
  */
 
 import type { BaseD1Escritura, ResultadoVentaWhatsapp } from './inventario-formas';
 import { stockExacto } from './inventario-leer';
 import { TITULO_SQL } from './inventario-panel-leer';
+import { sentenciasAgotado } from './inventario-agotado';
 
 /** Cuánto tiempo se puede deshacer algo. La franja de G.6 dice «unos segundos»;
     15 minutos cubren el «uy, me equivoqué» de quien se dio cuenta al rato. */
@@ -96,6 +104,7 @@ export async function ajustarFisico(
            FROM variantes WHERE id = ?1`,
       )
       .bind(entrada.varianteId),
+    ...sentenciasAgotado(db, { variante: entrada.varianteId }),
   ]);
   if (!r[0]?.meta.changes) return { ok: false, error: 'no-existe' };
   const e = (r[2]?.results?.[0] ?? null) as Escrito | null;
@@ -137,6 +146,7 @@ export async function fijarFisico(
            FROM variantes WHERE id = ?1`,
       )
       .bind(entrada.varianteId),
+    ...sentenciasAgotado(db, { variante: entrada.varianteId }),
   ]);
   if (!r[0]?.meta.changes) return { ok: false, error: 'cambio' };
   const e = (r[2]?.results?.[0] ?? null) as Escrito | null;
@@ -245,8 +255,10 @@ export async function venderPorWhatsapp(
     ),
   );
 
-  const r = await db.batch(sentencias);
-  const escrito = r[r.length - 1]?.results?.[0] as
+  /* El SELECT de lo escrito es la última sentencia ANTES de las del agotado. */
+  const leido = sentencias.length - 1;
+  const r = await db.batch([...sentencias, ...sentenciasAgotado(db, { variante: entrada.varianteId })]);
+  const escrito = r[leido]?.results?.[0] as
     | { movimiento_id: number; despacho_id: number }
     | undefined;
 
@@ -375,6 +387,7 @@ export async function deshacerMovimiento(
         .bind(m.despacho_id),
     );
   }
+  sentencias.push(...sentenciasAgotado(db, { variante: m.variante_id }));
   const r = await db.batch(sentencias);
   if (!r[0]?.meta.changes) {
     /* Solo para elegir la FRASE: la decisión ya la tomó la guarda. */

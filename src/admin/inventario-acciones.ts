@@ -26,7 +26,7 @@
  */
 
 import { inventarioDelPanel, type InventarioDelPanel } from '../datos/inventario';
-import { NOTA_ROTURA } from './inventario-textos';
+import { NOTA_ROTURA, NOTA_AGOTADO } from './inventario-textos';
 
 /** Un entero del formulario dentro de [min, max], o `null`. */
 function entero(form: FormData, campo: string, min: number, max: number): number | null {
@@ -103,7 +103,31 @@ export async function accionInventario(form: FormData, locals: unknown): Promise
         const anterior = entero(form, 'anterior', -99_999, 99_999);
         const nuevo = entero(form, 'nuevo', -99_999, 99_999);
         if (!v || anterior === null || nuevo === null) return destino(INV, { error: 'cantidad' }, ancla);
-        const r = await inv.fijar({ varianteId: v, anterior, nuevo, nota: texto(form, 'nota') });
+        /* Poner 0 no pide escribir por qué: el 0 ya lo dice (pedido del
+           cliente, 2 nov 2026: «estoy obligado a poner al menos 1»). */
+        const nota = texto(form, 'nota') || (nuevo === 0 ? NOTA_AGOTADO : '');
+        const r = await inv.fijar({ varianteId: v, anterior, nuevo, nota });
+        /* Escribir el número que ya había (contando la bodega, «sigue en 0»)
+           no es un error: se dice que no cambió nada y ya. */
+        if (!r.ok && r.error === 'cero') return destino(INV, { paquete, hecho: 'igual' }, ancla);
+        return r.ok
+          ? destino(INV, { paquete, hecho: 'm', m: r.movimientoId }, ancla)
+          : destino(INV, { paquete, error: r.error, abrir: v }, ancla);
+      }
+
+      /* «No me queda ninguno»: la cuenta a 0 en un toque. Es «Corregir la
+         cuenta» con la nota ya escrita, con el mismo cerrojo (`anterior`, el
+         número que veía) y el mismo libro. Si alguien lo está pagando en la
+         tienda, antes PREGUNTA, como «Vendí 1» (G.4.2). */
+      case 'agotado': {
+        const anterior = entero(form, 'anterior', -99_999, 99_999);
+        if (!v || anterior === null) return destino(INV, { error: 'cantidad' }, ancla);
+        if (texto(form, 'forzar', 1) !== '1') {
+          const f = (await inv.variante(v)).datos;
+          if (f && f.fisico - f.vendible > 0) return destino(INV, { paquete, pregunta: 'agotado', v }, 'pregunta');
+        }
+        const r = await inv.fijar({ varianteId: v, anterior, nuevo: 0, nota: NOTA_AGOTADO });
+        if (!r.ok && r.error === 'cero') return destino(INV, { paquete, hecho: 'igual' }, ancla);
         return r.ok
           ? destino(INV, { paquete, hecho: 'm', m: r.movimientoId }, ancla)
           : destino(INV, { paquete, error: r.error, abrir: v }, ancla);

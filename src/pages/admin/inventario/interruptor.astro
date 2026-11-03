@@ -14,6 +14,11 @@
  *
  * Apagar no pide casilla: es la vuelta atrás de G.6, paso 5, y tiene que
  * costar un toque. Las cantidades no se tocan al apagar.
+ *
+ * Desde migrations/0010, encender DESMARCA «A la venta» de lo que tiene la
+ * cuenta en 0 o menos (como haría su próximo movimiento), y apagar vuelve a
+ * marcar lo que se desmarcó así; lo que retiró ella no se toca nunca. Ver
+ * consultas/inventario-agotado.ts.
  */
 import Panel from '../../../layouts/Panel.astro';
 import { ruta } from '../../../datos/sitio';
@@ -41,6 +46,19 @@ try {
    vivo, y no tiene nada vendible. Es exactamente la fórmula de `sqlVendible`. */
 const saldrianAgotados = filas.filter((f) => !f.productoArchivado && f.aLaVenta && f.vendible <= 0);
 const aLaVenta = filas.filter((f) => !f.productoArchivado && f.aLaVenta).length;
+/* De esas, las que tienen la cuenta en 0 o menos se RETIRAN de la venta al
+   encender (migrations/0010); las demás solo están apartadas un rato. */
+const seRetiran = saldrianAgotados.filter((f) => f.fisico <= 0).length;
+/* Lo que el inventario retiró solo y vuelve a la venta al apagar. */
+const vuelven = filas.filter((f) => !f.productoArchivado && !f.aLaVenta && f.agotadaAuto).length;
+/* En una sola cadena: Astro deja un espacio entre expresiones en líneas
+   distintas, y salía «unidades) :». */
+const avisoAgotados =
+  `Ahora mismo ${saldrianAgotados.length} de ${aLaVenta} saldrían como Agotado` +
+  (seRetiran > 0
+    ? ` (${seRetiran === saldrianAgotados.length ? 'todas' : seRetiran} se retirarán solas de la venta hasta que cargues unidades)`
+    : '') +
+  `: ${saldrianAgotados.map((f) => nombreCompleto(f.productoTitulo, f.varianteTitulo)).join(', ')}.`;
 const error = ERRORES[Astro.url.searchParams.get('error') ?? ''] ?? null;
 ---
 
@@ -59,6 +77,8 @@ const error = ERRORES[Astro.url.searchParams.get('error') ?? ''] ?? null;
           Al apagarlo, la tienda vuelve a vender todo lo que tengas «a la venta», sin mirar cuántos hay. Las
           cantidades <strong>no se pierden</strong>: siguen en cada producto y puedes seguir cargándolas. Es la forma de
           volver atrás si algo sale mal.
+          {vuelven > 0 &&
+            ` Lo que se retiró solo de la venta por agotarse (${vuelven === 1 ? '1 versión' : `${vuelven} versiones`}) vuelve a estar a la venta; lo que retiraste tú sigue retirado.`}
         </p>
         <form method="post" action={ruta('/admin/inventario/accion')}>
           <input type="hidden" name="accion" value="interruptor" />
@@ -70,14 +90,14 @@ const error = ERRORES[Astro.url.searchParams.get('error') ?? ''] ?? null;
       <>
         <p class="p-entradilla">
           Al encenderlo, la tienda empieza a usar estas cantidades: lo que esté en 0 sale como
-          <strong>Agotado</strong> y nadie puede pedir más de lo que hay. Hazlo cuando hayas contado la bodega
+          <strong>Agotado</strong>, se desmarca solo «A la venta» y nadie puede pedir más de lo que hay. Cuando
+          cargues unidades, vuelve solo a la venta. Hazlo cuando hayas contado la bodega
           (en <a href={ruta('/admin/productos/contar')}>Contar la bodega</a>), a primera hora de un día de trabajo.
         </p>
         {saldrianAgotados.length > 0 ? (
           <ul class="pi-avisos">
             <li>
-              Ahora mismo {saldrianAgotados.length} de {aLaVenta} saldrían como Agotado:{' '}
-              {saldrianAgotados.map((f) => nombreCompleto(f.productoTitulo, f.varianteTitulo)).join(', ')}.
+              {avisoAgotados}
             </li>
           </ul>
         ) : (

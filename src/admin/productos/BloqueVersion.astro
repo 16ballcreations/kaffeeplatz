@@ -20,7 +20,9 @@
  * Y «A la venta» vive SOLO aquí arriba, como casilla de la versión, con su
  * cerrojo. El inventario ya no tiene su propio «Retirar de la venta»: dos
  * interruptores de lo mismo en la misma tarjeta acabarían diciendo cosas
- * distintas.
+ * distintas. Lo que SÍ hace el inventario (encendido) es desmarcarla sola
+ * cuando la versión se agota, y volver a marcarla si se agotó y llegan
+ * unidades (migrations/0010); la nota de debajo de la casilla lo dice.
  */
 import { ruta } from '../../datos/sitio';
 import type { FilaInventario } from '../../datos/inventario';
@@ -51,6 +53,8 @@ interface Props {
   sucio: boolean;
   inventario?: FilaInventario;
   inventarioActivo: boolean;
+  /** Retirada sola al agotarse (migrations/0010), no por ella. */
+  agotadaAuto?: boolean;
   paquete: number | null;
   abrirInventario: boolean;
 }
@@ -63,6 +67,16 @@ const titulo = unica ? 'Precio y venta' : p.titulo || `Versión ${p.numero}`;
 const hayErrores = Object.keys(errores).length > 0;
 const pendientes = p.fotos.filter((f) => f.porRevisar).length;
 const e = (k: string) => errores[k];
+
+/* Por qué la casilla está como está, cuando no lo dice ella sola. Con lo
+   GUARDADO (`agotadaAuto`, el físico), no con lo que lleva el formulario. */
+const fisico = p.inventario?.fisico ?? null;
+let notaVenta = '';
+if (p.inventarioActivo && !bv.aLaVenta && p.agotadaAuto) {
+  notaVenta = 'Se desmarcó sola porque se agotó. Vuelve sola a la venta cuando cargues unidades.';
+} else if (p.inventarioActivo && bv.aLaVenta && fisico !== null && fisico <= 0) {
+  notaVenta = 'No te queda ninguna: en la tienda sale «Agotado» hasta que cargues unidades.';
+}
 ---
 
 <section
@@ -128,13 +142,28 @@ const e = (k: string) => errores[k];
       </div>
     </div>
 
-    <label class="pp-casilla">
-      <input type="checkbox" name="venta" value="1" checked={bv.aLaVenta} />
-      <span>
-        <b>A la venta</b>
-        <small>Desmárcalo para que salga «Agotado» sin borrar nada.</small>
-      </span>
-    </label>
+    {/* `venta_antes`: cómo estaba la casilla al pintarse. El inventario la
+        desmarca solo al agotarse sin subir el cerrojo de la tarjeta, así que
+        guardar solo la escribe si ella la cambió (guardar.ts, `tocaLaVenta`).
+        Todo va envuelto para que cliente-inventario.ts lo pueda poner al día
+        tras un «Vendí 1», si ella no la ha tocado. */}
+    <div class="pb-venta" data-venta-casilla={bv.id}>
+      <input type="hidden" name="venta_antes" value={(bv.aLaVentaAntes ?? bv.aLaVenta) ? '1' : '0'} />
+      <label class="pp-casilla">
+        <input type="checkbox" name="venta" value="1" checked={bv.aLaVenta} />
+        <span>
+          <b>A la venta</b>
+          <small>Desmárcalo para que salga «Agotado» sin borrar nada.</small>
+        </span>
+      </label>
+      {
+        notaVenta && (
+          <p class="pb-venta__nota" role="note">
+            {notaVenta}
+          </p>
+        )
+      }
+    </div>
 
     {
       !unica && (
@@ -203,6 +232,7 @@ const e = (k: string) => errores[k];
           unica={true}
           volver={`p${productoId}`}
           como="div"
+          activo={p.inventarioActivo}
         />
       </div>
     )

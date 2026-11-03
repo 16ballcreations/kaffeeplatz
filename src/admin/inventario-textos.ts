@@ -108,7 +108,7 @@ export function minutosDesde(utc: string, ahora: Date = new Date()): number {
  */
 export function motivoLegible(motivo: MotivoMovimiento, nota: string | null): string {
   if (nota?.startsWith('deshecho #')) return 'Deshecho: se corrigió un toque anterior';
-  if (motivo === 'ajuste' && nota === NOTA_ROTURA) return NOTA_ROTURA;
+  if (motivo === 'ajuste' && (nota === NOTA_ROTURA || nota === NOTA_AGOTADO)) return nota;
   switch (motivo) {
     case 'entrada':
       return 'Llegó mercancía';
@@ -140,9 +140,15 @@ export function motivoLegible(motivo: MotivoMovimiento, nota: string | null): st
  */
 export const NOTA_ROTURA = 'Se rompió o se perdió';
 
+/**
+ * La nota de «No me queda ninguno» (y de corregir a 0 sin escribir por qué).
+ * Un `ajuste` como la rotura, por la misma razón: la cuenta a 0 ES corregirla.
+ */
+export const NOTA_AGOTADO = 'Se agotó';
+
 /** ¿La nota ya la dice el motivo? Entonces no se repite debajo. */
 export function notaVisible(nota: string | null): string | null {
-  return !nota || nota.startsWith('deshecho #') || nota === NOTA_ROTURA ? null : nota;
+  return !nota || nota.startsWith('deshecho #') || nota === NOTA_ROTURA || nota === NOTA_AGOTADO ? null : nota;
 }
 
 /** ¿Este movimiento toca lo apartado y no la estantería? (se pinta tenue) */
@@ -160,7 +166,8 @@ export function esDeLoApartado(motivo: MotivoMovimiento): boolean {
 export const ERRORES: Record<string, string> = {
   nota: 'Para corregir la cuenta escribe por qué: es lo que te va a explicar el número dentro de un mes.',
   cero: 'Ese cambio no mueve nada: el número ya era ese.',
-  cantidad: 'La cantidad tiene que ser un número entero, de 1 en adelante.',
+  cantidad:
+    'La cantidad tiene que ser un número entero, de 1 en adelante. Para dejarla en 0, usa «No me queda ninguno».',
   cambio:
     'La cuenta cambió mientras la estabas corrigiendo (seguramente una venta). Mira el número nuevo y vuelve a corregirla.',
   'no-existe': 'Eso ya no está en el catálogo.',
@@ -189,6 +196,7 @@ export function textoHecho(m: {
       return `+${n} ${m.titulo} · volvió a la estantería`;
     case 'ajuste':
       if (m.nota === NOTA_ROTURA) return `−${n} ${m.titulo} · se rompió o se perdió`;
+      if (m.nota === NOTA_AGOTADO) return `${m.titulo} en 0 · se agotó`;
       return m.cantidad > 0
         ? `+${n} ${m.titulo} · cuenta corregida`
         : `−${n} ${m.titulo} · cuenta corregida`;
