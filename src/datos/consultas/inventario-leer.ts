@@ -67,7 +67,7 @@ export async function stockExacto(
   const marcas = varianteIds.map(() => '?').join(', ');
   const { results } = await db
     .prepare(
-      `SELECT v.id, v.id_externo, v.titulo, v.disponible, v.stock_fisico, v.stock_reservado,
+      `SELECT v.id, v.id_externo, v.titulo, v.disponible, v.agotada_auto, v.stock_fisico, v.stock_reservado,
               p.handle AS producto_handle,
               COALESCE((SELECT SUM(r.cantidad) FROM reservas r
                          WHERE r.variante_id = v.id AND r.estado = 'activa'
@@ -98,7 +98,7 @@ export async function stockDeProducto(
 ): Promise<Map<string, StockVariante>> {
   const { results } = await db
     .prepare(
-      `SELECT v.id, v.id_externo, v.titulo, v.disponible, v.stock_fisico, v.stock_reservado,
+      `SELECT v.id, v.id_externo, v.titulo, v.disponible, v.agotada_auto, v.stock_fisico, v.stock_reservado,
               p.handle AS producto_handle,
               COALESCE((SELECT SUM(r.cantidad) FROM reservas r
                          WHERE r.variante_id = v.id AND r.estado = 'activa'
@@ -128,7 +128,7 @@ export async function stockDeProducto(
 export async function stockDeTodo(db: BaseD1): Promise<FilaInventario[]> {
   const { results } = await db
     .prepare(
-      `SELECT v.id, v.id_externo, v.titulo, v.disponible, v.stock_fisico, v.stock_reservado,
+      `SELECT v.id, v.id_externo, v.titulo, v.disponible, v.agotada_auto, v.stock_fisico, v.stock_reservado,
               p.handle AS producto_handle, p.titulo AS producto_titulo,
               p.archivado_en IS NOT NULL AS producto_archivado,
               COALESCE((SELECT SUM(r.cantidad) FROM reservas r
@@ -312,6 +312,7 @@ function aStock(f: FilaStock): StockVariante {
        reserva vencida no bloquee la venta aunque el cron no haya pasado. */
     vendible: fisico - f.reservado_vigente,
     aLaVenta,
+    agotadaAuto: f.agotada_auto === 1,
   };
 }
 
@@ -320,6 +321,7 @@ interface FilaStock {
   id_externo: string | null;
   titulo: string;
   disponible: number;
+  agotada_auto: number;
   stock_fisico: number;
   stock_reservado: number;
   producto_handle: string;

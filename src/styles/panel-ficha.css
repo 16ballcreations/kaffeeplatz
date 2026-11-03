@@ -55,6 +55,15 @@
   margin-top: 1rem;
 }
 
+/* La nota bajo «A la venta» cuando la desmarcó el inventario al agotarse
+   (migrations/0010): alineada con el texto de la casilla, no con el cuadro. */
+.pb-venta__nota {
+  margin: -0.25rem 0 0.5rem calc(1.375rem + 0.75rem);
+  font-size: var(--v-t-micro);
+  line-height: 1.45;
+  color: var(--v-tinta-2);
+}
+
 .pb-pendientes {
   font-size: var(--v-t-micro);
   color: var(--v-oro);

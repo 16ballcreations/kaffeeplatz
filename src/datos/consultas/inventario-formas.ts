@@ -93,8 +93,13 @@ export interface StockVariante {
    * vigentes (`vence_en > now`), no `reservado` a secas. Ver `stockExacto`.
    */
   vendible: number;
-  /** El interruptor manual de la dueña: "A la venta / Retirado". */
+  /** La casilla «A la venta» de la tarjeta de la versión. */
   aLaVenta: boolean;
+  /**
+   * No está a la venta porque SE AGOTÓ (la quitó el inventario, y vuelve sola
+   * al cargar unidades), no porque la retirara ella. migrations/0010.
+   */
+  agotadaAuto: boolean;
 }
 
 /**

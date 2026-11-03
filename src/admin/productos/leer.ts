@@ -99,6 +99,8 @@ export interface VariantePanel {
   titulo: string;
   precio: number;
   disponible: boolean;
+  /** Retirada sola al agotarse, no por ella (migrations/0010). */
+  agotadaAuto: boolean;
   orden: number;
   /** El cerrojo de su tarjeta (migrations/0009). */
   version: number;
@@ -163,7 +165,7 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
   const [vs, op] = await Promise.all([
     db
       .prepare(
-        `SELECT v.id, v.titulo, v.precio, v.disponible, v.orden, v.version,
+        `SELECT v.id, v.titulo, v.precio, v.disponible, v.agotada_auto, v.orden, v.version,
                 (SELECT COUNT(*) FROM imagenes i WHERE i.variante_id = v.id) AS fotos,
                 (EXISTS (SELECT 1 FROM movimientos m WHERE m.variante_id = v.id)
                  OR EXISTS (SELECT 1 FROM reservas r WHERE r.variante_id = v.id)
@@ -177,6 +179,7 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
         titulo: string;
         precio: number;
         disponible: number;
+        agotada_auto: number;
         orden: number;
         version: number;
         fotos: number;
@@ -208,6 +211,7 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
       titulo: v.titulo,
       precio: v.precio,
       disponible: v.disponible === 1,
+      agotadaAuto: v.agotada_auto === 1,
       orden: v.orden,
       version: v.version,
       fotos: v.fotos,

@@ -321,6 +321,13 @@
   color: var(--p-aviso);
 }
 
+/* «No me queda ninguno» va primero en «Cambiar» y separado de «Sumar o
+   quitar»: es la otra clase de número (fijar, no sumar). */
+.pi-agotado {
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--v-linea-2);
+}
+
 .pi-fila__pie {
   font-size: var(--v-t-micro);
 }

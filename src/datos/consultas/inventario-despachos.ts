@@ -12,6 +12,7 @@
 
 import type { BaseD1Escritura } from './inventario-formas';
 import { MINUTOS_PARA_DESHACER } from './inventario-panel';
+import { sentenciasAgotado, sentenciasAlApagar } from './inventario-agotado';
 
 /* SOBRE `entidad_id` EN LA AUDITORÍA: se pasa como `String(id)` y no con
    `CAST(? AS TEXT)`. D1 enlaza los números de JavaScript como REAL, y el CAST
@@ -93,6 +94,9 @@ export async function cerrarDespacho(
            FROM (${libro}) l WHERE changes() > 0`,
       )
       .bind(despachoId, nota?.trim() || 'paquete anulado: vuelve a la estantería'),
+    /* Lo que vuelve a la estantería puede devolver a la venta lo que se había
+       retirado solo al agotarse (migrations/0010). */
+    ...sentenciasAgotado(db, { despacho: despachoId }),
   ]);
   return Boolean(r[0]?.meta.changes);
 }
@@ -137,6 +141,7 @@ export async function nombrarDespacho(
 
 /**
  * Encender o apagar el inventario (`ajustes.inventario_activo`). R13.
+ * Y con él, «A la venta» de lo agotado (migrations/0010).
  *
  * UPSERT y no UPDATE: si la fila faltara (base a medio migrar), apagar tiene
  * que funcionar igual —es la vuelta atrás—. El `WHERE` del `DO UPDATE` hace
@@ -158,6 +163,11 @@ export async function cambiarInterruptor(db: BaseD1Escritura, activo: boolean): 
          SELECT 'ajuste', 'inventario_activo', ?1, json_object('valor', ?2) WHERE changes() = 1`,
       )
       .bind(activo ? 'activar' : 'desactivar', activo ? '0' : '1'),
+    /* Encender retira de la venta lo que tiene el físico en 0 o menos, igual
+       que lo haría su próximo movimiento; apagar devuelve lo que se retiró
+       solo (no lo que retiró ella). Ver consultas/inventario-agotado.ts. Van
+       detrás del UPSERT: miran el valor que este mismo batch acaba de dejar. */
+    ...(activo ? sentenciasAgotado(db, 'todas') : sentenciasAlApagar(db)),
   ]);
   return Boolean(r[0]?.meta.changes);
 }

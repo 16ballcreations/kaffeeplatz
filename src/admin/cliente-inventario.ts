@@ -32,11 +32,30 @@ function sustituir(doc: Document, v: string | null) {
     const nueva = doc.querySelector(`[data-inv-fila="${fila.dataset.invFila}"]`);
     if (nueva) fila.replaceWith(document.importNode(nueva, true));
   }
+  if (v) ponerAlDiaLaVenta(doc, v);
   for (const r of REGIONES) {
     const aqui = document.querySelector(`[data-region="${r}"]`);
     const alli = doc.querySelector(`[data-region="${r}"]`);
     if (aqui && alli) aqui.replaceWith(document.importNode(alli, true));
   }
+}
+
+/**
+ * La casilla «A la venta» de la tarjeta de esa versión, en la ficha. El
+ * inventario la desmarca solo al agotarse (y la vuelve a marcar si llegan
+ * unidades): sin esto, tras «Vendí 1» la tarjeta seguiría diciendo «A la
+ * venta» hasta recargar. Solo si ella NO la ha tocado (`checked` igual a
+ * como se pintó): si la cambió, es su decisión a medio guardar y se respeta;
+ * al guardar, el servidor la compara con `venta_antes` (guardar.ts).
+ * Cambiarla así no dispara `input`, así que la tarjeta no pasa a «sin guardar».
+ */
+function ponerAlDiaLaVenta(doc: Document, v: string) {
+  const sel = `[data-venta-casilla="${CSS.escape(v)}"]`;
+  const aqui = document.querySelector<HTMLElement>(sel);
+  const alli = doc.querySelector(sel);
+  const casilla = aqui?.querySelector<HTMLInputElement>('input[type="checkbox"]');
+  if (!aqui || !alli || !casilla || casilla.checked !== casilla.defaultChecked) return;
+  aqui.replaceWith(document.importNode(alli, true));
 }
 
 async function enviar(form: HTMLFormElement, boton: HTMLButtonElement | null) {

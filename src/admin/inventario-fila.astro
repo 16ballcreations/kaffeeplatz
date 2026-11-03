@@ -15,8 +15,9 @@
  *     pedirle que aprenda un modelo de datos.
  *   - «Vendí 1 por WhatsApp», el botón más grande: es el 90 % del uso y cuesta
  *     UN toque (G.3). Sin preguntas: el motivo ya lo dice el botón.
- *   - «Cambiar», plegado: cargar mercancía, devoluciones, roturas y corregir
- *     la cuenta. Todo con `<details>`, que se abre sin JavaScript.
+ *   - «Cambiar», plegado: «No me queda ninguno» (a 0 en un toque), cargar
+ *     mercancía, devoluciones, roturas y corregir la cuenta. Todo con
+ *     `<details>`, que se abre sin JavaScript.
  *   - «A la venta» YA NO está aquí: es la casilla de la tarjeta de la versión
  *     en la ficha del producto, que lo guarda con su cerrojo y su auditoría.
  *     Dos interruptores para lo mismo en la misma tarjeta se contradirían.
@@ -46,9 +47,11 @@ interface Props {
    * del producto, donde es un sub-bloque y no un elemento de lista.
    */
   como?: 'li' | 'div';
+  /** ¿Usa la tienda las cantidades? Cambia lo que significa estar en 0. */
+  activo?: boolean;
 }
 
-const { fila: f, paquete, abierto, unica, volver, como = 'li' } = Astro.props as Props;
+const { fila: f, paquete, abierto, unica, volver, como = 'li', activo = true } = Astro.props as Props;
 const Envoltorio = como;
 const accion = ruta('/admin/inventario/accion');
 
@@ -61,18 +64,27 @@ const numero = negativo ? f.fisico : Math.max(0, f.vendible);
    dice lo que es el número. */
 const nombre = (!unica && nombreVariante(f.varianteTitulo)) || 'Cuántos tengo';
 
+/* «Agotado (se retiró solo)» y «Retirado por ti» son cosas distintas desde
+   migrations/0010: lo primero vuelve solo a la venta al cargar unidades, lo
+   segundo no, y es lo que ella tiene que poder distinguir de un vistazo. */
 let estado = 'A la venta';
 let claseEstado = '';
 if (negativo) {
   estado = `Hay menos de lo que dice la cuenta (${f.fisico}). Corrígela cuando sepas cuántos hay.`;
   claseEstado = 'pi-estado--rojo';
+} else if (!f.aLaVenta && f.agotadaAuto) {
+  estado = 'Agotado: se retiró solo de la venta. Vuelve solo cuando cargues unidades.';
 } else if (!f.aLaVenta) {
-  estado = `Retirado por ti${f.fisico > 0 ? ` — hay ${f.fisico} en la estantería` : ''}.`;
+  estado =
+    `Retirado por ti${f.fisico > 0 ? ` — hay ${f.fisico} en la estantería` : ''}. ` +
+    'No vuelve a la venta solo: marca «A la venta» cuando quieras venderlo.';
 } else if (apartado > 0) {
   estado = `${apartado} lo está pagando alguien ahora · en la estantería hay ${f.fisico}.`;
   claseEstado = 'pi-estado--aviso';
 } else if (f.fisico === 0) {
-  estado = 'Agotado — se pondrá a la venta sola cuando cargues unidades.';
+  estado = activo
+    ? 'Agotado — en la tienda sale «Agotado» hasta que cargues unidades.'
+    : 'Sin unidades en la cuenta. Con el inventario apagado, la tienda lo sigue vendiendo.';
 }
 ---
 
@@ -100,14 +112,37 @@ if (negativo) {
     <details class="pi-mas" open={abierto}>
       <summary>Cambiar</summary>
       <div class="pi-mas__panel">
+        {/* «No me queda ninguno»: la cuenta a 0 en UN toque (pedido del
+            cliente, 2 nov 2026: escribía 0 en «¿Cuántas?», que es para sumar
+            o restar, y el navegador le exigía al menos 1). Es «Corregir la
+            cuenta» con la nota puesta y el mismo cerrojo (`anterior`). Si
+            alguien lo está pagando, el servidor pregunta antes. Con la cuenta
+            ya en 0 no hay nada que hacer y no sale. */}
+        {
+          f.fisico !== 0 && (
+            <form method="post" action={accion} data-inv class="pi-grupo pi-agotado">
+              <input type="hidden" name="accion" value="agotado" />
+              <input type="hidden" name="v" value={f.varianteId} />
+              <input type="hidden" name="anterior" value={f.fisico} />
+              <input type="hidden" name="volver" value={volver} />
+              {paquete && <input type="hidden" name="paquete" value={paquete} />}
+              <button class="pi-boton pi-boton--rojo" type="submit">No me queda ninguno (poner en 0)</button>
+              {/* Solo si está a la venta: lo que retiró ella no vuelve solo. */}
+              {activo && f.aLaVenta && <small>Sale de la venta sola, y vuelve sola cuando cargues unidades.</small>}
+            </form>
+          )
+        }
+
         {/* Un número y el motivo en el botón: «cargar diez en tres toques»
-            (abrir, teclear 10, «Llegó mercancía»), que es la prueba 27. */}
+            (abrir, teclear 10, «Llegó mercancía»), que es la prueba 27. Este
+            número es CUÁNTAS SE SUMAN O SE QUITAN, no cuántas hay: por eso
+            empieza en 1, y la etiqueta lo dice. */}
         <form method="post" action={accion} data-inv class="pi-grupo">
           <input type="hidden" name="accion" value="sumar" />
           <input type="hidden" name="v" value={f.varianteId} />
           <input type="hidden" name="volver" value={volver} />
       {paquete && <input type="hidden" name="paquete" value={paquete} />}
-          <label for={`n${f.varianteId}`}>¿Cuántas?</label>
+          <label for={`n${f.varianteId}`}>Sumar o quitar: ¿cuántas?</label>
           <input
             class="pi-num"
             id={`n${f.varianteId}`}
@@ -136,7 +171,9 @@ if (negativo) {
           <input type="hidden" name="anterior" value={f.fisico} />
           <input type="hidden" name="volver" value={volver} />
       {paquete && <input type="hidden" name="paquete" value={paquete} />}
-          <label for={`c${f.varianteId}`}>Corregir la cuenta: en la estantería hay de verdad</label>
+          <label for={`c${f.varianteId}`}>
+            Corregir la cuenta: ¿cuántas hay de verdad? <small>(el número exacto, puede ser 0)</small>
+          </label>
           <input
             class="pi-num"
             id={`c${f.varianteId}`}
@@ -148,7 +185,9 @@ if (negativo) {
             value={Math.max(0, f.fisico)}
             required
           />
-          <label for={`t${f.varianteId}`}>¿Por qué? <small>(obligatorio)</small></label>
+          {/* Sin `required`: con 0 no hace falta (la nota es «Se agotó»), y
+              con otro número la pide el servidor con una frase (ERRORES.nota). */}
+          <label for={`t${f.varianteId}`}>¿Por qué? <small>(obligatorio, salvo si pones 0)</small></label>
           <input
             class="pi-texto"
             id={`t${f.varianteId}`}
@@ -156,7 +195,6 @@ if (negativo) {
             type="text"
             maxlength="200"
             placeholder="Conté la bodega, se rompió una…"
-            required
           />
           <button class="pi-boton" type="submit">Guardar la cuenta</button>
         </form>
