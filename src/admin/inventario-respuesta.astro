@@ -60,9 +60,8 @@ const volver = ruta(`${pantalla}${paqueteAbierto ? `?paquete=${paqueteAbierto}` 
       <h2 id="t-pregunta">Alguien lo está pagando ahora mismo</h2>
       <p>
         {`La cuenta dice que tienes ${pregunta.fisico} ${pregunta.titulo}, y `}
-        <strong>alguien lo está pagando en la tienda</strong>
-        {pregunta.minutos !== null ? ` (le quedan ${pregunta.minutos} minutos)` : ''}. Si de verdad no te queda
-        ninguno, ponlo en 0 igual: sale de la venta.
+        <strong>alguien lo está pagando en la tienda</strong>{pregunta.minutos !== null ? ` (le quedan ${pregunta.minutos} minutos)` : ''}.
+        Si de verdad no te queda ninguno, ponlo en 0 igual: sale de la venta.
       </p>
       <div class="pi-pregunta__botones">
         <a class="pi-boton" href={`${volver}#v${pregunta.v}`} data-inv-cerrar>No, dejarlo</a>

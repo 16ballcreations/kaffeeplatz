@@ -51,6 +51,14 @@ const aLaVenta = filas.filter((f) => !f.productoArchivado && f.aLaVenta).length;
 const seRetiran = saldrianAgotados.filter((f) => f.fisico <= 0).length;
 /* Lo que el inventario retiró solo y vuelve a la venta al apagar. */
 const vuelven = filas.filter((f) => !f.productoArchivado && !f.aLaVenta && f.agotadaAuto).length;
+/* En una sola cadena: Astro deja un espacio entre expresiones en líneas
+   distintas, y salía «unidades) :». */
+const avisoAgotados =
+  `Ahora mismo ${saldrianAgotados.length} de ${aLaVenta} saldrían como Agotado` +
+  (seRetiran > 0
+    ? ` (${seRetiran === saldrianAgotados.length ? 'todas' : seRetiran} se retirarán solas de la venta hasta que cargues unidades)`
+    : '') +
+  `: ${saldrianAgotados.map((f) => nombreCompleto(f.productoTitulo, f.varianteTitulo)).join(', ')}.`;
 const error = ERRORES[Astro.url.searchParams.get('error') ?? ''] ?? null;
 ---
 
@@ -89,11 +97,7 @@ const error = ERRORES[Astro.url.searchParams.get('error') ?? ''] ?? null;
         {saldrianAgotados.length > 0 ? (
           <ul class="pi-avisos">
             <li>
-              Ahora mismo {saldrianAgotados.length} de {aLaVenta} saldrían como Agotado
-              {seRetiran > 0 &&
-                ` (${seRetiran === saldrianAgotados.length ? 'todas' : seRetiran} se retirarán solas de la venta hasta que cargues unidades)`}
-              :{' '}
-              {saldrianAgotados.map((f) => nombreCompleto(f.productoTitulo, f.varianteTitulo)).join(', ')}.
+              {avisoAgotados}
             </li>
           </ul>
         ) : (
