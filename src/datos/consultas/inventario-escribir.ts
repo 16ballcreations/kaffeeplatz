@@ -93,6 +93,16 @@ import { sentenciasAgotado } from './inventario-agotado';
  *
  * Quien escriba el `POST /api/pedidos` de la fase 2 del carrito debe crear el
  * pedido y llamar aquí, y borrar el pedido si esto devuelve `ok: false`.
+ *
+ * POR ENCARGO (migrations/0011) NO PASA POR AQUÍ, y hoy no hace falta: el
+ * carrito cierra por WhatsApp y esto no lo llama nadie. El día que haya pago
+ * en línea, una línea POR ENCARGO (`Variante.encargo`) tiene que saltarse
+ * la reserva —no hay unidades que apartar, y el `WHERE ... >= ?` la
+ * rechazaría como «faltante»—, y `confirmarPago` tiene que bajar el físico a
+ * negativo para ESA línea (como «Vendí 1 por WhatsApp») en lugar de no
+ * tocarlo, para que el cuadre y «Productos a despachar» la cuenten. Lo
+ * suyo es que la decisión se tome aquí, en el WHERE, con la misma condición
+ * que `consultas/productos.ts` (`por_encargo = 1` y no retirada a mano).
  */
 export async function reservar(
   db: BaseD1Escritura,

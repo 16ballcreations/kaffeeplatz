@@ -70,6 +70,20 @@ export interface Variante {
    * negativo es un aviso para el panel, no un dato para el cliente.
    */
   stockDisponible?: number;
+  /**
+   * `true` si esta versión se vende POR ENCARGO ahora mismo: su producto
+   * tiene la opción (`productos.por_encargo`, migrations/0011), el inventario
+   * está encendido y no le quedan unidades vendibles. Entonces `disponible`
+   * es `true` (se puede pedir) y la tienda dice «Por encargo · entrega en N
+   * días» en vez de «Agotado».
+   *
+   * OPCIONAL Y SOLO CUANDO ES `true`, por la misma razón que
+   * `stockDisponible`: un producto sin la opción tiene EXACTAMENTE la forma de
+   * antes y su HTML sale idéntico. Lo decide `consultas/productos.ts`
+   * (`aVariante`); nadie más lo calcula. Sin `stockDisponible`: lo que hay en
+   * bodega (0) no es el tope de un encargo (ver `conStock`).
+   */
+  encargo?: true;
 }
 
 export interface Opcion {
@@ -92,7 +106,16 @@ export interface Producto {
   coleccion?: string;
   categoria: string;
   destacado?: boolean;
+  /**
+   * Los días de entrega de un encargo, SOLO si el producto se puede pedir por
+   * encargo (`productos.por_encargo = 1`) y el inventario está encendido
+   * (apagado, el encargo no existe para la tienda). Ausente en los demás, para que su
+   * forma no cambie. Que esté no significa que alguna versión se esté
+   * vendiendo por encargo: eso lo dice `Variante.encargo`.
+   */
+  diasEncargo?: number;
 }
+
 
 export interface Articulo {
   handle: string;

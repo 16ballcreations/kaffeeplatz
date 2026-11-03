@@ -56,7 +56,7 @@ export interface BaseD1 {
    catálogo, y su URL la trata aparte `src/datos/catalogo.ts` (R3: 301 a su
    categoría, nunca un 404 silencioso ni un 200 vacío). */
 const CAMPOS = `handle, titulo, vendor, descripcion_html, descripcion_texto,
-  precio, disponible, categoria, coleccion, destacado, id`;
+  precio, disponible, categoria, coleccion, destacado, por_encargo, dias_encargo, id`;
 
 /* ===========================================================================
  * `vendible`: LA ÚNICA FÓRMULA DE DISPONIBILIDAD DEL SITIO
@@ -124,6 +124,30 @@ function sqlVendible(activo: boolean): string {
   return activo ? VENDIBLE_CON_STOCK : 'v.disponible';
 }
 
+/* ===========================================================================
+ * POR ENCARGO (migrations/0011): EL RESPALDO DE CUANDO NO HAY UNIDADES
+ * ===========================================================================
+ * Una versión se vende por encargo cuando, A LA VEZ:
+ *
+ *   · su producto tiene `por_encargo = 1`;
+ *   · el inventario está ENCENDIDO (apagado no hay «sin unidades»: todo se
+ *     vende como siempre y no se dice nada de encargo);
+ *   · NO es vendible por la fórmula de arriba (no le quedan unidades);
+ *   · y NO la retiró Andreina a mano. «A la venta» marcada (está en 0 o en
+ *     negativo sin que el inventario la haya retirado todavía) o desmarcada
+ *     SOLA al agotarse (`agotada_auto = 1`, migrations/0010) cuentan como «se
+ *     vende»; desmarcada por ella (`agotada_auto = 0`) es su decisión, y un
+ *     encargo no puede pasarle por encima.
+ *
+ * El SQL solo trae el último punto (`encargable`); el resto lo cruza
+ * `aVariante`, que ya tiene la fila del producto y el interruptor. Con el
+ * inventario apagado la columna NI SE PIDE: el SQL es el de antes, igual que
+ * con `sqlVendible`.
+ * =========================================================================== */
+function sqlEncargable(activo: boolean): string {
+  return activo ? ', (v.disponible = 1 OR v.agotada_auto = 1) AS encargable' : '';
+}
+
 /**
  * ¿Mira el sitio el stock? Lee el interruptor de `ajustes`.
  *
@@ -162,6 +186,8 @@ interface FilaProducto {
   categoria: string;
   coleccion: string | null;
   destacado: number;
+  por_encargo: number;
+  dias_encargo: number;
 }
 
 interface FilaVariante {
@@ -179,6 +205,8 @@ interface FilaVariante {
    */
   disponible: number;
   sku: string | null;
+  /** Solo con el inventario encendido: no la retiró ella a mano (ver `sqlEncargable`). */
+  encargable?: number;
 }
 
 interface FilaImagen {
@@ -214,7 +242,7 @@ export async function todosLosProductos(db: BaseD1): Promise<Producto[]> {
     db
       .prepare(
         `SELECT producto_id, id_externo, titulo, precio, sku,
-                ${sqlVendible(activo)} AS disponible
+                ${sqlVendible(activo)} AS disponible${sqlEncargable(activo)}
            FROM variantes v WHERE producto_id IN (${marcas}) ORDER BY producto_id, orden, id`,
       )
       .bind(...ids)
@@ -258,7 +286,7 @@ export async function productoPorHandle(db: BaseD1, handle: string): Promise<Pro
     db
       .prepare(
         `SELECT producto_id, id_externo, titulo, precio, sku,
-                ${sqlVendible(activo)} AS disponible
+                ${sqlVendible(activo)} AS disponible${sqlEncargable(activo)}
            FROM variantes v WHERE producto_id = ? ORDER BY orden, id`,
       )
       .bind(fila.id)
@@ -325,7 +353,9 @@ function coser(
   const is = porProducto(imagenes);
 
   return productos.map((p) => {
-    const variantesDe = (vs.get(p.id) ?? []).map(aVariante);
+    /* Por encargo solo con el inventario encendido (ver `sqlEncargable`). */
+    const encargo = inventarioActivo && p.por_encargo === 1;
+    const variantesDe = (vs.get(p.id) ?? []).map((v) => aVariante(v, encargo));
     return {
       handle: p.handle,
       titulo: p.titulo,
@@ -358,11 +388,17 @@ function coser(
       ...(p.coleccion ? { coleccion: p.coleccion } : {}),
       categoria: p.categoria,
       ...(p.destacado === 1 ? { destacado: true } : {}),
+      /* Al final, y solo con la opción Y el inventario encendido: sin una de
+         las dos, la forma es la de antes y nada sabe que existe el encargo. */
+      ...(encargo ? { diasEncargo: p.dias_encargo } : {}),
     };
   });
 }
 
-function aVariante(v: FilaVariante): Variante {
+function aVariante(v: FilaVariante, productoPorEncargo: boolean): Variante {
+  /* Sin unidades vendibles y no retirada a mano, en un producto por encargo
+     con el inventario encendido: se puede pedir, por encargo. */
+  const encargo = productoPorEncargo && v.disponible !== 1 && v.encargable === 1;
   return {
     /* El id de Shopify. Si falta (variante creada desde el panel, sin
        respaldo), se cae al título: es estable dentro del producto por el
@@ -372,8 +408,9 @@ function aVariante(v: FilaVariante): Variante {
     titulo: v.titulo,
     precio: v.precio,
     precioFormateado: formatearPrecio(v.precio),
-    disponible: v.disponible === 1,
+    disponible: v.disponible === 1 || encargo,
     sku: v.sku,
+    ...(encargo ? { encargo: true as const } : {}),
   };
 }
 

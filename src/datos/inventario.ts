@@ -371,6 +371,11 @@ export async function conStock(locals: unknown, productos: Producto[]): Promise<
     return productos.map((p) => ({
       ...p,
       variantes: p.variantes.map((v) => {
+        /* POR ENCARGO (migrations/0011) no lleva `stockDisponible`: lo que
+           hay en bodega es 0 y no es el tope de un encargo. Sin el campo,
+           `topeDe()` da el de sensatez, `textoQueda()` no dice nada y el
+           carrito no apunta un «tope de stock» de 0 (topes-recordados.ts). */
+        if (v.encargo) return v;
         const n = stock.get(`${p.handle}\u0000${v.id}`);
         return n === undefined ? v : { ...v, stockDisponible: n };
       }),
@@ -388,6 +393,11 @@ export async function conStock(locals: unknown, productos: Producto[]): Promise<
  * Los topes de UN producto, por id público de variante. Mapa vacío con el
  * inventario apagado. Para quien solo tenga un handle (el checkout de la fase
  * 2 del carrito); las páginas usan `conStock`, que deja el dato en su sitio.
+ *
+ * OJO, POR ENCARGO (migrations/0011): esto NO lo sabe. Una versión por
+ * encargo sale aquí con tope 0 (su stock). Hoy no lo llama nadie; el día que
+ * lo use el checkout, tiene que saltarse las versiones con `encargo` igual
+ * que `conStock`, o el encargo no se podrá pagar.
  */
 export async function topesPorVariante(
   locals: unknown,
