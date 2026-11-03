@@ -162,6 +162,29 @@ export async function postBloque(
          crea que ya está hecho. */
       completar(b, actual);
       const movio = aplicarAccion(b, accion);
+
+      /* Subir y bajar GUARDAN al momento cuando el bloque no tiene nada más
+         pendiente. Antes eran dos pasos (mover y luego «Guardar versiones») y
+         la dueña movía, veía el orden nuevo y se iba creyendo que estaba
+         hecho (pedido del cliente, 2 nov 2026: «necesito poder reordenar las
+         versiones»). Si hay algo más a medias —una fila nueva, una marcada
+         para quitar o el nombre de la opción cambiado— NO se guarda solo:
+         sería guardar también eso sin que ella lo pidiera. Entonces sigue
+         como antes, con el aviso. */
+      const soloOrden =
+        movio &&
+        /^(subir|bajar):/.test(accion) &&
+        b.opcionNombre.trim() === actual.opcionNombre.trim() &&
+        b.filas.every((f) => f.id !== null && !f.quitar);
+      if (soloOrden) {
+        const r = await guardarBloqueVersiones(w, actual, b);
+        return tras(r, 'versiones', { bloque: 'versiones', versiones: b, fotos: new Map() }, (ahora) => {
+          const d = diferenciasVersiones(ahora, b);
+          reconciliarVersiones(b, ahora);
+          return d;
+        });
+      }
+
       return {
         tipo: 'repintar',
         r: {
