@@ -240,9 +240,91 @@
   gap: 1.25rem;
 }
 
+/* Productos por fila elegidos por el visitante (3, 4 o 5). Solo por encima
+   de 1024 px: por debajo manda la regla de 2 columnas de aquí abajo. */
+@media (min-width: 1025px) {
+  .v-rejilla[data-columnas='4'] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .v-rejilla[data-columnas='5'] {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  /* A 5 por fila la tarjeta mide ~240 px: los dos botones lado a lado
+     recortarían «Elegir tamaño». Se apilan, como en el móvil. */
+  .v-rejilla[data-columnas='5'] .v-acc {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3125rem;
+  }
+  .v-rejilla[data-columnas='5'] .v-tarjeta__titulo {
+    font-size: 1.25rem;
+  }
+}
+
+/* A 4 por fila en pantallas de portátil la tarjeta tampoco llega (~240 px a
+   1100 px de ancho): medido, los botones se recortaban. Mismo remedio. */
+@media (min-width: 1025px) and (max-width: 1340px) {
+  .v-rejilla[data-columnas='4'] .v-acc {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.3125rem;
+  }
+}
+
 @media (max-width: 1024px) {
   .v-rejilla {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Selector «Por fila»: tres botones pequeños en forma de píldora. */
+.v-columnas {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: var(--v-r-pildora);
+  border: 1px solid var(--v-linea-2);
+  background: var(--v-superficie);
+}
+
+.v-columnas__etiqueta {
+  padding: 0 0.5rem 0 0.75rem;
+  font-size: var(--v-t-peq);
+  color: var(--v-tinta-2);
+}
+
+.v-columnas__opcion {
+  min-width: 2.25rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: var(--v-r-pildora);
+  background: transparent;
+  color: var(--v-tinta-2);
+  font: inherit;
+  font-size: var(--v-t-peq);
+  cursor: pointer;
+}
+
+.v-columnas__opcion:hover {
+  color: var(--v-tinta);
+}
+
+.v-columnas__opcion[aria-pressed='true'] {
+  background: var(--v-oro);
+  color: var(--v-tinta-oscura);
+}
+
+.v-columnas__opcion:focus-visible {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 2px;
+}
+
+/* Después del estilo base, para ganarle: por debajo de 1024 px la rejilla va
+   a 2 columnas fijas y el selector no tendría efecto. */
+@media (max-width: 1024px) {
+  .v-columnas {
+    display: none;
   }
 }
 

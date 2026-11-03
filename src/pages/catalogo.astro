@@ -140,6 +140,19 @@ const jsonLd = {
             </select>
             <Icono nombre="caret" tam={16} />
           </label>
+
+          {/* Cuántos productos por fila. Solo en pantallas anchas: por debajo
+              la rejilla ya va a 2 columnas y elegir no tendría efecto. La
+              elección se recuerda en este navegador (pedido del cliente,
+              nov 2026). */}
+          <div class="v-columnas" role="group" aria-label="Productos por fila" data-v-columnas>
+            <span class="v-columnas__etiqueta" aria-hidden="true">Por fila</span>
+            {[3, 4, 5].map((n) => (
+              <button type="button" class="v-columnas__opcion" data-columnas={n} aria-pressed={n === 3 ? 'true' : 'false'}>
+                <span class="sr-only">Ver </span>{n}<span class="sr-only"> por fila</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <p class="v-herramientas__estado" data-v-estado aria-live="polite"></p>
@@ -211,6 +224,31 @@ const jsonLd = {
       const c = new URLSearchParams(location.search).get('categoria');
       return c && validas.has(c) ? c : 'todos';
     };
+
+    /* Productos por fila: 3 por defecto; la elección vive en este navegador.
+       Si el almacenamiento falla (modo privado), simplemente no se recuerda. */
+    const CLAVE_COLUMNAS = 'kp.catalogo.columnas';
+    const botonesColumnas = Array.from(barra.querySelectorAll<HTMLButtonElement>('[data-columnas]'));
+    const ponerColumnas = (n: string) => {
+      if (!['3', '4', '5'].includes(n)) n = '3';
+      rejilla.dataset.columnas = n;
+      for (const b of botonesColumnas) b.setAttribute('aria-pressed', String(b.dataset.columnas === n));
+    };
+    try {
+      ponerColumnas(localStorage.getItem(CLAVE_COLUMNAS) ?? '3');
+    } catch {
+      ponerColumnas('3');
+    }
+    for (const b of botonesColumnas) {
+      b.addEventListener('click', () => {
+        ponerColumnas(b.dataset.columnas ?? '3');
+        try {
+          localStorage.setItem(CLAVE_COLUMNAS, b.dataset.columnas ?? '3');
+        } catch {
+          /* sin almacenamiento: vale para esta visita */
+        }
+      });
+    }
 
     let cat = leerURL();
 
