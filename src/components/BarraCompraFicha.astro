@@ -17,11 +17,22 @@ interface Props {
   inicial: Producto['variantes'][number];
   conSelector: boolean;
   mensajeAviso: string;
+  /** Arma el mensaje de WhatsApp de una variante concreta. */
   mensajeVariante: (titulo: string, precio: string) => string;
+  /** El de una versión que se vende POR ENCARGO (migrations/0011). */
+  mensajeEncargo: (titulo: string | null, precio: string) => string;
 }
 
-const { producto: d, inicial, conSelector, mensajeAviso, mensajeVariante } =
+const { producto: d, inicial, conSelector, mensajeAviso, mensajeVariante, mensajeEncargo } =
   Astro.props as Props;
+/* POR ENCARGO: el WhatsApp generico de un producto de una sola versión pide
+   el encargo en vez de preguntar si hay. Sin encargo es `undefined`, como
+   siempre (el mensaje por defecto de BotonWhatsApp). */
+const mensajeGenerico = d.disponible
+  ? !conSelector && inicial.encargo
+    ? mensajeEncargo(null, inicial.precioFormateado)
+    : undefined
+  : mensajeAviso;
 ---
 
 <div class="v-barra-compra" aria-label="Pedir este producto" role="region">
@@ -39,16 +50,17 @@ const { producto: d, inicial, conSelector, mensajeAviso, mensajeVariante } =
         data-v-agregar
         data-handle={d.handle}
         data-variante-id={inicial.id}
+        data-encargo={inicial.encargo ? '' : undefined}
         hidden
       >
         <Icono nombre="bolsa" tam={18} />
-        <span>Agregar</span>
+        <span>{inicial.encargo ? 'Encargar' : 'Agregar'}</span>
       </button>
     )
   }
   <BotonWhatsApp
     producto={d}
-    mensaje={d.disponible ? undefined : mensajeAviso}
+    mensaje={mensajeGenerico}
     clase="v-boton v-boton--oro v-boton--sm"
     data-v-wa="generico"
     data-v-wa-barra
@@ -61,7 +73,9 @@ const { producto: d, inicial, conSelector, mensajeAviso, mensajeVariante } =
       d.variantes.map((v) => (
         <BotonWhatsApp
           mensaje={
-            v.disponible
+            v.encargo
+              ? mensajeEncargo(v.titulo, v.precioFormateado)
+              : v.disponible
               ? mensajeVariante(v.titulo, v.precioFormateado)
               : `Hola KaffeePlatz, me interesa ${d.titulo} (${v.titulo}). ¿Me avisan cuando vuelva a estar disponible?`
           }

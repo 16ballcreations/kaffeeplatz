@@ -34,6 +34,8 @@ export function borradorVersiones(p: ProductoPanel): Borrador {
     descripcion: '',
     categoria: p.categoria,
     destacado: p.destacado,
+    porEncargo: p.porEncargo,
+    diasEncargoTexto: String(p.diasEncargo),
     opcionNombre: p.opcionNombre,
     handle: p.handle,
     version: p.versionVariantes,

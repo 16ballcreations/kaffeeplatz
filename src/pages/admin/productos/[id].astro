@@ -301,6 +301,7 @@ const pantalla = `/admin/productos/${id}`;
                 inventario={porVersion.get(v.id)}
                 inventarioActivo={inventarioActivo}
                 agotadaAuto={v.agotadaAuto}
+                diasEncargo={actual!.porEncargo ? actual!.diasEncargo : null}
                 paquete={respuesta.paquete?.id ?? null}
                 abrirInventario={abrir === v.id}
               />

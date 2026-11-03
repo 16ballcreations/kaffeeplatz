@@ -77,3 +77,43 @@ const desc = (campo: string, ayuda?: string) =>
     <small>Sale en la portada de la tienda y primero en el catálogo.</small>
   </span>
 </label>
+
+{/* POR ENCARGO (pedido del cliente, 2 nov 2026; migrations/0011). Es el
+    respaldo de cuando no hay unidades: con el inventario encendido, lo que se
+    agota sigue pudiéndose pedir, con este plazo. Lo retirado a mano no.
+    El tiempo de entrega se oculta con la casilla desmarcada SOLO con CSS
+    (`:has`, panel-productos.css): sin JavaScript funciona igual, y un
+    navegador sin `:has` lo enseña siempre, que también vale. */}
+<div class="pp-encargo">
+  <label class="pp-casilla">
+    <input type="checkbox" name="por_encargo" value="1" checked={b.porEncargo} />
+    <span>
+      <b>Se puede pedir por encargo</b>
+      <small>
+        Cuando se agote, en la tienda no saldrá «Agotado»: se podrá pedir y dirá en cuántos días
+        llega. Funciona con el inventario encendido.
+      </small>
+    </span>
+  </label>
+  <div class="pp-campo pp-encargo__dias">
+    <label class="p-campo__etiqueta" for="f-dias-encargo">Tiempo de entrega</label>
+    <span class="pp-dias">
+      <input
+        id="f-dias-encargo"
+        name="dias_encargo"
+        type="text"
+        inputmode="numeric"
+        value={b.diasEncargoTexto}
+        placeholder="15"
+        autocomplete="off"
+        aria-invalid={errores.dias_encargo ? 'true' : undefined}
+        aria-describedby={desc('dias_encargo', 'a-dias-encargo')}
+      />
+      <span aria-hidden="true">días</span>
+    </span>
+    <p class="pp-ayuda" id="a-dias-encargo">
+      Lo que tarda en llegar desde que lo piden. En la tienda se lee «Por encargo · entrega en N días».
+    </p>
+    {errores.dias_encargo && <p class="pp-error-campo" id="e-dias_encargo">{errores.dias_encargo}</p>}
+  </div>
+</div>

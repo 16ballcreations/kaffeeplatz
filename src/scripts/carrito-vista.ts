@@ -27,6 +27,7 @@ import {
   pesos,
   quitar,
   registrarTopes,
+  registrarTopesVivos,
   resolver,
   tope,
   type Catalogo,
@@ -35,6 +36,7 @@ import {
 } from './carrito';
 import { destinoDelPedido } from './carrito-destino';
 import { topeDe } from './topes';
+import { textoEncargo } from './encargo';
 import { calcularEnvio } from '../datos/envio';
 
 /* ===========================================================================
@@ -53,6 +55,17 @@ export function registrarTopesDeCatalogo(catalogo: Catalogo): void {
         varianteId: v.id,
         tope: topeDe({ disponible: p.disponible && v.disponible, stockDisponible: v.stockDisponible }),
       })),
+    ),
+  );
+  /* POR ENCARGO (migrations/0011): si la ficha apunto antes un tope de STOCK
+     para esa version (0, cuando estaba agotada), se borra. Si no, el `+` de
+     esta pagina se quedaria en 0 hasta que el apunte caducara (12 h), aunque
+     el encargo admita el tope de sensatez. Lo demas no se toca. */
+  registrarTopesVivos(
+    Object.values(catalogo).flatMap((p) =>
+      p.variantes
+        .filter((v) => v.encargo)
+        .map((v) => ({ handle: p.handle, varianteId: v.id, tope: topeDe({ disponible: true }), deStock: false })),
     ),
   );
 }
@@ -135,6 +148,21 @@ export function pintarLinea(plantilla: HTMLTemplateElement, l: LineaResuelta): D
 
   const unitario = q<HTMLElement>('[data-linea-unitario]');
   if (unitario) unitario.textContent = l.precioUnitarioFormateado;
+
+  /* POR ENCARGO (migrations/0011): «Por encargo · entrega en 15 días» bajo el
+     precio. Se CREA aqui y no viene en la plantilla: la del mini carrito va en
+     todas las paginas, y un nodo nuevo en ella cambiaria el HTML de todo el
+     sitio para un caso que solo existe con el inventario encendido. Toma la
+     clase de la linea de la variante, que ya es el texto pequeño de debajo
+     del titulo en las dos plantillas. */
+  const filaPrecio = unitario?.closest('p');
+  if (l.encargoDias !== undefined && filaPrecio) {
+    const nota = document.createElement('p');
+    nota.className = variante?.className ?? '';
+    nota.dataset.lineaEncargo = '';
+    nota.textContent = textoEncargo(l.encargoDias);
+    filaPrecio.after(nota);
+  }
 
   const agotado = q<HTMLElement>('[data-linea-agotado]');
   if (agotado && !l.disponible) agotado.hidden = false;

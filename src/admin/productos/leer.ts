@@ -25,6 +25,8 @@ export interface FilaListado {
   precio: number;
   disponible: boolean;
   destacado: boolean;
+  /** «Se puede pedir por encargo» (migrations/0011): la etiqueta de la lista. */
+  porEncargo: boolean;
   archivado: boolean;
   variantes: number;
   fotos: number;
@@ -63,7 +65,7 @@ export async function listarProductos(db: BaseAdmin): Promise<FilaListado[]> {
   const r = await db
     .prepare(
       `SELECT p.id, p.handle, p.titulo, p.categoria, p.precio, p.disponible, p.destacado,
-              p.archivado_en IS NOT NULL AS archivado,
+              p.por_encargo, p.archivado_en IS NOT NULL AS archivado,
               (SELECT COUNT(*) FROM variantes v WHERE v.producto_id = p.id) AS variantes,
               (SELECT COUNT(*) FROM imagenes i WHERE i.producto_id = p.id AND i.por_revisar = 0) AS fotos,
               (SELECT COUNT(*) FROM imagenes i WHERE i.producto_id = p.id AND i.por_revisar = 1) AS por_revisar,
@@ -79,6 +81,7 @@ export async function listarProductos(db: BaseAdmin): Promise<FilaListado[]> {
     .all<{
       por_revisar: number;
       sin_foto: string;
+      por_encargo: number;
       id: number;
       handle: string;
       titulo: string;
@@ -91,9 +94,10 @@ export async function listarProductos(db: BaseAdmin): Promise<FilaListado[]> {
       fotos: number;
       portada: string | null;
     }>();
-  return r.results.map(({ por_revisar, sin_foto, ...f }) => ({
+  return r.results.map(({ por_revisar, sin_foto, por_encargo, ...f }) => ({
     ...f,
     porRevisar: por_revisar,
+    porEncargo: por_encargo === 1,
     /* Con una sola versión no hay color que elegir (la ficha tampoco pinta
        selector): no hay hueco que avisar. */
     sinFotoPropia: f.variantes > 1 ? (JSON.parse(sin_foto || '[]') as string[]) : [],
@@ -132,6 +136,9 @@ export interface ProductoPanel {
   descripcionHtml: string;
   categoria: string;
   destacado: boolean;
+  /** «Se puede pedir por encargo» y en cuántos días (migrations/0011). */
+  porEncargo: boolean;
+  diasEncargo: number;
   precio: number;
   disponible: boolean;
   archivadoEn: string | null;
@@ -149,8 +156,8 @@ export interface ProductoPanel {
 export async function productoParaEditar(db: BaseAdmin, id: number): Promise<ProductoPanel | null> {
   const p = await db
     .prepare(
-      `SELECT id, handle, titulo, descripcion_html, categoria, destacado, precio, disponible,
-              archivado_en, version, version_variantes, updated_at,
+      `SELECT id, handle, titulo, descripcion_html, categoria, destacado, por_encargo, dias_encargo,
+              precio, disponible, archivado_en, version, version_variantes, updated_at,
               (SELECT COUNT(*) FROM imagenes i WHERE i.producto_id = productos.id) AS fotos
          FROM productos WHERE id = ?1`,
     )
@@ -162,6 +169,8 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
       descripcion_html: string;
       categoria: string;
       destacado: number;
+      por_encargo: number;
+      dias_encargo: number;
       precio: number;
       disponible: number;
       archivado_en: string | null;
@@ -208,6 +217,8 @@ export async function productoParaEditar(db: BaseAdmin, id: number): Promise<Pro
     descripcionHtml: p.descripcion_html,
     categoria: p.categoria,
     destacado: p.destacado === 1,
+    porEncargo: p.por_encargo === 1,
+    diasEncargo: p.dias_encargo,
     precio: p.precio,
     disponible: p.disponible === 1,
     archivadoEn: p.archivado_en,

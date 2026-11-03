@@ -34,6 +34,7 @@ import { ruta } from '../datos/sitio';
 import { categoriaPorId } from '../datos/categorias';
 import { obtenerCategorias, marcarCacheCorta } from '../datos/catalogo';
 import { textoQueda } from '../scripts/queda';
+import { textoEncargo } from '../scripts/encargo';
 /* El «Queda 1»: hoja propia, ver su cabecera. */
 import '../styles/queda.css';
 import { resumenOpciones } from '../datos/guias';
@@ -70,6 +71,12 @@ const opciones = resumenOpciones(producto.opciones);
    inventario apagado no hay `stockDisponible` y esto es siempre null. */
 const unica = producto.variantes.length === 1 ? producto.variantes[0] : undefined;
 const queda = producto.disponible && unica ? textoQueda(unica.stockDisponible) : null;
+/* POR ENCARGO (migrations/0011), con el mismo criterio: solo con una
+   versión. Con varias, basta con que no salga «Agotado» (el producto es
+   `disponible` si alguna se vende, con unidades o por encargo); el plazo lo
+   dice la ficha al elegir. Va en el hueco del «Queda», que nunca coincide:
+   una versión por encargo no trae `stockDisponible`. */
+const encargo = producto.disponible && unica?.encargo ? textoEncargo(producto.diasEncargo ?? 15) : null;
 /* R15: una pagina con este aviso no se guarda cinco minutos en el borde. */
 if (queda) marcarCacheCorta(Astro.locals);
 /* En el marcado, el aviso va PEGADO a la expresion del «Agotado», sin salto:
@@ -141,7 +148,7 @@ const esFoto = (src: string) => (/\.jpe?g$/i.test(src) ? 'true' : undefined);
           </p>
         )
       }
-      {queda && <p class="v-queda v-queda--tarjeta" data-kp-queda>{queda}</p>}{!producto.disponible && <p data-kp-agotado class="sr-only">Agotado</p>}
+      {queda && <p class="v-queda v-queda--tarjeta" data-kp-queda>{queda}</p>}{encargo && <p class="v-queda v-queda--tarjeta" data-kp-encargo>{encargo}</p>}{!producto.disponible && <p data-kp-agotado class="sr-only">Agotado</p>}
     </div>
   </a>
 

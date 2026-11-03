@@ -53,6 +53,9 @@ export interface DatosProducto {
   descripcionTexto: string;
   categoria: string;
   destacado: boolean;
+  /** «Se puede pedir por encargo» y sus días (migrations/0011). */
+  porEncargo: boolean;
+  diasEncargo: number;
 }
 
 /** Lo que guarda el bloque «Producto» de la ficha. */
@@ -140,7 +143,7 @@ export async function guardarDatosProducto(
       .prepare(
         `UPDATE productos
             SET titulo = ?3, descripcion_html = ?4, descripcion_texto = ?5,
-                categoria = ?6, destacado = ?7,
+                categoria = ?6, destacado = ?7, por_encargo = ?8, dias_encargo = ?9,
                 version = version + 1, updated_at = datetime('now')
           WHERE id = ?1 AND version = ?2`,
       )
@@ -152,6 +155,8 @@ export async function guardarDatosProducto(
         g.datos.descripcionTexto,
         g.datos.categoria,
         g.datos.destacado ? 1 : 0,
+        g.datos.porEncargo ? 1 : 0,
+        g.datos.diasEncargo,
       ),
     /* EL CERROJO. Ver la cabecera: si el UPDATE de arriba no tocó nada, esto
        viola el CHECK de `auditoria.entidad` y el batch entero se deshace.
@@ -218,8 +223,8 @@ export async function crearProducto(
     db
       .prepare(
         `INSERT INTO productos (handle, titulo, descripcion_html, descripcion_texto,
-                                categoria, destacado, precio, disponible)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)`,
+                                categoria, destacado, precio, disponible, por_encargo, dias_encargo)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`,
       )
       .bind(
         handle,
@@ -230,6 +235,8 @@ export async function crearProducto(
         datos.destacado ? 1 : 0,
         variante.precio,
         variante.disponible ? 1 : 0,
+        datos.porEncargo ? 1 : 0,
+        datos.diasEncargo,
       ),
     db
       .prepare(

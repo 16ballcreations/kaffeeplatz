@@ -62,9 +62,13 @@ export async function leerCatalogoCarrito(
               precioFormateado: v.precioFormateado,
               disponible: v.disponible,
               ...(v.stockDisponible !== undefined ? { stockDisponible: v.stockDisponible } : {}),
+              /* Por encargo (migrations/0011): solo si lo es, para que el
+                 JSON de los productos sin la opcion no cambie. */
+              ...(v.encargo ? { encargo: true as const } : {}),
             };
           }),
           ...(img ? { imagen: { src: img.src, alt: img.alt } } : {}),
+          ...(d.diasEncargo !== undefined ? { diasEncargo: d.diasEncargo } : {}),
         },
       ];
     }),

@@ -100,6 +100,9 @@ for (const b of agregarBotones) {
        cantidad que pidio. */
     const r = radios.find((x) => x.checked);
     const nombre = r ? ` (${r.value})` : '';
+    /* POR ENCARGO (migrations/0011) se dice también aquí: es lo único que
+       distingue esta agregada de una con unidades en bodega. */
+    const modo = b.hasAttribute('data-encargo') ? ', por encargo' : '';
 
     /* SI HUBO RECORTE SE DICE. El selector ya acota a lo que cabe, asi que
        llegar aqui con recorte es el caso raro —el carrito cambio en otra
@@ -119,8 +122,8 @@ for (const b of agregarBotones) {
     } else {
       confirmar(
         res.agregadas === 1
-          ? `Agregado al carrito${nombre}.`
-          : `Agregadas ${res.agregadas} unidades al carrito${nombre}.`,
+          ? `Agregado al carrito${nombre}${modo}.`
+          : `Agregadas ${res.agregadas} unidades al carrito${nombre}${modo}.`,
       );
     }
     /* Vuelve a 1: la cantidad era de ESTA agregada. Dejarla en 3 haria que
@@ -149,8 +152,11 @@ if (ficha && radios.length) {
     r.checked = true;
     for (const p of precios) p.textContent = r.dataset.precio ?? '';
     const disp = r.dataset.disponible === 'true';
+    /* POR ENCARGO (migrations/0011): el radio trae el texto hecho del
+       servidor («Por encargo · entrega en 15 días»); sin él, «Disponible». */
+    const encargo = disp ? (r.dataset.encargo ?? '') : '';
     if (estado) {
-      estado.textContent = disp ? 'Disponible' : 'Agotado por ahora';
+      estado.textContent = disp ? encargo || 'Disponible' : 'Agotado por ahora';
       estado.dataset.kpDisponible = String(disp);
     }
     /* El texto viene hecho del servidor en el radio (`textoQueda`): aqui solo
@@ -167,13 +173,18 @@ if (ficha && radios.length) {
     for (const b of agregarBotones) {
       b.dataset.varianteId = r.dataset.varianteId ?? '';
       b.disabled = !disp;
+      b.toggleAttribute('data-encargo', Boolean(encargo));
       const etiqueta = b.querySelector('span');
       if (etiqueta) {
         const corto = b.classList.contains('v-boton--sm');
         etiqueta.textContent = disp
           ? corto
-            ? 'Agregar'
-            : 'Agregar al carrito'
+            ? encargo
+              ? 'Encargar'
+              : 'Agregar'
+            : encargo
+              ? 'Agregar por encargo'
+              : 'Agregar al carrito'
           : corto
             ? 'Agotado'
             : 'Variante agotada';

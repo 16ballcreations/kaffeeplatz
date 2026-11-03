@@ -13,6 +13,7 @@
 import type { Producto } from '../../datos/formas';
 import { SITIO, ruta } from '../../datos/sitio';
 import { MARCA_PRODUCTO } from '../../datos/seo';
+import { plazo } from '../../scripts/encargo';
 
 /** El nombre de la opción en mayúscula inicial: «Color», «Tamaño», o «Opción». */
 export function nombreDeOpcionFicha(d: Producto): string {
@@ -21,11 +22,19 @@ export function nombreDeOpcionFicha(d: Producto): string {
     : 'Opción';
 }
 
-/** Los dos mensajes de WhatsApp de la ficha: el de una variante y el de «avísame». */
+/**
+ * Los mensajes de WhatsApp de la ficha: el de una variante, el de «avísame» y
+ * el de una versión POR ENCARGO (migrations/0011), que no pregunta si está
+ * disponible —ya se sabe que no hay— sino que pide el encargo con su plazo.
+ * `titulo` null: el producto no tiene versiones que nombrar.
+ */
 export function mensajesFicha(d: Producto) {
   return {
     mensajeVariante: (titulo: string, precio: string) =>
       `Hola KaffeePlatz, me interesa ${d.titulo} (${titulo}, ${precio}). ¿Está disponible?`,
+    mensajeEncargo: (titulo: string | null, precio: string) =>
+      `Hola KaffeePlatz, quiero encargar ${d.titulo} (${titulo ? `${titulo}, ` : ''}${precio}), ` +
+      `con entrega en ${plazo(d.diasEncargo ?? 15)}.`,
     mensajeAviso: `Hola KaffeePlatz, me interesa ${d.titulo}. ¿Me avisan cuando vuelva a estar disponible?`,
   };
 }
@@ -54,8 +63,37 @@ export function relacionadosDe(d: Producto, todos: Producto[]): Producto[] {
     .slice(0, 4);
 }
 
+/**
+ * La disponibilidad de una oferta para schema.org.
+ *
+ * POR ENCARGO ES `BackOrder`, NO `PreOrder`. `PreOrder` es para algo que
+ * todavía no ha salido al mercado (un lanzamiento); `BackOrder` es «ahora no
+ * hay, se puede pedir y llega cuando entre», que es exactamente el encargo:
+ * un producto de catálogo que se pide al proveedor. Google acepta las dos y
+ * con `BackOrder` no promete una fecha de lanzamiento que no existe. El plazo
+ * va aparte, en `deliveryLeadTime` de la oferta.
+ */
+function disponibilidad(disponible: boolean, encargo: boolean): string {
+  if (!disponible) return 'https://schema.org/OutOfStock';
+  return encargo ? 'https://schema.org/BackOrder' : 'https://schema.org/InStock';
+}
+
 /** El JSON-LD de Product: una oferta, o un rango si hay varias variantes. */
 export function jsonLdFicha(d: Producto, url: string, site: URL | undefined) {
+  /* Por encargo cuando NINGUNA versión vendible tiene unidades: si alguna las
+     tiene, el producto está «en existencia» (la ficha abre con esa). */
+  const vendibles = d.variantes.filter((v) => v.disponible);
+  const encargo = vendibles.length > 0 && vendibles.every((v) => v.encargo);
+  /* El plazo, solo en el encargo: sin él, el JSON-LD es el de siempre. */
+  const plazoEncargo = encargo
+    ? {
+        deliveryLeadTime: {
+          '@type': 'QuantitativeValue',
+          value: d.diasEncargo ?? 15,
+          unitCode: 'DAY',
+        },
+      }
+    : {};
   return {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -75,9 +113,8 @@ export function jsonLdFicha(d: Producto, url: string, site: URL | undefined) {
             lowPrice: Math.min(...d.variantes.map((v) => v.precio)),
             highPrice: Math.max(...d.variantes.map((v) => v.precio)),
             offerCount: d.variantes.length,
-            availability: d.disponible
-              ? 'https://schema.org/InStock'
-              : 'https://schema.org/OutOfStock',
+            availability: disponibilidad(d.disponible, encargo),
+            ...plazoEncargo,
             url,
             seller: { '@type': 'Organization', name: SITIO.nombre },
           }
@@ -85,9 +122,8 @@ export function jsonLdFicha(d: Producto, url: string, site: URL | undefined) {
             '@type': 'Offer',
             priceCurrency: 'COP',
             price: d.precio,
-            availability: d.disponible
-              ? 'https://schema.org/InStock'
-              : 'https://schema.org/OutOfStock',
+            availability: disponibilidad(d.disponible, encargo),
+            ...plazoEncargo,
             url,
             seller: { '@type': 'Organization', name: SITIO.nombre },
           },

@@ -38,6 +38,7 @@ import {
   marcarCacheCorta,
 } from '../../datos/catalogo';
 import { textoQueda } from '../../scripts/queda';
+import { textoEncargo } from '../../scripts/encargo';
 import '../../styles/queda.css';
 import { obtenerArticulos } from '../../datos/diario';
 import { conStock } from '../../datos/inventario';
@@ -102,8 +103,13 @@ const categoria = categoriaPorId(d.categoria, await obtenerCategorias(Astro.loca
 /* Solo hay selector cuando hay de verdad entre que elegir. */
 const conSelector = d.variantes.length > 1;
 const nombreOpcion = nombreDeOpcionFicha(d);
-/* Por defecto se marca la primera variante disponible. */
-const inicial = d.variantes.find((v) => v.disponible) ?? d.variantes[0];
+/* Por defecto se marca la primera variante disponible; si alguna tiene
+   unidades, antes que una POR ENCARGO (migrations/0011): lo que sale ya
+   primero que lo que tarda quince días. Sin encargo es la misma de siempre. */
+const inicial =
+  d.variantes.find((v) => v.disponible && !v.encargo) ?? d.variantes.find((v) => v.disponible) ?? d.variantes[0];
+/* «Por encargo · entrega en 15 días» en lugar de «Disponible». */
+const estadoInicial = inicial.encargo ? textoEncargo(d.diasEncargo ?? 15) : 'Disponible';
 
 /* «QUEDA 1» (plan, sección G). Solo con el inventario encendido, que es
    cuando las variantes traen `stockDisponible`: apagado no se pinta ni el
@@ -118,7 +124,7 @@ if (d.variantes.some((v) => v.disponible && textoQueda(v.stockDisponible))) {
   marcarCacheCorta(Astro.locals);
 }
 
-const { mensajeVariante, mensajeAviso } = mensajesFicha(d);
+const { mensajeVariante, mensajeAviso, mensajeEncargo } = mensajesFicha(d);
 const relacionados = relacionadosDe(d, todos);
 const guia = articulos.find((a) => a.handle === GUIA_DE_PRODUCTO[d.handle]);
 
@@ -172,7 +178,7 @@ const jsonLd = jsonLdFicha(d, url, Astro.site);
           class="v-estado"
           data-v-estado-variante
         >
-          {d.disponible ? 'Disponible' : 'Agotado por ahora'}
+          {d.disponible ? estadoInicial : 'Agotado por ahora'}
         </p>{
           /* Pegado al </p> a proposito: un salto antes de la expresion deja un
              espacio en el HTML aunque no pinte nada, y con el inventario
@@ -216,6 +222,7 @@ const jsonLd = jsonLdFicha(d, url, Astro.site);
         conSelector={conSelector}
         mensajeAviso={mensajeAviso}
         mensajeVariante={mensajeVariante}
+        mensajeEncargo={mensajeEncargo}
       />
 
       <ul class="v-garantias">
@@ -291,6 +298,7 @@ const jsonLd = jsonLdFicha(d, url, Astro.site);
     conSelector={conSelector}
     mensajeAviso={mensajeAviso}
     mensajeVariante={mensajeVariante}
+    mensajeEncargo={mensajeEncargo}
   />
 </Base>
 
