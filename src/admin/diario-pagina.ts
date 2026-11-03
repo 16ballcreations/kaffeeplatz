@@ -23,6 +23,7 @@ import {
   leerFormulario,
   validarArticulo,
   hayErrores,
+  AUTOR_POR_DEFECTO,
   type ValoresArticulo,
   type Errores,
 } from './diario-validar';
@@ -72,7 +73,7 @@ export function valoresNuevos(hoy: string, temaPorDefecto: string): ValoresArtic
     titulo: '',
     handle: '',
     fecha: hoy,
-    autor: 'Andreina Morales',
+    autor: AUTOR_POR_DEFECTO,
     resumen: '',
     cuerpoMd: '',
     imagen: '',

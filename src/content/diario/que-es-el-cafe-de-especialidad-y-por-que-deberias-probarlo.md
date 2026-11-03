@@ -2,7 +2,7 @@
 titulo: "¿Qué es el café de especialidad y por qué deberías probarlo?"
 handle: "que-es-el-cafe-de-especialidad-y-por-que-deberias-probarlo"
 fecha: 2025-04-21
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "En este blog te explicamos qué significa realmente \\\"café de especialidad\\\", qué lo diferencia del café tradicional, cómo reconocerlo, por qué vale la pena probarlo y qué accesorios necesitas para prepararlo en casa como un experto."
 imagen: "/img/diario/que-es-el-cafe-de-especialidad-y-por-que-deberias-probarlo.png"
 categoria: grano

@@ -2,7 +2,7 @@
 titulo: "¿Qué molienda usar para cada método de café? La clave para una taza perfecta"
 handle: "que-molienda-usar-para-cada-metodo-de-cafe-la-clave-para-una-taza-perfecta"
 fecha: 2025-04-21
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "La molienda del café es tan importante como la calidad del grano. En esta guía te explicamos qué tipo de molienda debes usar para cada método: prensa francesa, V60, moka, Chemex, Aeropress y otros. Aprende a ajustar tu molienda para lograr la taza perfecta."
 imagen: "/img/diario/que-molienda-usar-para-cada-metodo-de-cafe-la-clave-para-una-taza-perfecta.png"
 categoria: tecnica

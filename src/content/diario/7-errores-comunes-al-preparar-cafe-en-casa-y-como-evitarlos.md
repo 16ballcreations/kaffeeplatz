@@ -2,7 +2,7 @@
 titulo: "7 errores comunes al preparar café en casa (y cómo evitarlos)"
 handle: "7-errores-comunes-al-preparar-cafe-en-casa-y-como-evitarlos"
 fecha: 2025-04-14
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "En este blog te contamos los 7 errores más comunes que arruinan el sabor del café en casa: desde el mal molido hasta el agua incorrecta. Aprende a identificarlos, corregirlos y empieza a preparar café como un profesional."
 imagen: "/img/diario/7-errores-comunes-al-preparar-cafe-en-casa-y-como-evitarlos.png"
 categoria: tecnica

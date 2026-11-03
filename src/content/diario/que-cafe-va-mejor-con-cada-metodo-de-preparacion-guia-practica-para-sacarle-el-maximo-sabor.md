@@ -2,7 +2,7 @@
 titulo: "¿Qué café va mejor con cada método de preparación? Guía práctica para sacarle el máximo sabor"
 handle: "que-cafe-va-mejor-con-cada-metodo-de-preparacion-guia-practica-para-sacarle-el-maximo-sabor"
 fecha: 2025-04-21
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "Cada método de preparación resalta diferentes notas del café. En este blog te explicamos qué tipo de café (perfil de sabor, molienda y tostión) va mejor con V60, prensa francesa, Aeropress, Chemex y más, para que disfrutes la mejor experiencia en cada taza."
 imagen: "/img/diario/que-cafe-va-mejor-con-cada-metodo-de-preparacion-guia-practica-para-sacarle-el-maximo-sabor.png"
 categoria: tecnica

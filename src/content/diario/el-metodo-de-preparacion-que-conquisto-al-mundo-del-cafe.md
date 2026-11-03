@@ -2,7 +2,7 @@
 titulo: "Chemex (El método de preparación que conquistó al mundo del café)"
 handle: "el-metodo-de-preparacion-que-conquisto-al-mundo-del-cafe"
 fecha: 2025-09-02
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "El mundo del café está lleno de métodos de preparación que buscan resaltar lo mejor de cada grano. Entre todos ellos, la Chemex se ha convertido en un ícono no solo por su diseñ..."
 imagen: "/img/diario/el-metodo-de-preparacion-que-conquisto-al-mundo-del-cafe.png"
 categoria: metodos

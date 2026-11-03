@@ -2,7 +2,7 @@
 titulo: "Los mejores accesorios para mejorar tu experiencia de café en casa"
 handle: "los-mejores-accesorios-para-mejorar-tu-experiencia-de-cafe-en-casa"
 fecha: 2025-05-05
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "¿Quieres llevar tu café casero al siguiente nivel? Este blog te muestra los accesorios indispensables que todo amante del café debería tener en casa para lograr una preparación perfecta, cómoda y deliciosa."
 imagen: "/img/diario/los-mejores-accesorios-para-mejorar-tu-experiencia-de-cafe-en-casa.png"
 categoria: equipo

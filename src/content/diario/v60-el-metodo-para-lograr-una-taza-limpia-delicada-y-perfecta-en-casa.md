@@ -2,7 +2,7 @@
 titulo: "V60: El método para lograr una taza limpia, delicada y perfecta en casa"
 handle: "v60-el-metodo-para-lograr-una-taza-limpia-delicada-y-perfecta-en-casa"
 fecha: 2025-04-14
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "En este blog exploramos el V60, uno de los métodos más queridos por los baristas. Te enseñamos cómo funciona, cómo prepararlo paso a paso y qué accesorios necesitas para sacarle todo el provecho en casa."
 imagen: "/img/diario/v60-el-metodo-para-lograr-una-taza-limpia-delicada-y-perfecta-en-casa.png"
 categoria: metodos

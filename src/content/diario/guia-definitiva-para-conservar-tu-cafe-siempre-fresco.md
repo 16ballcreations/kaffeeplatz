@@ -2,7 +2,7 @@
 titulo: "Guía definitiva para conservar tu café siempre fresco"
 handle: "guia-definitiva-para-conservar-tu-cafe-siempre-fresco"
 fecha: 2025-05-05
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "El café es un producto delicado que pierde frescura rápidamente si no se almacena bien. En esta guía te enseñamos cómo conservar tu café de forma óptima para que cada taza mantenga su sabor y calidad original."
 imagen: "/img/diario/guia-definitiva-para-conservar-tu-cafe-siempre-fresco.png"
 categoria: tecnica

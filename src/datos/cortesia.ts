@@ -70,7 +70,7 @@ export function paginaDeCortesia(): string {
   <h1>Volvemos en un momento</h1>
   <p>
     Estamos teniendo un problema técnico para mostrar el catálogo. Dura poco, y
-    mientras tanto puedes escribirnos: te responde ${SITIO.dueña}.
+    mientras tanto puedes escribirnos: te atenderemos por WhatsApp.
   </p>
   <a class="wa" href="${wa}">Escribir por WhatsApp</a>
   <span class="otra"><a href="/">Volver a la portada</a></span>

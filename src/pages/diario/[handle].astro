@@ -93,7 +93,8 @@ const jsonLd = {
   datePublished: iso,
   dateModified: iso,
   inLanguage: 'es-CO',
-  author: { '@type': 'Person', name: d.autor },
+  /* La firma de la marca es una organizacion, no una persona. */
+    author: { '@type': d.autor === SITIO.nombre ? 'Organization' : 'Person', name: d.autor },
   publisher: {
     '@type': 'Organization',
     name: SITIO.nombre,

@@ -2,7 +2,7 @@
 titulo: "¿Qué es el café de especialidad y por qué está conquistando al mundo?"
 handle: "que-es-el-cafe-de-especialidad-y-por-que-esta-conquistando-al-mundo"
 fecha: 2025-04-28
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "El café de especialidad no es solo una moda: es una revolución de calidad, trazabilidad y sabor en la industria cafetera. Aprende qué lo hace único, cómo se diferencia del café comercial y por qué deberías probarlo si aún no lo has hecho."
 categoria: grano
 ---

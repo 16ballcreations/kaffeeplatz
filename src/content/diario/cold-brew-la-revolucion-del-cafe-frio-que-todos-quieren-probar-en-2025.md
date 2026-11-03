@@ -2,7 +2,7 @@
 titulo: "Cold Brew: La revolución del café frío que todos quieren probar en 2025"
 handle: "cold-brew-la-revolucion-del-cafe-frio-que-todos-quieren-probar-en-2025"
 fecha: 2025-04-07
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "En este blog te contamos todo sobre el auge del cold brew en 2025: por qué se ha vuelto tan popular, cómo hacerlo en casa, qué beneficios tiene y qué accesorios necesitas para llevar tu experiencia cafetera al siguiente nivel."
 imagen: "/img/diario/cold-brew-la-revolucion-del-cafe-frio-que-todos-quieren-probar-en-2025.jpg"
 categoria: metodos

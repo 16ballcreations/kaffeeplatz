@@ -2,7 +2,7 @@
 titulo: "Prensa francesa: Café con cuerpo, sabor intenso y preparación sin complicaciones"
 handle: "prensa-francesa-cafe-con-cuerpo-sabor-intenso-y-preparacion-sin-complicaciones"
 fecha: 2025-04-14
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "La prensa francesa es uno de los métodos más clásicos y accesibles para preparar café. En este blog te contamos cómo usarla correctamente, qué tipo de café funciona mejor, los errores que debes evitar y los accesorios que potencian tu experiencia."
 imagen: "/img/diario/prensa-francesa-cafe-con-cuerpo-sabor-intenso-y-preparacion-sin-complicaciones.png"
 categoria: metodos

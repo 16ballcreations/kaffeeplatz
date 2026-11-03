@@ -7,7 +7,7 @@
  */
 import Base from '../../layouts/Base.astro';
 import TarjetaArticulo from '../../components/TarjetaArticulo.astro';
-import { ruta } from '../../datos/sitio';
+import { SITIO, ruta } from '../../datos/sitio';
 import { CATEGORIAS_DIARIO } from '../../datos/categorias';
 import FiltrosCategoria from '../../components/FiltrosCategoria.astro';
 import { obtenerArticulos, obtenerTemas } from '../../datos/diario';
@@ -57,7 +57,8 @@ const jsonLd = {
     '@type': 'BlogPosting',
     headline: a.titulo,
     datePublished: a.fecha.toISOString().slice(0, 10),
-    author: { '@type': 'Person', name: a.autor },
+    /* La firma de la marca es una organizacion, no una persona. */
+    author: { '@type': a.autor === SITIO.nombre ? 'Organization' : 'Person', name: a.autor },
     url: new URL(ruta(`/diario/${a.handle}`), Astro.site).toString(),
   })),
 };

@@ -2,7 +2,7 @@
 titulo: "Café de especialidad en casa: cómo un buen equipo eleva tu experiencia cafetera"
 handle: "cafe-de-especialidad-en-casa-como-un-buen-equipo-eleva-tu-experiencia-cafetera"
 fecha: 2025-04-07
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "El café de especialidad está ganando cada vez más espacio en los hogares colombianos y latinoamericanos. En este artículo exploramos por qué esta tendencia está creciendo, qué lo diferencia del café tradicional, y cómo puedes vivir la experiencia completa desde casa. También te contamos qué accesorios no pueden faltar en tu estación cafetera y cómo elegirlos según tu estilo."
 imagen: "/img/diario/cafe-de-especialidad-en-casa-como-un-buen-equipo-eleva-tu-experiencia-cafetera.jpg"
 categoria: equipo

@@ -2,7 +2,7 @@
 titulo: "Aeropress: El método perfecto para preparar café de especialidad en casa"
 handle: "aeropress-el-metodo-perfecto-para-preparar-cafe-de-especialidad-en-casa"
 fecha: 2025-04-07
-autor: "Andreina Morales"
+autor: "KaffeePlatz"
 resumen: "En este blog te explicamos todo lo que necesitas saber sobre la Aeropress: qué la hace única, cómo se usa, tips para mejorar tu preparación y los accesorios recomendados para llevar tu experiencia cafetera al siguiente nivel."
 imagen: "/img/diario/aeropress-el-metodo-perfecto-para-preparar-cafe-de-especialidad-en-casa.png"
 categoria: metodos

@@ -106,7 +106,7 @@ const forma = (o) => ({ get: (n) => o[n] ?? null });
 const borrador = validarArticulo(leerFormulario(forma({ titulo: 'Mi borrador', fecha: '2026-10-09', categoria: 'otros', estado: 'borrador' })), ctx);
 caso('un borrador se guarda sin resumen ni texto', Object.keys(borrador.errores).length === 0, JSON.stringify(borrador.errores));
 caso('…y la dirección se deriva sola', borrador.valores.handle === 'mi-borrador');
-caso('…y el autor por defecto es Andreina', borrador.valores.autor === 'Andreina Morales');
+caso('…y el autor por defecto es la marca', borrador.valores.autor === 'KaffeePlatz');
 
 const publicar = validarArticulo(leerFormulario(forma({ titulo: 'X', fecha: '2026-10-09', categoria: 'otros', estado: 'publicado' })), ctx);
 caso('publicar exige resumen y texto', !!publicar.errores.resumen && !!publicar.errores.cuerpoMd, JSON.stringify(publicar.errores));

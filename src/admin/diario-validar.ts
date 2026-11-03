@@ -39,7 +39,9 @@ export interface ValoresArticulo {
 export type CampoArticulo = Exclude<keyof ValoresArticulo, 'version'>;
 export type Errores = Partial<Record<CampoArticulo | 'general', string>>;
 
-export const AUTOR_POR_DEFECTO = 'Andreina Morales';
+/* La marca y no una persona: la duena pidio (nov 2026) que su nombre no
+   aparezca en la tienda. */
+export const AUTOR_POR_DEFECTO = 'KaffeePlatz';
 
 /* Topes: holgados respecto a lo que ya existe (el título más largo tiene 93
    caracteres, el resumen 377, la dirección 91, el cuerpo 3.581). Están para
