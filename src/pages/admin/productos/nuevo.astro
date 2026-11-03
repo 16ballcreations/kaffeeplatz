@@ -37,7 +37,15 @@ import CamposBasicos from '../../../admin/productos/CamposBasicos.astro';
 import { ruta } from '../../../datos/sitio';
 import { baseAdmin } from '../../../admin/base';
 import { categoriasDeProducto, handleLibre } from '../../../admin/productos/leer';
-import { leerFormulario, validarBasicos, leerPrecio, type Borrador, type Errores } from '../../../admin/productos/forma';
+import {
+  leerFormulario,
+  validarBasicos,
+  leerPrecio,
+  diasAGuardar,
+  DIAS_ENCARGO,
+  type Borrador,
+  type Errores,
+} from '../../../admin/productos/forma';
 import { baseEscritura } from '../../../admin/productos/guardar';
 import { aHandle, descripcionAGuardar } from '../../../admin/productos/texto';
 import { crearProducto } from '../../../datos/consultas/productos-escribir';
@@ -53,6 +61,8 @@ let b: Borrador = {
   descripcion: '',
   categoria: '',
   destacado: false,
+  porEncargo: false,
+  diasEncargoTexto: String(DIAS_ENCARGO),
   opcionNombre: '',
   handle: '',
   version: 0,
@@ -119,6 +129,8 @@ try {
           descripcionTexto: desc.texto,
           categoria: b.categoria,
           destacado: b.destacado,
+          porEncargo: b.porEncargo,
+          diasEncargo: diasAGuardar(b, DIAS_ENCARGO),
         },
         { precio: precio.valor, disponible: fila.aLaVenta },
       );

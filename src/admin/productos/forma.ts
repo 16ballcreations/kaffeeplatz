@@ -24,6 +24,9 @@ export const MAX_DESCRIPCION = 20_000;
 export const MAX_NOMBRE_VARIANTE = 60;
 export const MAX_FILAS = 40;
 export const MAX_PRECIO = 100_000_000;
+/** Por encargo (migrations/0011): de 1 a 120 días, 15 si no se dice otra cosa. */
+export const DIAS_ENCARGO = 15;
+export const MAX_DIAS_ENCARGO = 120;
 
 /** Una fila del bloque «Versiones» tal como llegó del formulario. */
 export interface FilaBorrador {
@@ -40,6 +43,10 @@ export interface Borrador {
   descripcion: string;
   categoria: string;
   destacado: boolean;
+  /** «Se puede pedir por encargo» (migrations/0011). */
+  porEncargo: boolean;
+  /** «Tiempo de entrega», como texto: si no se entiende, vuelve tal cual. */
+  diasEncargoTexto: string;
   opcionNombre: string;
   /** Solo en el alta: la dirección escrita a mano, si la cambió. */
   handle: string;
@@ -73,6 +80,8 @@ export function leerFormulario(f: FormData): Borrador {
     descripcion: texto(f, 'descripcion'),
     categoria: texto(f, 'categoria'),
     destacado: f.get('destacado') === '1',
+    porEncargo: f.get('por_encargo') === '1',
+    diasEncargoTexto: texto(f, 'dias_encargo').trim(),
     opcionNombre: texto(f, 'opcion_nombre').trim(),
     handle: texto(f, 'handle').trim(),
     version: parseInt(texto(f, 'version'), 10) || 0,
@@ -104,6 +113,25 @@ export function leerPrecio(t: string): { ok: true; valor: number } | { ok: false
   return { ok: true, valor };
 }
 
+/**
+ * «15», «15 días» → 15. Entero de 1 a 120, o el error en palabras.
+ *
+ * Mismo criterio que el precio: no se redondea ni se recorta en silencio.
+ * «15,5» o «0» vuelven con el error y con lo escrito en el campo. Se acepta
+ * la palabra «días» detrás porque es lo natural al escribirlo.
+ */
+export function leerDiasEncargo(t: string): { ok: true; valor: number } | { ok: false; error: string } {
+  const limpio = t.replace(/\s*d[ií]as?\s*$/i, '').trim();
+  if (!limpio) return { ok: false, error: 'Escribe en cuántos días se entrega, por ejemplo 15.' };
+  if (!/^\d+$/.test(limpio)) return { ok: false, error: 'Escribe solo el número de días, por ejemplo 15.' };
+  const valor = parseInt(limpio, 10);
+  if (valor < 1) return { ok: false, error: 'El tiempo de entrega tiene que ser de al menos 1 día.' };
+  if (valor > MAX_DIAS_ENCARGO) {
+    return { ok: false, error: `El tiempo de entrega puede ser de hasta ${MAX_DIAS_ENCARGO} días.` };
+  }
+  return { ok: true, valor };
+}
+
 /** Cuenta caracteres como los cuenta una persona (una tilde no es dos). */
 const largo = (s: string) => [...s].length;
 
@@ -118,7 +146,24 @@ export function validarBasicos(b: Borrador, categorias: string[]): Errores {
     e.descripcion = `La descripción es muy larga: tiene ${largo(b.descripcion)} letras y el máximo es ${MAX_DESCRIPCION}.`;
   }
   if (!categorias.includes(b.categoria)) e.categoria = 'Elige una categoría de la lista.';
+  /* Los días solo se exigen con la casilla marcada: desmarcada, el campo se
+     oculta y un error ahí no se podría ver (ver `diasAGuardar`). */
+  if (b.porEncargo) {
+    const d = leerDiasEncargo(b.diasEncargoTexto);
+    if (!d.ok) e.dias_encargo = d.error;
+  }
   return e;
+}
+
+/**
+ * Los días que se guardan. Con la casilla marcada, los escritos (ya
+ * validados). Desmarcada, los escritos si se entienden —para que no se pierda
+ * un cambio hecho antes de desmarcar— y si no, los que había: el campo está
+ * oculto y la opción apagada, así que no hay nada que corregir.
+ */
+export function diasAGuardar(b: Borrador, antes: number): number {
+  const d = leerDiasEncargo(b.diasEncargoTexto);
+  return d.ok ? d.valor : antes;
 }
 
 /** Lo que sale de validar las filas: los errores y, si no hay, lo que se guarda. */

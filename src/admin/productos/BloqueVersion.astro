@@ -55,6 +55,8 @@ interface Props {
   inventarioActivo: boolean;
   /** Retirada sola al agotarse (migrations/0010), no por ella. */
   agotadaAuto?: boolean;
+  /** Días de entrega si el producto se puede pedir por encargo (migrations/0011). */
+  diasEncargo?: number | null;
   paquete: number | null;
   abrirInventario: boolean;
 }
@@ -71,11 +73,20 @@ const e = (k: string) => errores[k];
 /* Por qué la casilla está como está, cuando no lo dice ella sola. Con lo
    GUARDADO (`agotadaAuto`, el físico), no con lo que lleva el formulario. */
 const fisico = p.inventario?.fisico ?? null;
+/* POR ENCARGO (migrations/0011): lo agotado no sale «Agotado» sino «Por
+   encargo», salvo lo que ella retiró a mano. Las notas lo dicen. */
+const encargo = p.inventarioActivo && p.diasEncargo ? `«Por encargo · entrega en ${p.diasEncargo} días»` : '';
 let notaVenta = '';
 if (p.inventarioActivo && !bv.aLaVenta && p.agotadaAuto) {
-  notaVenta = 'Se desmarcó sola porque se agotó. Vuelve sola a la venta cuando cargues unidades.';
+  notaVenta = encargo
+    ? `Se desmarcó sola porque se agotó. Como el producto es por encargo, en la tienda sale ${encargo}. Vuelve sola a la venta cuando cargues unidades.`
+    : 'Se desmarcó sola porque se agotó. Vuelve sola a la venta cuando cargues unidades.';
 } else if (p.inventarioActivo && bv.aLaVenta && fisico !== null && fisico <= 0) {
-  notaVenta = 'No te queda ninguna: en la tienda sale «Agotado» hasta que cargues unidades.';
+  notaVenta = encargo
+    ? `No te queda ninguna: en la tienda sale ${encargo} hasta que cargues unidades.`
+    : 'No te queda ninguna: en la tienda sale «Agotado» hasta que cargues unidades.';
+} else if (encargo && !bv.aLaVenta) {
+  notaVenta = 'La retiraste tú: no se vende, ni por encargo.';
 }
 ---
 
@@ -224,6 +235,7 @@ if (p.inventarioActivo && !bv.aLaVenta && p.agotadaAuto) {
         <p class="pp-ayuda">
           Estos botones se aplican al pulsar; no hace falta «Guardar».
           {!p.inventarioActivo && ' El inventario está apagado: la tienda todavía no usa estas cantidades.'}
+          {p.diasEncargo && ' Por encargo: puedes registrar la venta aunque no haya unidades (quedará en negativo hasta que llegue).'}
         </p>
         <FilaVariante
           fila={p.inventario}

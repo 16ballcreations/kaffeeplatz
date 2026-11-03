@@ -412,6 +412,50 @@
   color: var(--v-oro);
 }
 
+/* Por encargo (migrations/0011): un dato, no un aviso. */
+.pp-etiqueta--encargo {
+  border-color: var(--v-linea-oro);
+  color: var(--v-tinta);
+}
+
+/* --- Por encargo en el bloque «Producto» (migrations/0011) ----------------- */
+/* El tiempo de entrega solo se ve con la casilla marcada. Con CSS y no con
+   JavaScript: así funciona igual sin script, y un navegador sin `:has` lo
+   enseña siempre (se puede rellenar igual). */
+.pp-encargo:has(> .pp-casilla input:not(:checked)) > .pp-encargo__dias {
+  display: none;
+}
+
+.pp-encargo__dias {
+  margin: 0.25rem 0 0.5rem 2.125rem;
+}
+
+/* El «días» va dentro de la caja, detrás del número, como el «$» del precio. */
+.pp-dias {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 10rem;
+  padding-right: 0.8rem;
+  background: var(--p-fondo);
+  border: 1px solid var(--v-linea-2);
+  border-radius: var(--v-r-mini);
+  color: var(--v-tinta-3);
+}
+
+.pp-dias:focus-within {
+  outline: 2px solid var(--v-oro);
+  outline-offset: 1px;
+}
+
+.pp-campo .pp-dias input {
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- Inventario en la lista y en «Contar la bodega» ------------------------ */
 .pl-botones {
   display: flex;

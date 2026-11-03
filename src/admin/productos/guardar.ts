@@ -24,7 +24,15 @@ import { guardarDatosProducto, type MotivoFallo } from '../../datos/consultas/pr
 import { guardarVariante } from '../../datos/consultas/variantes-escribir';
 import { formatearPrecio } from '../../datos/formas';
 import type { ProductoPanel, VariantePanel } from './leer';
-import { validarBasicos, leerPrecio, MAX_NOMBRE_VARIANTE, type Borrador, type Errores } from './forma';
+import {
+  validarBasicos,
+  leerPrecio,
+  diasAGuardar,
+  MAX_NOMBRE_VARIANTE,
+  type Borrador,
+  type Errores,
+} from './forma';
+import { plazo } from '../../scripts/encargo';
 import { descripcionAGuardar, htmlATexto } from './texto';
 
 /**
@@ -65,6 +73,8 @@ export function instantanea(p: ProductoPanel) {
     descripcionHtml: p.descripcionHtml,
     categoria: p.categoria,
     destacado: p.destacado,
+    porEncargo: p.porEncargo,
+    diasEncargo: p.diasEncargo,
     precio: p.precio,
     disponible: p.disponible,
     archivadoEn: p.archivadoEn,
@@ -91,6 +101,8 @@ export function borradorProducto(p: ProductoPanel): Borrador {
     descripcion: htmlATexto(p.descripcionHtml),
     categoria: p.categoria,
     destacado: p.destacado,
+    porEncargo: p.porEncargo,
+    diasEncargoTexto: String(p.diasEncargo),
     opcionNombre: p.opcionNombre,
     handle: p.handle,
     version: p.version,
@@ -126,6 +138,8 @@ export async function guardarBloqueProducto(
   if (desc.cambio) c.push('descripción');
   if (b.categoria !== actual.categoria) c.push(`categoría: ${actual.categoria} → ${b.categoria}`);
   if (b.destacado !== actual.destacado) c.push(b.destacado ? 'destacado en la portada' : 'ya no destacado');
+  const dias = diasAGuardar(b, actual.diasEncargo);
+  c.push(...notaEncargo(actual, b.porEncargo, dias));
   c.push(...notaFotos(fotos));
   if (!c.length) return { ok: true, sinCambios: true };
 
@@ -138,12 +152,28 @@ export async function guardarBloqueProducto(
       descripcionTexto: desc.texto,
       categoria: b.categoria,
       destacado: b.destacado,
+      porEncargo: b.porEncargo,
+      diasEncargo: dias,
     },
     fotos: fotos.sentencias,
     antes: instantanea(actual),
     nota: c.join('; '),
   });
   return r.ok ? { ok: true, sinCambios: false } : fallo(r.motivo);
+}
+
+/**
+ * Lo que dice «Últimos cambios» del encargo: «ahora se puede pedir por
+ * encargo (15 días)», «ya no se puede pedir por encargo» o «entrega por
+ * encargo: 15 → 20 días». Cambiar los días con la opción apagada se guarda
+ * (ver `diasAGuardar`) y se dice igual, para que no sea un cambio mudo.
+ */
+function notaEncargo(antes: ProductoPanel, porEncargo: boolean, dias: number): string[] {
+  if (porEncargo !== antes.porEncargo) {
+    return [porEncargo ? `ahora se puede pedir por encargo (${plazo(dias)})` : 'ya no se puede pedir por encargo'];
+  }
+  if (dias !== antes.diasEncargo) return [`entrega por encargo: ${antes.diasEncargo} → ${plazo(dias)}`];
+  return [];
 }
 
 /** En qué se diferencia lo guardado AHORA de lo que ella escribió. */
@@ -155,6 +185,11 @@ export function diferenciasProducto(ahora: ProductoPanel, b: Borrador): string[]
   }
   if (ahora.categoria !== b.categoria) d.push(`La categoría guardada es otra (${ahora.categoria}).`);
   if (ahora.destacado !== b.destacado) d.push(ahora.destacado ? 'Está guardado como destacado.' : 'Está guardado sin destacar.');
+  if (ahora.porEncargo !== b.porEncargo) {
+    d.push(ahora.porEncargo ? 'Está guardado como «por encargo».' : 'Está guardado sin «por encargo».');
+  } else if (ahora.diasEncargo !== diasAGuardar(b, ahora.diasEncargo)) {
+    d.push(`El tiempo de entrega guardado es de ${plazo(ahora.diasEncargo)}.`);
+  }
   return d;
 }
 
