@@ -83,6 +83,9 @@ const hayQueElegir = producto.variantes.length > 1;
 const unica = hayQueElegir ? null : producto.variantes[0];
 
 /* "Elegir color" / "Elegir tamaño" / "Elegir modelo" de reserva. */
+/* Con una sola versión que se vende POR ENCARGO (migrations/0011), la accion
+   dice «Encargar»: es la misma alta en el carrito, con el tope de sensatez
+   (sin `stockDisponible`, ver `conStock`), y el plazo lo dice la tarjeta. */
 const textoElegir = `Elegir ${nombreDeOpcion(producto.opciones)}`;
 ---
 
@@ -116,12 +119,14 @@ const textoElegir = `Elegir ${nombreDeOpcion(producto.opciones)}`;
         data-kp-titulo={producto.titulo}
         aria-label={
           unica
-            ? `Agregar ${producto.titulo} al carrito`
+            ? unica.encargo
+              ? `Encargar ${producto.titulo}`
+              : `Agregar ${producto.titulo} al carrito`
             : `${textoElegir} de ${producto.titulo}`
         }
       >
         <Icono nombre={unica ? 'bolsa' : 'ajustes'} tam={17} />
-        <span data-kp-agregar-texto>{unica ? 'Agregar' : textoElegir}</span>
+        <span data-kp-agregar-texto>{unica ? (unica.encargo ? 'Encargar' : 'Agregar') : textoElegir}</span>
       </a>
 
       <BotonWhatsApp

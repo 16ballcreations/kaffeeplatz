@@ -9,6 +9,7 @@
 
 import { escribir } from './carrito-almacen';
 import type { Catalogo, CarritoResuelto, LineaGuardada, LineaResuelta } from './carrito-tipos';
+import { marcaEncargoMensaje } from './encargo';
 
 /* ===========================================================================
    RESOLUCION CONTRA EL CATALOGO
@@ -56,6 +57,8 @@ export function resolver(guardadas: LineaGuardada[], catalogo: Catalogo): Carrit
       subtotal,
       subtotalFormateado: pesos(subtotal),
       disponible: p.disponible && v.disponible,
+      /* POR ENCARGO (migrations/0011): la linea lo dice y el mensaje lo marca. */
+      ...(v.encargo ? { encargoDias: p.diasEncargo ?? 15 } : {}),
       imagen: p.imagen,
       /* Con barra final, la URL canonica de la ficha (SEO fase 1): sin ella
          cada clic en una linea pagaba un 301 del middleware. */
@@ -103,8 +106,16 @@ export function mensajePedido(
 ): string {
   const lineas = carrito.lineas.map((l) => {
     const nombre = l.varianteTitulo ? `${l.titulo} (${l.varianteTitulo})` : l.titulo;
-    return `• ${l.cantidad} × ${nombre} — ${l.precioUnitarioFormateado} c/u = ${l.subtotalFormateado}`;
+    /* POR ENCARGO (migrations/0011): la marca va al final de SU linea, para
+       que Andreina vea de un vistazo que pedir al proveedor. */
+    const encargo = l.encargoDias !== undefined ? ` ${marcaEncargoMensaje(l.encargoDias)}` : '';
+    return `• ${l.cantidad} × ${nombre} — ${l.precioUnitarioFormateado} c/u = ${l.subtotalFormateado}${encargo}`;
   });
+  /* Si el pedido MEZCLA lo que hay con lo que se encarga, se pregunta como
+     enviarlo: lo de bodega puede salir ya y lo encargado tarda. Sin encargo,
+     o con todo por encargo, el mensaje es el de siempre. */
+  const conEncargo = carrito.lineas.filter((l) => l.encargoDias !== undefined).length;
+  const mezcla = conEncargo > 0 && conEncargo < carrito.lineas.length;
   const total = carrito.subtotal + envio.costo;
   return [
     'Hola KaffeePlatz, quiero pedir:',
@@ -115,6 +126,7 @@ export function mensajePedido(
     `Envío: ${envio.gratis ? 'gratis' : pesos(envio.costo)}`,
     `Total: ${pesos(total)}`,
     '',
+    ...(mezcla ? ['Hay productos por encargo: ¿me lo envían todo junto o por partes?'] : []),
     '¿Me confirman disponibilidad y envío?',
   ].join('\n');
 }

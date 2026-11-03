@@ -24,6 +24,8 @@ export interface VarianteCatalogo {
   disponible: boolean;
   /** Solo con el inventario encendido: unidades que se pueden vender. */
   stockDisponible?: number;
+  /** Solo si hoy se vende POR ENCARGO (migrations/0011). Ver `Variante.encargo`. */
+  encargo?: true;
 }
 
 /** Un producto del catalogo, reducido a lo que el carrito necesita. */
@@ -36,6 +38,8 @@ export interface ProductoCatalogo {
   imagen?: { src: string; alt: string };
   /** true cuando el producto tiene mas de una variante (se muestra el nombre). */
   conVariantes: boolean;
+  /** Dias de entrega de un encargo; solo en productos con la opcion. */
+  diasEncargo?: number;
 }
 
 /** El catalogo indexado por handle, tal como lo serializa /carrito. */
@@ -55,6 +59,8 @@ export interface LineaResuelta {
   subtotal: number;
   subtotalFormateado: string;
   disponible: boolean;
+  /** Dias de entrega si la linea va POR ENCARGO; ausente si no. */
+  encargoDias?: number;
   imagen?: { src: string; alt: string };
   url: string;
 }
