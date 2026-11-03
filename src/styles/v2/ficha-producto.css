@@ -269,12 +269,31 @@
   .v-ficha__accion > * {
     grid-column: 1 / -1;
   }
+  /* El selector se «abre» (display: contents) para que sus piezas se
+     coloquen en la rejilla del bloque: la etiqueta encima, el contador junto
+     al botón y el aviso de tope («Máximo 1 por pedido…») en su PROPIA fila
+     debajo. Dentro de la caja del selector, ese aviso ensanchaba la primera
+     columna y descuadraba el botón (visto en la ficha de la prensa). */
   .v-ficha__accion > .v-cantidad:not([hidden]) {
+    display: contents;
+  }
+  .v-ficha__accion .v-cantidad__etiqueta {
     grid-column: 1;
-    margin-bottom: 0;
+    grid-row: 1;
+    margin-bottom: -0.25rem;
+  }
+  .v-ficha__accion .v-cantidad__control {
+    grid-column: 1;
+    grid-row: 2;
   }
   .v-ficha__accion > .v-cantidad:not([hidden]) ~ .v-agregar {
     grid-column: 2;
+    grid-row: 2;
+  }
+  .v-ficha__accion .v-cantidad__tope {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin: 0;
   }
   /* El hueco lo da el `row-gap`: fuera el margen entre botones seguidos. */
   .v-ficha__accion > .v-boton + .v-boton,
