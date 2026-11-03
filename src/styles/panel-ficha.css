@@ -115,3 +115,14 @@
     width: 100%;
   }
 }
+
+/* Foto subida sin JS que no es cuadrada (FotosBloque.astro): un aviso, no un
+   error. Nada se bloquea; solo se verá peor en la tienda. */
+.f-foto__aviso {
+  margin: 0.25rem 0 0;
+  font-size: var(--v-t-micro);
+  line-height: 1.45;
+  color: var(--v-tinta-2);
+  border-left: 2px solid var(--v-linea-oro);
+  padding-left: 0.5rem;
+}

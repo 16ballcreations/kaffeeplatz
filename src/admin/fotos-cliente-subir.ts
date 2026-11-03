@@ -17,12 +17,23 @@
  * desde un celular es la diferencia entre esperar y no esperar. Y de paso la
  * foto queda ya girada según su EXIF, que es como se ve.
  *
+ * Y LA DEJAN CUADRADA
+ * ---------------------------------------------------------------------------
+ * La tienda pinta las fotos en huecos cuadrados; una vertical u horizontal se
+ * ve pequeña o recortada. Ya reducida, la foto pasa por fotos-cuadrar-canvas.ts
+ * (fondo liso → se completa con su color; fondo de ambiente → relleno
+ * desenfocado con fundido; nunca se recorta el producto) y la miniatura sale
+ * del cuadrado, así que también es cuadrada y cuadra con `ladoMini`. En su
+ * fila se dice qué se hizo («Ajustada a cuadrado…»): ni preguntas ni pasos.
+ *
  * Si el navegador no puede redibujarla (un formato que no conoce), se sube el
  * fichero tal cual, sin miniatura: el servidor lo valida y, si no es JPG, PNG
  * o WebP, contesta con un mensaje claro que se enseña en su fila.
  *
  * Sin JavaScript nada de esto corre y el formulario se envía entero (ver
- * src/pages/admin/productos/[id]/subir.ts). Lo primero que se hace aquí es
+ * src/pages/admin/productos/[id]/subir.ts): la foto llega TAL CUAL, sin
+ * cuadrar, porque el Worker no puede procesar imágenes. Por eso la rejilla
+ * avisa de las que no son cuadradas (FotosBloque.astro). Lo primero que se hace aquí es
  * marcar la página como «con JS», que es lo que esconde el botón «Subir»
  * (panel-fotos.css).
  *
@@ -30,6 +41,8 @@
  * cada una sube a su destino y pinta su propio progreso.
  */
 import { LADO_MAX, ladoMini } from '../datos/imagenes';
+import { cuadrar } from './fotos-cuadrar-canvas';
+import { textoAjuste } from './fotos-cuadrar';
 
 document.documentElement.classList.add('f-con-js');
 
@@ -49,12 +62,14 @@ const CALIDAD = 0.85;
 interface Preparada {
   foto: Blob;
   mini: Blob | null;
+  /** Lo que se le hizo para dejarla cuadrada, para decírselo; null si nada. */
+  ajuste: string | null;
 }
 
 const aBlob = (c: HTMLCanvasElement) =>
   new Promise<Blob | null>((ok) => c.toBlob(ok, 'image/jpeg', CALIDAD));
 
-function dibujar(img: ImageBitmap, ancho: number, alto: number): HTMLCanvasElement {
+function dibujar(img: CanvasImageSource, ancho: number, alto: number): HTMLCanvasElement {
   const c = document.createElement('canvas');
   c.width = ancho;
   c.height = alto;
@@ -68,19 +83,23 @@ function dibujar(img: ImageBitmap, ancho: number, alto: number): HTMLCanvasEleme
   return c;
 }
 
-/** La foto a ≤1600 px y su miniatura, en JPG. `null` si no se pudo. */
+/** La foto a ≤1600 px, cuadrada, y su miniatura, en JPG. `null` si no se pudo. */
 async function preparar(f: File): Promise<Preparada | null> {
   try {
     const img = await createImageBitmap(f, { imageOrientation: 'from-image' });
     const k = Math.min(1, LADO_MAX / Math.max(img.width, img.height));
     const ancho = Math.max(1, Math.round(img.width * k));
     const alto = Math.max(1, Math.round(img.height * k));
-    /* Las medidas de la miniatura salen de la MISMA cuenta que usa el
-       servidor para comprobarla y la tienda para el `srcset`. */
-    const [am, hm] = ladoMini(ancho, alto);
-    const [foto, mini] = await Promise.all([aBlob(dibujar(img, ancho, alto)), aBlob(dibujar(img, am, hm))]);
+    /* El cuadrado se hace sobre la foto YA reducida: su lado es el mayor de
+       ella, así que no pasa de LADO_MAX ni amplía nada. */
+    const { canvas, modo } = cuadrar(dibujar(img, ancho, alto));
     img.close();
-    return foto ? { foto, mini } : null;
+    /* Las medidas de la miniatura salen de la MISMA cuenta que usa el
+       servidor para comprobarla y la tienda para el `srcset`. Se saca del
+       cuadrado: es la misma foto, ya ajustada. */
+    const [am, hm] = ladoMini(canvas.width, canvas.height);
+    const [foto, mini] = await Promise.all([aBlob(canvas), aBlob(dibujar(canvas, am, hm))]);
+    return foto ? { foto, mini, ajuste: textoAjuste(modo) } : null;
   } catch {
     return null;
   }
@@ -141,7 +160,7 @@ async function subirUna(form: HTMLFormElement, f: File): Promise<boolean> {
     const r = await enviar(form, datos, barra);
     if (r.ok) {
       barra.value = 100;
-      estado.textContent = 'Guardada';
+      estado.textContent = p?.ajuste ? `Guardada · ${p.ajuste}` : 'Guardada';
       li.dataset.estado = 'ok';
       return true;
     }

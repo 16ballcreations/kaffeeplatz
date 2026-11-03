@@ -33,6 +33,11 @@
  * a la página con el resultado en la URL. Con JS pide JSON y la página pinta
  * el progreso.
  *
+ * Sin JS la foto tampoco se CUADRA: eso lo hace el navegador al subir
+ * (fotos-cuadrar.ts) y un Worker no puede redibujar imágenes. Se guarda tal
+ * cual, con sus medidas reales, y la rejilla del panel avisa de que no es
+ * cuadrada (FotosBloque.astro) para que se vuelva a subir con el celular.
+ *
  * VALIDACION EN EL SERVIDOR, SIEMPRE
  * ---------------------------------------------------------------------------
  * Tipo por los bytes, tamaño, medidas (src/admin/fotos-validar.ts). Lo que
