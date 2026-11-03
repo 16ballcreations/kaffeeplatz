@@ -126,3 +126,68 @@
   border-left: 2px solid var(--v-linea-oro);
   padding-left: 0.5rem;
 }
+
+/* «Subir una sesión de fotos completa»: plegado por defecto. El resumen hace
+   de título del bloque y se puede tocar entero (44 px como mínimo). */
+.pb-varias__resumen {
+  position: relative;
+  padding-right: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  min-height: 44px;
+  cursor: pointer;
+  list-style-position: outside;
+}
+
+.pb-varias__resumen .p-seccion__titulo {
+  margin: 0;
+}
+
+.pb-varias__resumen .pp-ayuda {
+  margin: 0;
+}
+
+.pb-varias[open] .pb-varias__resumen {
+  margin-bottom: 0.75rem;
+}
+
+.pb-varias__convencion ul {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.pb-varias__convencion li + li {
+  margin-top: 0.25rem;
+}
+
+/* Con `display: flex` el navegador quita el triángulo del <summary>: sin una
+   señal propia, nada dice que el bloque se abre. */
+.pb-varias__resumen::-webkit-details-marker {
+  display: none;
+}
+
+.pb-varias__resumen::after {
+  content: '';
+  position: absolute;
+  top: 0.55rem;
+  right: 0.25rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-right: 2px solid var(--v-oro);
+  border-bottom: 2px solid var(--v-oro);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+}
+
+.pb-varias[open] .pb-varias__resumen::after {
+  transform: rotate(-135deg);
+  top: 0.8rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pb-varias__resumen::after {
+    transition: none;
+  }
+}

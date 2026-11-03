@@ -222,29 +222,51 @@ const pantalla = `/admin/productos/${id}`;
           )}
         </div>
 
-        <section class="pp-bloque pb-varias" aria-labelledby="t-varias">
-          <h2 class="p-seccion__titulo" id="t-varias">Subir varias fotos</h2>
+        {/* PLEGADO a propósito (pedido del cliente, nov 2026): hoy las fotos se
+            suben desde cada tarjeta y este flujo no se usa a diario. Se deja
+            como opción para una sesión de fotos grande, con la convención de
+            nombres a la vista dentro, porque sin ella esto no aporta nada:
+            una foto mal nombrada acaba en las fotos generales. */}
+        <details class="pp-bloque pb-varias">
+          <summary class="pb-varias__resumen">
+            <span class="p-seccion__titulo" id="t-varias">Subir una sesión de fotos completa</span>
+            <span class="pp-ayuda">Opcional · reparte las fotos solas según su nombre</span>
+          </summary>
+
           <p class="pp-ayuda">
-            Para la sesión de fotos entera: cada foto va a la tarjeta que dice su nombre y queda sin publicar
-            hasta que guardes esa tarjeta. Para una versión concreta, usa «Agregar fotos» en su tarjeta.
+            Para subir de una vez las fotos de varias versiones. Cada foto va a la tarjeta que dice su
+            nombre y queda <strong>sin publicar</strong> hasta que guardes esa tarjeta. Si solo vas a
+            subir fotos de una versión, es más directo usar «Agregar fotos» dentro de su tarjeta.
           </p>
+
+          <div class="f-ayuda pb-varias__convencion">
+            <p><strong>Cómo nombrar los archivos</strong></p>
+            <p>
+              <code>{actual.handle}-versión-toma.jpg</code>, todo en minúsculas, sin tildes y con guiones.
+            </p>
+            <ul>
+              <li>
+                Ejemplo: <code>{ejemplo}</code> va a esa versión, con esa toma.
+              </li>
+              <li>
+                Sin versión (<code>{actual.handle}-detalle.jpg</code>) va a las fotos generales.
+              </li>
+              <li>
+                Varias fotos de la misma toma: <code>-2</code>, <code>-3</code> al final.
+              </li>
+              <li>Un nombre que no siga la convención también va a las fotos generales.</li>
+            </ul>
+            {versiones.length > 0 && <p>Versiones: {versiones.map((v) => <code>{normalizar(v.titulo)}</code>)}</p>}
+            <p>Tomas: {roles.map((x) => <code>{normalizar(x.nombre).split('-')[0]}</code>)}</p>
+          </div>
+
           <SubirFotos
             accion={ruta(`/admin/productos/${actual.id}/subir`)}
             destino="nombre"
-            texto="Arrastra aquí las fotos, o elígelas"
+            texto="Arrastra aquí las fotos de la sesión, o elígelas"
             clave="varias"
           />
-          <details class="f-ayuda">
-            <summary>Cómo nombrar las fotos para que lleguen solas a su sitio</summary>
-            <p>
-              <code>{actual.handle}-color-toma.jpg</code>, por ejemplo <code>{ejemplo}</code>. Sin color si es del
-              producto en general (<code>{actual.handle}-detalle.jpg</code>). Varias de la misma toma:
-              <code>-2</code>, <code>-3</code> al final.
-            </p>
-            {versiones.length > 0 && <p>Versiones: {versiones.map((v) => <code>{normalizar(v.titulo)}</code>)}</p>}
-            <p>Tomas: {roles.map((x) => <code>{normalizar(x.nombre).split('-')[0]}</code>)}</p>
-          </details>
-        </section>
+        </details>
 
         <div class="pb-bloques" data-bloques>
           <BloqueProducto
