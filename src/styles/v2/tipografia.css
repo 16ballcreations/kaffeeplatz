@@ -59,5 +59,10 @@ h1 em,
 }
 
 .v-cabeza-fila .v-titulo {
-  max-width: 18ch;
+  /* 26 y no 18: con 18 se partían en dos líneas sin necesidad los títulos
+     de más de 18 letras («También te puede servir», «Para prepararlo en
+     casa»). Si en pantallas estrechas tienen que partirse, `balance` reparte
+     las palabras entre las dos líneas. */
+  max-width: 26ch;
+  text-wrap: balance;
 }
