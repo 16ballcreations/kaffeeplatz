@@ -19,6 +19,16 @@
  * existe —también entre los archivados: un handle es único para siempre, porque
  * una URL archivada sigue redirigiendo— se le añade -2, -3...
  *
+ * LA CATEGORIA PUEDE LLEGAR YA ELEGIDA
+ * ---------------------------------------------------------------------------
+ * Cada sección de la lista de productos tiene su «Agregar producto», que
+ * entra aquí con `?categoria=<id>`: quien está mirando los molinos y pulsa
+ * añadir quiere un molino, y elegirlo otra vez en el desplegable era un paso
+ * de más en el teléfono. Solo se acepta un id que exista entre las
+ * categorías de producto; cualquier otro valor se ignora en silencio y el
+ * desplegable sale como siempre («Elige una…»). En el POST manda lo que
+ * llega en el formulario, no la URL.
+ *
  * Mismo ciclo que la edición: 400 con lo escrito si algo no vale, 303 a la
  * edición si se creó (PRG).
  */
@@ -55,6 +65,9 @@ let sinBase = false;
 try {
   const db = baseAdmin(Astro.locals);
   categorias = await categoriasDeProducto(db);
+
+  const pedida = Astro.url.searchParams.get('categoria') ?? '';
+  if (categorias.some((c) => c.id === pedida)) b.categoria = pedida;
 
   if (Astro.request.method === 'POST') {
     const forma = await Astro.request.formData();
