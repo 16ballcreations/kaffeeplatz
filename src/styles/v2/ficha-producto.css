@@ -253,6 +253,39 @@
   margin-top: 2rem;
 }
 
+/* ESCRITORIO: la cantidad y «Agregar al carrito» en la misma fila, y WhatsApp
+   debajo. Apilado todo a ancho completo dejaba media columna vacía junto a
+   un contador de 140 px (pedido del cliente, nov 2026). En móvil (≤ 860 px,
+   donde manda la barra fija de compra) sigue apilado. Todo lo demás del
+   bloque —WhatsApp, el aviso de «agregado», la nota— ocupa la fila entera. */
+@media (min-width: 861px) {
+  .v-ficha__accion {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+    column-gap: 0.75rem;
+    row-gap: 0.75rem;
+  }
+  .v-ficha__accion > * {
+    grid-column: 1 / -1;
+  }
+  .v-ficha__accion > .v-cantidad:not([hidden]) {
+    grid-column: 1;
+    margin-bottom: 0;
+  }
+  .v-ficha__accion > .v-cantidad:not([hidden]) ~ .v-agregar {
+    grid-column: 2;
+  }
+  /* El hueco lo da el `row-gap`: fuera el margen entre botones seguidos. */
+  .v-ficha__accion > .v-boton + .v-boton,
+  .v-ficha__accion > .v-ficha__nota {
+    margin-top: 0;
+  }
+  .v-ficha__accion > [hidden] {
+    display: none;
+  }
+}
+
 .v-ficha__nota {
   margin-top: 0.875rem;
   font-size: var(--v-t-peq);
