@@ -113,6 +113,12 @@ const fecha = (d: Date) =>
   descripcion="Métodos de preparación, filtros, molinos y utensilios para café de especialidad. Desde Medellín, con envíos a toda Colombia y asesoría por WhatsApp."
   camino="/"
 >
+  {/* La textura del hero es el «elemento más grande» que mide el LCP: sin
+      precarga, el navegador no la descubre hasta haber leído el CSS. Solo
+      aquí: en las demás páginas no se pinta, y en la ficha le quitaría la
+      prioridad a la foto del producto, que es su LCP. */}
+  <link slot="head" rel="preload" as="image" href={recurso('/img/marca/lino-tile.webp')} type="image/webp" fetchpriority="high" />
+
   {/* 1. HERO ------------------------------------------------------------ */}
   <section data-kp-seccion="hero" class="v-hero v-lino-oscuro" data-kp-emblema-hero>
     <canvas class="v-hero__lienzo" data-kp-emblema-lienzo aria-hidden="true"></canvas>
