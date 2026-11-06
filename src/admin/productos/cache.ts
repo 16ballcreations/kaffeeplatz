@@ -42,6 +42,10 @@ function paginasDe(handle: string): string[] {
     '/',
     '/carrito',
     '/sitemap.xml',
+    /* El catálogo reducido que pide el carrito emergente: desde que las
+       copias se sirven como página fresca, sin esto mostraría el precio
+       viejo hasta 5 minutos. */
+    '/api/carrito/catalogo.json',
   ];
 }
 
@@ -63,4 +67,31 @@ export async function invalidarProducto(origen: string, handle: string): Promise
 /** El enlace a la ficha pública que salta cualquier caché. */
 export function enlaceFicha(handle: string, sello: string = Date.now().toString(36)): string {
   return ruta(`/producto/${handle}?v=${sello}`);
+}
+
+/**
+ * Tras un movimiento de inventario: borra las copias de lo que cambió.
+ *
+ * Desde que la tienda sirve las copias frescas del borde (nov 2026), un
+ * «Vendí 1» o una carga no se verían hasta 5 minutos después. Con `varianteId`
+ * se borra solo ese producto (y las páginas comunes); sin él —interruptor,
+ * anular un paquete— todos, porque puede haber cambiado cualquiera. Nunca
+ * lanza: un fallo aquí no puede deshacer un movimiento ya guardado.
+ */
+export async function invalidarInventario(
+  origen: string,
+  db: { prepare(sql: string): { bind(...v: unknown[]): { all<T>(): Promise<{ results: T[] }> }; all<T>(): Promise<{ results: T[] }> } },
+  varianteId: number | null,
+): Promise<void> {
+  try {
+    const filas = varianteId
+      ? await db
+          .prepare('SELECT p.handle FROM variantes v JOIN productos p ON p.id = v.producto_id WHERE v.id = ?')
+          .bind(varianteId)
+          .all<{ handle: string }>()
+      : await db.prepare('SELECT handle FROM productos WHERE archivado_en IS NULL').all<{ handle: string }>();
+    await Promise.all(filas.results.map((f) => invalidarProducto(origen, f.handle)));
+  } catch (fallo) {
+    console.warn('[admin] no se pudo invalidar tras el inventario:', fallo instanceof Error ? fallo.message : fallo);
+  }
 }

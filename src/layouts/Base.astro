@@ -117,6 +117,9 @@ const activo = (href: string) =>
     {/* Cormorant Garamond se mantiene: es la firma aprobada de Obsidiana.
         Geist sustituye a Inter en cuerpo e interfaz: mas caracter, cifras
         tabulares limpias para los precios. */}
+    {/* La textura del hero es el «elemento más grande» que mide el LCP: sin
+        precarga, el navegador no la descubre hasta haber leído el CSS. */}
+    <link rel="preload" as="image" href={recurso('/img/marca/lino-tile.webp')} type="image/webp" fetchpriority="high" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

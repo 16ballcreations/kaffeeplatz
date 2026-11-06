@@ -207,6 +207,9 @@ export async function guardarCopia(
   html: string,
   etiquetas: string[],
   esperar?: (p: Promise<unknown>) => void,
+  /* Para servirla también como página FRESCA (`copiaFresca`): su tipo y
+     cuántos segundos vale como respuesta normal. */
+  extra: { tipo?: string; vida?: number } = {},
 ): Promise<void> {
   const cache = cacheDelBorde();
   if (!cache) return;
@@ -216,9 +219,11 @@ export async function guardarCopia(
      cabeceras de la respuesta real, no esta copia. */
   const copia = new Response(html, {
     headers: {
-      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Type': extra.tipo ?? 'text/html; charset=utf-8',
       'Cache-Control': `public, s-maxage=${SEGUNDOS_RESPALDO}`,
       'Cache-Tag': etiquetas.join(','),
+      'X-KP-Guardado': String(Date.now()),
+      'X-KP-Vida': String(extra.vida ?? SEGUNDOS_CACHE),
     },
   });
   const tarea = cache.put(claveDeCache(url), copia).catch((e) => {
@@ -239,6 +244,42 @@ export async function copiaGuardada(url: URL): Promise<string | null> {
     return r ? await r.text() : null;
   } catch (e) {
     console.error('[cache] no se pudo leer la copia:', e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
+/**
+ * La copia guardada, SI TODAVÍA ESTÁ FRESCA, lista para servirse tal cual.
+ *
+ * POR QUÉ EXISTE (nov 2026): las cabeceras `s-maxage` no bastaban. Cloudflare
+ * NO cachea en su CDN lo que responde un Worker: el Worker corre delante de esa
+ * caché. Así que cada visita a la portada consultaba D1 y renderizaba de nuevo
+ * (TTFB de ~0,6 s frente a ~0,25 s de los sitios estáticos del estudio). La
+ * copia de respaldo ya estaba en la Cache API del borde, y el panel ya la borra
+ * al guardar: basta con leerla antes de renderizar mientras no haya vencido.
+ *
+ * Fresca = guardada hace menos de su `X-KP-Vida` (300 s, o 60 s si la página
+ * pinta un «Queda 1»). Vencida no se sirve aquí: para eso está el respaldo de
+ * `respuestaDeEmergencia`, que solo entra si D1 falla.
+ */
+export async function copiaFresca(url: URL): Promise<Response | null> {
+  const cache = cacheDelBorde();
+  if (!cache) return null;
+  try {
+    const r = await cache.match(claveDeCache(url));
+    if (!r) return null;
+    const guardado = Number(r.headers.get('X-KP-Guardado'));
+    const vida = Number(r.headers.get('X-KP-Vida'));
+    if (!guardado || !vida) return null;
+    const edad = (Date.now() - guardado) / 1000;
+    if (edad < 0 || edad >= vida) return null;
+    const etiquetas = (r.headers.get('Cache-Tag') ?? '').split(',').filter(Boolean);
+    const cabeceras = new Headers(cabecerasOk(etiquetas, vida <= SEGUNDOS_CACHE_CORTA));
+    cabeceras.set('Content-Type', r.headers.get('Content-Type') ?? 'text/html; charset=utf-8');
+    cabeceras.set('X-KP-Cache', `HIT; edad=${Math.round(edad)}`);
+    return new Response(r.body, { status: 200, headers: cabeceras });
+  } catch (e) {
+    console.error('[cache] no se pudo leer la copia fresca:', e instanceof Error ? e.message : e);
     return null;
   }
 }

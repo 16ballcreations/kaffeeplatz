@@ -10,6 +10,8 @@
   background-image:
     radial-gradient(ellipse 80% 70% at 75% 40%, rgb(222 193 133 / 0.08), transparent 70%),
     linear-gradient(rgb(15 14 13 / 0.82), rgb(15 14 13 / 0.82)),
+    /* lino-tile.webp: 512 px a calidad 50 (27 KB; antes 56 KB). Va bajo un
+       velo del 82 %: la diferencia no se ve y es lo que espera el LCP. */
     url('/img/marca/lino-tile.webp');
   background-size: auto, auto, 320px;
 }
@@ -34,6 +36,8 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
+  /* lino-tile-claro.webp: 464 px (2x de 232) a calidad 45, 17 KB (antes
+     62 KB). Se pinta al 30 % en multiply: no se distingue. */
   background: url('/img/marca/lino-tile-claro.webp') center top / 232px repeat;
   opacity: 0.3;
   mix-blend-mode: multiply;

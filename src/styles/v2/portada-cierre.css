@@ -32,7 +32,7 @@
 .v-cierre__planta {
   background:
     radial-gradient(ellipse at 30% 60%, rgb(222 193 133 / 0.12), transparent 65%),
-    url('/img/marca/planta-oro.webp') center 60% / contain no-repeat;
+    url('/img/marca/planta-oro.w640.webp') center 60% / contain no-repeat;
   opacity: 0.85;
   margin: 2rem;
   /* El PNG trae fondo oscuro propio: se funde por los bordes. */

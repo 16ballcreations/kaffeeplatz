@@ -74,7 +74,7 @@
 [data-kp-articulo-media]:has([data-kp-sin-imagen]) {
   background:
     radial-gradient(ellipse at 50% 60%, rgb(222 193 133 / 0.1), transparent 70%),
-    url('/img/marca/planta-oro.webp') center / 40% no-repeat,
+    url('/img/marca/planta-oro.w640.webp') center / 40% no-repeat,
     var(--v-superficie);
 }
 

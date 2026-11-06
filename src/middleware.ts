@@ -46,7 +46,7 @@
  */
 
 import { defineMiddleware } from 'astro:middleware';
-import { cabecerasOk, guardarCopia } from './datos/resiliencia';
+import { cabecerasOk, guardarCopia, copiaFresca, SEGUNDOS_CACHE, SEGUNDOS_CACHE_CORTA } from './datos/resiliencia';
 import { pasarPuerta, esRutaDelPanel, cabecerasPanel } from './admin/puerta';
 
 /**
@@ -84,6 +84,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
      y no cuesta nada. */
   const corte = await pasarPuerta(context.request, context.url, context.locals);
   if (corte) return corte;
+
+  /* LA CACHÉ DE VERDAD. Antes de renderizar, una copia fresca de esta página
+     guardada en el borde (ver `copiaFresca`): sin consultar D1 ni renderizar.
+     Solo GET públicos y dinámicos. `?v=` es la puerta para saltarla a
+     propósito: el «Ver cómo queda en la tienda» del panel la usa. */
+  if (
+    context.request.method === 'GET' &&
+    !context.isPrerendered &&
+    !esRutaDelPanel(context.url.pathname) &&
+    !context.url.searchParams.has('v')
+  ) {
+    const fresca = await copiaFresca(context.url);
+    if (fresca) return fresca;
+  }
 
   const respuesta = await next();
 
@@ -126,7 +140,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
      el visitante no paga el guardado. Si el runtime no lo ofrece, `guardarCopia`
      espera (más lento, igual de correcto). */
   const esperar = context.locals.runtime?.ctx?.waitUntil?.bind(context.locals.runtime.ctx);
-  await guardarCopia(context.url, html, etiquetas, esperar);
+  const cortaCopia = (context.locals as { cacheCorta?: boolean }).cacheCorta === true;
+  await guardarCopia(context.url, html, etiquetas, esperar, {
+    tipo: respuesta.headers.get('Content-Type') ?? undefined,
+    vida: cortaCopia ? SEGUNDOS_CACHE_CORTA : SEGUNDOS_CACHE,
+  });
 
   /* Se lee AQUÍ y no junto a las etiquetas: lo marcan las tarjetas que
      pintan un «Queda 1», y una tarjeta se renderiza mientras sale el cuerpo.

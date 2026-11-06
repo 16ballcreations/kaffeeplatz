@@ -6,13 +6,15 @@
  * La puerta ya comprobó la sesión y el `Origin` (ver `src/admin/puerta.ts`).
  */
 import type { APIRoute } from 'astro';
+import { invalidarInventario } from '../../../admin/productos/cache';
+import { baseAdmin } from '../../../admin/base';
 import { ruta } from '../../../datos/sitio';
 import { cabecerasPanel } from '../../../admin/puerta';
 import { accionDespacho } from '../../../admin/inventario-acciones';
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, locals, url }) => {
   let form: FormData;
   try {
     form = await request.formData();
@@ -20,6 +22,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     form = new FormData();
   }
   const destino = await accionDespacho(form, locals);
+  /* Que la tienda lo vea ya: la copia fresca del borde se borra (ver
+     `invalidarInventario`). */
+  await invalidarInventario(url.origin, baseAdmin(locals), null);
   return new Response(null, { status: 303, headers: cabecerasPanel({ Location: ruta(destino) }) });
 };
 
