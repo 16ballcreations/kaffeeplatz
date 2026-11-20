@@ -17,10 +17,10 @@ funcionando, pero las novedades llegan a Workers.
 
 ## Modo servidor (fase 1 del panel de administración)
 
-Desde la rama `feature/modo-servidor`, el sitio se construye en **modo
-servidor** con `@astrojs/cloudflare` en vez de como sitio estático puro. Es un
-cambio de **envoltorio**, no de contenido: el objetivo de esta fase es que el
-sitio salga idéntico.
+El sitio se construye en **modo servidor** con `@astrojs/cloudflare` en vez de
+como sitio estático puro. Está en `main` y en producción desde noviembre de
+2026 (la tienda lee el catálogo y el diario de D1). La fase 1 fue un cambio de
+**envoltorio**, no de contenido: el objetivo era que el sitio saliera idéntico.
 
 **Qué cambió y por qué:**
 
@@ -35,36 +35,22 @@ sitio salga idéntico.
 **Lo que NO cambió:** la fuente de datos. Las páginas siguen leyendo de
 `getCollection`; D1 llega en la fase 2.
 
-### Cómo volver atrás (R6 del plan)
+### Cómo volver atrás
 
-El sitio está en producción: hay que poder revertir en minutos. Como el
-dominio apunta al Worker `kaffeeplatz`, volver atrás es **volver a desplegar
-la versión estática**.
+**Revertir el despliegue desde Cloudflare (~1 min).** No necesita el
+repositorio: en el panel, **Workers & Pages → kaffeeplatz → Deployments**, se
+elige el despliegue anterior y **Rollback**. Es el camino a usar si el sitio
+está caído. Cada despliegue lleva su commit como mensaje (`npm run deploy`),
+así que se sabe a qué código corresponde.
 
-**Opción 1 — revertir el despliegue desde Cloudflare (lo más rápido, ~1 min).**
-No necesita el repositorio: en el panel, **Workers & Pages → kaffeeplatz →
-Deployments**, se elige el despliegue anterior y **Rollback**. Es el camino a
-usar si el sitio ya está caído.
-
-**Opción 2 — volver a publicar el estático desde git (~3 min).**
+**La última versión estática** (sin D1 ni modo servidor) quedó marcada con la
+etiqueta `archivo-ultimo-estatico` (commit `058154c`, 2026-10-23). Volver a ella
+ya no es un simple rollback: la tienda, el panel y el inventario viven en D1 y
+en el Worker, y esa versión no los tiene.
 
 ```bash
-git checkout main          # main sigue siendo el sitio estatico
-npm ci                     # sin @astrojs/cloudflare
-npm run build              # genera dist/ sin _worker.js
-npx wrangler deploy        # vuelve a publicar como assets puros
+git checkout archivo-ultimo-estatico   # para consultarla, no para publicar a ciegas
 ```
-
-Para que esto funcione, `main` **no debe** llevar los cambios de esta fase
-hasta que el modo servidor esté validado en producción. Mientras tanto viven
-en `feature/modo-servidor`.
-
-**Comprobación antes de dar por buena la vuelta atrás:** que `dist/` NO
-contenga `_worker.js`, y que `wrangler.jsonc` no tenga `main`. Si queda
-`main` apuntando a un `_worker.js` que ya no se genera, el despliegue falla.
-
-**Ensayar esto una vez antes de publicar**, no suponerlo: el plan lo pide
-explícitamente (R6).
 
 ## Publicar
 
@@ -225,9 +211,21 @@ Builds → Connect**, con `npm run build` como comando de build y
 
 ## Las propuestas anteriores
 
-A · Imprenta, B · Galería y C · Obsidiana están archivadas en la rama
-`archivo/propuestas-abc`. Ya no se publican desde `main`; para recuperarlas:
+A · Imprenta, B · Galería y C · Obsidiana están archivadas en la etiqueta
+`archivo-propuestas-abc`, y la propuesta D tal como se presentó en
+`archivo-propuesta-obsidiana-v2`. Ya no se publican; para consultarlas:
 
 ```bash
-git checkout archivo/propuestas-abc
+git checkout archivo-propuestas-abc
 ```
+
+## Ramas
+
+| Rama | Para qué |
+|---|---|
+| `main` | Lo que está en producción. Publicar siempre desde aquí (`npm run deploy` exige que el commit esté en GitHub) |
+| `integracion/dev` | Donde se juntan los cambios antes de pasar a `main` |
+| `borrador/privacidad-clarity` | Página de privacidad (Ley 1581) y medición con Clarity. **Pendiente de aprobación de Andreina**: no mezclar en `main` hasta entonces |
+
+Las ramas de trabajo (`feature/...`) se borran cuando su contenido entra en
+`main`. Los hitos que vale la pena conservar quedan como etiquetas `archivo-*`.
