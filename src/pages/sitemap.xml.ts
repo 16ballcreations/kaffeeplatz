@@ -9,7 +9,7 @@ import type { APIRoute } from 'astro';
 import { coleccion } from '../datos/colecciones';
 import { ruta } from '../datos/sitio';
 
-const FIJAS = ['/', '/catalogo/', '/diario/', '/nosotros/', '/contacto/'];
+const FIJAS = ['/', '/catalogo/', '/diario/', '/nosotros/', '/contacto/', '/privacidad/'];
 
 export const GET: APIRoute = async ({ site }) => {
   const productos = await coleccion('productos');

@@ -23,6 +23,9 @@ export const SITIO = {
   whatsappVisible: '+57 301 380 9886',
   /** El dominio va en minúsculas y NO se normaliza a KaffeePlatz. */
   dominioLegado: 'kaffeeplatz.co',
+  /** Microsoft Clarity (tiempo en página, scroll y mapas de calor), con el
+   *  aviso de public/medicion.js. Vacío: no se carga nada. */
+  clarity: '',
 } as const;
 
 /** Navegación principal. Los diseños la pintan como quieran, pero no cambian las rutas. */

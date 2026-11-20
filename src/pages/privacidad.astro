@@ -1,0 +1,108 @@
+---
+/**
+ * /privacidad — política de tratamiento de datos (Ley 1581 de 2012) y aviso
+ * de medición con Microsoft Clarity (public/medicion.js).
+ *
+ * BORRADOR de 16BC (09/11/2026): Andreina tiene que aprobarlo antes de
+ * publicar. No reemplaza la política de Shopify de contenido-original/, que
+ * hablaba de pagos y carrito que este sitio ya no tiene.
+ */
+import Base from '../layouts/Base.astro';
+import { SITIO } from '../datos/sitio';
+---
+
+<Base
+  titulo="Privacidad y tratamiento de datos"
+  descripcion={`Qué datos guarda ${SITIO.nombre}, para qué, con quién se comparten y cómo pedir que se corrijan o se borren.`}
+  camino="/privacidad"
+  migas={[{ nombre: 'Privacidad', href: '/privacidad' }]}
+>
+  <header data-kp-seccion="encabezado" class="v-encabezado v-limite">
+    <p class="v-eyebrow v-entra">Privacidad</p>
+    <h1 class="v-entra" style="--d:1">Tus datos, <em>en claro</em></h1>
+    <p class="v-encabezado__texto v-entra" style="--d:2">
+      Qué guardamos cuando nos escribes o visitas el sitio, para qué, con quién lo compartimos y
+      cómo pedir que lo corrijamos o lo borremos.
+    </p>
+  </header>
+
+  <section data-kp-seccion="privacidad" class="v-seccion v-limite v-prosa kp-legal">
+    <h2>Quién responde por tus datos</h2>
+    <p>
+      {SITIO.nombre}, tienda en línea de accesorios de café en {SITIO.ciudad}, a cargo de
+      {' '}{SITIO.dueña}. Para cualquier cosa sobre tus datos escríbenos a
+      {' '}<a href={`mailto:${SITIO.email}`}>{SITIO.email}</a>. Tratamos tus datos según la Ley 1581 de
+      2012 y el Decreto 1377 de 2013.
+    </p>
+
+    <h2>Lo que nos cuentas</h2>
+    <p>
+      Cuando haces un pedido o nos escribes por WhatsApp o por correo, guardamos tu nombre, cómo
+      contactarte, la dirección de envío y lo que pediste. Lo usamos para atenderte, cerrar el
+      pedido y enviarlo. No lo vendemos ni lo usamos para enviarte publicidad que no pediste.
+    </p>
+
+    <h2>Cómo se lee el sitio</h2>
+    <p>
+      Usamos Microsoft Clarity para entender cómo se recorre la tienda: cuánto tiempo pasa la gente
+      en cada página, hasta dónde baja y dónde hace clic. Con eso sabemos qué funciona y qué hay que
+      mejorar. Clarity también guarda una reconstrucción de la visita, con lo que escribes en los
+      formularios oculto.
+    </p>
+    <p>
+      Para unir las páginas de una misma visita usa dos cookies propias (<code>_clck</code>, un año,
+      y <code>_clsk</code>, un día). No la usamos para anuncios. Microsoft procesa esos datos, que
+      pueden salir de Colombia; su política está en
+      {' '}<a href="https://privacy.microsoft.com/es-es/privacystatement" rel="noopener noreferrer">privacy.microsoft.com</a>.
+    </p>
+    <ul>
+      <li>Si entras desde Europa, te preguntamos antes y no se carga nada hasta que digas que sí.</li>
+      <li>
+        Desde cualquier otro lugar se carga al entrar, y un aviso te lo cuenta con la opción de decir
+        que no. Si dices que no, se apaga, se borran sus cookies y no vuelve a cargar.
+      </li>
+    </ul>
+    <p>
+      <button type="button" class="v-boton v-boton--oro" data-cambiar-medicion>
+        Vuelve a mostrarme el aviso
+      </button>
+    </p>
+
+    <h2>Quién más ve tus datos</h2>
+    <ul>
+      <li>
+        <strong>Cloudflare</strong> aloja el sitio y guarda en sus registros la dirección IP y datos
+        básicos de cada visita.
+      </li>
+      <li><strong>WhatsApp (Meta)</strong> lleva la conversación de cada pedido.</li>
+      <li><strong>La transportadora</strong> recibe tu nombre, dirección y teléfono para entregarte.</li>
+      <li><strong>Microsoft</strong>, a través de Clarity, mientras la medición esté activa.</li>
+    </ul>
+
+    <h2>Cuánto lo guardamos</h2>
+    <p>
+      Los datos de tus pedidos, el tiempo que pida la ley para las ventas; lo demás, hasta que nos
+      pidas borrarlo. En Clarity, Microsoft guarda las grabaciones 30 días y las cifras y mapas de
+      calor hasta 13 meses.
+    </p>
+
+    <h2>Tus derechos</h2>
+    <p>
+      Puedes conocer, corregir, actualizar y pedir que borremos tus datos, o retirar la autorización
+      que nos diste. Escríbenos a <a href={`mailto:${SITIO.email}`}>{SITIO.email}</a>: respondemos las
+      consultas en máximo 10 días hábiles y los reclamos en máximo 15. Si no quedas conforme, puedes
+      acudir a la Superintendencia de Industria y Comercio.
+    </p>
+
+    <p><em>Última actualización: 9 de noviembre de 2026.</em></p>
+  </section>
+</Base>
+
+<style>
+  .kp-legal h2 { margin-top: 2.5em; margin-bottom: 0.5em; }
+  .kp-legal p,
+  .kp-legal li { color: var(--v-tinta-2); line-height: 1.65; margin-bottom: 1em; }
+  .kp-legal ul { padding-left: 1.2em; list-style: disc; }
+  .kp-legal a:not(.v-boton) { color: var(--v-oro); }
+  .kp-legal strong { color: var(--v-tinta); }
+</style>

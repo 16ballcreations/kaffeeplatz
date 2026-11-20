@@ -3464,3 +3464,12 @@ body:has(.v-menu[open]) {
     align-items: flex-start;
   }
 }
+
+/* Aviso de medición (public/medicion.js) con los colores de Obsidiana. */
+:root {
+  --medicion-fondo: var(--v-elevado);
+  --medicion-texto: var(--v-tinta);
+  --medicion-borde: color-mix(in srgb, var(--v-tinta) 22%, transparent);
+  --medicion-acento: var(--v-oro);
+}
+.v-pie__legal a[href$='/privacidad/'] { color: inherit; }
